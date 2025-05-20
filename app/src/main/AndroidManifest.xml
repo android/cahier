@@ -34,7 +34,14 @@
             android:label="@string/app_name"
             android:theme="@style/Theme.MyApplication"
             android:showWhenLocked="true"
-            android:turnScreenOn="true">
+            android:turnScreenOn="true"
+            android:resizeableActivity="true"
+            android:launchMode="singleInstancePerTask">
+
+            <property
+                android:name="android.window.PROPERTY_SUPPORTS_MULTI_INSTANCE_SYSTEM_UI"
+                android:value="true"/>
+
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_NOTE" />
                 <category android:name="android.intent.category.DEFAULT" />
