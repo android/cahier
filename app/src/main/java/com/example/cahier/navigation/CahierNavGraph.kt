@@ -24,6 +24,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.cahier.data.NoteType
 import com.example.cahier.ui.DrawingCanvas
 import com.example.cahier.ui.HomeDestination
 import com.example.cahier.ui.HomePane
@@ -32,11 +33,13 @@ import com.example.cahier.ui.NoteCanvas
 
 @Composable
 fun CahierNavHost(
-    navController: NavHostController
+    navController: NavHostController,
+    noteType: NoteType?,
+    noteId: Long
 ) {
     NavHost(
         navController = navController,
-        startDestination = HomeDestination.route
+        startDestination = defineHomeDestination(noteId, noteType)
     ) {
         composable(HomeDestination.route) {
 
@@ -75,6 +78,13 @@ fun CahierNavHost(
             )
         }
     }
+}
+
+fun defineHomeDestination(noteId: Long, noteType: NoteType?): String {
+    if (noteId < 0)  return HomeDestination.route //no valid id passed
+    if (NoteType.TEXT == noteType) return "${TextCanvasDestination.route}/$noteId"
+    if (NoteType.DRAWING == noteType) return "${DrawingCanvasDestination.route}/$noteId"
+    else return HomeDestination.route
 }
 
 object TextCanvasDestination : NavigationDestination {
