@@ -31,6 +31,7 @@
     <string name="drawing">Drawing</string>
     <string name="add_note">Add Note</string>"
     <string name="delete_note">Delete Note</string>
+    <string name="open_new_window">Open in New Window</string>
 
     <!-- Ink Tools -->
     <string name="brush">Brush</string>

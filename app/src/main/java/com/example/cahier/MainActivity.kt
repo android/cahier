@@ -18,6 +18,7 @@
 
 package com.example.cahier
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.example.cahier.data.NoteType
 import com.example.cahier.ui.CahierApp
 import com.example.cahier.ui.theme.CahierReviewTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,13 +35,21 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val noteId = intent.getLongExtra(AppArgs.NOTE_ID_KEY, -1)
+        val noteType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(AppArgs.NOTE_TYPE_KEY, NoteType::class.java)
+        } else {
+            intent.getParcelableExtra(AppArgs.NOTE_TYPE_KEY) as NoteType?
+        }
+
         setContent {
             CahierReviewTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CahierApp()
+                    CahierApp(noteId = noteId, noteType = noteType)
                 }
             }
         }
