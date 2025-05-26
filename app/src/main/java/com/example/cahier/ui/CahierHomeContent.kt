@@ -39,9 +39,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CardDefaults
@@ -81,6 +83,7 @@ fun NoteList(
     onAddNewDrawingNote: () -> Unit,
     onNoteClick: (Note) -> Unit,
     onToggleFavorite: (Long) -> Unit,
+    onNewWindow: (Note) -> Unit,
     modifier: Modifier = Modifier,
     onDeleteNote: (Note) -> Unit = {},
 ) {
@@ -123,7 +126,8 @@ fun NoteList(
                             note = note,
                             onClick = { onNoteClick(note) },
                             onDelete = { onDeleteNote(note) },
-                            onToggleFavorite = { onToggleFavorite(note.id) }
+                            onToggleFavorite = { onToggleFavorite(note.id) },
+                            onNewWindow = { onNewWindow(note) }
                         )
                     }
 
@@ -145,7 +149,8 @@ fun NoteList(
                             note = note,
                             onClick = { onNoteClick(note) },
                             onDelete = { onDeleteNote(note) },
-                            onToggleFavorite = { onToggleFavorite(note.id) }
+                            onToggleFavorite = { onToggleFavorite(note.id) },
+                            onNewWindow = { onNewWindow(note) }
                         )
                     }
                 }
@@ -156,7 +161,8 @@ fun NoteList(
                             note = note,
                             onClick = { onNoteClick(note) },
                             onDelete = { onDeleteNote(note) },
-                            onToggleFavorite = { onToggleFavorite(note.id) }
+                            onToggleFavorite = { onToggleFavorite(note.id) },
+                            onNewWindow = { onNewWindow(note) }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                     }
@@ -166,13 +172,14 @@ fun NoteList(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+
 @Composable
 fun NoteItem(
     note: Note,
     onClick: () -> Unit,
     onDelete: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onNewWindow: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -252,6 +259,12 @@ fun NoteItem(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(R.string.delete_note)
+                )
+            }
+            IconButton(onClick = onNewWindow) {
+                Icon(
+                    painter = painterResource(R.drawable.outline_open_in_new_24),
+                    contentDescription = stringResource(R.string.open_new_window)
                 )
             }
         }

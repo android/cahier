@@ -18,7 +18,12 @@
 
 package com.example.cahier.ui
 
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,6 +53,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.ink.strokes.Stroke
+import com.example.cahier.AppArgs
+import com.example.cahier.MainActivity
 import com.example.cahier.R
 import com.example.cahier.data.Note
 import com.example.cahier.data.NoteType
@@ -77,6 +84,7 @@ enum class AppDestinations(
 }
 
 
+@SuppressLint("NewApi")
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun HomePane(
@@ -91,6 +99,8 @@ fun HomePane(
     val noteList by homeScreenViewModel.noteList.collectAsState()
     val selectedNoteUIState by homeScreenViewModel.uiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+
+    val activity = LocalActivity.current
 
     LaunchedEffect(selectedNoteUIState.note) {
         if (false) {
@@ -179,7 +189,10 @@ fun HomePane(
                                     },
                                     onToggleFavorite = { noteId ->
                                         homeScreenViewModel.toggleFavorite(noteId)
-                                    }
+                                    },
+                                    onNewWindow = { note ->
+                                        openNewWindow(activity, note)
+                                    },
                                 )
                             },
                             detailPane = {
@@ -212,6 +225,8 @@ fun HomePane(
     }
 }
 
+
+
 @Composable
 private fun ListPaneContent(
     noteList: List<Note>,
@@ -221,6 +236,7 @@ private fun ListPaneContent(
     onToggleFavorite: (Long) -> Unit,
     modifier: Modifier = Modifier,
     onDeleteNote: (Note) -> Unit = {},
+    onNewWindow: (Note) -> Unit = {},
 ) {
     val (favorites, others) = noteList.partition { it.isFavorite }
 
@@ -232,7 +248,8 @@ private fun ListPaneContent(
         onAddNewTextNote = onAddNewTextNote,
         onAddNewDrawingNote = onAddNewDrawingNote,
         onDeleteNote = onDeleteNote,
-        onToggleFavorite = onToggleFavorite
+        onToggleFavorite = onToggleFavorite,
+        onNewWindow = onNewWindow
     )
 }
 
@@ -248,4 +265,14 @@ private fun DetailPaneContent(
         strokes = strokes,
         onClickToEdit = onClickToEdit
     )
+}
+
+fun openNewWindow(activity: Activity?, note: Note) {
+    val intent = Intent(activity, MainActivity::class.java)
+    intent.putExtra(AppArgs.NOTE_TYPE_KEY, note.type)
+    intent.putExtra(AppArgs.NOTE_ID_KEY, note.id)
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+        Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+
+    activity?.startActivity(intent)
 }
