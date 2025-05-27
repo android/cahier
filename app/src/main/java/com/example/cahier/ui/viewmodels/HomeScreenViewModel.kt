@@ -46,8 +46,6 @@ class HomeScreenViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CahierUiState())
     val uiState: StateFlow<CahierUiState> = _uiState.asStateFlow()
 
-    private var newlyAddedId = 0L
-
     /**
      * Holds ui state for the list of notes on the home pane.
      * The list of items are retrieved from [NoteRepository] and mapped to
@@ -85,42 +83,47 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    fun addNote(callback: (id: Long) -> Unit): Long {
-        return addNoteOfType(NoteType.TEXT, callback)
-    }
-
-    fun addDrawingNote(callback: (id: Long) -> Unit): Long {
-        return addNoteOfType(NoteType.DRAWING, callback)
-    }
-
-    private fun addNoteOfType(noteType: NoteType, callback: (id: Long) -> Unit): Long {
-        try {
-            viewModelScope.launch {
-                val newNote = Note(
-                    id = 0,
-                    title = "",
-                    type = noteType,
-                    text = if (noteType == NoteType.TEXT) "" else null,
-                )
-                newlyAddedId = noteRepository.addNote(newNote)
-                _uiState.value = CahierUiState(note = newNote.copy(id = newlyAddedId))
-                callback(newlyAddedId)
+    fun addNote(callback: (noteId: Long) -> Unit) {
+        viewModelScope.launch {
+            val newNoteId = addNoteOfType(NoteType.TEXT)
+            newNoteId?.let {
+                callback(it)
             }
-            return newlyAddedId
+        }
+    }
+
+    fun addDrawingNote(callback: (id: Long) -> Unit) {
+        viewModelScope.launch {
+            val newNoteId = addNoteOfType(NoteType.DRAWING)
+            newNoteId?.let {
+                callback(it)
+            }
+        }
+    }
+
+    private suspend fun addNoteOfType(noteType: NoteType): Long? {
+        return try {
+            val newNote = Note(
+                id = 0,
+                title = "",
+                type = noteType,
+                text = if (noteType == NoteType.TEXT) "" else null,
+            )
+            val insertedId = noteRepository.addNote(newNote)
+            _uiState.value = CahierUiState(note = newNote.copy(id = insertedId))
+            insertedId
         } catch (e: Exception) {
             Log.e(TAG, "Error adding note: ${e.message}")
             _uiState.value =
                 _uiState.value.copy(error = "Error adding note: ${e.message}")
-            return -1
+            null
         }
     }
 
-    fun deleteNote() {
+    fun deleteNote(noteToDelete: Note) {
         try {
             viewModelScope.launch {
-                _uiState.value.note.let {
-                    noteRepository.deleteNote(it)
-                }
+                noteRepository.deleteNote(noteToDelete)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting note: ${e.message}")

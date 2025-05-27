@@ -21,7 +21,6 @@ package com.example.cahier.ui
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
@@ -174,8 +173,8 @@ fun HomePane(
                                         homeScreenViewModel.selectNote(it.id)
                                     },
                                     onAddNewTextNote = {
-                                        homeScreenViewModel.addNote { it ->
-                                            navigateToCanvas(it)
+                                        homeScreenViewModel.addNote { noteId ->
+                                            navigateToCanvas(noteId)
                                         }
                                     },
                                     onAddNewDrawingNote = {
@@ -184,7 +183,7 @@ fun HomePane(
                                         }
                                     },
                                     onDeleteNote = { note ->
-                                        homeScreenViewModel.deleteNote()
+                                        homeScreenViewModel.deleteNote(note)
                                         navigateUp()
                                     },
                                     onToggleFavorite = { noteId ->
@@ -224,7 +223,6 @@ fun HomePane(
         )
     }
 }
-
 
 
 @Composable
