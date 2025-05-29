@@ -214,170 +214,203 @@ fun DrawingToolbox(
         tonalElevation = 4.dp,
         shape = MaterialTheme.shapes.medium
     ) {
-        Row(
+        LazyRow (
             modifier = modifier
                 .background(
                     MaterialTheme.colorScheme.surfaceVariant,
                     shape = MaterialTheme.shapes.medium
                 )
-                .height(IntrinsicSize.Min)
 
         ) {
-            IconButton(onClick = {
-                brushMenuExpanded = true
-                drawingCanvasViewModel.setEraserMode(false)
-            }) {
-                Icon(
-                    painter = painterResource(R.drawable.brush_24px),
-                    contentDescription = stringResource(R.string.brush),
-                    modifier = Modifier.background(
-                        color = if (isEraserMode) Color.Transparent else
-                            MaterialTheme.colorScheme.inversePrimary,
-                        shape = CircleShape
-                    )
-                )
-            }
-
-            BrushDropdownMenu(
-                expanded = brushMenuExpanded,
-                onDismissRequest = { brushMenuExpanded = false },
-                onBrushChange = { newBrush, newSize ->
-                    coroutineScope.launch {
-                        drawingCanvasViewModel.changeBrush(newBrush, newSize)
-                    }
-                    brushMenuExpanded = false
-                },
-            )
-
-            IconButton(onClick = {
-                showColorPicker = true
-                drawingCanvasViewModel.setEraserMode(false)
-            }) {
-                Icon(
-                    painter = painterResource(R.drawable.palette_24px),
-                    contentDescription = stringResource(R.string.color),
-                )
-            }
-
-            ColorPickerDialog(
-                showDialog = showColorPicker,
-                onDismissRequest = { showColorPicker = false },
-                onColorSelected = { color ->
-                    coroutineScope.launch {
-                        drawingCanvasViewModel.changeBrushColor(color)
-                    }
-                    showColorPicker = false
-                }
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            VerticalDivider(
-                thickness = 4.dp,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(vertical = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(onClick = onUndo, enabled = canUndo) {
-                Icon(
-                    painter = painterResource(R.drawable.undo_24px),
-                    contentDescription = stringResource(R.string.undo)
-                )
-            }
-
-            IconButton(onClick = onRedo, enabled = canRedo) {
-                Icon(
-                    painter = painterResource(R.drawable.redo_24px),
-                    contentDescription = stringResource(R.string.redo)
-                )
-            }
-
-            IconButton(onClick = { drawingCanvasViewModel.setEraserMode(true) }) {
-                Icon(
-                    painter = painterResource(R.drawable.ink_eraser_24px),
-                    contentDescription = stringResource(R.string.eraser),
-                    modifier = Modifier.background(
-                        color = if (isEraserMode)
-                            MaterialTheme.colorScheme.inversePrimary else Color.Transparent,
-                    )
-                )
-            }
-
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        drawingCanvasViewModel.clearStrokes()
-                    }
-                }
-            ) {
-                Text(text = stringResource(R.string.clear))
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            VerticalDivider(
-                thickness = 4.dp,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(vertical = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(onClick = { drawingCanvasViewModel.toggleFavorite() }) {
-                Icon(
-                    imageVector = if (uiState.note.isFavorite)
-                        Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = if (uiState.note.isFavorite)
-                        stringResource(R.string.unfavorite) else stringResource(R.string.favorite),
-                    tint = if (uiState.note.isFavorite)
-                        MaterialTheme.colorScheme.primary else LocalContentColor.current
-                )
-            }
-
-            Spacer(modifier = Modifier.size(4.dp))
-
-            IconButton(onClick = {
-                imagePickerLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
-            }) {
-                Icon(
-                    painter = painterResource(R.drawable.image_24px),
-                    contentDescription = stringResource(R.string.add_image)
-                )
-            }
-
-            Box {
-                IconButton(onClick = { optionsMenuExpanded = true }) {
+            item {
+                IconButton(onClick = {
+                    brushMenuExpanded = true
+                    drawingCanvasViewModel.setEraserMode(false)
+                }) {
                     Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = stringResource(R.string.more_options)
+                        painter = painterResource(R.drawable.brush_24px),
+                        contentDescription = stringResource(R.string.brush),
+                        modifier = Modifier.background(
+                            color = if (isEraserMode) Color.Transparent else
+                                MaterialTheme.colorScheme.inversePrimary,
+                            shape = CircleShape
+                        )
                     )
                 }
-                DropdownMenu(
-                    expanded = optionsMenuExpanded,
-                    onDismissRequest = { optionsMenuExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.exit)) },
-                        onClick = {
-                            optionsMenuExpanded = false
-                            onExit()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ExitToApp,
-                                contentDescription = null
-                            )
-                        }
+            }
+
+            item {
+                IconButton(onClick = {
+                    showColorPicker = true
+                    drawingCanvasViewModel.setEraserMode(false)
+                }) {
+                    Icon(
+                        painter = painterResource(R.drawable.palette_24px),
+                        contentDescription = stringResource(R.string.color),
                     )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            item {
+                VerticalDivider(
+                    thickness = 4.dp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .height(48.dp)
+                        .padding(vertical = 8.dp)
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            item {
+                IconButton(onClick = onUndo, enabled = canUndo) {
+                    Icon(
+                        painter = painterResource(R.drawable.undo_24px),
+                        contentDescription = stringResource(R.string.undo)
+                    )
+                }
+            }
+
+            item {
+                IconButton(onClick = onRedo, enabled = canRedo) {
+                    Icon(
+                        painter = painterResource(R.drawable.redo_24px),
+                        contentDescription = stringResource(R.string.redo)
+                    )
+                }
+            }
+
+            item {
+                IconButton(onClick = { drawingCanvasViewModel.setEraserMode(true) }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ink_eraser_24px),
+                        contentDescription = stringResource(R.string.eraser),
+                        modifier = Modifier.background(
+                            color = if (isEraserMode)
+                                MaterialTheme.colorScheme.inversePrimary else Color.Transparent,
+                        )
+                    )
+                }
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            drawingCanvasViewModel.clearStrokes()
+                        }
+                    }
+                ) {
+                    Text(text = stringResource(R.string.clear))
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.width(16.dp))
+            }
+
+            item {
+                VerticalDivider(
+                    thickness = 4.dp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .height(48.dp)
+                        .padding(vertical = 8.dp)
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            item {
+                IconButton(onClick = { drawingCanvasViewModel.toggleFavorite() }) {
+                    Icon(
+                        imageVector = if (uiState.note.isFavorite)
+                            Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = if (uiState.note.isFavorite)
+                            stringResource(R.string.unfavorite) else stringResource(R.string.favorite),
+                        tint = if (uiState.note.isFavorite)
+                            MaterialTheme.colorScheme.primary else LocalContentColor.current
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.size(4.dp))
+            }
+
+            item {
+                IconButton(onClick = {
+                    imagePickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }) {
+                    Icon(
+                        painter = painterResource(R.drawable.image_24px),
+                        contentDescription = stringResource(R.string.add_image)
+                    )
+                }
+            }
+
+            item {
+                Box {
+                    IconButton(onClick = { optionsMenuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = stringResource(R.string.more_options)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = optionsMenuExpanded,
+                        onDismissRequest = { optionsMenuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.exit)) },
+                            onClick = {
+                                optionsMenuExpanded = false
+                                onExit()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ExitToApp,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
+
+        BrushDropdownMenu(
+            expanded = brushMenuExpanded,
+            onDismissRequest = { brushMenuExpanded = false },
+            onBrushChange = { newBrush, newSize ->
+                coroutineScope.launch {
+                    drawingCanvasViewModel.changeBrush(newBrush, newSize)
+                }
+                brushMenuExpanded = false
+            },
+        )
+
+        ColorPickerDialog(
+            showDialog = showColorPicker,
+            onDismissRequest = { showColorPicker = false },
+            onColorSelected = { color ->
+                coroutineScope.launch {
+                    drawingCanvasViewModel.changeBrushColor(color)
+                }
+                showColorPicker = false
+            }
+        )
     }
 
 }
