@@ -21,7 +21,6 @@ package com.example.cahier.ui
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
@@ -224,7 +223,6 @@ fun HomePane(
         )
     }
 }
-
 
 
 @Composable
