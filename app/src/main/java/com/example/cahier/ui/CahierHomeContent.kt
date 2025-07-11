@@ -24,6 +24,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,6 +65,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -186,8 +189,9 @@ fun NoteItem(
     OutlinedCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerLow),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
+            .clip(CardDefaults.outlinedShape)
             .clickable { onClick() }
     ) {
         Text(
@@ -195,51 +199,57 @@ fun NoteItem(
             style = MaterialTheme.typography.titleMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(4.dp)
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        Column(modifier = Modifier.weight(1f)) {
-
-            Spacer(Modifier.height(4.dp))
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+        ) {
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                note.imageUriList?.let { uriString ->
-                    AsyncImage(
-                        model = uriString,
-                        contentDescription = stringResource(R.string.note_image_preview),
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        contentScale = ContentScale.Crop,
-                        placeholder = painterResource(id = R.drawable.media)
-                    )
-                    Spacer(Modifier.width(8.dp))
+                if (!note.imageUriList.isNullOrEmpty()) {
+                    note.imageUriList.forEach { imageUri ->
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = stringResource(R.string.note_image_preview),
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(id = R.drawable.media)
+                        )
+                        Spacer(Modifier.width(8.dp))
+
+                    }
                 }
 
-                if (note.type == NoteType.TEXT) {
-                    note.text?.let {
+                when (note.type) {
+                    NoteType.TEXT -> {
+                        if (!note.text.isNullOrBlank()) {
+                            Text(
+                                text = note.text,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    NoteType.DRAWING -> {
+                        Image(
+                            painterResource(id = R.drawable.ic_drawing_mode),
+                            contentDescription = stringResource(R.string.drawing_note_indicator),
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
                         Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
+                            text = stringResource(R.string.drawing),
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                } else {
-                    Icon(
-                        painterResource(id = R.drawable.ic_drawing_mode),
-                        contentDescription = stringResource(R.string.drawing_note_indicator),
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = stringResource(R.string.drawing),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
                 }
             }
         }
