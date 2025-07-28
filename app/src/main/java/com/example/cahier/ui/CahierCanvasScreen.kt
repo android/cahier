@@ -18,11 +18,18 @@
 
 package com.example.cahier.ui
 
+import android.content.ClipData
+import android.content.ClipDescription
 import android.content.Intent
 import android.net.Uri
+import android.view.View
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +39,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -57,21 +66,32 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.mimeTypes
+import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
+import coil3.compose.AsyncImage
 import com.example.cahier.R
 import com.example.cahier.data.FocusedField
 import com.example.cahier.ui.viewmodels.CanvasScreenViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun NoteCanvas(
@@ -83,53 +103,77 @@ fun NoteCanvas(
     val uiState by canvasScreenViewModel.uiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     var optionsMenuExpanded by rememberSaveable { mutableStateOf(false) }
-
-    val context = LocalContext.current
-    var focusedField = rememberSaveable { mutableStateOf(FocusedField.NONE) }
+    val activity = LocalActivity.current as ComponentActivity
+    var focusedField by rememberSaveable { mutableStateOf(FocusedField.NONE) }
     val titleFocusRequester = canvasScreenViewModel.titleFocusRequester
     val bodyFocusRequester = canvasScreenViewModel.bodyFocusRequester
+    val view = LocalView.current
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         uri?.let {
-            val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(uri, flag)
             coroutineScope.launch {
-                canvasScreenViewModel.updateImageUri(it.toString())
+                val localUri = canvasScreenViewModel.fileHelper.copyUriToInternalStorage(
+                    activity.contentResolver, it)
+                canvasScreenViewModel.addImage(localUri)
             }
         }
     }
 
-    val initialText: String = ""
-
-    var textFieldValueState by remember {
-        mutableStateOf(
-            TextFieldValue(
-                text = initialText,
-                selection = TextRange(initialText.length)
-            )
-        )
-    }
-
     LaunchedEffect(Unit) {
-        when (focusedField.value) {
+        when (focusedField) {
             FocusedField.TITLE -> titleFocusRequester.requestFocus()
             FocusedField.BODY -> {
                 if (uiState.note.text != null) {
                     bodyFocusRequester.requestFocus()
                 } else {
-                    focusedField.value = FocusedField.NONE
+                    focusedField = FocusedField.NONE
                 }
             }
 
-            FocusedField.NONE -> { /* Do nothing */
+            FocusedField.NONE -> { /* Do nothing. */ }
+        }
+    }
+
+    val dropTarget = remember {
+        object : DragAndDropTarget {
+            override fun onDrop(event: DragAndDropEvent): Boolean {
+                val dragEvent = event.toAndroidDragEvent()
+                activity.lifecycleScope.launch {
+                    val permission = activity.requestDragAndDropPermissions(dragEvent)
+                    if (permission != null) {
+                        try {
+                            val uri = dragEvent.clipData.getItemAt(0)?.uri
+                            if (uri != null) {
+                                val localUri = canvasScreenViewModel.fileHelper
+                                    .copyUriToInternalStorage(
+                                        activity.contentResolver,
+                                        uri
+                                    )
+                                canvasScreenViewModel.addImage(localUri)
+                            }
+                        } finally {
+                            permission.release()
+                        }
+                    }
+                }
+                return true
             }
         }
     }
 
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .dragAndDropTarget(
+                shouldStartDragAndDrop = { event ->
+                    event
+                        .mimeTypes()
+                        .any { it.startsWith("image/") }
+                },
+                target = dropTarget
+            ),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(
@@ -154,7 +198,7 @@ fun NoteCanvas(
                         .focusRequester(titleFocusRequester)
                         .onFocusChanged { focusState ->
                             if (focusState.isFocused) {
-                                focusedField.value = FocusedField.TITLE
+                                focusedField = FocusedField.TITLE
                             }
                         },
                     keyboardOptions = KeyboardOptions(
@@ -182,7 +226,8 @@ fun NoteCanvas(
                                 optionsMenuExpanded = false
                                 imagePickerLauncher.launch(
                                     PickVisualMediaRequest(
-                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                        ActivityResultContracts
+                                            .PickVisualMedia.ImageOnly
                                     )
                                 )
                             },
@@ -232,65 +277,86 @@ fun NoteCanvas(
                 }
             }
 
-            if (uiState.note.imageUriList.isNullOrEmpty()) {
-                uiState.note.text?.let { text ->
-                    TextField(
-                        value = text,
-                        placeholder = { Text(stringResource(R.string.note)) },
-                        onValueChange = { canvasScreenViewModel.updateNoteText(it) },
-                        keyboardOptions = KeyboardOptions(
-                            autoCorrectEnabled = true,
-                            capitalization = KeyboardCapitalization.Sentences
-                        ),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .focusRequester(bodyFocusRequester)
-                            .onFocusChanged { focusState ->
-                                if (focusState.isFocused) {
-                                    focusedField.value = FocusedField.BODY
-                                }
-                            },
-                        textStyle = MaterialTheme.typography.bodyLarge
-                    )
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item {
+                    uiState.note.text?.let { text ->
+                        TextField(
+                            value = text,
+                            placeholder = { Text(stringResource(R.string.note)) },
+                            onValueChange = { canvasScreenViewModel.updateNoteText(it) },
+                            keyboardOptions = KeyboardOptions(
+                                autoCorrectEnabled = true,
+                                capitalization = KeyboardCapitalization.Sentences
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .focusRequester(bodyFocusRequester)
+                                .onFocusChanged { focusState ->
+                                    if (focusState.isFocused) {
+                                        focusedField = FocusedField.BODY
+                                    }
+                                },
+                            textStyle = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(3f)
-                            .fillMaxSize()
 
-                    ) {
-                        uiState.note.text?.let { text ->
-                            TextField(
-                                value = text,
-                                placeholder = { Text(stringResource(R.string.note)) },
-                                onValueChange = { canvasScreenViewModel.updateNoteText(it) },
-                                keyboardOptions = KeyboardOptions(
-                                    autoCorrectEnabled = true,
-                                    capitalization = KeyboardCapitalization.Sentences
-                                ),
-                                modifier = Modifier.fillMaxSize(),
-                                textStyle = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
+                items(uiState.note.imageUriList ?: emptyList()) { imageUriString ->
 
                     Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxSize()
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .pointerInput(imageUriString) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = {
+                                        val fileUri = imageUriString.toUri()
+                                        val originalFile = fileUri.path?.let { File(it) }
+
+                                        if (originalFile != null && originalFile.exists()) {
+                                            coroutineScope.launch {
+                                                val contentUri = canvasScreenViewModel
+                                                    .fileHelper.createShareableUri(originalFile)
+
+                                                val clipData = ClipData(
+                                                    ClipDescription(
+                                                        "Image",
+                                                        arrayOf("image/*")
+                                                    ),
+                                                    ClipData.Item(contentUri)
+                                                )
+                                                val dragShadowBuilder = View.DragShadowBuilder(view)
+
+                                                view.startDragAndDrop(
+                                                    clipData,
+                                                    dragShadowBuilder,
+                                                    null,
+                                                    View.DRAG_FLAG_GLOBAL
+                                                            or View.DRAG_FLAG_GLOBAL_URI_READ
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onDrag = { _, _ ->
+                                        // Consume events.
+                                    },
+                                    onDragEnd = {
+                                        // Do nothing.
+                                    }
+                                )
+                            }
                     ) {
-                        if (uiState.note.imageUriList?.isNotEmpty() == true) {
-                            NoteImagesView(
-                                images = uiState.note.imageUriList!!,
-                                onClearImages = { /*TODO*/ },
-                            )
-                        }
+                        AsyncImage(
+                            model = imageUriString ,
+                            contentDescription = stringResource(R.string.uploaded_image),
+                            contentScale = ContentScale.FillWidth,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
                     }
+
                 }
             }
         }

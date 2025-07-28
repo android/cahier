@@ -18,14 +18,19 @@
 
 package com.example.cahier.ui
 
-import android.content.Intent
+import android.content.ClipData
+import android.content.ClipDescription
 import android.net.Uri
+import android.view.View
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.UiThread
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -60,9 +65,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,27 +76,33 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.mimeTypes
+import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.ink.authoring.InProgressStrokeId
-import androidx.ink.authoring.InProgressStrokesFinishedListener
-import androidx.ink.authoring.InProgressStrokesView
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
 import com.example.cahier.R
 import com.example.cahier.ui.viewmodels.DrawingCanvasViewModel
 import kotlinx.coroutines.launch
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DrawingCanvas(
     navBackStackEntry: NavBackStackEntry,
@@ -99,15 +111,18 @@ fun DrawingCanvas(
     drawingCanvasViewModel: DrawingCanvasViewModel = hiltViewModel()
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    val inProgressStrokesView = remember {
-        InProgressStrokesView(context)
-    }
-    inProgressStrokesView.eagerInit()
-
+    LocalContext.current
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     val coroutineScope = rememberCoroutineScope()
-
+    val strokes = remember { mutableStateListOf<Stroke>() }
+    val activity = LocalActivity.current as ComponentActivity
+    val currentBrush by drawingCanvasViewModel.currentBrush.collectAsState()
+    val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsState()
+    var showConfirmationDialog by remember { mutableStateOf(false) }
+    var pendingImageUri by remember { mutableStateOf<Uri?>(null) }
+    val exportedUri by drawingCanvasViewModel.exportedImageUri.collectAsState()
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+    val view = LocalView.current
     val canUndo by drawingCanvasViewModel.canUndo.collectAsState()
     val canRedo by drawingCanvasViewModel.canRedo.collectAsState()
 
@@ -115,33 +130,86 @@ fun DrawingCanvas(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         uri?.let {
-            val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(uri, flag)
-            coroutineScope.launch {
-                drawingCanvasViewModel.updateImageUri(it.toString())
+            if (uiState.note.imageUriList?.isNotEmpty() == true) {
+                pendingImageUri = it
+                showConfirmationDialog = true
+            } else {
+                coroutineScope.launch {
+                    drawingCanvasViewModel
+                        .processAndAddImage(activity.contentResolver, it)
+                }
             }
         }
     }
 
-    val listener = remember(inProgressStrokesView) {
-
-        object : InProgressStrokesFinishedListener {
-            @UiThread
-            override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
-                drawingCanvasViewModel.onStrokesFinished(strokes, inProgressStrokesView)
+    val dropTarget = remember {
+        object : DragAndDropTarget {
+            override fun onDrop(event: DragAndDropEvent): Boolean {
+                val dragEvent = event.toAndroidDragEvent()
+                activity.lifecycleScope.launch {
+                    val permission = activity.requestDragAndDropPermissions(dragEvent)
+                    if (permission != null) {
+                        try {
+                            if (dragEvent.clipData.itemCount > 0) {
+                                val uri = dragEvent.clipData.getItemAt(0).uri
+                                if (uri != null) {
+                                    val localUri =
+                                        drawingCanvasViewModel.fileHelper.copyUriToInternalStorage(
+                                            activity.contentResolver, uri
+                                        )
+                                    drawingCanvasViewModel.addImageWithLocalUri(localUri)
+                                }
+                            }
+                        } finally {
+                            permission.release()
+                        }
+                    }
+                }
+                return true
             }
         }
     }
 
-    drawingCanvasViewModel.setInProgressStrokesFinishedListener(inProgressStrokesView, listener)
+    LaunchedEffect(uiState.strokes) {
+        if (strokes != uiState.strokes) {
+            strokes.clear()
+            strokes.addAll(uiState.strokes)
+        }
+    }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            drawingCanvasViewModel.removeInProgressStrokesFinishedListener(
-                inProgressStrokesView,
-                listener
+    LaunchedEffect(
+        uiState.strokes,
+        uiState.note.imageUriList,
+        canvasSize
+    )
+    {
+        if (canvasSize != IntSize.Zero) {
+            drawingCanvasViewModel.createExportedBitmap(
+                activity.contentResolver,
+                canvasSize.width,
+                canvasSize.height
             )
         }
+    }
+
+
+    if (showConfirmationDialog) {
+        ConfirmationDialog(
+            onConfirm = {
+                drawingCanvasViewModel.replaceImage(
+                    activity.contentResolver,
+                    pendingImageUri
+                )
+                showConfirmationDialog = false
+                pendingImageUri = null
+            },
+            onDismiss = {
+                showConfirmationDialog = false
+                pendingImageUri = null
+            },
+            title = stringResource(R.string.replace_image_title),
+            text = stringResource(R.string.replace_image_text)
+        )
     }
 
     Column(
@@ -163,7 +231,7 @@ fun DrawingCanvas(
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { /* Maybe hide keyboard */ })
+                keyboardActions = KeyboardActions(onDone = { })
             )
         }
         DrawingToolbox(
@@ -178,14 +246,53 @@ fun DrawingCanvas(
             onRedo = drawingCanvasViewModel::redo,
             onExit = navigateUp,
         )
-        DrawingSurface(
-            strokes = uiState.strokes,
-            inProgressStrokesView = inProgressStrokesView,
-            canvasStrokeRenderer = canvasStrokeRenderer,
-            onDrawing = drawingCanvasViewModel::handleDrawing,
-            uiState = uiState,
-            modifier = Modifier.weight(1f),
-        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)
+                .onSizeChanged { canvasSize = it }
+                .dragAndDropTarget(
+                    shouldStartDragAndDrop = { event ->
+                        event.mimeTypes().any { it.startsWith("image/") }
+                    }, target = dropTarget
+                )
+        ) {
+            DrawingSurface(
+                strokes = strokes,
+                canvasStrokeRenderer = canvasStrokeRenderer,
+                onStrokesFinished = { newStrokes ->
+                    strokes.addAll(newStrokes)
+                    drawingCanvasViewModel.onStrokesFinished(newStrokes)
+                },
+                onErase = drawingCanvasViewModel::erase,
+                onEraseStart = drawingCanvasViewModel::startErase,
+                onEraseEnd = drawingCanvasViewModel::endErase,
+                onStartDrag = {
+                    exportedUri?.let { uri ->
+                        val clipData = ClipData(
+                            ClipDescription(
+                                "Image",
+                                arrayOf("image/png")
+                            ),
+                            ClipData.Item(uri)
+                        )
+                        val dragShadowBuilder = View.DragShadowBuilder(view)
+                        view.startDragAndDrop(
+                            clipData,
+                            dragShadowBuilder,
+                            null,
+                            View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ
+                        )
+                    }
+                },
+                currentBrush = currentBrush,
+                onGetNextBrush = drawingCanvasViewModel::getCurrentBrush,
+                isEraserMode = isEraserMode,
+                backgroundImageUri = uiState.note.imageUriList?.firstOrNull(),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
@@ -303,7 +410,7 @@ fun DrawingToolbox(
                 Button(
                     onClick = {
                         coroutineScope.launch {
-                            drawingCanvasViewModel.clearStrokes()
+                            drawingCanvasViewModel.clearScreen()
                         }
                     }
                 ) {
@@ -349,7 +456,9 @@ fun DrawingToolbox(
             item {
                 IconButton(onClick = {
                     imagePickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        PickVisualMediaRequest(
+                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                        )
                     )
                 }) {
                     Icon(

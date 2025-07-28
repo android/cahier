@@ -61,7 +61,8 @@ class SettingsViewModel @Inject constructor(
         if (roleManager != null) {
             viewModelScope.launch {
                 try {
-                    _isRoleAvailable.value = roleManager!!.isRoleAvailable(RoleManager.ROLE_NOTES)
+                    _isRoleAvailable.value = roleManager!!.isRoleAvailable(
+                        RoleManager.ROLE_NOTES)
                     _isRoleHeld.value = roleManager!!.isRoleHeld(RoleManager.ROLE_NOTES)
                     Log.d(
                         TAG,
@@ -77,7 +78,10 @@ class SettingsViewModel @Inject constructor(
         } else {
             _isRoleAvailable.value = false
             _isRoleHeld.value = false
-            Log.d(TAG, "Role Manager not available on this API level or failed to get service.")
+            Log.d(
+                TAG,
+                "Role Manager not available on this API level or failed to get service."
+            )
         }
     }
 
@@ -88,7 +92,7 @@ class SettingsViewModel @Inject constructor(
                 val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
                 intent.extras?.let { bundle ->
                     for (key in bundle.keySet()) {
-                        Log.wtf(TAG, "Intent extra: $key = ${bundle.get(key)}")
+                        Log.w(TAG, "Intent extra: $key = ${bundle.get(key)}")
                     }
                 }
                 launcher.launch(intent)

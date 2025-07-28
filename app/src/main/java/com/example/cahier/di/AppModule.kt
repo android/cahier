@@ -19,9 +19,11 @@
 package com.example.cahier.di
 
 import android.content.Context
+import coil3.ImageLoader
 import com.example.cahier.data.NoteDatabase
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.data.OfflineNotesRepository
+import com.example.cahier.utils.FileHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,5 +45,17 @@ object AppModule {
     @Singleton
     fun provideNoteRepository(database: NoteDatabase): NotesRepository {
         return OfflineNotesRepository(database.noteDao())
+    }
+
+    @Provides
+    @Singleton
+    fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
+        return ImageLoader(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFileHelper(@ApplicationContext context: Context): FileHelper {
+        return FileHelper(context)
     }
 }

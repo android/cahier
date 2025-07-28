@@ -21,7 +21,7 @@ package com.example.cahier.data
 import android.util.Log
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
-import androidx.ink.storage.decodeOrThrow
+import androidx.ink.storage.decode
 import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.ink.strokes.StrokeInputBatch
@@ -33,9 +33,12 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.lang.reflect.Type
 
+private const val TAG = "Converters"
+
 class Converters {
 
     private val gson: Gson = GsonBuilder().create()
+
 
     companion object {
         private val stockBrushToEnumValues = mapOf(
@@ -74,7 +77,7 @@ class Converters {
 
     private fun deserializeStroke(serializedStroke: SerializedStroke): Stroke? {
         val inputs = ByteArrayInputStream(serializedStroke.inputs).use { inputStream ->
-            StrokeInputBatch.decodeOrThrow(inputStream)
+            StrokeInputBatch.decode(inputStream)
         }
         val brush = deserializeBrush(serializedStroke.brush)
         return Stroke(brush = brush, inputs = inputs)
@@ -110,7 +113,10 @@ class Converters {
         return try {
             gson.fromJson(jsonString, listType) ?: emptyList()
         } catch (e: Exception) {
-            Log.e("Converters", "Error decoding string list from JSON: $jsonString", e)
+            Log.e(
+                TAG,
+                "Error decoding string list from JSON: $jsonString", e
+            )
             emptyList()
         }
     }

@@ -18,32 +18,47 @@
 
 package com.example.cahier.ui.viewmodels
 
+import android.content.ContentResolver
+import android.content.Context
+import android.graphics.Canvas
+import android.net.Uri
 import android.util.Log
 import android.view.MotionEvent
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 import androidx.ink.authoring.InProgressStrokeId
 import androidx.ink.authoring.InProgressStrokesFinishedListener
 import androidx.ink.authoring.InProgressStrokesView
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
+import androidx.ink.brush.compose.copyWithComposeColor
+import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.geometry.AffineTransform
 import androidx.ink.geometry.Intersection.intersects
 import androidx.ink.geometry.MutableParallelogram
 import androidx.ink.geometry.MutableSegment
 import androidx.ink.geometry.MutableVec
+import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import androidx.input.motionprediction.MotionEventPredictor
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.ImageLoader
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.toBitmap
 import com.example.cahier.data.CahierUiState
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.navigation.DrawingCanvasDestination
+import com.example.cahier.utils.FileHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,8 +69,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DrawingCanvasViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
-    private val noteRepository: NotesRepository
+    private val noteRepository: NotesRepository,
+    val fileHelper: FileHelper,
+    private val imageLoader: ImageLoader
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CahierUiState())
@@ -63,18 +81,20 @@ class DrawingCanvasViewModel @Inject constructor(
 
     private val noteId: Long = checkNotNull(savedStateHandle[DrawingCanvasDestination.NOTE_ID_ARG])
 
-    val currentNightMode = AppCompatDelegate.getDefaultNightMode()
+    private val currentNightMode = AppCompatDelegate.getDefaultNightMode()
 
-    val defaultBrush = Brush.createWithColorIntArgb(
-        family = StockBrushes.pressurePenLatest,
-        colorIntArgb = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES)
-            Color.White.toArgb() else Color.Gray.toArgb(),
-        size = 5F,
-        epsilon = 0.1F
+    private val _defaultBrush = MutableStateFlow(
+        Brush.createWithComposeColor(
+            family = StockBrushes.pressurePenLatest,
+            color = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES)
+                Color.White else Color.Gray,
+            size = 5F,
+            epsilon = 0.1F
+        )
     )
 
-    private val _selectedBrush = MutableStateFlow<Brush>(defaultBrush)
-    val selectedBrush: StateFlow<Brush> = _selectedBrush.asStateFlow()
+    private val _currentBrush = MutableStateFlow(_defaultBrush.value)
+    val currentBrush = _currentBrush.asStateFlow()
 
     private val _isEraserMode = MutableStateFlow(false)
     val isEraserMode: StateFlow<Boolean> = _isEraserMode.asStateFlow()
@@ -88,6 +108,10 @@ class DrawingCanvasViewModel @Inject constructor(
     val canUndo: StateFlow<Boolean> = _canUndo.asStateFlow()
     private val _canRedo = MutableStateFlow(false)
     val canRedo: StateFlow<Boolean> = _canRedo.asStateFlow()
+
+    private val _exportedImageUri = MutableStateFlow<Uri?>(null)
+    val exportedImageUri: StateFlow<Uri?> = _exportedImageUri.asStateFlow()
+
 
     init {
         viewModelScope.launch {
@@ -117,6 +141,14 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
+    fun addImageWithLocalUri(localUri: Uri) {
+        val newImageUri = localUri.toString()
+        val updatedNote = _uiState.value.note.copy(imageUriList = listOf(newImageUri))
+        viewModelScope.launch {
+            noteRepository.updateNote(updatedNote)
+        }
+    }
+
     private fun updateStrokes(newStrokes: List<Stroke>) {
         if (historyIndex < history.size - 1) {
             history.subList(historyIndex + 1, history.size).clear()
@@ -126,7 +158,6 @@ class DrawingCanvasViewModel @Inject constructor(
 
         _uiState.update { it.copy(strokes = newStrokes) }
         updateUndoRedoState()
-        viewModelScope.launch { saveStrokes() }
     }
 
     private fun updateUndoRedoState() {
@@ -158,26 +189,68 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
-    suspend fun updateImageUri(uri: String?) {
+    suspend fun processAndAddImage(contentResolver: ContentResolver, uri: Uri?) {
         if (uri == null) return
+        val localFileUri = fileHelper.copyUriToInternalStorage(contentResolver, uri)
+        addImageWithLocalUri(localFileUri)
+    }
 
-        var updatedList: List<String>? = null
+    fun replaceImage(contentResolver: ContentResolver, uri: Uri?) {
+        viewModelScope.launch {
+            processAndAddImage(contentResolver, uri)
+        }
+    }
 
-        _uiState.update { currentState ->
-            val currentList = currentState.note.imageUriList ?: emptyList()
-            val newList = currentList + uri
-            updatedList = newList
-            val updatedNote = currentState.note.copy(imageUriList = newList)
-            currentState.copy(note = updatedNote)
+    suspend fun createExportedBitmap(contentResolver: ContentResolver, width: Int, height: Int) {
+        val backgroundImageUri = _uiState.value.note.imageUriList?.firstOrNull()
+        val strokes = _uiState.value.strokes
+
+        val backgroundBitmap = if (backgroundImageUri != null) {
+            val request = ImageRequest.Builder(context)
+                .data(backgroundImageUri.toUri())
+                .allowHardware(false)
+                .build()
+            imageLoader.execute(request).image?.toBitmap()
+        } else {
+            null
         }
 
-        updatedList?.let { listToSave ->
-            try {
-                noteRepository.updateNoteImageUriList(noteId = noteId, imageUriList = listToSave)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to save updated image list for note $noteId", e)
-            }
+        val exportBitmap = createBitmap(width, height)
+        val canvas = Canvas(exportBitmap)
+
+        val backgroundColor = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
+            android.graphics.Color.BLACK
+        } else {
+            android.graphics.Color.WHITE
         }
+        canvas.drawColor(backgroundColor)
+
+        backgroundBitmap?.let { bmp ->
+            val canvasWidth = width.toFloat()
+            val canvasHeight = height.toFloat()
+            val bmpWidth = bmp.width.toFloat()
+            val bmpHeight = bmp.height.toFloat()
+
+            val scaleX = canvasWidth / bmpWidth
+            val scaleY = canvasHeight / bmpHeight
+
+            val scale = maxOf(scaleX, scaleY)
+
+            val dx = (canvasWidth - bmpWidth * scale) / 2f
+            val dy = (canvasHeight - bmpHeight * scale) / 2f
+
+            val matrix = android.graphics.Matrix()
+            matrix.setScale(scale, scale)
+            matrix.postTranslate(dx, dy)
+
+            canvas.drawBitmap(bmp, matrix, null)
+        }
+
+        val strokeRenderer = CanvasStrokeRenderer.create(forcePathRendering = true)
+        strokes.forEach { stroke ->
+            strokeRenderer.draw(canvas, stroke, android.graphics.Matrix())
+        }
+        _exportedImageUri.value = fileHelper.saveBitmapToCache(exportBitmap)
     }
 
     suspend fun saveStrokes() {
@@ -188,112 +261,40 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
-
     suspend fun updateNoteTitle(newTitle: String) {
         val updatedNote = _uiState.value.note.copy(title = newTitle)
         noteRepository.updateNote(updatedNote)
-        _uiState.value = _uiState.value.copy(note = updatedNote)
-    }
-
-    fun setInProgressStrokesFinishedListener(
-        inProgressStrokesView: InProgressStrokesView,
-        listener: InProgressStrokesFinishedListener
-    ) {
-        inProgressStrokesView.addFinishedStrokesListener(listener)
-    }
-
-    fun removeInProgressStrokesFinishedListener(
-        inProgressStrokesView: InProgressStrokesView,
-        listener: InProgressStrokesFinishedListener
-    ) {
-        inProgressStrokesView.removeFinishedStrokesListener(listener)
-    }
-
-    fun handleDrawing(
-        event: MotionEvent,
-        inProgressStrokesView: InProgressStrokesView,
-        pointerIdToStrokeId: MutableMap<Int, InProgressStrokeId>,
-        predictor: MotionEventPredictor,
-    ) {
-
-        if (_isEraserMode.value) {
-            if (event.actionMasked == MotionEvent.ACTION_MOVE
-                || event.actionMasked == MotionEvent.ACTION_DOWN
-            ) {
-
-                val strokesBeforeErase = history.getOrElse(historyIndex) { emptyList() }
-                val strokesAfterErase = eraseIntersectingStrokes(
-                    event.x, event.y, strokesBeforeErase
-                )
-
-                if (strokesAfterErase.size != strokesBeforeErase.size) {
-                    updateStrokes(strokesAfterErase)
-                }
-            }
-        } else {
-            predictor.record(event)
-            val predictedEvent = predictor.predict()
-            try {
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> {
-                        val pointerIndex = event.actionIndex
-                        pointerIdToStrokeId[event.getPointerId(pointerIndex)] =
-                            inProgressStrokesView.startStroke(
-                                event = event,
-                                pointerId = event.getPointerId(pointerIndex),
-                                brush = _selectedBrush.value
-                            )
-                    }
-
-                    MotionEvent.ACTION_MOVE -> {
-                        for (pointerIndex in 0 until event.pointerCount) {
-                            val pointerId = event.getPointerId(pointerIndex)
-                            val currentStrokeId = pointerIdToStrokeId[pointerId] ?: continue
-                            inProgressStrokesView.addToStroke(
-                                event,
-                                pointerId,
-                                currentStrokeId,
-                                predictedEvent
-                            )
-                        }
-                    }
-
-                    MotionEvent.ACTION_UP -> {
-                        val pointerIndex = event.actionIndex
-                        val pointerId = event.getPointerId(pointerIndex)
-                        val currentStrokeId =
-                            pointerIdToStrokeId.remove(pointerId) ?: return
-                        inProgressStrokesView.finishStroke(event, pointerId, currentStrokeId)
-                        inProgressStrokesView.postInvalidate()
-                    }
-
-                    MotionEvent.ACTION_CANCEL -> {
-                        val pointerIndex = event.actionIndex
-                        val pointerId = event.getPointerId(pointerIndex)
-                        val currentStrokeId = pointerIdToStrokeId.remove(pointerId)
-                            ?: return
-                        inProgressStrokesView.cancelStroke(currentStrokeId, event)
-                    }
-                }
-            } finally {
-                predictedEvent?.recycle()
-            }
-            if (previousPoint != null) previousPoint = null
-        }
     }
 
     @UiThread
-    fun onStrokesFinished(
-        strokes: Map<InProgressStrokeId, Stroke>,
-        inProgressStrokesView: InProgressStrokesView
-    ) {
-        inProgressStrokesView.postOnAnimation {
-            inProgressStrokesView.removeFinishedStrokes(strokes.keys)
-        }
+    fun onStrokesFinished(finishedStrokes: List<Stroke>) {
         val currentStrokes = history.getOrElse(historyIndex) { emptyList() }
-        val newStrokes = currentStrokes + strokes.values.toList()
+        val newStrokes = currentStrokes + finishedStrokes
         updateStrokes(newStrokes)
+        viewModelScope.launch {
+            saveStrokes()
+        }
+    }
+
+    fun startErase() {
+        previousPoint = null
+    }
+
+    fun endErase() {
+        previousPoint = null
         viewModelScope.launch { saveStrokes() }
+    }
+
+
+    fun erase(x: Float, y: Float) {
+        val strokesBeforeErase = history.getOrElse(historyIndex) { emptyList() }
+        val strokesAfterErase = eraseIntersectingStrokes(
+            x, y, strokesBeforeErase
+        )
+
+        if (strokesAfterErase.size != strokesBeforeErase.size) {
+            updateStrokes(strokesAfterErase)
+        }
     }
 
     private fun eraseIntersectingStrokes(
@@ -320,37 +321,46 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
-
     fun changeBrush(brushFamily: BrushFamily, size: Float) {
-        _selectedBrush.update { currentBrush ->
-            currentBrush.copy(
+        _currentBrush.update {
+            it.copy(
                 family = brushFamily,
-                size = size
+                size = size,
             )
         }
     }
 
     fun changeBrushColor(color: Color) {
-        _selectedBrush.update {
-            it.copyWithColorIntArgb(
-                colorIntArgb = color.toArgb()
-            )
+        _currentBrush.update {
+            it.copyWithComposeColor(color = color)
         }
     }
 
     fun setEraserMode(enabled: Boolean) {
         _isEraserMode.update { enabled }
-        if (!enabled) {
-            previousPoint = null
-        } else {
-            previousPoint = null
-        }
     }
 
-    suspend fun clearStrokes() {
+    fun clearStrokes() {
         if (_uiState.value.strokes.isNotEmpty()) {
             updateStrokes(emptyList())
         }
+    }
+
+    fun clearImages() {
+        val updatedNote = _uiState.value.note.copy(imageUriList = emptyList())
+        viewModelScope.launch {
+            noteRepository.updateNote(updatedNote)
+        }
+    }
+
+    fun clearScreen() {
+        clearStrokes()
+        clearImages()
+    }
+
+
+    fun getCurrentBrush(): Brush {
+        return _currentBrush.value
     }
 
     override fun onCleared() {
