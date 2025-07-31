@@ -34,7 +34,7 @@ import coil3.compose.AsyncImage
 import com.example.cahier.R
 
 @Composable
-fun NoteImagesView(
+fun NoteImagesContainer(
     images: List<String>,
     onClearImages: () -> Unit,
     modifier: Modifier = Modifier

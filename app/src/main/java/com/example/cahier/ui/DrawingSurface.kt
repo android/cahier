@@ -38,7 +38,7 @@ import androidx.ink.authoring.InProgressStrokesView
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import androidx.input.motionprediction.MotionEventPredictor
-import com.example.cahier.data.CahierUiState
+import com.example.cahier.ui.CahierUiState
 
 @SuppressLint("ClickableViewAccessibility")
 @Composable
@@ -117,7 +117,7 @@ fun DrawingSurface(
                     .fillMaxSize()
             ) {
                 if (uiState.note.imageUriList?.isNotEmpty() == true) {
-                    NoteImagesView(
+                    NoteImagesContainer(
                         images = uiState.note.imageUriList,
                         onClearImages = { /*TODO*/ },
                     )
