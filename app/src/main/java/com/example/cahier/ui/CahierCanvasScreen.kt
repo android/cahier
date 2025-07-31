@@ -284,11 +284,13 @@ fun NoteCanvas(
                             .weight(1f)
                             .fillMaxSize()
                     ) {
-                        if (uiState.note.imageUriList?.isNotEmpty() == true) {
-                            NoteImagesContainer(
-                                images = uiState.note.imageUriList!!,
-                                onClearImages = { /*TODO*/ },
-                            )
+                        uiState.note.imageUriList?.let { images ->
+                            if (images.isNotEmpty()) {
+                                NoteImagesContainer(
+                                    images = images,
+                                    onClearImages = { /*TODO*/ },
+                                )
+                            }
                         }
                     }
                 }
