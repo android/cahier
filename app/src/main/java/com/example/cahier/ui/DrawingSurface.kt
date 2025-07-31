@@ -117,7 +117,7 @@ fun DrawingSurface(
                     .fillMaxSize()
             ) {
                 if (uiState.note.imageUriList?.isNotEmpty() == true) {
-                    NoteImagesView(
+                    NoteImagesContainer(
                         images = uiState.note.imageUriList,
                         onClearImages = { /*TODO*/ },
                     )
