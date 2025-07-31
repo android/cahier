@@ -115,7 +115,8 @@ fun NoteCanvas(
         uri?.let {
             coroutineScope.launch {
                 val localUri = canvasScreenViewModel.fileHelper.copyUriToInternalStorage(
-                    activity.contentResolver, it)
+                    activity.contentResolver, it
+                )
                 canvasScreenViewModel.addImage(localUri)
             }
         }
@@ -132,7 +133,8 @@ fun NoteCanvas(
                 }
             }
 
-            FocusedField.NONE -> { /* Do nothing. */ }
+            FocusedField.NONE -> { /* Do nothing. */
+            }
         }
     }
 
@@ -302,7 +304,9 @@ fun NoteCanvas(
                     }
                 }
 
-                items(uiState.note.imageUriList ?: emptyList()) { imageUriString ->
+                items(
+                    items = uiState.note.imageUriList ?: emptyList(),
+                    key = { it }) { imageUriString ->
 
                     Box(
                         modifier = Modifier
@@ -348,7 +352,7 @@ fun NoteCanvas(
                             }
                     ) {
                         AsyncImage(
-                            model = imageUriString ,
+                            model = imageUriString,
                             contentDescription = stringResource(R.string.uploaded_image),
                             contentScale = ContentScale.FillWidth,
                             modifier = Modifier

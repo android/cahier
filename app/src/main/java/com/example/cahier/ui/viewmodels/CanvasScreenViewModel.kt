@@ -100,11 +100,6 @@ class CanvasScreenViewModel @Inject constructor(
                 val currentList = _uiState.value.note.imageUriList ?: emptyList()
                 val newList = currentList + localUri.toString()
 
-                _uiState.update { currentState ->
-                    val updatedNote = currentState.note.copy(imageUriList = newList)
-                    currentState.copy(note = updatedNote)
-                }
-
                 noteId?.let { noteRepository.updateNoteImageUriList(it, newList) }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to add image", e)

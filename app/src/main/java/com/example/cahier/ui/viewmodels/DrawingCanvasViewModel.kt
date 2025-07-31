@@ -201,7 +201,7 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
-    suspend fun createExportedBitmap(contentResolver: ContentResolver, width: Int, height: Int) {
+    suspend fun createExportedBitmap(width: Int, height: Int) {
         val backgroundImageUri = _uiState.value.note.imageUriList?.firstOrNull()
         val strokes = _uiState.value.strokes
 
