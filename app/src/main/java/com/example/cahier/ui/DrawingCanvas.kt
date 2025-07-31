@@ -185,7 +185,6 @@ fun DrawingCanvas(
     {
         if (canvasSize != IntSize.Zero) {
             drawingCanvasViewModel.createExportedBitmap(
-                activity.contentResolver,
                 canvasSize.width,
                 canvasSize.height
             )
