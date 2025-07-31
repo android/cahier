@@ -75,4 +75,9 @@
     <string name="set_as_default_notes_app">Set as Default</string>
     <string name="navigate_up">Back</string>
 
+    <!-- Confirmation Dialog -->
+    <string name="confirm">Confirm</string>
+    <string name="replace_image_title">Image Upload</string>
+    <string name="replace_image_text">Do you want to replace the current image?</string>
+
 </resources>

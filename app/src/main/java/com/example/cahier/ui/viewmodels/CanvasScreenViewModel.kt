@@ -18,6 +18,7 @@
 
 package com.example.cahier.ui.viewmodels
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.SavedStateHandle
@@ -27,6 +28,7 @@ import com.example.cahier.ui.CahierUiState
 import com.example.cahier.data.Note
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.navigation.TextCanvasDestination
+import com.example.cahier.utils.FileHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +41,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CanvasScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val noteRepository: NotesRepository
+    private val noteRepository: NotesRepository,
+    val fileHelper: FileHelper
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(CahierUiState())
     val uiState: StateFlow<CahierUiState> = _uiState.asStateFlow()
@@ -91,24 +94,16 @@ class CanvasScreenViewModel @Inject constructor(
         }
     }
 
-    suspend fun updateImageUri(uri: String?) {
-        if (uri == null) return
-
-        var updatedList: List<String>? = null
-
-        _uiState.update { currentState ->
-            val currentList = currentState.note.imageUriList ?: emptyList()
-            val newList = currentList + uri
-            updatedList = newList
-            val updatedNote = currentState.note.copy(imageUriList = newList)
-            currentState.copy(note = updatedNote)
-        }
-
-        updatedList?.let { listToSave ->
+    fun addImage(localUri: Uri) {
+        viewModelScope.launch {
             try {
-                noteId?.let { noteRepository.updateNoteImageUriList(it, listToSave) }
+                val currentList = _uiState.value.note.imageUriList ?: emptyList()
+                val newList = currentList + localUri.toString()
+
+                noteId?.let { noteRepository.updateNoteImageUriList(it, newList) }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to save updated image list for note $noteId", e)
+                Log.e(TAG, "Failed to add image", e)
+                _uiState.update { it.copy(error = "Failed to add image.") }
             }
         }
     }
@@ -118,7 +113,6 @@ class CanvasScreenViewModel @Inject constructor(
             noteId?.let { noteRepository.toggleFavorite(it) }
         }
     }
-
 
     companion object {
         private const val TAG = "CanvasScreenViewModel"
