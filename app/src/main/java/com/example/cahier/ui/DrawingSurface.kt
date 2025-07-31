@@ -36,6 +36,8 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import coil3.compose.AsyncImage
 import com.example.cahier.utils.pointerInputWithSiblingFallthrough
+import androidx.input.motionprediction.MotionEventPredictor
+import com.example.cahier.ui.CahierUiState
 
 @Composable
 fun DrawingSurface(

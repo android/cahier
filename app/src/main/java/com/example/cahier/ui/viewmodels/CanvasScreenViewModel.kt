@@ -24,7 +24,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cahier.data.CahierUiState
+import com.example.cahier.ui.CahierUiState
 import com.example.cahier.data.Note
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.navigation.TextCanvasDestination

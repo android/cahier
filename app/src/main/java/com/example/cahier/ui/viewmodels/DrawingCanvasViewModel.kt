@@ -53,7 +53,7 @@ import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
-import com.example.cahier.data.CahierUiState
+import com.example.cahier.ui.CahierUiState
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.navigation.DrawingCanvasDestination
 import com.example.cahier.utils.FileHelper
