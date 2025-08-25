@@ -1,0 +1,165 @@
+/*
+ *
+ *  *
+ *  *  * Copyright 2025 Google LLC. All rights reserved.
+ *  *  *
+ *  *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  * you may not use this file except in compliance with the License.
+ *  *  * You may obtain a copy of the License at
+ *  *  *
+ *  *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *  *
+ *  *  * Unless required by applicable law or agreed to in writing, software
+ *  *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  * See the License for the specific language governing permissions and
+ *  *  * limitations under the License.
+ *  *
+ *
+ */
+
+
+package com.example.cahier.ui.viewmodels
+
+import android.content.Context
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.compose.ui.graphics.Color
+import androidx.ink.brush.Brush
+import androidx.ink.brush.StockBrushes
+import androidx.ink.strokes.ImmutableStrokeInputBatch
+import androidx.ink.strokes.Stroke
+import androidx.lifecycle.SavedStateHandle
+import androidx.test.core.app.ApplicationProvider
+import app.cash.turbine.test
+import coil3.ImageLoader
+import com.example.cahier.data.FakeNotesRepository
+import com.example.cahier.navigation.DrawingCanvasDestination
+import com.example.cahier.utils.FileHelper
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import javax.inject.Inject
+
+@ExperimentalCoroutinesApi
+@HiltAndroidTest
+class DrawingCanvasViewModelTest {
+
+    @get:Rule
+    var hiltRule = HiltAndroidRule(this)
+
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    private val testDispatcher = UnconfinedTestDispatcher()
+
+    @Inject
+    lateinit var fileHelper: FileHelper
+
+    @Inject
+    lateinit var imageLoader: ImageLoader
+
+    private lateinit var notesRepository: FakeNotesRepository
+    private lateinit var viewModel: DrawingCanvasViewModel
+    private var noteId: Long = 0L
+
+    @Before
+    fun setup() {
+        hiltRule.inject()
+        Dispatchers.setMain(testDispatcher)
+        notesRepository = FakeNotesRepository()
+        noteId = runBlocking {
+            notesRepository.addNote(com.example.cahier.data.Note(title = "Drawing Test"))
+        }
+
+        val savedStateHandle = SavedStateHandle(
+            mapOf(DrawingCanvasDestination.NOTE_ID_ARG to noteId)
+        )
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        viewModel = DrawingCanvasViewModel(
+            context, savedStateHandle, notesRepository, fileHelper, imageLoader
+        )
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun initial_state_is_correct() = runTest {
+        assertEquals("Drawing Test", viewModel.uiState.value.note.title)
+        assertFalse(viewModel.isEraserMode.value)
+        assertFalse(viewModel.canUndo.value)
+        assertFalse(viewModel.canRedo.value)
+    }
+
+    @Test
+    fun setEraserMode_updates_isEraserMode_state() = runTest {
+        viewModel.setEraserMode(true)
+        assertTrue(viewModel.isEraserMode.value)
+
+        viewModel.setEraserMode(false)
+        assertFalse(viewModel.isEraserMode.value)
+    }
+
+    @Test
+    fun changeBrush_updates_currentBrush_state() = runTest {
+        val initialBrush = viewModel.currentBrush.value
+        viewModel.changeBrush(StockBrushes.highlighterLatest, 20f)
+
+        viewModel.currentBrush.test {
+            val newBrush = awaitItem()
+            assertNotEquals(initialBrush.family, newBrush.family)
+            assertEquals(StockBrushes.highlighterLatest, newBrush.family)
+            assertEquals(20f, newBrush.size, 0.01f)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun changeBrushColor_updates_currentBrush_state() = runTest {
+        viewModel.changeBrushColor(Color.Red)
+        assertEquals(
+            Color.Red.value.toLong(),
+            viewModel.currentBrush.value.colorLong
+        )
+    }
+
+    @Test
+    fun undo_restores_previous_strokes() = runTest {
+        val brush = Brush(StockBrushes.markerLatest, 10f, 1f)
+        val stroke1 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+
+        viewModel.onStrokesFinished(listOf(stroke1))
+
+        assertTrue(viewModel.canUndo.value)
+        assertFalse(viewModel.canRedo.value)
+        assertEquals(1, viewModel.uiState.value.strokes.size)
+
+        viewModel.undo()
+
+        assertFalse(viewModel.canUndo.value)
+        assertTrue(viewModel.canRedo.value)
+        assertEquals(0, viewModel.uiState.value.strokes.size)
+
+        viewModel.redo()
+
+        assertTrue(viewModel.canUndo.value)
+        assertFalse(viewModel.canRedo.value)
+        assertEquals(1, viewModel.uiState.value.strokes.size)
+    }
+}

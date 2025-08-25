@@ -19,6 +19,7 @@
 package com.example.cahier.data
 
 import androidx.ink.strokes.Stroke
+import com.example.cahier.ui.Converters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow

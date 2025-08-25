@@ -20,7 +20,6 @@ package com.example.cahier.ui
 
 import android.content.ClipData
 import android.content.ClipDescription
-import android.content.Intent
 import android.net.Uri
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -28,6 +27,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
@@ -74,13 +74,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -94,6 +91,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun NoteCanvas(
     navBackStackEntry: NavBackStackEntry,
     onExit: () -> Unit,
