@@ -80,7 +80,7 @@ Cahier is built with a focus on modern Android development:
 
 1.  Clone the repository:
     ```sh
-    git clone [https://github.com/android/cahier](https://github.com/android/cahier)
+    git clone https://github.com/android/cahier
     ```
 2.  Open the project in Android Studio.
 3.  Let Android Studio sync Gradle dependencies.
