@@ -62,7 +62,8 @@ class SettingsViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     _isRoleAvailable.value = roleManager!!.isRoleAvailable(
-                        RoleManager.ROLE_NOTES)
+                        RoleManager.ROLE_NOTES
+                    )
                     _isRoleHeld.value = roleManager!!.isRoleHeld(RoleManager.ROLE_NOTES)
                     Log.d(
                         TAG,
@@ -88,11 +89,12 @@ class SettingsViewModel @Inject constructor(
     fun requestNotesRole(launcher: ActivityResultLauncher<Intent>) {
         roleManager?.let { manager ->
             if (manager.isRoleAvailable(RoleManager.ROLE_NOTES)
-                && !manager.isRoleHeld(RoleManager.ROLE_NOTES)) {
+                && !manager.isRoleHeld(RoleManager.ROLE_NOTES)
+            ) {
                 val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
                 intent.extras?.let { bundle ->
                     for (key in bundle.keySet()) {
-                        Log.w(TAG, "Intent extra: $key = ${bundle.get(key)}")
+                        Log.w(TAG, "Intent extra: $key = ${bundle.getString(key)}")
                     }
                 }
                 launcher.launch(intent)
