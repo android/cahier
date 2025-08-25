@@ -18,21 +18,16 @@
 
 package com.example.cahier.ui.viewmodels
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Canvas
 import android.net.Uri
-import android.util.Log
-import android.view.MotionEvent
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
-import androidx.ink.authoring.InProgressStrokeId
-import androidx.ink.authoring.InProgressStrokesFinishedListener
-import androidx.ink.authoring.InProgressStrokesView
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
@@ -45,7 +40,6 @@ import androidx.ink.geometry.MutableSegment
 import androidx.ink.geometry.MutableVec
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
-import androidx.input.motionprediction.MotionEventPredictor
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -53,9 +47,9 @@ import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
-import com.example.cahier.ui.CahierUiState
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.navigation.DrawingCanvasDestination
+import com.example.cahier.ui.CahierUiState
 import com.example.cahier.utils.FileHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -201,6 +195,7 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("RestrictedApi")
     suspend fun createExportedBitmap(width: Int, height: Int) {
         val backgroundImageUri = _uiState.value.note.imageUriList?.firstOrNull()
         val strokes = _uiState.value.strokes
@@ -297,6 +292,7 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("RestrictedApi")
     private fun eraseIntersectingStrokes(
         currentX: Float,
         currentY: Float,

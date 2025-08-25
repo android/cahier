@@ -18,6 +18,7 @@
 
 package com.example.cahier.ui
 
+import android.annotation.SuppressLint
 import android.graphics.Matrix
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -39,6 +40,7 @@ import com.example.cahier.utils.pointerInputWithSiblingFallthrough
 import androidx.input.motionprediction.MotionEventPredictor
 import com.example.cahier.ui.CahierUiState
 
+@SuppressLint("RestrictedApi", "VisibleForTests")
 @Composable
 fun DrawingSurface(
     strokes: List<Stroke>,

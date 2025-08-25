@@ -24,10 +24,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cahier.ui.CahierUiState
 import com.example.cahier.data.Note
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.navigation.TextCanvasDestination
+import com.example.cahier.ui.CahierUiState
 import com.example.cahier.utils.FileHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,6 +99,11 @@ class CanvasScreenViewModel @Inject constructor(
             try {
                 val currentList = _uiState.value.note.imageUriList ?: emptyList()
                 val newList = currentList + localUri.toString()
+
+                _uiState.update { currentState ->
+                    val updatedNote = currentState.note.copy(imageUriList = newList)
+                    currentState.copy(note = updatedNote)
+                }
 
                 noteId?.let { noteRepository.updateNoteImageUriList(it, newList) }
             } catch (e: Exception) {
