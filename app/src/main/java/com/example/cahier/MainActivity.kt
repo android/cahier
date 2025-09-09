@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
         val noteType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(AppArgs.NOTE_TYPE_KEY, NoteType::class.java)
         } else {
+            @Suppress("DEPRECATION")
             intent.getParcelableExtra(AppArgs.NOTE_TYPE_KEY) as NoteType?
         }
 

@@ -19,6 +19,7 @@
 package com.example.cahier.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -31,6 +32,7 @@ import com.example.cahier.ui.HomePane
 import com.example.cahier.ui.NoteCanvas
 
 
+@OptIn(ExperimentalComposeApi::class)
 @Composable
 fun CahierNavHost(
     navController: NavHostController,
@@ -81,7 +83,7 @@ fun CahierNavHost(
 }
 
 fun defineHomeDestination(noteId: Long, noteType: NoteType?): String {
-    if (noteId < 0)  return HomeDestination.route //no valid id passed
+    if (noteId < 0) return HomeDestination.route //no valid id passed
     if (NoteType.TEXT == noteType) return "${TextCanvasDestination.route}/$noteId"
     if (NoteType.DRAWING == noteType) return "${DrawingCanvasDestination.route}/$noteId"
     else return HomeDestination.route
