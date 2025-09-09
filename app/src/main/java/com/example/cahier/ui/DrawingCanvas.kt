@@ -56,6 +56,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -98,6 +99,7 @@ import androidx.ink.strokes.Stroke
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
 import com.example.cahier.R
+import com.example.cahier.data.CustomBrush
 import com.example.cahier.ui.viewmodels.DrawingCanvasViewModel
 import kotlinx.coroutines.launch
 
@@ -118,7 +120,7 @@ fun DrawingCanvas(
     val activity = LocalActivity.current as ComponentActivity
     val currentBrush by drawingCanvasViewModel.currentBrush.collectAsState()
     val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsState()
-    var showConfirmationDialog by remember { mutableStateOf(false) }
+    var showConfirmationDialog by rememberSaveable { mutableStateOf(false) }
     var pendingImageUri by remember { mutableStateOf<Uri?>(null) }
     val exportedUri by drawingCanvasViewModel.exportedImageUri.collectAsState()
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
@@ -308,11 +310,13 @@ fun DrawingToolbox(
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var brushMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    var brushesMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var showColorPicker by rememberSaveable { mutableStateOf(false) }
+    var sizeMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsState()
     val uiState by drawingCanvasViewModel.uiState.collectAsState()
     var optionsMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val customBrushes by drawingCanvasViewModel.customBrushes.collectAsState()
 
     Surface(
         modifier = modifier,
@@ -329,7 +333,7 @@ fun DrawingToolbox(
         ) {
             item {
                 IconButton(onClick = {
-                    brushMenuExpanded = true
+                    brushesMenuExpanded = true
                     drawingCanvasViewModel.setEraserMode(false)
                 }) {
                     Icon(
@@ -348,10 +352,20 @@ fun DrawingToolbox(
                 IconButton(onClick = {
                     showColorPicker = true
                     drawingCanvasViewModel.setEraserMode(false)
+                    brushesMenuExpanded = false
                 }) {
                     Icon(
                         painter = painterResource(R.drawable.palette_24px),
                         contentDescription = stringResource(R.string.color),
+                    )
+                }
+            }
+
+            item {
+                IconButton(onClick = { sizeMenuExpanded = true }) {
+                    Icon(
+                        painter = painterResource(R.drawable.line_weight_24px),
+                        contentDescription = stringResource(R.string.brush_size),
                     )
                 }
             }
@@ -393,7 +407,10 @@ fun DrawingToolbox(
             }
 
             item {
-                IconButton(onClick = { drawingCanvasViewModel.setEraserMode(true) }) {
+                IconButton(onClick = {
+                    drawingCanvasViewModel.setEraserMode(true)
+                    brushesMenuExpanded = false
+                }) {
                     Icon(
                         painter = painterResource(R.drawable.ink_eraser_24px),
                         contentDescription = stringResource(R.string.eraser),
@@ -497,15 +514,27 @@ fun DrawingToolbox(
             }
         }
 
-        BrushDropdownMenu(
-            expanded = brushMenuExpanded,
-            onDismissRequest = { brushMenuExpanded = false },
-            onBrushChange = { newBrush, newSize ->
+        BrushesDropdownMenu(
+            expanded = brushesMenuExpanded,
+            onDismissRequest = { brushesMenuExpanded = false },
+            onBrushChange = { newBrush ->
                 coroutineScope.launch {
-                    drawingCanvasViewModel.changeBrush(newBrush, newSize)
+                    drawingCanvasViewModel.changeBrush(newBrush)
                 }
-                brushMenuExpanded = false
+                brushesMenuExpanded = false
             },
+            customBrushes = customBrushes
+        )
+
+        SizeDropdownMenu(
+            expanded = sizeMenuExpanded,
+            onDismissRequest = { sizeMenuExpanded = false },
+            onSizeChange = { newSize ->
+                coroutineScope.launch {
+                    drawingCanvasViewModel.changeBrushSize(newSize)
+                }
+                sizeMenuExpanded = false
+            }
         )
 
         ColorPickerDialog(
@@ -523,15 +552,35 @@ fun DrawingToolbox(
 }
 
 @Composable
-fun BrushDropdownMenu(
+fun SizeDropdownMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
-    onBrushChange: (BrushFamily, Float) -> Unit,
+    onSizeChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pressurePenSize = 5f
-    val markerSize = 10f
-    val highlighterSize = 25f
+    val sizes = listOf(5f, 10f, 15f, 20f, 25f)
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        properties = PopupProperties(focusable = true)
+    ) {
+        sizes.forEach { size ->
+            DropdownMenuItem(
+                text = { Text(text = "${size.toInt()}px") },
+                onClick = { onSizeChange(size) }
+            )
+        }
+    }
+}
+
+@Composable
+fun BrushesDropdownMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    onBrushChange: (BrushFamily) -> Unit,
+    customBrushes: List<CustomBrush>,
+    modifier: Modifier = Modifier
+) {
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
@@ -539,19 +588,64 @@ fun BrushDropdownMenu(
     ) {
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.pressure_pen)) },
-            onClick = { onBrushChange(StockBrushes.pressurePenLatest, pressurePenSize) }
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.stylus_pen_24px),
+                    contentDescription = stringResource(R.string.pressure_pen)
+                )
+            },
+            onClick = { onBrushChange(StockBrushes.pressurePenLatest) }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.marker)) },
-            onClick = { onBrushChange(StockBrushes.markerLatest, markerSize) }
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.ink_marker_24px),
+                    contentDescription = stringResource(R.string.marker)
+                )
+            },
+            onClick = { onBrushChange(StockBrushes.markerLatest) }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.highlighter)) },
-            onClick = { onBrushChange(StockBrushes.highlighterLatest, highlighterSize) }
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.ink_highlighter_24px),
+                    contentDescription = stringResource(R.string.highlighter)
+                )
+            },
+            onClick = { onBrushChange(StockBrushes.highlighterLatest) }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.dashed_line)) },
-            onClick = { onBrushChange(StockBrushes.dashedLineLatest, pressurePenSize) }
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.road_24px),
+                    contentDescription = stringResource(R.string.dashed_line)
+                )
+            },
+            onClick = { onBrushChange(StockBrushes.dashedLineLatest) }
         )
+        if (customBrushes.isNotEmpty()) {
+            HorizontalDivider()
+            Text(
+                text = stringResource(R.string.custom_brush),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+            customBrushes.forEach { customBrush ->
+                DropdownMenuItem(
+                    text = { Text(text = customBrush.name) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(customBrush.icon),
+                            contentDescription = customBrush.name
+                        )
+                    },
+                    onClick = { onBrushChange(customBrush.brushFamily) }
+                )
+            }
+        }
     }
 }
