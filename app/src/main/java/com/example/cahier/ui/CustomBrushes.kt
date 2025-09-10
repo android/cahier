@@ -34,10 +34,9 @@ object CustomBrushes {
     private const val TAG = "CustomBrushes"
 
     fun getBrushes(context: Context): List<CustomBrush> {
-        if (customBrushes == null) {
-            customBrushes = loadCustomBrushes(context)
+        return customBrushes ?: synchronized(this) {
+            customBrushes ?: loadCustomBrushes(context).also { customBrushes = it }
         }
-        return customBrushes ?: emptyList()
     }
 
     @OptIn(ExperimentalInkCustomBrushApi::class)

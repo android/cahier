@@ -328,7 +328,7 @@ class DrawingCanvasViewModel @Inject constructor(
         _currentBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily)
             val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
-                newBrush.composeColor.copy(alpha = 0.5f)
+                newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
             } else {
                 newBrush.composeColor.copy(alpha = 1f)
             }
@@ -340,7 +340,7 @@ class DrawingCanvasViewModel @Inject constructor(
         _currentBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily, size = size)
             val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
-                newBrush.composeColor.copy(alpha = 0.5f)
+                newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
             } else {
                 newBrush.composeColor.copy(alpha = 1f)
             }
@@ -351,7 +351,7 @@ class DrawingCanvasViewModel @Inject constructor(
     fun changeBrushColor(color: Color) {
         _currentBrush.update { currentBrush ->
             val colorToApply = if (currentBrush.family == StockBrushes.highlighterLatest) {
-                color.copy(alpha = 0.3f)
+                color.copy(alpha = HIGHLIGHTER_ALPHA)
             } else {
                 color.copy(alpha = 1f)
             }
@@ -407,5 +407,6 @@ class DrawingCanvasViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "DrawingCanvasViewModel"
+        private const val HIGHLIGHTER_ALPHA = 0.3f
     }
 }
