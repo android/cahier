@@ -31,6 +31,7 @@ import androidx.core.net.toUri
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
+import androidx.ink.brush.compose.composeColor
 import androidx.ink.brush.compose.copyWithComposeColor
 import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.geometry.AffineTransform
@@ -47,9 +48,11 @@ import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
+import com.example.cahier.data.CustomBrush
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.navigation.DrawingCanvasDestination
 import com.example.cahier.ui.CahierUiState
+import com.example.cahier.ui.CustomBrushes
 import com.example.cahier.utils.FileHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -106,6 +109,8 @@ class DrawingCanvasViewModel @Inject constructor(
     private val _exportedImageUri = MutableStateFlow<Uri?>(null)
     val exportedImageUri: StateFlow<Uri?> = _exportedImageUri.asStateFlow()
 
+    private val _customBrushes = MutableStateFlow<List<CustomBrush>>(emptyList())
+    val customBrushes: StateFlow<List<CustomBrush>> = _customBrushes.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -133,6 +138,8 @@ class DrawingCanvasViewModel @Inject constructor(
                     }
                 }
         }
+
+        loadCustomBrushes()
     }
 
     fun addImageWithLocalUri(localUri: Uri) {
@@ -317,18 +324,44 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
-    fun changeBrush(brushFamily: BrushFamily, size: Float) {
-        _currentBrush.update {
-            it.copy(
-                family = brushFamily,
-                size = size,
-            )
+    fun changeBrush(brushFamily: BrushFamily) {
+        _currentBrush.update { currentBrush ->
+            val newBrush = currentBrush.copy(family = brushFamily)
+            val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
+                newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
+            } else {
+                newBrush.composeColor.copy(alpha = 1f)
+            }
+            newBrush.copyWithComposeColor(colorToApply)
+        }
+    }
+
+    fun changeBrushAndSize(brushFamily: BrushFamily, size: Float) {
+        _currentBrush.update { currentBrush ->
+            val newBrush = currentBrush.copy(family = brushFamily, size = size)
+            val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
+                newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
+            } else {
+                newBrush.composeColor.copy(alpha = 1f)
+            }
+            newBrush.copyWithComposeColor(colorToApply)
         }
     }
 
     fun changeBrushColor(color: Color) {
-        _currentBrush.update {
-            it.copyWithComposeColor(color = color)
+        _currentBrush.update { currentBrush ->
+            val colorToApply = if (currentBrush.family == StockBrushes.highlighterLatest) {
+                color.copy(alpha = HIGHLIGHTER_ALPHA)
+            } else {
+                color.copy(alpha = 1f)
+            }
+            currentBrush.copyWithComposeColor(color = colorToApply)
+        }
+    }
+
+    fun changeBrushSize(size: Float) {
+        _currentBrush.update { currentBrush ->
+            currentBrush.copy(size = size)
         }
     }
 
@@ -359,6 +392,12 @@ class DrawingCanvasViewModel @Inject constructor(
         return _currentBrush.value
     }
 
+    private fun loadCustomBrushes() {
+        viewModelScope.launch {
+            _customBrushes.value = CustomBrushes.getBrushes(context)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         viewModelScope.launch {
@@ -368,5 +407,6 @@ class DrawingCanvasViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "DrawingCanvasViewModel"
+        private const val HIGHLIGHTER_ALPHA = 0.3f
     }
 }

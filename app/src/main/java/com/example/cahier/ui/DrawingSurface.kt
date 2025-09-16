@@ -27,18 +27,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.withSaveLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.graphics.withSave
 import androidx.ink.authoring.compose.InProgressStrokes
 import androidx.ink.brush.Brush
+import androidx.ink.brush.StockBrushes
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import coil3.compose.AsyncImage
 import com.example.cahier.utils.pointerInputWithSiblingFallthrough
-import androidx.input.motionprediction.MotionEventPredictor
-import com.example.cahier.ui.CahierUiState
 
 @SuppressLint("RestrictedApi", "VisibleForTests")
 @Composable
@@ -69,12 +71,22 @@ fun DrawingSurface(
         Canvas(modifier = Modifier.fillMaxSize()) {
             val canvas = drawContext.canvas.nativeCanvas
             strokes.forEach { stroke ->
-                canvas.withSave {
-                    canvasStrokeRenderer.draw(
-                        stroke = stroke,
-                        canvas = this,
-                        strokeToScreenTransform = Matrix()
-                    )
+                val blendMode = if (stroke.brush.family == StockBrushes.highlighterLatest) {
+                    BlendMode.Multiply
+                } else {
+                    BlendMode.SrcOver
+                }
+                drawContext.canvas.withSaveLayer(
+                    drawContext.size.toRect(),
+                    androidx.compose.ui.graphics.Paint()
+                        .apply { this.blendMode = blendMode }) {
+                    canvas.withSave {
+                        canvasStrokeRenderer.draw(
+                            stroke = stroke,
+                            canvas = this,
+                            strokeToScreenTransform = Matrix()
+                        )
+                    }
                 }
             }
         }
@@ -96,7 +108,6 @@ fun DrawingSurface(
                     )
                 }
         )
-
 
         if (isEraserMode) {
             Box(

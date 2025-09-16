@@ -48,10 +48,10 @@ class CahierAppTest {
         composeTestRule.onNodeWithText("Settings").assertExists()
 
 
-        composeTestRule.onNodeWithContentDescription("Add Note").performClick()
-        composeTestRule.onNodeWithContentDescription("Drawing Note").performClick()
+        composeTestRule.onNodeWithContentDescription("Add note").performClick()
+        composeTestRule.onNodeWithContentDescription("Drawing note").performClick()
 
-        composeTestRule.onNodeWithText("Drawing Title", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("Drawing title", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithContentDescription("Brush").assertExists()
         composeTestRule.onNodeWithContentDescription("Color").assertExists()
         composeTestRule.onNodeWithContentDescription("Eraser").assertExists()

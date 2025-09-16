@@ -15,9 +15,9 @@
 
 <resources>
     <string name="app_name">Cahier</string>
-    <string name="floating_action_button_des">add new note</string>
+    <string name="floating_action_button_des">Add new note</string>
     <string name="date_pattern">MM/dd/YYYY</string>
-    <string name="all_notes">All Notes</string>
+    <string name="all_notes">All notes</string>
     <string name="done">Done</string>
     <string name="home">Home</string>
     <string name="favorites">Favorites</string>
@@ -25,59 +25,61 @@
     <string name="trash">Trash</string>
     <string name="title">Title</string>
     <string name="note">Note</string>
-    <string name="drawing_note">Drawing Note</string>
-    <string name="drawing_title">Drawing Title</string>"
-    <string name="text_note">Text Note</string>
+    <string name="drawing_note">Drawing note</string>
+    <string name="drawing_title">Drawing title</string>"
+    <string name="text_note">Text note</string>
     <string name="drawing">Drawing</string>
-    <string name="add_note">Add Note</string>"
-    <string name="delete_note">Delete Note</string>
-    <string name="open_new_window">Open in New Window</string>
+    <string name="add_note">Add note</string>"
+    <string name="delete_note">Delete note</string>
+    <string name="open_new_window">Open in new window</string>
 
     <!-- Ink Tools -->
     <string name="brush">Brush</string>
+    <string name="brush_size">Brush size</string>
+    <string name="custom_brush">Custom brush</string>
     <string name="color">Color</string>
     <string name="eraser">Eraser</string>
     <string name="clear">Clear</string>
     <string name="save">Save</string>
-    <string name="select_color">Select Color</string>
+    <string name="select_color">Select color</string>
     <string name="dismiss">Dismiss</string>
 
     <!-- Ink Brush Families -->
     <string name="pressure_pen">Pen</string>
     <string name="marker">Marker</string>
     <string name="highlighter">Highlighter</string>
-    <string name="dashed_line">Dashed Line</string>
+    <string name="dashed_line">Dashed line</string>
 
-    <string name="note_image_preview">Note Image Preview</string>
-    <string name="drawing_note_indicator">Drawing Note Indicator</string>
-    <string name="untitled_note">Untitled Note</string>
+    <string name="note_image_preview">Note image preview</string>
+    <string name="drawing_note_indicator">Drawing note indicator</string>
+    <string name="untitled_note">Untitled note</string>
     <string name="no_notes_yet">No notes yet.</string>
     <string name="favorite">Favorite</string>
     <string name="unfavorite">Unfavorite</string>
     <string name="delete">Delete</string>
     <string name="other_notes">Others</string>"
-    <string name="add_image">Add Image</string>"
-    <string name="background_image">Background Image</string>
+    <string name="add_image">Add image</string>"
+    <string name="background_image">Background image</string>
     <string name="undo">Undo</string>
     <string name="redo">Redo</string>
     <string name="exit">Exit</string>
-    <string name="more_options">More Options</string>
-    <string name="uploaded_image">Uploaded Image</string>
-    <string name="uploaded_images">Uploaded Images</string>
-    <string name="upload_image">Upload Image</string>
+    <string name="more_options">More options</string>
+    <string name="uploaded_image">Uploaded image</string>
+    <string name="uploaded_images">Uploaded images</string>
+    <string name="upload_image">Upload image</string>
 
     <!-- Settings Pane -->
-    <string name="notes_role_setting_title">Default Notes App</string>
+    <string name="notes_role_setting_title">Default notes app</string>
     <string name="notes_role_setting_description">Set this app as the default for handling note-taking actions and capturing content.</string>
     <string name="notes_role_not_available">Notes Role not available on this device/OS version.</string>
     <string name="notes_role_held">This app is the default Notes app.</string>
     <string name="notes_role_not_held">This app is not the default Notes app.</string>
-    <string name="set_as_default_notes_app">Set as Default</string>
+    <string name="set_as_default_notes_app">Set as default</string>
     <string name="navigate_up">Back</string>
 
     <!-- Confirmation Dialog -->
     <string name="confirm">Confirm</string>
-    <string name="replace_image_title">Image Upload</string>
+    <string name="replace_image_title">Image upload</string>
     <string name="replace_image_text">Do you want to replace the current image?</string>
 
 </resources>

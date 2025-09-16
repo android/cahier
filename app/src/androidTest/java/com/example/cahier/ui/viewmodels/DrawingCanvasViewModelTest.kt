@@ -26,6 +26,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.compose.ui.graphics.Color
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
+import androidx.ink.brush.compose.composeColor
 import androidx.ink.strokes.ImmutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.SavedStateHandle
@@ -119,13 +120,14 @@ class DrawingCanvasViewModelTest {
     @Test
     fun changeBrush_updates_currentBrush_state() = runTest {
         val initialBrush = viewModel.currentBrush.value
-        viewModel.changeBrush(StockBrushes.highlighterLatest, 20f)
+        viewModel.changeBrushAndSize(StockBrushes.highlighterLatest, 20f)
 
         viewModel.currentBrush.test {
             val newBrush = awaitItem()
             assertNotEquals(initialBrush.family, newBrush.family)
             assertEquals(StockBrushes.highlighterLatest, newBrush.family)
             assertEquals(20f, newBrush.size, 0.01f)
+            assertTrue(newBrush.composeColor.alpha < 1.0f)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -134,9 +136,26 @@ class DrawingCanvasViewModelTest {
     fun changeBrushColor_updates_currentBrush_state() = runTest {
         viewModel.changeBrushColor(Color.Red)
         assertEquals(
-            Color.Red.value.toLong(),
-            viewModel.currentBrush.value.colorLong
+            Color.Red.value,
+            viewModel.currentBrush.value.composeColor.value
         )
+    }
+
+    @Test
+    fun changeBrushSize_updates_currentBrush_state() = runTest {
+        viewModel.changeBrushSize(15f)
+        assertEquals(15f, viewModel.currentBrush.value.size, 0.01f)
+    }
+
+    @Test
+    fun highlighter_brush_has_reduced_alpha() = runTest {
+        viewModel.changeBrushAndSize(StockBrushes.highlighterLatest, 20f)
+        val highlighterBrush = viewModel.currentBrush.value
+        assertTrue(highlighterBrush.composeColor.alpha < 1.0f)
+
+        viewModel.changeBrushAndSize(StockBrushes.markerLatest, 10f)
+        val markerBrush = viewModel.currentBrush.value
+        assertEquals(1.0f, markerBrush.composeColor.alpha, 0.01f)
     }
 
     @Test
