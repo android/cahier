@@ -113,7 +113,6 @@ fun DrawingCanvas(
     drawingCanvasViewModel: DrawingCanvasViewModel = hiltViewModel()
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsState()
-    LocalContext.current
     val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
     val coroutineScope = rememberCoroutineScope()
     val strokes = remember { mutableStateListOf<Stroke>() }
