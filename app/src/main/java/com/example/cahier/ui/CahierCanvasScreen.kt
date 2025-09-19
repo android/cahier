@@ -21,7 +21,7 @@ package com.example.cahier.ui
 import android.content.ClipData
 import android.content.ClipDescription
 import android.net.Uri
-import android.view.View
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -74,7 +74,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -105,7 +105,7 @@ fun NoteCanvas(
     var focusedField by rememberSaveable { mutableStateOf(FocusedField.NONE) }
     val titleFocusRequester = canvasScreenViewModel.titleFocusRequester
     val bodyFocusRequester = canvasScreenViewModel.bodyFocusRequester
-    val view = LocalView.current
+    val context = LocalContext.current
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -328,14 +328,15 @@ fun NoteCanvas(
                                                     ),
                                                     ClipData.Item(contentUri)
                                                 )
-                                                val dragShadowBuilder = View.DragShadowBuilder(view)
-
-                                                view.startDragAndDrop(
+                                                
+                                                // Get the root view from activity's content view
+                                                val rootView = activity.findViewById<android.view.View>(android.R.id.content)
+                                                rootView.startDragAndDrop(
                                                     clipData,
-                                                    dragShadowBuilder,
+                                                    android.view.View.DragShadowBuilder(),  // Empty shadow builder
                                                     null,
-                                                    View.DRAG_FLAG_GLOBAL
-                                                            or View.DRAG_FLAG_GLOBAL_URI_READ
+                                                    android.view.View.DRAG_FLAG_GLOBAL
+                                                            or android.view.View.DRAG_FLAG_GLOBAL_URI_READ
                                                 )
                                             }
                                         }

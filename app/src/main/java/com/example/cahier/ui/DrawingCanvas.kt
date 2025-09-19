@@ -21,7 +21,7 @@ package com.example.cahier.ui
 import android.content.ClipData
 import android.content.ClipDescription
 import android.net.Uri
-import android.view.View
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -84,7 +84,7 @@ import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -124,7 +124,7 @@ fun DrawingCanvas(
     var pendingImageUri by remember { mutableStateOf<Uri?>(null) }
     val exportedUri by drawingCanvasViewModel.exportedImageUri.collectAsState()
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
-    val view = LocalView.current
+    val context = LocalContext.current
     val canUndo by drawingCanvasViewModel.canUndo.collectAsState()
     val canRedo by drawingCanvasViewModel.canRedo.collectAsState()
 
@@ -278,12 +278,13 @@ fun DrawingCanvas(
                             ),
                             ClipData.Item(uri)
                         )
-                        val dragShadowBuilder = View.DragShadowBuilder(view)
-                        view.startDragAndDrop(
+                        // Get the root view from activity's content view
+                        val rootView = activity.findViewById<android.view.View>(android.R.id.content)
+                        rootView.startDragAndDrop(
                             clipData,
-                            dragShadowBuilder,
+                            android.view.View.DragShadowBuilder(),  // Empty shadow builder
                             null,
-                            View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ
+                            android.view.View.DRAG_FLAG_GLOBAL or android.view.View.DRAG_FLAG_GLOBAL_URI_READ
                         )
                     }
                 },

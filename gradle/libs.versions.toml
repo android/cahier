@@ -1,6 +1,6 @@
 [versions]
 adaptive = "1.1.0"
-agp = "8.1.4"
+agp = "8.3.2"
 appcompatV7 = "1.7.1"
 coilCompose = "3.1.0"
 foundation = "1.7.8"
