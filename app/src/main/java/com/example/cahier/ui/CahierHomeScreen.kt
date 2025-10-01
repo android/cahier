@@ -24,6 +24,7 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
@@ -38,6 +39,7 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -131,10 +133,10 @@ fun HomePane(
             .imePadding()
     ) {
         NavigationSuiteScaffold(
-            navigationSuiteItems = {
+            navigationItems = {
                 AppDestinations.entries.forEach { destination ->
                     val isSelected = currentDestination == destination
-                    item(
+                    NavigationSuiteItem(
                         icon = {
                             Icon(
                                 destination.icon,
@@ -157,6 +159,7 @@ fun HomePane(
                     )
                 }
             },
+            navigationItemVerticalArrangement = Arrangement.Center,
             content = {
                 when (currentDestination) {
                     AppDestinations.HOME -> {

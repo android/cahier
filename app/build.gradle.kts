@@ -85,6 +85,7 @@ dependencies {
     // Adaptive layouts dependencies
     implementation(libs.material3.adaptive.navigation.suite.android)
     implementation(libs.androidx.adaptive.navigation.android)
+    implementation(libs.androidx.material.icons.core)
 
     //Room
     implementation(libs.androidx.room.runtime)
