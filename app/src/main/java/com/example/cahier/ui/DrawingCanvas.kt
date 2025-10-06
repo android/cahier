@@ -59,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.mimeTypes
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -70,7 +71,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -155,7 +156,7 @@ private fun DrawingCanvasTopBar(
         mutableStateOf(TextFieldValue(uiState.note.title))
     }
     var focusedFieldEnum by rememberSaveable { mutableStateOf(FocusedFieldEnum.None) }
-    val titleFocusRequester = drawingCanvasViewModel.titleFocusRequester
+    val titleFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(focusedFieldEnum) {
         if (focusedFieldEnum == FocusedFieldEnum.Title) {

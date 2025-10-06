@@ -26,6 +26,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -480,16 +481,19 @@ private fun ExpandedFabContent(
             horizontalAlignment = Alignment.End,
             modifier = Modifier.padding(end = 8.dp)
         ) {
-            Text(
-                stringResource(
-                    R.string.drawing
-                ), modifier = Modifier.padding(vertical = 20.dp)
-            )
-            Text(
-                stringResource(
-                    R.string.text_note
-                ), modifier = Modifier.padding(vertical = 20.dp)
-            )
+            Box(
+                modifier = Modifier.height(56.dp).padding(bottom = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(stringResource(R.string.drawing))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier.height(56.dp).padding(top = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(stringResource(R.string.text_note))
+            }
         }
 
         Column(horizontalAlignment = Alignment.End) {

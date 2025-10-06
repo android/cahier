@@ -24,7 +24,6 @@ import android.graphics.Canvas
 import android.net.Uri
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
@@ -73,8 +72,6 @@ class DrawingCanvasViewModel @Inject constructor(
     private val imageLoader: ImageLoader
 ) : ViewModel() {
 
-    val titleFocusRequester = FocusRequester()
-
     private val _uiState = MutableStateFlow(CahierUiState())
     val uiState: StateFlow<CahierUiState> = _uiState.asStateFlow()
 
@@ -92,10 +89,8 @@ class DrawingCanvasViewModel @Inject constructor(
         )
     )
 
-    private val _currentBrush = MutableStateFlow(_defaultBrush.value)
-    val currentBrush = _currentBrush.asStateFlow()
-
     private val _selectedBrush = MutableStateFlow(_defaultBrush.value)
+    val currentBrush = _selectedBrush.asStateFlow()
 
     private val _isEraserMode = MutableStateFlow(false)
     val isEraserMode: StateFlow<Boolean> = _isEraserMode.asStateFlow()
@@ -132,7 +127,7 @@ class DrawingCanvasViewModel @Inject constructor(
                             it.brushFamily.clientBrushFamilyId == id
                         }
                         customBrush?.let {
-                            _currentBrush.value = _currentBrush.value.copy(family = it.brushFamily)
+                            _selectedBrush.value = _selectedBrush.value.copy(family = it.brushFamily)
                         }
                     }
 
@@ -287,7 +282,6 @@ class DrawingCanvasViewModel @Inject constructor(
 
     @UiThread
     fun onStrokesFinished(finishedStrokes: List<Stroke>) {
-        _currentBrush.value = finishedStrokes.first().brush
         val currentStrokes = history.getOrElse(historyIndex) { emptyList() }
         val newStrokes = currentStrokes + finishedStrokes
         updateStrokes(newStrokes)
