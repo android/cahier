@@ -21,6 +21,8 @@
 
 package com.example.cahier
 
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -44,6 +46,12 @@ class CahierAppTest {
 
     @Test
     fun homeScreen_displaysAndNavigatesToDrawing() {
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule
+                .onAllNodesWithContentDescription("Add note")
+                .fetchSemanticsNodes().size == 1
+        }
+
         composeTestRule.onNodeWithText("Home").assertExists()
         composeTestRule.onNodeWithText("Settings").assertExists()
 

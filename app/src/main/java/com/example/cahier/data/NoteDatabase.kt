@@ -27,7 +27,7 @@ import com.example.cahier.ui.Converters
 
 @Database(
     entities = [Note::class],
-    version = 5,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -45,7 +45,7 @@ abstract class NoteDatabase : RoomDatabase() {
                     NoteDatabase::class.java,
                     "note_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_7_8)
                     .build()
                     .also {
                         Instance = it

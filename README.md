@@ -103,8 +103,8 @@ testability.
 * **Offline-First:** Using Room to ensure data is always available locally.
 * **Responsive & Adaptive Design:** Employing Material 3 adaptive components like
 `ListDetailPaneScaffold` to provide an optimal layout on various screen sizes.
-* **State Management:** Using `StateFlow` and `collectAsState()` for managing and observing UI
-state in a reactive way.
+* **State Management:** Using `StateFlow` and `collectAsStateWithLifecycle()` for managing and
+* observing UI state in a reactive way.
 * **Navigation Graph:** Defining clear navigation paths using Jetpack Navigation for Compose.
 * **Material Design 3:** Implementing the latest Material Design guidelines, components, and
 theming (including dynamic color).

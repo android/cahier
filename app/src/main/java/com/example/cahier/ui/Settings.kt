@@ -18,9 +18,7 @@
 
 package com.example.cahier.ui
 
-import android.content.Context
 import android.os.Build
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -39,7 +37,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -48,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
 import com.example.cahier.ui.viewmodels.SettingsViewModel
 import kotlinx.coroutines.launch
@@ -59,8 +57,8 @@ fun SettingsPane(
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val isRoleAvailable by viewModel.isRoleAvailable.collectAsState()
-    val isRoleHeld by viewModel.isRoleHeld.collectAsState()
+    val isRoleAvailable by viewModel.isRoleAvailable.collectAsStateWithLifecycle()
+    val isRoleHeld by viewModel.isRoleHeld.collectAsStateWithLifecycle()
     LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -125,8 +123,4 @@ fun SettingsPane(
             }
         }
     }
-}
-
-private fun showToast(context: Context, message: String) {
-    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 }

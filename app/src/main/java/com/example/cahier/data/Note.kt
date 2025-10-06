@@ -36,16 +36,18 @@ data class Note(
     @ColumnInfo(name = "text")
     val text: String? = null,
     @ColumnInfo(name = "type")
-    val type: NoteType = NoteType.TEXT,
+    val type: NoteType = NoteType.Text,
     @ColumnInfo(name = "strokes_data")
     val strokesData: String? = null,
     @ColumnInfo(name = "is_favorite", defaultValue = "0")
     val isFavorite: Boolean = false,
     @ColumnInfo(name = "image_uri")
     val imageUriList: List<String>? = emptyList(),
+    @ColumnInfo(name = "client_brush_family_id")
+    val clientBrushFamilyId: String? = null,
 ) : Parcelable
 
 enum class NoteType {
-    TEXT,
-    DRAWING
+    Text,
+    Drawing
 }

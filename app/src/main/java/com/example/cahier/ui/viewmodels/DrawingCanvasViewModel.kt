@@ -19,12 +19,12 @@
 package com.example.cahier.ui.viewmodels
 
 import android.annotation.SuppressLint
-import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Canvas
 import android.net.Uri
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
@@ -73,10 +73,12 @@ class DrawingCanvasViewModel @Inject constructor(
     private val imageLoader: ImageLoader
 ) : ViewModel() {
 
+    val titleFocusRequester = FocusRequester()
+
     private val _uiState = MutableStateFlow(CahierUiState())
     val uiState: StateFlow<CahierUiState> = _uiState.asStateFlow()
 
-    private val noteId: Long = checkNotNull(savedStateHandle[DrawingCanvasDestination.NOTE_ID_ARG])
+    private val noteId: Long = savedStateHandle[DrawingCanvasDestination.NOTE_ID_ARG] ?: 0L
 
     private val currentNightMode = AppCompatDelegate.getDefaultNightMode()
 
@@ -92,6 +94,8 @@ class DrawingCanvasViewModel @Inject constructor(
 
     private val _currentBrush = MutableStateFlow(_defaultBrush.value)
     val currentBrush = _currentBrush.asStateFlow()
+
+    private val _selectedBrush = MutableStateFlow(_defaultBrush.value)
 
     private val _isEraserMode = MutableStateFlow(false)
     val isEraserMode: StateFlow<Boolean> = _isEraserMode.asStateFlow()
@@ -122,6 +126,16 @@ class DrawingCanvasViewModel @Inject constructor(
                     } else {
                         emptyList()
                     }
+
+                    note.clientBrushFamilyId?.let { id ->
+                        val customBrush = customBrushes.value.find {
+                            it.brushFamily.clientBrushFamilyId == id
+                        }
+                        customBrush?.let {
+                            _currentBrush.value = _currentBrush.value.copy(family = it.brushFamily)
+                        }
+                    }
+
                     _uiState.update {
                         it.copy(note = note, strokes = initialStrokes)
                     }
@@ -190,15 +204,15 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
-    suspend fun processAndAddImage(contentResolver: ContentResolver, uri: Uri?) {
+    suspend fun processAndAddImage(uri: Uri?) {
         if (uri == null) return
-        val localFileUri = fileHelper.copyUriToInternalStorage(contentResolver, uri)
+        val localFileUri = fileHelper.copyUriToInternalStorage(uri)
         addImageWithLocalUri(localFileUri)
     }
 
-    fun replaceImage(contentResolver: ContentResolver, uri: Uri?) {
+    fun replaceImage(uri: Uri?) {
         viewModelScope.launch {
-            processAndAddImage(contentResolver, uri)
+            processAndAddImage(uri)
         }
     }
 
@@ -257,9 +271,12 @@ class DrawingCanvasViewModel @Inject constructor(
 
     suspend fun saveStrokes() {
         if (historyIndex >= 0 && historyIndex < history.size) {
-            noteRepository.updateNoteStrokes(noteId, history[historyIndex])
+            val strokesToSave = history[historyIndex]
+            val clientBrushFamilyId =
+                strokesToSave.firstOrNull()?.brush?.family?.clientBrushFamilyId
+            noteRepository.updateNoteStrokes(noteId, strokesToSave, clientBrushFamilyId)
         } else if (history.isEmpty()) {
-            noteRepository.updateNoteStrokes(noteId, emptyList())
+            noteRepository.updateNoteStrokes(noteId, emptyList(), null)
         }
     }
 
@@ -270,6 +287,7 @@ class DrawingCanvasViewModel @Inject constructor(
 
     @UiThread
     fun onStrokesFinished(finishedStrokes: List<Stroke>) {
+        _currentBrush.value = finishedStrokes.first().brush
         val currentStrokes = history.getOrElse(historyIndex) { emptyList() }
         val newStrokes = currentStrokes + finishedStrokes
         updateStrokes(newStrokes)
@@ -325,7 +343,7 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrush(brushFamily: BrushFamily) {
-        _currentBrush.update { currentBrush ->
+        _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily)
             val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
                 newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
@@ -337,7 +355,7 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrushAndSize(brushFamily: BrushFamily, size: Float) {
-        _currentBrush.update { currentBrush ->
+        _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily, size = size)
             val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
                 newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
@@ -349,7 +367,7 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrushColor(color: Color) {
-        _currentBrush.update { currentBrush ->
+        _selectedBrush.update { currentBrush ->
             val colorToApply = if (currentBrush.family == StockBrushes.highlighterLatest) {
                 color.copy(alpha = HIGHLIGHTER_ALPHA)
             } else {
@@ -360,7 +378,7 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrushSize(size: Float) {
-        _currentBrush.update { currentBrush ->
+        _selectedBrush.update { currentBrush ->
             currentBrush.copy(size = size)
         }
     }
@@ -387,9 +405,15 @@ class DrawingCanvasViewModel @Inject constructor(
         clearImages()
     }
 
+    fun handleDroppedUri(uri: Uri) {
+        viewModelScope.launch {
+            val localUri = fileHelper.copyUriToInternalStorage(uri)
+            addImageWithLocalUri(localUri)
+        }
+    }
 
     fun getCurrentBrush(): Brush {
-        return _currentBrush.value
+        return _selectedBrush.value
     }
 
     private fun loadCustomBrushes() {

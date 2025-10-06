@@ -16,8 +16,8 @@
  *
  */
 
-package com.example.cahier.data
+package com.example.cahier.ui
 
-enum class FocusedField {
-    NONE, TITLE, BODY
+enum class FocusedFieldEnum {
+    None, Title, Body
 }

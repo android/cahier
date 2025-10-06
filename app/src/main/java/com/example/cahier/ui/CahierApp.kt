@@ -19,12 +19,37 @@
 package com.example.cahier.ui
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.cahier.data.NoteType
 import com.example.cahier.navigation.CahierNavHost
+import com.example.cahier.navigation.DrawingCanvasDestination
+import com.example.cahier.navigation.TextCanvasDestination
 
 @Composable
-fun CahierApp(navController: NavHostController = rememberNavController(), noteId: Long, noteType: NoteType?) {
-    CahierNavHost(navController = navController, noteType, noteId)
+fun CahierApp(
+    noteId: Long,
+    noteType: NoteType?,
+    modifier: Modifier = Modifier,
+) {
+    val navController = rememberNavController()
+
+    LaunchedEffect(noteId, noteType) {
+        if (noteId > 0) {
+            val destination = when (noteType) {
+                NoteType.Text -> "${TextCanvasDestination.route}/$noteId"
+                NoteType.Drawing -> "${DrawingCanvasDestination.route}/$noteId"
+                else -> null
+            }
+            destination?.let {
+                navController.navigate(it)
+            }
+        }
+    }
+
+    CahierNavHost(
+        navController = navController,
+        modifier = modifier
+    )
 }

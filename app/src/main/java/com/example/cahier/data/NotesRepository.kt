@@ -50,7 +50,7 @@ interface NotesRepository {
     /**
      * Update the strokes data of a note.
      */
-    suspend fun updateNoteStrokes(noteId: Long, strokes: List<Stroke>)
+    suspend fun updateNoteStrokes(noteId: Long, strokes: List<Stroke>, clientBrushFamilyId: String?)
 
     /**
      * Retrieve strokes data for a note.

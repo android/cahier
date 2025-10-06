@@ -17,7 +17,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.ksp)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
     id("kotlin-parcelize")
     id("com.google.dagger.hilt.android")
 }
@@ -55,15 +55,11 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
-    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    namespace = "com.example.cahier"
 }
 
 dependencies {
@@ -77,6 +73,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.window.core)
@@ -85,10 +82,10 @@ dependencies {
     // Adaptive layouts dependencies
     implementation(libs.material3.adaptive.navigation.suite.android)
     implementation(libs.androidx.adaptive.navigation.android)
-    implementation(libs.androidx.material.icons.core)
 
     //Room
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.compose.material3.window.size.class1)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 

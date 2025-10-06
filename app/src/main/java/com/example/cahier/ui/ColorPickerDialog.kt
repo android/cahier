@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -49,21 +50,34 @@ import com.example.cahier.R
 fun ColorPickerDialog(
     showDialog: Boolean,
     onDismissRequest: () -> Unit,
-    onColorSelected: (Color) -> Unit
+    onColorSelected: (Color) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    if (showDialog) {
-        Dialog(onDismissRequest = onDismissRequest) {
-            ColorPickerContent(
-                onColorSelected = onColorSelected,
-                onDismissRequest = onDismissRequest
-            )
+    Surface(
+        modifier = modifier
+    ) {
+        if (showDialog) {
+            Dialog(
+                onDismissRequest = onDismissRequest,
+            ) {
+                ColorPickerContent(
+                    onColorSelected = onColorSelected,
+                    onDismissRequest = onDismissRequest
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ColorPickerContent(onColorSelected: (Color) -> Unit, onDismissRequest: () -> Unit) {
-    Card {
+private fun ColorPickerContent(
+    onColorSelected: (Color) -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+    ) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 text = stringResource(R.string.select_color),
@@ -81,7 +95,10 @@ private fun ColorPickerContent(onColorSelected: (Color) -> Unit, onDismissReques
 
 
 @Composable
-private fun ColorGrid(onColorSelected: (Color) -> Unit) {
+private fun ColorGrid(
+    onColorSelected: (Color) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val colors = remember {
         listOf(
             Color.Black, Color.Gray, Color.White, Color.Red, Color.Green, Color.Blue,
@@ -91,20 +108,26 @@ private fun ColorGrid(onColorSelected: (Color) -> Unit) {
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 40.dp),
-        contentPadding = PaddingValues(8.dp)
+        contentPadding = PaddingValues(8.dp),
+        modifier = modifier
     ) {
         items(colors.size) { index ->
-            ColorSwatch(color = colors[index]) { selectedColor ->
-                onColorSelected(selectedColor)
-            }
+            ColorSwatch(
+                color = colors[index],
+                onColorSelected = onColorSelected
+            )
         }
     }
 }
 
 @Composable
-private fun ColorSwatch(color: Color, onColorSelected: (Color) -> Unit) {
+private fun ColorSwatch(
+    color: Color,
+    onColorSelected: (Color) -> Unit,
+    modifier: Modifier = Modifier)
+{
     Box(
-        modifier = Modifier
+        modifier = modifier
             .padding(8.dp)
             .size(40.dp)
             .clip(CircleShape)

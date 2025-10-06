@@ -68,7 +68,7 @@ class FileHelperTest {
         sourceFile.writeText("hello world")
         val sourceUri = sourceFile.toUri()
 
-        val resultUri = fileHelper.copyUriToInternalStorage(contentResolver, sourceUri)
+        val resultUri = fileHelper.copyUriToInternalStorage(sourceUri)
 
         assertNotNull(resultUri)
         val resultFile = File(resultUri.path!!)

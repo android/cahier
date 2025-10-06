@@ -18,13 +18,18 @@
 
 package com.example.cahier.data
 
+import android.content.Context
 import androidx.ink.strokes.Stroke
 import com.example.cahier.ui.Converters
+import com.example.cahier.ui.CustomBrushes
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 
-class OfflineNotesRepository(private val notesDao: NoteDao) : NotesRepository {
+class OfflineNotesRepository(
+    private val notesDao: NoteDao,
+    private val context: Context
+) : NotesRepository {
 
     private val converters = Converters()
 
@@ -40,13 +45,18 @@ class OfflineNotesRepository(private val notesDao: NoteDao) : NotesRepository {
 
     override suspend fun updateNote(note: Note) = notesDao.updateNote(note)
 
-    override suspend fun updateNoteStrokes(noteId: Long, strokes: List<Stroke>) {
+    override suspend fun updateNoteStrokes(
+        noteId: Long,
+        strokes: List<Stroke>,
+        clientBrushFamilyId: String?
+    ) {
         val strokesData = strokes.map { converters.serializeStroke(it) }
         val strokesJson = Gson().toJson(strokesData)
 
         val note = notesDao.getNoteById(noteId)
         if (note != null) {
-            val updatedNote = note.copy(strokesData = strokesJson)
+            val updatedNote =
+                note.copy(strokesData = strokesJson, clientBrushFamilyId = clientBrushFamilyId)
             notesDao.updateNote(updatedNote)
         }
     }
@@ -54,10 +64,11 @@ class OfflineNotesRepository(private val notesDao: NoteDao) : NotesRepository {
     override suspend fun getNoteStrokes(noteId: Long): List<Stroke> {
         val note = notesDao.getNoteById(noteId)
         val strokesJson = note?.strokesData ?: return emptyList()
+        val customBrushes = CustomBrushes.getBrushes(context)
 
         val strokesData: List<String> =
             Gson().fromJson(strokesJson, object : TypeToken<List<String>>() {}.type)
-        return strokesData.mapNotNull { converters.deserializeStrokeFromString(it) }
+        return strokesData.mapNotNull { converters.deserializeStrokeFromString(it, customBrushes) }
     }
 
     override suspend fun toggleFavorite(noteId: Long) {

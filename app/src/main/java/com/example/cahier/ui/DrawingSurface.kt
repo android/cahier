@@ -99,8 +99,8 @@ fun DrawingSurface(
                         onDragStart = {
                             onStartDrag()
                         },
-                        onDrag = { _, _ ->
-                            // Consume events.
+                        onDrag = { change, _ ->
+                            change.consume()
                         },
                         onDragEnd = {
                             // Do nothing.

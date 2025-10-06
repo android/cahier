@@ -18,14 +18,21 @@
 
 package com.example.cahier.ui.viewmodels
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cahier.AppArgs
+import com.example.cahier.MainActivity
 import com.example.cahier.data.Note
 import com.example.cahier.data.NoteType
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.ui.CahierUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,22 +40,26 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val noteRepository: NotesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CahierUiState())
     val uiState: StateFlow<CahierUiState> = _uiState.asStateFlow()
 
+    private val _newWindowEvent = Channel<Intent>()
+    val newWindowEvent = _newWindowEvent.receiveAsFlow()
+
     /**
      * Holds ui state for the list of notes on the home pane.
-     * The list of items are retrieved from [NoteRepository] and mapped to
+     * The list of items are retrieved from [NotesRepository] and mapped to
      * [NoteListUiState]
      */
     val noteList: StateFlow<NoteListUiState> =
@@ -66,7 +77,7 @@ class HomeScreenViewModel @Inject constructor(
                 noteRepository.getNoteStream(noteId)
                     .filterNotNull()
                     .collect { note ->
-                        val strokes = if (note.type == NoteType.DRAWING) {
+                        val strokes = if (note.type == NoteType.Drawing) {
                             noteRepository.getNoteStrokes(noteId)
                         } else {
                             emptyList()
@@ -85,7 +96,7 @@ class HomeScreenViewModel @Inject constructor(
 
     fun addNote(callback: (noteId: Long) -> Unit) {
         viewModelScope.launch {
-            val newNoteId = addNoteOfType(NoteType.TEXT)
+            val newNoteId = addNoteOfType(NoteType.Text)
             newNoteId?.let {
                 callback(it)
             }
@@ -94,7 +105,7 @@ class HomeScreenViewModel @Inject constructor(
 
     fun addDrawingNote(callback: (id: Long) -> Unit) {
         viewModelScope.launch {
-            val newNoteId = addNoteOfType(NoteType.DRAWING)
+            val newNoteId = addNoteOfType(NoteType.Drawing)
             newNoteId?.let {
                 callback(it)
             }
@@ -107,7 +118,7 @@ class HomeScreenViewModel @Inject constructor(
                 id = 0,
                 title = "",
                 type = noteType,
-                text = if (noteType == NoteType.TEXT) "" else null,
+                text = if (noteType == NoteType.Text) "" else null,
             )
             val insertedId = noteRepository.addNote(newNote)
             _uiState.value = CahierUiState(note = newNote.copy(id = insertedId))
@@ -148,6 +159,19 @@ class HomeScreenViewModel @Inject constructor(
 
     fun clearSelection() {
         _uiState.update { CahierUiState() }
+    }
+
+    fun openInNewWindow(note: Note) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            putExtra(AppArgs.NOTE_TYPE_KEY, note.type)
+            putExtra(AppArgs.NOTE_ID_KEY, note.id)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+                Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+        }
+        viewModelScope.launch {
+            _newWindowEvent.send(intent)
+        }
     }
 
     companion object {

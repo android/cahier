@@ -21,6 +21,7 @@
 
 package com.example.cahier.ui.viewmodels
 
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
 import com.example.cahier.data.FakeNotesRepository
@@ -40,6 +41,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mockito.mock
 
 @ExperimentalCoroutinesApi
 class HomeScreenViewModelTest {
@@ -55,7 +57,11 @@ class HomeScreenViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         notesRepository = FakeNotesRepository()
-        viewModel = HomeScreenViewModel(notesRepository)
+        val context = mock(Context::class.java)
+        viewModel = HomeScreenViewModel(
+            context = context,
+            noteRepository = notesRepository
+        )
     }
 
     @After
@@ -69,7 +75,7 @@ class HomeScreenViewModelTest {
             notesRepository.addNote(
                 Note(
                     title = "Selected Note",
-                    type = NoteType.DRAWING
+                    type = NoteType.Drawing
                 )
             )
         }
@@ -92,7 +98,7 @@ class HomeScreenViewModelTest {
 
         val notes = notesRepository.getNotes()
         assertEquals(1, notes.size)
-        assertEquals(NoteType.DRAWING, notes.first().type)
+        assertEquals(NoteType.Drawing, notes.first().type)
         assertEquals(createdNoteId, notes.first().id)
     }
 

@@ -20,12 +20,12 @@ package com.example.cahier.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ExperimentalComposeApi
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.cahier.data.NoteType
 import com.example.cahier.ui.DrawingCanvas
 import com.example.cahier.ui.HomeDestination
 import com.example.cahier.ui.HomePane
@@ -36,15 +36,14 @@ import com.example.cahier.ui.NoteCanvas
 @Composable
 fun CahierNavHost(
     navController: NavHostController,
-    noteType: NoteType?,
-    noteId: Long
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = defineHomeDestination(noteId, noteType)
+        startDestination = HomeDestination.route,
+        modifier = modifier
     ) {
         composable(HomeDestination.route) {
-
             HomePane(
                 navigateToCanvas = { noteId ->
                     navController.navigate("${TextCanvasDestination.route}/$noteId")
@@ -64,7 +63,6 @@ fun CahierNavHost(
             })
         ) { navBackStackEntry ->
             NoteCanvas(
-                navBackStackEntry = navBackStackEntry,
                 onExit = { navController.navigateUp() },
             )
         }
@@ -75,18 +73,10 @@ fun CahierNavHost(
             })
         ) { navBackStackEntry ->
             DrawingCanvas(
-                navBackStackEntry = navBackStackEntry,
                 navigateUp = { navController.navigateUp() },
             )
         }
     }
-}
-
-fun defineHomeDestination(noteId: Long, noteType: NoteType?): String {
-    if (noteId < 0) return HomeDestination.route //no valid id passed
-    if (NoteType.TEXT == noteType) return "${TextCanvasDestination.route}/$noteId"
-    if (NoteType.DRAWING == noteType) return "${DrawingCanvasDestination.route}/$noteId"
-    else return HomeDestination.route
 }
 
 object TextCanvasDestination : NavigationDestination {
