@@ -29,6 +29,7 @@ import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.ink.strokes.StrokeInputBatch
 import androidx.room.TypeConverter
+import com.example.cahier.data.CustomBrush
 import com.example.cahier.data.SerializedBrush
 import com.example.cahier.data.SerializedStockBrush
 import com.example.cahier.data.SerializedStroke
@@ -48,10 +49,10 @@ class Converters {
 
     companion object {
         private val stockBrushToEnumValues = mapOf(
-            StockBrushes.markerLatest to SerializedStockBrush.MARKER_LATEST,
-            StockBrushes.pressurePenLatest to SerializedStockBrush.PRESSURE_PEN_LATEST,
-            StockBrushes.highlighterLatest to SerializedStockBrush.HIGHLIGHTER_LATEST,
-            StockBrushes.dashedLineLatest to SerializedStockBrush.DASHED_LINE_LATEST,
+            StockBrushes.markerLatest to SerializedStockBrush.MarkerLatest,
+            StockBrushes.pressurePenLatest to SerializedStockBrush.PressurePenLatest,
+            StockBrushes.highlighterLatest to SerializedStockBrush.HighlighterLatest,
+            StockBrushes.dashedLineLatest to SerializedStockBrush.DashedLineLatest,
         )
 
         private val enumToStockBrush =
@@ -63,7 +64,8 @@ class Converters {
             size = brush.size,
             color = brush.colorLong,
             epsilon = brush.epsilon,
-            stockBrush = stockBrushToEnumValues[brush.family] ?: SerializedStockBrush.MARKER_LATEST,
+            stockBrush = stockBrushToEnumValues[brush.family] ?: SerializedStockBrush.MarkerLatest,
+            clientBrushFamilyId = brush.family.clientBrushFamilyId
         )
     }
 
@@ -81,28 +83,39 @@ class Converters {
         return gson.toJson(serializedStroke)
     }
 
-    private fun deserializeStroke(serializedStroke: SerializedStroke): Stroke? {
+    private fun deserializeStroke(
+        serializedStroke: SerializedStroke,
+        customBrushes: List<CustomBrush>
+    ): Stroke? {
         val inputs = ByteArrayInputStream(serializedStroke.inputs).use { inputStream ->
             StrokeInputBatch.Companion.decode(inputStream)
         }
-        val brush = deserializeBrush(serializedStroke.brush)
+        val brush = deserializeBrush(serializedStroke.brush, customBrushes)
         return Stroke(brush = brush, inputs = inputs)
     }
 
-    private fun deserializeBrush(serializedBrush: SerializedBrush): Brush {
-        val stockBrushFamily = enumToStockBrush[serializedBrush.stockBrush] ?: StockBrushes.markerV1
+    private fun deserializeBrush(
+        serializedBrush: SerializedBrush,
+        customBrushes: List<CustomBrush>
+    ): Brush {
+        val stockBrushFamily = enumToStockBrush[serializedBrush.stockBrush]
+        val customBrush = customBrushes.find {
+            it.brushFamily.clientBrushFamilyId == serializedBrush.clientBrushFamilyId
+        }
+
+        val brushFamily = customBrush?.brushFamily ?: stockBrushFamily ?: StockBrushes.markerV1
 
         return Brush.Companion.createWithColorLong(
-            family = stockBrushFamily,
+            family = brushFamily,
             colorLong = serializedBrush.color,
             size = serializedBrush.size,
             epsilon = serializedBrush.epsilon,
         )
     }
 
-    fun deserializeStrokeFromString(data: String): Stroke? {
+    fun deserializeStrokeFromString(data: String, customBrushes: List<CustomBrush>): Stroke? {
         val serializedStroke = gson.fromJson(data, SerializedStroke::class.java)
-        return deserializeStroke(serializedStroke)
+        return deserializeStroke(serializedStroke, customBrushes)
     }
 
     @TypeConverter

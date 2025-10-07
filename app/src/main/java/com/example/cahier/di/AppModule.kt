@@ -43,8 +43,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideNoteRepository(database: NoteDatabase): NotesRepository {
-        return OfflineNotesRepository(database.noteDao())
+    fun provideNoteRepository(
+        database: NoteDatabase,
+        @ApplicationContext context: Context
+    ): NotesRepository {
+        return OfflineNotesRepository(database.noteDao(), context)
     }
 
     @Provides

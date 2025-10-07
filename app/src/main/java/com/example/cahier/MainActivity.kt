@@ -22,30 +22,35 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.cahier.data.NoteType
 import com.example.cahier.ui.CahierApp
-import com.example.cahier.ui.theme.CahierReviewTheme
+import com.example.cahier.ui.theme.CahierAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         val noteId = intent.getLongExtra(AppArgs.NOTE_ID_KEY, -1)
         val noteType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(AppArgs.NOTE_TYPE_KEY, NoteType::class.java)
-        } else {
+        }
+        else {
+            // The old way to get the parcelable extra is deprecated as of API 33, but we use it
+            // because we need to support older versions of Android.
             @Suppress("DEPRECATION")
             intent.getParcelableExtra(AppArgs.NOTE_TYPE_KEY) as NoteType?
         }
 
         setContent {
-            CahierReviewTheme {
+            CahierAppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

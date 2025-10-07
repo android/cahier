@@ -47,9 +47,9 @@ class FileHelper (private val context: Context) {
      * @param uri The content URI to copy from.
      * @return The URI of the newly created local file.
      */
-    suspend fun copyUriToInternalStorage(contentResolver: ContentResolver, uri: Uri): Uri {
+    suspend fun copyUriToInternalStorage(uri: Uri): Uri {
         return withContext(Dispatchers.IO) {
-            val inputStream = contentResolver.openInputStream(uri)
+            val inputStream = context.contentResolver.openInputStream(uri)
             val imagesDir = File(context.filesDir, "images")
             if (!imagesDir.exists()) {
                 imagesDir.mkdirs()

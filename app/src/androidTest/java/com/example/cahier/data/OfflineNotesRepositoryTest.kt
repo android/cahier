@@ -1,10 +1,12 @@
 package com.example.cahier.data
 
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
 import androidx.ink.strokes.ImmutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
+import androidx.test.core.app.ApplicationProvider
 import com.example.cahier.ui.Converters
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +40,8 @@ class OfflineNotesRepositoryTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repository = OfflineNotesRepository(noteDao)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        repository = OfflineNotesRepository(noteDao, context)
     }
 
     @After
@@ -69,7 +72,7 @@ class OfflineNotesRepositoryTest {
         val note = Note(id = noteId, title = "Test")
         whenever(noteDao.getNoteById(noteId)).thenReturn(note)
 
-        repository.updateNoteStrokes(noteId, listOf(stroke))
+        repository.updateNoteStrokes(noteId, listOf(stroke), null)
 
         verify(noteDao).updateNote(any())
     }

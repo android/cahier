@@ -19,43 +19,47 @@
 package com.example.cahier.ui
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.Intent
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.defaultDragHandleSemantics
+import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.ink.strokes.Stroke
-import com.example.cahier.AppArgs
-import com.example.cahier.MainActivity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
 import com.example.cahier.data.Note
 import com.example.cahier.data.NoteType
@@ -63,30 +67,34 @@ import com.example.cahier.navigation.NavigationDestination
 import com.example.cahier.ui.viewmodels.HomeScreenViewModel
 import kotlinx.coroutines.launch
 
+
 object HomeDestination : NavigationDestination {
     override val route = "home"
 }
 
 enum class AppDestinations(
     @StringRes val label: Int,
-    val icon: ImageVector,
+    @DrawableRes val icon: Int,
     @StringRes val contentDescription: Int
 ) {
-    HOME(
+    Home(
         label = R.string.home,
-        icon = Icons.Filled.Home,
+        icon = R.drawable.home_24px,
         contentDescription = R.string.home
     ),
-    SETTINGS(
+    Settings(
         label = R.string.settings,
-        icon = Icons.Filled.Settings,
+        icon = R.drawable.settings_24px,
         contentDescription = R.string.settings
     ),
 }
 
 
 @SuppressLint("NewApi")
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(
+    ExperimentalMaterial3AdaptiveApi::class,
+    ExperimentalMaterial3WindowSizeClassApi::class
+)
 @Composable
 fun HomePane(
     navigateToCanvas: (Long) -> Unit,
@@ -95,27 +103,43 @@ fun HomePane(
     modifier: Modifier = Modifier,
     homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
 ) {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.Home) }
     val navigator = rememberListDetailPaneScaffoldNavigator<Note>()
-    val noteList by homeScreenViewModel.noteList.collectAsState()
-    val selectedNoteUIState by homeScreenViewModel.uiState.collectAsState()
+    val noteList by homeScreenViewModel.noteList.collectAsStateWithLifecycle()
+    val selectedNoteUIState by homeScreenViewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
-
     val activity = LocalActivity.current
+    val windowSizeClass = activity?.let { calculateWindowSizeClass(it) }
+    val paneExpansionState = rememberPaneExpansionState()
+    var hasSetInitialProportion by remember {
+        mutableStateOf(false)
+    }
+    val isCompact = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact
+    val context = LocalContext.current
 
-    LaunchedEffect(selectedNoteUIState.note) {
-        if (false) {
-            if (noteList.noteList.isNotEmpty()) {
-                coroutineScope.launch {
-                    noteList.noteList.first().let { defaultSelectedNote ->
-                        navigator.navigateTo(
-                            ListDetailPaneScaffoldRole.Detail, defaultSelectedNote
-                        )
-                    }
-                }
-            } else {
-                navigator.navigateTo(ListDetailPaneScaffoldRole.List)
-            }
+    LaunchedEffect(context) {
+        homeScreenViewModel.newWindowEvent.collect { intent ->
+            context.startActivity(intent)
+        }
+    }
+
+    LaunchedEffect(isCompact) {
+        if (isCompact) {
+            homeScreenViewModel.clearSelection()
+            navigator.navigateTo(ListDetailPaneScaffoldRole.List)
+        }
+    }
+
+    LaunchedEffect(isCompact, noteList) {
+        if (!isCompact && noteList.noteList.isNotEmpty() && selectedNoteUIState.note.id == 0L) {
+            homeScreenViewModel.selectNote(noteList.noteList.first().id)
+        }
+    }
+
+    LaunchedEffect(isCompact, hasSetInitialProportion) {
+        if (!isCompact && !hasSetInitialProportion) {
+            paneExpansionState.setFirstPaneProportion(0.3f)
+            hasSetInitialProportion = true
         }
     }
 
@@ -139,8 +163,10 @@ fun HomePane(
                     NavigationSuiteItem(
                         icon = {
                             Icon(
-                                destination.icon,
-                                contentDescription = stringResource(destination.contentDescription)
+                                painter = painterResource(id = destination.icon),
+                                contentDescription = stringResource(
+                                    destination.contentDescription
+                                )
                             )
                         },
                         label = { Text(stringResource(destination.label)) },
@@ -148,7 +174,7 @@ fun HomePane(
                         onClick = {
                             if (currentDestination != destination) {
                                 currentDestination = destination
-                                if (destination != AppDestinations.HOME
+                                if (destination != AppDestinations.Home
                                     && navigator.currentDestination?.pane ==
                                     ListDetailPaneScaffoldRole.Detail
                                 ) {
@@ -162,18 +188,40 @@ fun HomePane(
             navigationItemVerticalArrangement = Arrangement.Center,
             content = {
                 when (currentDestination) {
-                    AppDestinations.HOME -> {
+                    AppDestinations.Home -> {
                         ListDetailPaneScaffold(
                             directive = navigator.scaffoldDirective,
                             value = navigator.scaffoldValue,
+                            paneExpansionState = paneExpansionState,
+                            paneExpansionDragHandle = { state ->
+                                val interactionSource = remember { MutableInteractionSource() }
+                                VerticalDragHandle(
+                                    modifier =
+                                        Modifier.paneExpansionDraggable(
+                                            state,
+                                            LocalMinimumInteractiveComponentSize
+                                                .current,
+                                            interactionSource,
+                                            state.defaultDragHandleSemantics()
+                                        ),
+                                )
+                            },
                             listPane = {
                                 ListPaneContent(
                                     noteList = noteList.noteList,
+                                    isCompact = isCompact,
+                                    selectedNoteId = if (isCompact) null
+                                    else selectedNoteUIState.note.id,
                                     onNoteClick = {
-                                        coroutineScope.launch {
-                                            navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                                        if (isCompact) {
+                                            if (it.type == NoteType.Drawing) {
+                                                navigateToDrawingCanvas(it.id)
+                                            } else {
+                                                navigateToCanvas(it.id)
+                                            }
+                                        } else {
+                                            homeScreenViewModel.selectNote(it.id)
                                         }
-                                        homeScreenViewModel.selectNote(it.id)
                                     },
                                     onAddNewTextNote = {
                                         homeScreenViewModel.addNote { noteId ->
@@ -193,29 +241,31 @@ fun HomePane(
                                         homeScreenViewModel.toggleFavorite(noteId)
                                     },
                                     onNewWindow = { note ->
-                                        openNewWindow(activity, note)
+                                        homeScreenViewModel.openInNewWindow(note)
                                     },
                                 )
                             },
                             detailPane = {
-                                selectedNoteUIState.note.let { note ->
-                                    DetailPaneContent(
-                                        note = note,
-                                        strokes = selectedNoteUIState.strokes,
-                                        onClickToEdit = {
-                                            if (note.type == NoteType.TEXT) {
-                                                navigateToCanvas(note.id)
-                                            } else {
-                                                navigateToDrawingCanvas(note.id)
+                                if (!isCompact) {
+                                    selectedNoteUIState.note.let { note ->
+                                        DetailPaneContent(
+                                            note = note,
+                                            strokes = selectedNoteUIState.strokes,
+                                            onClickToEdit = {
+                                                if (note.type == NoteType.Text) {
+                                                    navigateToCanvas(note.id)
+                                                } else {
+                                                    navigateToDrawingCanvas(note.id)
+                                                }
                                             }
-                                        }
-                                    )
+                                        )
+                                    }
                                 }
                             }
                         )
                     }
 
-                    AppDestinations.SETTINGS -> {
+                    AppDestinations.Settings -> {
                         SettingsPane(
                             modifier = Modifier.fillMaxSize()
                         )
@@ -231,26 +281,30 @@ fun HomePane(
 @Composable
 private fun ListPaneContent(
     noteList: List<Note>,
+    isCompact: Boolean,
+    selectedNoteId: Long?,
     onNoteClick: (Note) -> Unit,
     onAddNewTextNote: () -> Unit,
     onAddNewDrawingNote: () -> Unit,
     onToggleFavorite: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    onDeleteNote: (Note) -> Unit = {},
-    onNewWindow: (Note) -> Unit = {},
+    onDeleteNote: (Note) -> Unit,
+    onNewWindow: (Note) -> Unit,
 ) {
     val (favorites, others) = noteList.partition { it.isFavorite }
 
     NoteList(
-        noteList = noteList,
         favorites = favorites,
         otherNotes = others,
+        isCompact = isCompact,
+        selectedNoteId = selectedNoteId,
         onNoteClick = onNoteClick,
         onAddNewTextNote = onAddNewTextNote,
         onAddNewDrawingNote = onAddNewDrawingNote,
         onDeleteNote = onDeleteNote,
         onToggleFavorite = onToggleFavorite,
-        onNewWindow = onNewWindow
+        onNewWindow = onNewWindow,
+        modifier = modifier
     )
 }
 
@@ -264,16 +318,7 @@ private fun DetailPaneContent(
     NoteDetail(
         note = note,
         strokes = strokes,
-        onClickToEdit = onClickToEdit
+        onClickToEdit = onClickToEdit,
+        modifier = modifier
     )
-}
-
-fun openNewWindow(activity: Activity?, note: Note) {
-    val intent = Intent(activity, MainActivity::class.java)
-    intent.putExtra(AppArgs.NOTE_TYPE_KEY, note.type)
-    intent.putExtra(AppArgs.NOTE_ID_KEY, note.id)
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
-        Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-
-    activity?.startActivity(intent)
 }

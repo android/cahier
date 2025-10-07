@@ -20,7 +20,6 @@ package com.example.cahier.ui.viewmodels
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -48,9 +47,6 @@ class CanvasScreenViewModel @Inject constructor(
     val uiState: StateFlow<CahierUiState> = _uiState.asStateFlow()
 
     private val noteId: Long? = savedStateHandle[TextCanvasDestination.NOTE_ID_ARG]
-
-    val titleFocusRequester = FocusRequester()
-    val bodyFocusRequester = FocusRequester()
 
     init {
         viewModelScope.launch {
@@ -105,7 +101,12 @@ class CanvasScreenViewModel @Inject constructor(
                     currentState.copy(note = updatedNote)
                 }
 
-                noteId?.let { noteRepository.updateNoteImageUriList(it, newList) }
+                noteId?.let {
+                    noteRepository.updateNoteImageUriList(
+                        it,
+                        newList
+                    )
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to add image", e)
                 _uiState.update { it.copy(error = "Failed to add image.") }
@@ -116,6 +117,13 @@ class CanvasScreenViewModel @Inject constructor(
     fun toggleFavorite() {
         viewModelScope.launch {
             noteId?.let { noteRepository.toggleFavorite(it) }
+        }
+    }
+
+    fun handleDroppedUri(uri: Uri) {
+        viewModelScope.launch {
+            val localUri = fileHelper.copyUriToInternalStorage(uri)
+            addImage(localUri)
         }
     }
 

@@ -80,12 +80,17 @@ class FakeNotesRepository : NotesRepository {
         }
     }
 
-    override suspend fun updateNoteStrokes(noteId: Long, strokes: List<Stroke>) {
+    override suspend fun updateNoteStrokes(
+        noteId: Long,
+        strokes: List<Stroke>,
+        clientBrushFamilyId: String?
+    ) {
         strokesFlow.update {
             val current = LinkedHashMap(it)
             current[noteId] = strokes
             current
         }
+        updateNoteField(noteId) { it.copy(clientBrushFamilyId = clientBrushFamilyId) }
     }
 
     override suspend fun getNoteStrokes(noteId: Long): List<Stroke> {
