@@ -110,7 +110,7 @@ fun NoteCanvas(
         mutableStateOf(TextFieldValue(uiState.note.text ?: ""))
     }
 
-    LaunchedEffect(uiState.note) {
+    LaunchedEffect(uiState.note.id) {
         if (titleState.text != uiState.note.title) {
             titleState = TextFieldValue(uiState.note.title)
         }
