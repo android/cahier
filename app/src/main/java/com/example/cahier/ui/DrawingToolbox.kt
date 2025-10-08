@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -234,8 +233,14 @@ internal fun ToolboxHistoryControls(
                 )
             )
         }
-        Button(onClick = { coroutineScope.launch { onClear() } }) {
-            Text(text = stringResource(R.string.clear))
+        IconButton(
+            onClick = { coroutineScope.launch { onClear() } },
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.clear_all_24px),
+                contentDescription = stringResource(R.string.clear)
+            )
         }
     }
     if (isVertical) {

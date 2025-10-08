@@ -78,7 +78,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.cahier.R
@@ -108,6 +108,15 @@ fun NoteCanvas(
 
     var bodyState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(uiState.note.text ?: ""))
+    }
+
+    LaunchedEffect(uiState.note.id) {
+        if (titleState.text != uiState.note.title) {
+            titleState = TextFieldValue(uiState.note.title)
+        }
+        if (bodyState.text != (uiState.note.text ?: "")) {
+            bodyState = TextFieldValue(uiState.note.text ?: "")
+        }
     }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
