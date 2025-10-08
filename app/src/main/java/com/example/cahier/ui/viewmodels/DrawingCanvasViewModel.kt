@@ -384,6 +384,7 @@ class DrawingCanvasViewModel @Inject constructor(
     fun clearStrokes() {
         if (_uiState.value.strokes.isNotEmpty()) {
             updateStrokes(emptyList())
+            viewModelScope.launch { saveStrokes() }
         }
     }
 

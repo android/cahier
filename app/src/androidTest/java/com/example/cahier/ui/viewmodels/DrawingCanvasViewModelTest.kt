@@ -39,6 +39,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -176,5 +177,21 @@ class DrawingCanvasViewModelTest {
         assertTrue(viewModel.canUndo.value)
         assertFalse(viewModel.canRedo.value)
         assertEquals(1, viewModel.uiState.value.strokes.size)
+    }
+
+    @Test
+    fun clearStrokes_clears_and_saves_empty_strokes() = runTest {
+        val brush = Brush(StockBrushes.markerLatest, 10f, 1f)
+        val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+
+        viewModel.onStrokesFinished(listOf(stroke))
+        assertEquals(1, viewModel.uiState.value.strokes.size)
+
+        viewModel.clearStrokes()
+
+        assertEquals(0, viewModel.uiState.value.strokes.size)
+
+        val note = notesRepository.getNoteStream(noteId).first()
+        assertTrue(note.strokesData.isNullOrEmpty())
     }
 }
