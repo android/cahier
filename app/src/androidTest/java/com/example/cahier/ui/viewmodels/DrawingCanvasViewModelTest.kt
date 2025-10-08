@@ -39,7 +39,6 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -183,15 +182,18 @@ class DrawingCanvasViewModelTest {
     fun clearStrokes_clears_and_saves_empty_strokes() = runTest {
         val brush = Brush(StockBrushes.markerLatest, 10f, 1f)
         val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
-
         viewModel.onStrokesFinished(listOf(stroke))
-        assertEquals(1, viewModel.uiState.value.strokes.size)
+
+        assertEquals (1, viewModel.uiState.value.strokes.size)
+        assertEquals( 1, notesRepository.getNoteStrokes(noteId).size)
 
         viewModel.clearStrokes()
 
-        assertEquals(0, viewModel.uiState.value.strokes.size)
-
-        val note = notesRepository.getNoteStream(noteId).first()
-        assertTrue(note.strokesData.isNullOrEmpty())
+        assertEquals( 0, viewModel.uiState.value.strokes.size)
+        val repoStrokes = notesRepository.getNoteStrokes(noteId)
+        assertTrue(
+            "Strokes should have been cleared from the repository.",
+            repoStrokes.isEmpty()
+        )
     }
 }
