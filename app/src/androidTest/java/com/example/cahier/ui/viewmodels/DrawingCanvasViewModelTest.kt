@@ -177,4 +177,23 @@ class DrawingCanvasViewModelTest {
         assertFalse(viewModel.canRedo.value)
         assertEquals(1, viewModel.uiState.value.strokes.size)
     }
+
+    @Test
+    fun clearStrokes_clears_and_saves_empty_strokes() = runTest {
+        val brush = Brush(StockBrushes.markerLatest, 10f, 1f)
+        val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+        viewModel.onStrokesFinished(listOf(stroke))
+
+        assertEquals (1, viewModel.uiState.value.strokes.size)
+        assertEquals( 1, notesRepository.getNoteStrokes(noteId).size)
+
+        viewModel.clearStrokes()
+
+        assertEquals( 0, viewModel.uiState.value.strokes.size)
+        val repoStrokes = notesRepository.getNoteStrokes(noteId)
+        assertTrue(
+            "Strokes should have been cleared from the repository.",
+            repoStrokes.isEmpty()
+        )
+    }
 }
