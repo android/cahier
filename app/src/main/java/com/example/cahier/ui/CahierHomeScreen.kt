@@ -54,7 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.AppArgs
@@ -115,11 +115,9 @@ fun HomePane(
     }
     val isCompact = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact
     val context = LocalContext.current
-    val newWindowEvent = homeScreenViewModel.newWindowEvent
-        .collectAsStateWithLifecycle(null)
 
 
-    LaunchedEffect(newWindowEvent) {
+    LaunchedEffect(Unit) {
         homeScreenViewModel.newWindowEvent.collect { (noteType, noteId) ->
             val intent = Intent(context, MainActivity::class.java).apply {
                 putExtra(AppArgs.NOTE_TYPE_KEY, noteType)

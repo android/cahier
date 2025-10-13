@@ -92,6 +92,10 @@ class CanvasScreenViewModel @Inject constructor(
     }
 
     fun addImage(localUri: Uri?) {
+        if (localUri == null) {
+            Log.w(TAG, "addImage called with null URI, ignoring.")
+            return
+        }
         viewModelScope.launch {
             try {
                 val currentList = _uiState.value.note.imageUriList ?: emptyList()
