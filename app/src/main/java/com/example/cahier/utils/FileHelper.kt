@@ -42,7 +42,7 @@ class FileHelper (private val context: Context) {
      * where permissions are temporary.
      *
      * @param uri The content URI to copy from.
-     * @return The URI of the newly created local file.
+     * @return The URI of the newly created local file, or null if the copy operation fails.
      */
     suspend fun copyUriToInternalStorage(uri: Uri): Uri? {
         return try {

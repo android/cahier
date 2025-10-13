@@ -415,7 +415,7 @@ private fun NoteImage(
 
     LaunchedEffect(imageUriString) {
         launch {
-            val imageFile = File(imageUriString.toUri().path!!)
+            val imageFile = imageUriString.toUri().path?.let { File(it) } ?: return@launch
 
             val shareableUri = fileHelper.createShareableUri(imageFile)
 
