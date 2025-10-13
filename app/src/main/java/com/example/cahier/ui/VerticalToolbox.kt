@@ -21,8 +21,7 @@ package com.example.cahier.ui
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -53,7 +52,8 @@ internal fun VerticalToolbox(
                 shape = MaterialTheme.shapes.medium
             )
             .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
             ToolboxBrushControls(
@@ -62,16 +62,13 @@ internal fun VerticalToolbox(
                 onColorPickerClick = onColorPickerClick,
             )
         }
-        item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
             HorizontalDivider(
                 thickness = 4.dp,
                 modifier = Modifier
                     .width(48.dp)
-                    .padding(horizontal = 8.dp)
             )
         }
-        item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
             ToolboxHistoryControls(
                 onUndo = onUndo,
@@ -85,16 +82,13 @@ internal fun VerticalToolbox(
                 isVertical = true
             )
         }
-        item { Spacer(modifier = Modifier.height(16.dp)) }
         item {
             HorizontalDivider(
                 thickness = 4.dp,
                 modifier = Modifier
                     .width(48.dp)
-                    .padding(horizontal = 8.dp)
             )
         }
-        item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
             ToolboxNoteActions(
                 drawingCanvasViewModel = drawingCanvasViewModel,

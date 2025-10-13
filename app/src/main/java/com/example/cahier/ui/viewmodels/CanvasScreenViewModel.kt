@@ -20,6 +20,7 @@ package com.example.cahier.ui.viewmodels
 
 import android.net.Uri
 import android.util.Log
+import android.view.DragAndDropPermissions
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -90,7 +91,7 @@ class CanvasScreenViewModel @Inject constructor(
         }
     }
 
-    fun addImage(localUri: Uri) {
+    fun addImage(localUri: Uri?) {
         viewModelScope.launch {
             try {
                 val currentList = _uiState.value.note.imageUriList ?: emptyList()
@@ -120,7 +121,15 @@ class CanvasScreenViewModel @Inject constructor(
         }
     }
 
-    fun handleDroppedUri(uri: Uri) {
+    fun handleDroppedUri(uri: Uri, permissions: DragAndDropPermissions?) {
+        viewModelScope.launch {
+            val localUri = fileHelper.copyUriToInternalStorage(uri)
+            addImage(localUri)
+            permissions?.release()
+        }
+    }
+
+    fun handlePickedImageUri(uri: Uri) {
         viewModelScope.launch {
             val localUri = fileHelper.copyUriToInternalStorage(uri)
             addImage(localUri)
