@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -109,78 +110,103 @@ internal fun ToolboxBrushControls(
     onColorPickerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var brushesMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    var sizeMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val brushesMenuExpanded = rememberSaveable { mutableStateOf(false) }
+    val sizeMenuExpanded = rememberSaveable { mutableStateOf(false) }
     val customBrushes by drawingCanvasViewModel.customBrushes.collectAsStateWithLifecycle()
     val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
 
-    val content = @Composable {
-        Box {
-            IconButton(
-                onClick = { brushesMenuExpanded = true },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.brush_24px),
-                    contentDescription = stringResource(R.string.brush),
-                    modifier = Modifier.background(
-                        color = if (isEraserMode)
-                            Color.Transparent else MaterialTheme.colorScheme.inversePrimary,
-                        shape = CircleShape
-                    )
-                )
-            }
-            BrushesDropdownMenu(
-                expanded = brushesMenuExpanded,
-                onDismissRequest = { brushesMenuExpanded = false },
-                onBrushChange = { newBrush ->
-                    drawingCanvasViewModel.changeBrush(newBrush)
-                    brushesMenuExpanded = false
-                },
-                customBrushes = customBrushes
-            )
-        }
-        IconButton(
-            onClick = {
-                onColorPickerClick()
-                drawingCanvasViewModel.setEraserMode(false)
-            },
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.palette_24px),
-                contentDescription = stringResource(R.string.color),
-            )
-        }
-        Box {
-            IconButton(
-                onClick = { sizeMenuExpanded = true },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.line_weight_24px),
-                    contentDescription = stringResource(R.string.brush_size),
-                )
-            }
-            SizeDropdownMenu(
-                expanded = sizeMenuExpanded,
-                onDismissRequest = { sizeMenuExpanded = false },
-                onSizeChange = { newSize ->
-                    drawingCanvasViewModel.changeBrushSize(newSize)
-                    sizeMenuExpanded = false
-                }
-            )
-        }
-    }
-
     if (isVertical) {
         Column(modifier = modifier) {
-            content()
+            ToolBoxContent(
+                drawingCanvasViewModel = drawingCanvasViewModel,
+                brushesMenuExpanded = brushesMenuExpanded,
+                sizeMenuExpanded = sizeMenuExpanded,
+                customBrushes = customBrushes,
+                onColorPickerClick = onColorPickerClick,
+                isEraserMode = isEraserMode,
+            )
         }
     } else {
         Row(modifier = modifier) {
-            content()
+            ToolBoxContent(
+                drawingCanvasViewModel = drawingCanvasViewModel,
+                brushesMenuExpanded = brushesMenuExpanded,
+                sizeMenuExpanded = sizeMenuExpanded,
+                customBrushes = customBrushes,
+                onColorPickerClick = onColorPickerClick,
+                isEraserMode = isEraserMode,
+            )
         }
+    }
+}
+
+@Composable
+private fun ToolBoxContent(
+    drawingCanvasViewModel: DrawingCanvasViewModel,
+    brushesMenuExpanded: MutableState<Boolean>,
+    sizeMenuExpanded: MutableState<Boolean>,
+    customBrushes: List<CustomBrush>,
+    onColorPickerClick: () -> Unit,
+    isEraserMode: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+    ) {
+        IconButton(
+            onClick = { brushesMenuExpanded.value = true },
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.brush_24px),
+                contentDescription = stringResource(R.string.brush),
+                modifier = Modifier.background(
+                    color = if (isEraserMode)
+                        Color.Transparent else MaterialTheme.colorScheme.inversePrimary,
+                    shape = CircleShape
+                )
+            )
+        }
+        BrushesDropdownMenu(
+            expanded = brushesMenuExpanded.value,
+            onDismissRequest = { brushesMenuExpanded.value = false },
+            onBrushChange = { newBrush ->
+                drawingCanvasViewModel.changeBrush(newBrush)
+                brushesMenuExpanded.value = false
+            },
+            customBrushes = customBrushes
+        )
+    }
+    IconButton(
+        onClick = {
+            onColorPickerClick()
+            drawingCanvasViewModel.setEraserMode(false)
+        },
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.palette_24px),
+            contentDescription = stringResource(R.string.color),
+        )
+    }
+    Box {
+        IconButton(
+            onClick = { sizeMenuExpanded.value = true },
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.line_weight_24px),
+                contentDescription = stringResource(R.string.brush_size),
+            )
+        }
+        SizeDropdownMenu(
+            expanded = sizeMenuExpanded.value,
+            onDismissRequest = { sizeMenuExpanded.value = false },
+            onSizeChange = { newSize ->
+                drawingCanvasViewModel.changeBrushSize(newSize)
+                sizeMenuExpanded.value = false
+            }
+        )
     }
 }
 
