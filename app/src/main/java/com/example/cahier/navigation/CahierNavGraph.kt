@@ -29,7 +29,7 @@ import androidx.navigation.navArgument
 import com.example.cahier.ui.DrawingCanvas
 import com.example.cahier.ui.HomeDestination
 import com.example.cahier.ui.HomePane
-import com.example.cahier.ui.NoteCanvas
+import com.example.cahier.ui.TextNoteCanvasScreen
 
 
 @OptIn(ExperimentalComposeApi::class)
@@ -62,7 +62,7 @@ fun CahierNavHost(
                 type = NavType.LongType
             })
         ) { navBackStackEntry ->
-            NoteCanvas(
+            TextNoteCanvasScreen(
                 onExit = { navController.navigateUp() },
             )
         }

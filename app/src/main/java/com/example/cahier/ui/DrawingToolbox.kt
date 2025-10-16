@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -109,78 +110,103 @@ internal fun ToolboxBrushControls(
     onColorPickerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var brushesMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    var sizeMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val brushesMenuExpanded = rememberSaveable { mutableStateOf(false) }
+    val sizeMenuExpanded = rememberSaveable { mutableStateOf(false) }
     val customBrushes by drawingCanvasViewModel.customBrushes.collectAsStateWithLifecycle()
     val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
 
-    val content = @Composable {
-        Box {
-            IconButton(
-                onClick = { brushesMenuExpanded = true },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.brush_24px),
-                    contentDescription = stringResource(R.string.brush),
-                    modifier = Modifier.background(
-                        color = if (isEraserMode)
-                            Color.Transparent else MaterialTheme.colorScheme.inversePrimary,
-                        shape = CircleShape
-                    )
-                )
-            }
-            BrushesDropdownMenu(
-                expanded = brushesMenuExpanded,
-                onDismissRequest = { brushesMenuExpanded = false },
-                onBrushChange = { newBrush ->
-                    drawingCanvasViewModel.changeBrush(newBrush)
-                    brushesMenuExpanded = false
-                },
-                customBrushes = customBrushes
-            )
-        }
-        IconButton(
-            onClick = {
-                onColorPickerClick()
-                drawingCanvasViewModel.setEraserMode(false)
-            },
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.palette_24px),
-                contentDescription = stringResource(R.string.color),
-            )
-        }
-        Box {
-            IconButton(
-                onClick = { sizeMenuExpanded = true },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.line_weight_24px),
-                    contentDescription = stringResource(R.string.brush_size),
-                )
-            }
-            SizeDropdownMenu(
-                expanded = sizeMenuExpanded,
-                onDismissRequest = { sizeMenuExpanded = false },
-                onSizeChange = { newSize ->
-                    drawingCanvasViewModel.changeBrushSize(newSize)
-                    sizeMenuExpanded = false
-                }
-            )
-        }
-    }
-
     if (isVertical) {
         Column(modifier = modifier) {
-            content()
+            ToolBoxContent(
+                drawingCanvasViewModel = drawingCanvasViewModel,
+                brushesMenuExpanded = brushesMenuExpanded,
+                sizeMenuExpanded = sizeMenuExpanded,
+                customBrushes = customBrushes,
+                onColorPickerClick = onColorPickerClick,
+                isEraserMode = isEraserMode,
+            )
         }
     } else {
         Row(modifier = modifier) {
-            content()
+            ToolBoxContent(
+                drawingCanvasViewModel = drawingCanvasViewModel,
+                brushesMenuExpanded = brushesMenuExpanded,
+                sizeMenuExpanded = sizeMenuExpanded,
+                customBrushes = customBrushes,
+                onColorPickerClick = onColorPickerClick,
+                isEraserMode = isEraserMode,
+            )
         }
+    }
+}
+
+@Composable
+private fun ToolBoxContent(
+    drawingCanvasViewModel: DrawingCanvasViewModel,
+    brushesMenuExpanded: MutableState<Boolean>,
+    sizeMenuExpanded: MutableState<Boolean>,
+    customBrushes: List<CustomBrush>,
+    onColorPickerClick: () -> Unit,
+    isEraserMode: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+    ) {
+        IconButton(
+            onClick = { brushesMenuExpanded.value = true },
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.brush_24px),
+                contentDescription = stringResource(R.string.brush),
+                modifier = Modifier.background(
+                    color = if (isEraserMode)
+                        Color.Transparent else MaterialTheme.colorScheme.inversePrimary,
+                    shape = CircleShape
+                )
+            )
+        }
+        BrushesDropdownMenu(
+            expanded = brushesMenuExpanded.value,
+            onDismissRequest = { brushesMenuExpanded.value = false },
+            onBrushChange = { newBrush ->
+                drawingCanvasViewModel.changeBrush(newBrush)
+                brushesMenuExpanded.value = false
+            },
+            customBrushes = customBrushes
+        )
+    }
+    IconButton(
+        onClick = {
+            onColorPickerClick()
+            drawingCanvasViewModel.setEraserMode(false)
+        },
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.palette_24px),
+            contentDescription = stringResource(R.string.color),
+        )
+    }
+    Box {
+        IconButton(
+            onClick = { sizeMenuExpanded.value = true },
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.line_weight_24px),
+                contentDescription = stringResource(R.string.brush_size),
+            )
+        }
+        SizeDropdownMenu(
+            expanded = sizeMenuExpanded.value,
+            onDismissRequest = { sizeMenuExpanded.value = false },
+            onSizeChange = { newSize ->
+                drawingCanvasViewModel.changeBrushSize(newSize)
+                sizeMenuExpanded.value = false
+            }
+        )
     }
 }
 
@@ -195,62 +221,85 @@ internal fun ToolboxHistoryControls(
     isVertical: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val content = @Composable {
-        val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
-        val coroutineScope = rememberCoroutineScope()
-        IconButton(
-            onClick = onUndo,
-            enabled = canUndo,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.undo_24px),
-                contentDescription = stringResource(R.string.undo)
-            )
-        }
-        IconButton(
-            onClick = onRedo,
-            enabled = canRedo,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.redo_24px),
-                contentDescription = stringResource(R.string.redo)
-            )
-        }
-        IconButton(
-            onClick = {
-                drawingCanvasViewModel.setEraserMode(true)
-            },
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ink_eraser_24px),
-                contentDescription = stringResource(R.string.eraser),
-                modifier = Modifier.background(
-                    color = if (isEraserMode)
-                        MaterialTheme.colorScheme.inversePrimary else Color.Transparent,
-                )
-            )
-        }
-        IconButton(
-            onClick = { coroutineScope.launch { onClear() } },
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.clear_all_24px),
-                contentDescription = stringResource(R.string.clear)
-            )
-        }
-    }
     if (isVertical) {
         Column(modifier = modifier) {
-            content()
+            ToolboxHistoryControlsContent(
+                drawingCanvasViewModel = drawingCanvasViewModel,
+                onUndo = onUndo,
+                canUndo = canUndo,
+                onRedo = onRedo,
+                canRedo = canRedo,
+                onClear = onClear
+            )
         }
     } else {
         Row(modifier = modifier) {
-            content()
+            ToolboxHistoryControlsContent(
+                drawingCanvasViewModel = drawingCanvasViewModel,
+                onUndo = onUndo,
+                canUndo = canUndo,
+                onRedo = onRedo,
+                canRedo = canRedo,
+                onClear = onClear
+            )
         }
+    }
+}
+
+@Composable
+private fun ToolboxHistoryControlsContent(
+    drawingCanvasViewModel: DrawingCanvasViewModel,
+    onUndo: () -> Unit,
+    canUndo: Boolean,
+    onRedo: () -> Unit,
+    canRedo: Boolean,
+    onClear: () -> Unit,
+) {
+    val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
+    IconButton(
+        onClick = onUndo,
+        enabled = canUndo,
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.undo_24px),
+            contentDescription = stringResource(R.string.undo)
+        )
+    }
+    IconButton(
+        onClick = onRedo,
+        enabled = canRedo,
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.redo_24px),
+            contentDescription = stringResource(R.string.redo)
+        )
+    }
+    IconButton(
+        onClick = {
+            drawingCanvasViewModel.setEraserMode(true)
+        },
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ink_eraser_24px),
+            contentDescription = stringResource(R.string.eraser),
+            modifier = Modifier.background(
+                color = if (isEraserMode)
+                    MaterialTheme.colorScheme.inversePrimary else Color.Transparent,
+            )
+        )
+    }
+    IconButton(
+        onClick = { coroutineScope.launch { onClear() } },
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.clear_all_24px),
+            contentDescription = stringResource(R.string.clear)
+        )
     }
 }
 
@@ -262,77 +311,91 @@ internal fun ToolboxNoteActions(
     isVertical: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val content = @Composable {
-        val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
-        var optionsMenuExpanded by rememberSaveable { mutableStateOf(false) }
-        IconButton(
-            onClick = { drawingCanvasViewModel.toggleFavorite() },
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                painter = if (uiState.note.isFavorite)
-                    painterResource(R.drawable.favorite_24px_filled) else
-                    painterResource(R.drawable.favorite_24px),
-                contentDescription = if (uiState.note.isFavorite)
-                    stringResource(R.string.unfavorite) else
-                    stringResource(R.string.favorite),
-                tint = if (uiState.note.isFavorite)
-                    MaterialTheme.colorScheme.primary else LocalContentColor.current
-            )
-        }
-        Spacer(modifier = Modifier.size(4.dp))
-        IconButton(
-            onClick = {
-                imagePickerLauncher.launch(
-                    PickVisualMediaRequest(
-                        ActivityResultContracts.PickVisualMedia.ImageOnly
-                    )
-                )
-            },
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.image_24px),
-                contentDescription = stringResource(R.string.add_image)
-            )
-        }
-        Box {
-            IconButton(
-                onClick = { optionsMenuExpanded = true },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.menu_24px),
-                    contentDescription = stringResource(R.string.more_options)
-                )
-            }
-            DropdownMenu(
-                expanded = optionsMenuExpanded,
-                onDismissRequest = { optionsMenuExpanded = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.exit)) },
-                    onClick = {
-                        optionsMenuExpanded = false
-                        onExit()
-                    },
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.exit_to_app_24px),
-                            contentDescription = null
-                        )
-                    }
-                )
-            }
-        }
-    }
     if (isVertical) {
         Column(modifier = modifier) {
-            content()
+            ToolboxNoteActionsContent(
+                drawingCanvasViewModel = drawingCanvasViewModel,
+                imagePickerLauncher = imagePickerLauncher,
+                onExit = onExit
+            )
         }
     } else {
         Row(modifier = modifier) {
-            content()
+            ToolboxNoteActionsContent(
+                drawingCanvasViewModel = drawingCanvasViewModel,
+                imagePickerLauncher = imagePickerLauncher,
+                onExit = onExit
+            )
+        }
+    }
+}
+
+@Composable
+private fun ToolboxNoteActionsContent(
+    drawingCanvasViewModel: DrawingCanvasViewModel,
+    imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
+    onExit: () -> Unit
+) {
+    val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
+    var optionsMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    IconButton(
+        onClick = { drawingCanvasViewModel.toggleFavorite() },
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            painter = if (uiState.note.isFavorite)
+                painterResource(R.drawable.favorite_24px_filled) else
+                painterResource(R.drawable.favorite_24px),
+            contentDescription = if (uiState.note.isFavorite)
+                stringResource(R.string.unfavorite) else
+                stringResource(R.string.favorite),
+            tint = if (uiState.note.isFavorite)
+                MaterialTheme.colorScheme.primary else LocalContentColor.current
+        )
+    }
+    Spacer(modifier = Modifier.size(4.dp))
+    IconButton(
+        onClick = {
+            imagePickerLauncher.launch(
+                PickVisualMediaRequest(
+                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                )
+            )
+        },
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.image_24px),
+            contentDescription = stringResource(R.string.add_image)
+        )
+    }
+    Box {
+        IconButton(
+            onClick = { optionsMenuExpanded = true },
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.menu_24px),
+                contentDescription = stringResource(R.string.more_options)
+            )
+        }
+        DropdownMenu(
+            expanded = optionsMenuExpanded,
+            onDismissRequest = { optionsMenuExpanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.exit)) },
+                onClick = {
+                    optionsMenuExpanded = false
+                    onExit()
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.exit_to_app_24px),
+                        contentDescription = null
+                    )
+                }
+            )
         }
     }
 }

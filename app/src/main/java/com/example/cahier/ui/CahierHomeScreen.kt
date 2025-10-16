@@ -19,21 +19,18 @@
 package com.example.cahier.ui
 
 import android.annotation.SuppressLint
-import android.util.Log
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
@@ -57,9 +54,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.cahier.AppArgs
+import com.example.cahier.MainActivity
 import com.example.cahier.R
 import com.example.cahier.data.Note
 import com.example.cahier.data.NoteType
@@ -117,8 +116,16 @@ fun HomePane(
     val isCompact = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact
     val context = LocalContext.current
 
-    LaunchedEffect(context) {
-        homeScreenViewModel.newWindowEvent.collect { intent ->
+
+    LaunchedEffect(Unit) {
+        homeScreenViewModel.newWindowEvent.collect { (noteType, noteId) ->
+            val intent = Intent(context, MainActivity::class.java).apply {
+                putExtra(AppArgs.NOTE_TYPE_KEY, noteType)
+                putExtra(AppArgs.NOTE_ID_KEY, noteId)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+                    Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+            }
             context.startActivity(intent)
         }
     }
@@ -149,132 +156,126 @@ fun HomePane(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-    ) {
-        NavigationSuiteScaffold(
-            navigationItems = {
-                AppDestinations.entries.forEach { destination ->
-                    val isSelected = currentDestination == destination
-                    NavigationSuiteItem(
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = destination.icon),
-                                contentDescription = stringResource(
-                                    destination.contentDescription
-                                )
+    NavigationSuiteScaffold(
+        modifier = modifier,
+        navigationItems = {
+            AppDestinations.entries.forEach { destination ->
+                val isSelected = currentDestination == destination
+                NavigationSuiteItem(
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = destination.icon),
+                            contentDescription = stringResource(
+                                destination.contentDescription
+                            )
+                        )
+                    },
+                    label = { Text(stringResource(destination.label)) },
+                    selected = isSelected,
+                    onClick = {
+                        if (currentDestination != destination) {
+                            currentDestination = destination
+                            if (destination != AppDestinations.Home
+                                && navigator.currentDestination?.pane ==
+                                ListDetailPaneScaffoldRole.Detail
+                            ) {
+                                homeScreenViewModel.clearSelection()
+                            }
+                        }
+                    }
+                )
+            }
+        },
+        navigationItemVerticalArrangement = Arrangement.Center,
+        content = {
+            when (currentDestination) {
+                AppDestinations.Home -> {
+                    ListDetailPaneScaffold(
+                        directive = navigator.scaffoldDirective,
+                        value = navigator.scaffoldValue,
+                        paneExpansionState = paneExpansionState,
+                        paneExpansionDragHandle = { state ->
+                            val interactionSource = remember { MutableInteractionSource() }
+                            VerticalDragHandle(
+                                modifier =
+                                    Modifier.paneExpansionDraggable(
+                                        state,
+                                        LocalMinimumInteractiveComponentSize
+                                            .current,
+                                        interactionSource,
+                                        state.defaultDragHandleSemantics()
+                                    ),
                             )
                         },
-                        label = { Text(stringResource(destination.label)) },
-                        selected = isSelected,
-                        onClick = {
-                            if (currentDestination != destination) {
-                                currentDestination = destination
-                                if (destination != AppDestinations.Home
-                                    && navigator.currentDestination?.pane ==
-                                    ListDetailPaneScaffoldRole.Detail
-                                ) {
-                                    homeScreenViewModel.clearSelection()
+                        listPane = {
+                            ListPaneContent(
+                                noteList = noteList.noteList,
+                                isCompact = isCompact,
+                                selectedNoteId = if (isCompact) null
+                                else selectedNoteUIState.note.id,
+                                onNoteClick = {
+                                    if (isCompact) {
+                                        if (it.type == NoteType.Drawing) {
+                                            navigateToDrawingCanvas(it.id)
+                                        } else {
+                                            navigateToCanvas(it.id)
+                                        }
+                                    } else {
+                                        homeScreenViewModel.selectNote(it.id)
+                                    }
+                                },
+                                onAddNewTextNote = {
+                                    homeScreenViewModel.addNote { noteId ->
+                                        navigateToCanvas(noteId)
+                                    }
+                                },
+                                onAddNewDrawingNote = {
+                                    homeScreenViewModel.addDrawingNote { noteId ->
+                                        navigateToDrawingCanvas(noteId)
+                                    }
+                                },
+                                onDeleteNote = { note ->
+                                    homeScreenViewModel.deleteNote(note)
+                                    navigateUp()
+                                },
+                                onToggleFavorite = { noteId ->
+                                    homeScreenViewModel.toggleFavorite(noteId)
+                                },
+                                onNewWindow = { note ->
+                                    homeScreenViewModel.openInNewWindow(note)
+                                },
+                            )
+                        },
+                        detailPane = {
+                            if (!isCompact) {
+                                selectedNoteUIState.note.let { note ->
+                                    DetailPaneContent(
+                                        note = note,
+                                        strokes = selectedNoteUIState.strokes,
+                                        onClickToEdit = {
+                                            if (note.type == NoteType.Text) {
+                                                navigateToCanvas(note.id)
+                                            } else {
+                                                navigateToDrawingCanvas(note.id)
+                                            }
+                                        }
+                                    )
                                 }
                             }
                         }
                     )
                 }
-            },
-            navigationItemVerticalArrangement = Arrangement.Center,
-            content = {
-                when (currentDestination) {
-                    AppDestinations.Home -> {
-                        ListDetailPaneScaffold(
-                            directive = navigator.scaffoldDirective,
-                            value = navigator.scaffoldValue,
-                            paneExpansionState = paneExpansionState,
-                            paneExpansionDragHandle = { state ->
-                                val interactionSource = remember { MutableInteractionSource() }
-                                VerticalDragHandle(
-                                    modifier =
-                                        Modifier.paneExpansionDraggable(
-                                            state,
-                                            LocalMinimumInteractiveComponentSize
-                                                .current,
-                                            interactionSource,
-                                            state.defaultDragHandleSemantics()
-                                        ),
-                                )
-                            },
-                            listPane = {
-                                ListPaneContent(
-                                    noteList = noteList.noteList,
-                                    isCompact = isCompact,
-                                    selectedNoteId = if (isCompact) null
-                                    else selectedNoteUIState.note.id,
-                                    onNoteClick = {
-                                        if (isCompact) {
-                                            if (it.type == NoteType.Drawing) {
-                                                navigateToDrawingCanvas(it.id)
-                                            } else {
-                                                navigateToCanvas(it.id)
-                                            }
-                                        } else {
-                                            homeScreenViewModel.selectNote(it.id)
-                                        }
-                                    },
-                                    onAddNewTextNote = {
-                                        homeScreenViewModel.addNote { noteId ->
-                                            navigateToCanvas(noteId)
-                                        }
-                                    },
-                                    onAddNewDrawingNote = {
-                                        homeScreenViewModel.addDrawingNote { noteId ->
-                                            navigateToDrawingCanvas(noteId)
-                                        }
-                                    },
-                                    onDeleteNote = { note ->
-                                        homeScreenViewModel.deleteNote(note)
-                                        navigateUp()
-                                    },
-                                    onToggleFavorite = { noteId ->
-                                        homeScreenViewModel.toggleFavorite(noteId)
-                                    },
-                                    onNewWindow = { note ->
-                                        homeScreenViewModel.openInNewWindow(note)
-                                    },
-                                )
-                            },
-                            detailPane = {
-                                if (!isCompact) {
-                                    selectedNoteUIState.note.let { note ->
-                                        DetailPaneContent(
-                                            note = note,
-                                            strokes = selectedNoteUIState.strokes,
-                                            onClickToEdit = {
-                                                if (note.type == NoteType.Text) {
-                                                    navigateToCanvas(note.id)
-                                                } else {
-                                                    navigateToDrawingCanvas(note.id)
-                                                }
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        )
-                    }
 
-                    AppDestinations.Settings -> {
-                        SettingsPane(
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
+                AppDestinations.Settings -> {
+                    SettingsScreen(
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
-
             }
-        )
-    }
+
+        }
+    )
+
 }
 
 
