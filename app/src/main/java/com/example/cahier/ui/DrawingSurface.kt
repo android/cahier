@@ -77,7 +77,7 @@ fun DrawingSurface(
         Canvas(modifier = Modifier.fillMaxSize()) {
             val canvas = drawContext.canvas.nativeCanvas
             strokes.forEach { stroke ->
-                val blendMode = if (stroke.brush.family == StockBrushes.highlighterLatest) {
+                val blendMode = if (stroke.brush.family == StockBrushes.highlighter()) {
                     BlendMode.Multiply
                 } else {
                     BlendMode.SrcOver
@@ -146,7 +146,7 @@ fun DrawingSurfacePreview() {
     var currentBrush by remember {
         mutableStateOf(
             Brush.createWithComposeColor(
-                family = StockBrushes.highlighterLatest,
+                family = StockBrushes.highlighter(),
                 color = androidx.compose.ui.graphics.Color.Blue,
                 size = 10F,
                 epsilon = 0.01F

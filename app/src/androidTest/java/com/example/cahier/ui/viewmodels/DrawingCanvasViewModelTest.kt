@@ -119,11 +119,11 @@ class DrawingCanvasViewModelTest {
     @Test
     fun changeBrush_updates_selectedBrush_state() = runTest {
         val initialBrush = viewModel.getCurrentBrush()
-        viewModel.changeBrushAndSize(StockBrushes.highlighterLatest, 20f)
+        viewModel.changeBrushAndSize(StockBrushes.highlighter(), 20f)
 
         val newBrush = viewModel.getCurrentBrush()
         assertNotEquals(initialBrush.family, newBrush.family)
-        assertEquals(StockBrushes.highlighterLatest, newBrush.family)
+        assertEquals(StockBrushes.highlighter(), newBrush.family)
         assertEquals(20f, newBrush.size, 0.01f)
         assertTrue(newBrush.composeColor.alpha < 1.0f)
     }
@@ -145,18 +145,18 @@ class DrawingCanvasViewModelTest {
 
     @Test
     fun highlighter_brush_has_reduced_alpha() = runTest {
-        viewModel.changeBrushAndSize(StockBrushes.highlighterLatest, 20f)
+        viewModel.changeBrushAndSize(StockBrushes.highlighter(), 20f)
         val highlighterBrush = viewModel.getCurrentBrush()
         assertTrue(highlighterBrush.composeColor.alpha < 1.0f)
 
-        viewModel.changeBrushAndSize(StockBrushes.markerLatest, 10f)
+        viewModel.changeBrushAndSize(StockBrushes.marker(), 10f)
         val markerBrush = viewModel.getCurrentBrush()
         assertEquals(1.0f, markerBrush.composeColor.alpha, 0.01f)
     }
 
     @Test
     fun undo_restores_previous_strokes() = runTest {
-        val brush = Brush(StockBrushes.markerLatest, 10f, 1f)
+        val brush = Brush(StockBrushes.marker(), 10f, 1f)
         val stroke1 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
 
         viewModel.onStrokesFinished(listOf(stroke1))
@@ -180,7 +180,7 @@ class DrawingCanvasViewModelTest {
 
     @Test
     fun clearStrokes_clears_and_saves_empty_strokes() = runTest {
-        val brush = Brush(StockBrushes.markerLatest, 10f, 1f)
+        val brush = Brush(StockBrushes.marker(), 10f, 1f)
         val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
         viewModel.onStrokesFinished(listOf(stroke))
 
@@ -205,7 +205,7 @@ class DrawingCanvasViewModelTest {
             viewModel.isEraserMode.value
         )
 
-        viewModel.changeBrush(StockBrushes.markerLatest)
+        viewModel.changeBrush(StockBrushes.marker())
 
         assertFalse(
             "Calling changeBrush should disable eraser mode.",
