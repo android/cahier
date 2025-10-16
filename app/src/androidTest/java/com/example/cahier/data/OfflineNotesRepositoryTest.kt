@@ -51,7 +51,7 @@ class OfflineNotesRepositoryTest {
 
     @Test
     fun getNoteStrokes_deserializes_strokes_correctly() = runTest {
-        val brush = Brush(StockBrushes.markerLatest, 1f, 1f)
+        val brush = Brush(StockBrushes.marker(), 1f, 1f)
         val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
         val serializedStroke = Converters().serializeStroke(stroke)
         val strokesJson = Gson().toJson(listOf(serializedStroke))
@@ -67,7 +67,7 @@ class OfflineNotesRepositoryTest {
     @Test
     fun updateNoteStrokes_calls_DAO_with_serialized_strokes() = runTest {
         val noteId = 1L
-        val brush = Brush(StockBrushes.markerLatest, 1f, 1f)
+        val brush = Brush(StockBrushes.marker(), 1f, 1f)
         val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
         val note = Note(id = noteId, title = "Test")
         whenever(noteDao.getNoteById(noteId)).thenReturn(note)

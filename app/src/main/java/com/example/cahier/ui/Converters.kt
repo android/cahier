@@ -48,10 +48,10 @@ class Converters {
 
     companion object {
         private val stockBrushToEnumValues = mapOf(
-            StockBrushes.markerLatest to SerializedStockBrush.MarkerLatest,
-            StockBrushes.pressurePenLatest to SerializedStockBrush.PressurePenLatest,
-            StockBrushes.highlighterLatest to SerializedStockBrush.HighlighterLatest,
-            StockBrushes.dashedLineLatest to SerializedStockBrush.DashedLineLatest,
+            StockBrushes.marker() to SerializedStockBrush.MarkerLatest,
+            StockBrushes.pressurePen() to SerializedStockBrush.PressurePenLatest,
+            StockBrushes.highlighter() to SerializedStockBrush.HighlighterLatest,
+            StockBrushes.dashedLine() to SerializedStockBrush.DashedLineLatest,
         )
 
         private val enumToStockBrush =
@@ -102,7 +102,7 @@ class Converters {
             it.brushFamily.clientBrushFamilyId == serializedBrush.clientBrushFamilyId
         }
 
-        val brushFamily = customBrush?.brushFamily ?: stockBrushFamily ?: StockBrushes.markerV1
+        val brushFamily = customBrush?.brushFamily ?: stockBrushFamily ?: StockBrushes.marker()
 
         return Brush.createWithColorLong(
             family = brushFamily,
