@@ -6,7 +6,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.cahier.R
 
 @Composable
@@ -32,16 +31,5 @@ fun ConfirmationDialog(
             }
         },
         modifier = modifier
-    )
-}
-
-@Preview
-@Composable
-fun ConfirmationDialogPreview() {
-    ConfirmationDialog(
-        onConfirm = {},
-        onDismiss = {},
-        title = "Confirm",
-        text = "Confirm you want to perform this action."
     )
 }

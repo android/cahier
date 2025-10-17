@@ -21,17 +21,19 @@
 
 package com.example.cahier.utils
 
+import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
 import androidx.core.content.FileProvider
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import kotlin.io.copyTo
 import kotlin.io.use
 
@@ -41,32 +43,26 @@ class FileHelper (private val context: Context) {
      * This is crucial for handling URIs from external sources like drag-and-drop,
      * where permissions are temporary.
      *
+     * @param contentResolver The ContentResolver to use for opening the URI.
      * @param uri The content URI to copy from.
-     * @return The URI of the newly created local file, or null if the copy operation fails.
+     * @return The URI of the newly created local file.
      */
-    suspend fun copyUriToInternalStorage(uri: Uri): Uri? {
-        return try {
-            withContext(Dispatchers.IO) {
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val imagesDir = File(context.filesDir, "images")
-                if (!imagesDir.exists()) {
-                    imagesDir.mkdirs()
-                }
-                val outputFile = File(imagesDir, "img_${UUID.randomUUID()}.jpg")
-                val outputStream = FileOutputStream(outputFile)
-                inputStream?.use { input ->
-                    outputStream.use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                Uri.fromFile(outputFile)
+    suspend fun copyUriToInternalStorage(uri: Uri): Uri {
+        return withContext(Dispatchers.IO) {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val imagesDir = File(context.filesDir, "images")
+            if (!imagesDir.exists()) {
+                imagesDir.mkdirs()
             }
-        } catch (e: SecurityException) {
-            Log.e("FileHelper", "SecurityException for URI: $uri", e)
-            null
-        } catch (e: IOException) {
-            Log.e("FileHelper", "IOException for URI: $uri", e)
-            null
+
+            val outputFile = File(imagesDir, "img_${UUID.randomUUID()}.jpg")
+            val outputStream = FileOutputStream(outputFile)
+            inputStream?.use { input ->
+                outputStream.use { output ->
+                    input.copyTo(output)
+                }
+            }
+            Uri.fromFile(outputFile)
         }
     }
 
