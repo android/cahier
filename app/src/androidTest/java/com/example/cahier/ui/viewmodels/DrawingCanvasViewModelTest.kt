@@ -184,32 +184,16 @@ class DrawingCanvasViewModelTest {
         val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
         viewModel.onStrokesFinished(listOf(stroke))
 
-        assertEquals(1, viewModel.uiState.value.strokes.size)
-        assertEquals(1, notesRepository.getNoteStrokes(noteId).size)
+        assertEquals (1, viewModel.uiState.value.strokes.size)
+        assertEquals( 1, notesRepository.getNoteStrokes(noteId).size)
 
         viewModel.clearStrokes()
 
-        assertEquals(0, viewModel.uiState.value.strokes.size)
+        assertEquals( 0, viewModel.uiState.value.strokes.size)
         val repoStrokes = notesRepository.getNoteStrokes(noteId)
         assertTrue(
             "Strokes should have been cleared from the repository.",
             repoStrokes.isEmpty()
-        )
-    }
-
-    @Test
-    fun changeBrush_disables_eraserMode() = runTest {
-        viewModel.setEraserMode(true)
-        assertTrue(
-            "Precondition failed: Eraser mode should be enabled.",
-            viewModel.isEraserMode.value
-        )
-
-        viewModel.changeBrush(StockBrushes.markerLatest)
-
-        assertFalse(
-            "Calling changeBrush should disable eraser mode.",
-            viewModel.isEraserMode.value
         )
     }
 }

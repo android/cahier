@@ -413,7 +413,7 @@ fun NoteDetail(
             }
 
             NoteType.Drawing -> {
-                DrawingDetailThumbnail(
+                DrawingPreview(
                     strokes = strokes,
                     onClick = { onClickToEdit(note) },
                     modifier = Modifier
@@ -479,27 +479,24 @@ private fun ExpandedFabContent(
     ) {
         Column(
             horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(end = 8.dp)
         ) {
             Box(
-                modifier = Modifier.height(56.dp),
+                modifier = Modifier.height(56.dp).padding(bottom = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(stringResource(R.string.drawing))
             }
+            Spacer(modifier = Modifier.height(8.dp))
             Box(
-                modifier = Modifier.height(56.dp),
+                modifier = Modifier.height(56.dp).padding(top = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(stringResource(R.string.text_note))
             }
         }
 
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        Column(horizontalAlignment = Alignment.End) {
             FloatingActionButton(
                 onClick = {
                     onDrawingNoteSelected()
@@ -513,11 +510,13 @@ private fun ExpandedFabContent(
                     contentDescription = stringResource(R.string.drawing_note)
                 )
             }
+            Spacer(modifier = Modifier.height(8.dp))
             FloatingActionButton(
                 onClick = {
                     onTextNoteSelected()
                     onCollapse()
                 },
+                modifier = Modifier.padding(top = 8.dp),
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(

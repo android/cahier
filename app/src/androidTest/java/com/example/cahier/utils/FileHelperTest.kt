@@ -71,7 +71,7 @@ class FileHelperTest {
         val resultUri = fileHelper.copyUriToInternalStorage(sourceUri)
 
         assertNotNull(resultUri)
-        val resultFile = File(resultUri?.path!!)
+        val resultFile = File(resultUri.path!!)
         assertTrue(resultFile.exists())
         assertEquals("hello world", resultFile.readText())
 

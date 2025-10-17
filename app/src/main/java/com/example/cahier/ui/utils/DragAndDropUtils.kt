@@ -28,15 +28,21 @@ import androidx.compose.ui.draganddrop.toAndroidDragEvent
 @OptIn(ExperimentalFoundationApi::class)
 fun createDropTarget(
     activity: Activity,
-    onUriReceived: (Uri, android.view.DragAndDropPermissions?) -> Unit
+    onUriReceived: (Uri) -> Unit
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
             val dragEvent = event.toAndroidDragEvent()
             val permission = activity.requestDragAndDropPermissions(dragEvent)
-            val uri = dragEvent.clipData.getItemAt(0)?.uri
-            uri?.let {
-                onUriReceived(it, permission)
+            if (permission != null) {
+                try {
+                    val uri = dragEvent.clipData.getItemAt(0)?.uri
+                    uri?.let {
+                        onUriReceived(it)
+                    }
+                } finally {
+                    permission.release()
+                }
             }
             return true
         }
