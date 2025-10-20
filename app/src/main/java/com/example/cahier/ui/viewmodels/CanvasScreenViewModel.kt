@@ -127,9 +127,12 @@ class CanvasScreenViewModel @Inject constructor(
 
     fun handleDroppedUri(uri: Uri, permissions: DragAndDropPermissions?) {
         viewModelScope.launch {
-            val localUri = fileHelper.copyUriToInternalStorage(uri)
-            addImage(localUri)
-            permissions?.release()
+            try {
+                val localUri = fileHelper.copyUriToInternalStorage(uri)
+                addImage(localUri)
+            } finally {
+                permissions?.release()
+            }
         }
     }
 

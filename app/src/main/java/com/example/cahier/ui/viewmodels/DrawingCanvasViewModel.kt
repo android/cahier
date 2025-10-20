@@ -153,6 +153,7 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun addImageWithLocalUri(localUri: Uri?) {
+        if (localUri == null) return
         val newImageUri = localUri.toString()
         val updatedNote = _uiState.value.note.copy(imageUriList = listOf(newImageUri))
         viewModelScope.launch {
@@ -404,9 +405,12 @@ class DrawingCanvasViewModel @Inject constructor(
 
     fun handleDroppedUri(uri: Uri, permissions: android.view.DragAndDropPermissions?) {
         viewModelScope.launch {
-            val localUri = fileHelper.copyUriToInternalStorage(uri)
-            addImageWithLocalUri(localUri)
-            permissions?.release()
+            try {
+                val localUri = fileHelper.copyUriToInternalStorage(uri)
+                addImageWithLocalUri(localUri)
+            } finally {
+                permissions?.release()
+            }
         }
     }
 
