@@ -127,8 +127,7 @@ class DrawingCanvasViewModel @Inject constructor(
                             it.brushFamily.clientBrushFamilyId == id
                         }
                         customBrush?.let {
-                            _selectedBrush.value =
-                                _selectedBrush.value.copy(family = it.brushFamily)
+                            _selectedBrush.value = _selectedBrush.value.copy(family = it.brushFamily)
                         }
                     }
 
@@ -152,7 +151,7 @@ class DrawingCanvasViewModel @Inject constructor(
         loadCustomBrushes()
     }
 
-    fun addImageWithLocalUri(localUri: Uri?) {
+    fun addImageWithLocalUri(localUri: Uri) {
         val newImageUri = localUri.toString()
         val updatedNote = _uiState.value.note.copy(imageUriList = listOf(newImageUri))
         viewModelScope.launch {
@@ -338,7 +337,6 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrush(brushFamily: BrushFamily) {
-        setEraserMode(false)
         _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily)
             val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
@@ -402,11 +400,10 @@ class DrawingCanvasViewModel @Inject constructor(
         clearImages()
     }
 
-    fun handleDroppedUri(uri: Uri, permissions: android.view.DragAndDropPermissions?) {
+    fun handleDroppedUri(uri: Uri) {
         viewModelScope.launch {
             val localUri = fileHelper.copyUriToInternalStorage(uri)
             addImageWithLocalUri(localUri)
-            permissions?.release()
         }
     }
 

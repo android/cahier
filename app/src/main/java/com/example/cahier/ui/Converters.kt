@@ -46,6 +46,7 @@ class Converters {
 
     private val gson: Gson = GsonBuilder().create()
 
+
     companion object {
         private val stockBrushToEnumValues = mapOf(
             StockBrushes.markerLatest to SerializedStockBrush.MarkerLatest,
@@ -87,7 +88,7 @@ class Converters {
         customBrushes: List<CustomBrush>
     ): Stroke? {
         val inputs = ByteArrayInputStream(serializedStroke.inputs).use { inputStream ->
-            StrokeInputBatch.decode(inputStream)
+            StrokeInputBatch.Companion.decode(inputStream)
         }
         val brush = deserializeBrush(serializedStroke.brush, customBrushes)
         return Stroke(brush = brush, inputs = inputs)
@@ -104,7 +105,7 @@ class Converters {
 
         val brushFamily = customBrush?.brushFamily ?: stockBrushFamily ?: StockBrushes.markerV1
 
-        return Brush.createWithColorLong(
+        return Brush.Companion.createWithColorLong(
             family = brushFamily,
             colorLong = serializedBrush.color,
             size = serializedBrush.size,

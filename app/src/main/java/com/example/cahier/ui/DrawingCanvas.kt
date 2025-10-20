@@ -290,8 +290,8 @@ private fun DrawingSurfaceWithTarget(
     val activity = LocalActivity.current as ComponentActivity
 
     val dropTarget = remember {
-        createDropTarget(activity) { uri, permissions ->
-            drawingCanvasViewModel.handleDroppedUri(uri, permissions)
+        createDropTarget(activity) { uri ->
+            drawingCanvasViewModel.handleDroppedUri(uri)
         }
     }
 
@@ -349,14 +349,6 @@ private fun DrawingSurfaceWithTarget(
                         ClipData.Item(uri)
                     )
                     val dragShadowBuilder = View.DragShadowBuilder(view)
-                    // While Jetpack Compose offers the `dragAndDropSource`
-                    // modifier, a custom implementation using the Android View
-                    // system's `startDragAndDrop` is necessary here. This is
-                    // because the Ink API's drawing gestures conflict with the
-                    // long-press-to-drag gesture when using the standard Compose
-                    // modifier, preventing drag detection. This approach allows
-                    // for a custom gesture detector to coexist with the Ink API
-                    // and manually initiate the drag for seamless interoperability.
                     view.startDragAndDrop(
                         clipData,
                         dragShadowBuilder,
