@@ -62,6 +62,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.focus.FocusRequester
@@ -165,7 +166,7 @@ fun NoteCanvasContent(
     var focusedFieldEnum by rememberSaveable { mutableStateOf(FocusedFieldEnum.None) }
     val titleFocusRequester = remember { FocusRequester() }
     val bodyFocusRequester = remember { FocusRequester() }
-    val activity = LocalActivity.current as ComponentActivity
+    val activity = LocalActivity.current as? ComponentActivity
 
     LaunchedEffect(focusedFieldEnum) {
         when (focusedFieldEnum) {
@@ -184,7 +185,7 @@ fun NoteCanvasContent(
         }
     }
 
-    val dropTarget = remember {
+    val dropTarget: DragAndDropTarget = remember {
         createDropTarget(activity, onDroppedUri)
     }
 
@@ -415,7 +416,8 @@ private fun NoteImage(
 
     LaunchedEffect(imageUriString) {
         launch {
-            val imageFile = imageUriString.toUri().path?.let { File(it) } ?: return@launch
+            val imageFile = imageUriString
+                .toUri().path?.let { File(it) } ?: return@launch
 
             val shareableUri = fileHelper.createShareableUri(imageFile)
 

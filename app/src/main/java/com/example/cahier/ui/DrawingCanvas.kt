@@ -53,7 +53,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -79,8 +78,6 @@ import com.example.cahier.R
 import com.example.cahier.ui.theme.CahierAppTheme
 import com.example.cahier.ui.utils.createDropTarget
 import com.example.cahier.ui.viewmodels.DrawingCanvasViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 
 @OptIn(
@@ -94,7 +91,6 @@ fun DrawingCanvas(
     drawingCanvasViewModel: DrawingCanvasViewModel = hiltViewModel()
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
-    val coroutineScope = rememberCoroutineScope()
     var showConfirmationDialog by rememberSaveable { mutableStateOf(false) }
     var pendingImageUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -106,9 +102,7 @@ fun DrawingCanvas(
                 pendingImageUri = it
                 showConfirmationDialog = true
             } else {
-                coroutineScope.launch {
-                    drawingCanvasViewModel.processAndAddImage(it)
-                }
+                drawingCanvasViewModel.processAndAddImageFromPicker(it)
             }
         }
     }
@@ -136,7 +130,7 @@ fun DrawingCanvas(
             .navigationBarsPadding()
             .imePadding()
     ) {
-        DrawingCanvasTopBar(drawingCanvasViewModel, coroutineScope)
+        DrawingCanvasTopBar(drawingCanvasViewModel)
         DrawingCanvasContent(
             drawingCanvasViewModel = drawingCanvasViewModel,
             imagePickerLauncher = imagePickerLauncher,
@@ -148,7 +142,6 @@ fun DrawingCanvas(
 @Composable
 private fun DrawingCanvasTopBar(
     drawingCanvasViewModel: DrawingCanvasViewModel,
-    coroutineScope: CoroutineScope,
     modifier: Modifier = Modifier
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
@@ -172,9 +165,7 @@ private fun DrawingCanvasTopBar(
             value = titleState,
             onValueChange = { newTitle ->
                 titleState = newTitle
-                coroutineScope.launch {
-                    drawingCanvasViewModel.updateNoteTitle(newTitle.text)
-                }
+                drawingCanvasViewModel.onTitleChanged(newTitle.text)
             },
             placeholder = { Text(text = stringResource(R.string.drawing_title)) },
             modifier = Modifier

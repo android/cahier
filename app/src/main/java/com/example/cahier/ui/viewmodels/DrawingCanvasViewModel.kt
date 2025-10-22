@@ -201,6 +201,12 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
+    fun processAndAddImageFromPicker(uri: Uri?) {
+        viewModelScope.launch {
+            processAndAddImage(uri)
+        }
+    }
+
     suspend fun processAndAddImage(uri: Uri?) {
         if (uri == null) return
         val localFileUri = fileHelper.copyUriToInternalStorage(uri)
@@ -274,6 +280,12 @@ class DrawingCanvasViewModel @Inject constructor(
             noteRepository.updateNoteStrokes(noteId, strokesToSave, clientBrushFamilyId)
         } else if (history.isEmpty()) {
             noteRepository.updateNoteStrokes(noteId, emptyList(), null)
+        }
+    }
+
+    fun onTitleChanged(newTitle: String) {
+        viewModelScope.launch {
+            updateNoteTitle(newTitle)
         }
     }
 
