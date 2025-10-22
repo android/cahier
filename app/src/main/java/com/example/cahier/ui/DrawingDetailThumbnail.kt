@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import coil3.compose.AsyncImage
@@ -74,4 +75,18 @@ fun DrawingDetailThumbnail(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun DrawingDetailThumbnailPreview(
+    modifier: Modifier = Modifier
+) {
+    DrawingDetailThumbnail(
+        modifier = modifier
+            .fillMaxSize(),
+        strokes = emptyList(),
+        onClick = {},
+        backgroundImageUri = null,
+    )
 }

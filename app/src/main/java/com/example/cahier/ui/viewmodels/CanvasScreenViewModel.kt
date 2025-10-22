@@ -21,6 +21,7 @@ package com.example.cahier.ui.viewmodels
 import android.net.Uri
 import android.util.Log
 import android.view.DragAndDropPermissions
+import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -141,6 +143,11 @@ class CanvasScreenViewModel @Inject constructor(
             val localUri = fileHelper.copyUriToInternalStorage(uri)
             addImage(localUri)
         }
+    }
+
+    suspend fun createShareableUri(imageUriString: String): Uri? {
+        val imageFile = imageUriString.toUri().path?.let { File(it) } ?: return null
+        return fileHelper.createShareableUri(imageFile)
     }
 
     companion object {

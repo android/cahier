@@ -20,9 +20,11 @@ package com.example.cahier.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -34,8 +36,10 @@ import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.PaneExpansionState
 import androidx.compose.material3.adaptive.layout.defaultDragHandleSemantics
 import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
+import androidx.compose.material3.adaptive.navigation.ThreePaneScaffoldNavigator
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -64,6 +68,7 @@ import com.example.cahier.data.Note
 import com.example.cahier.data.NoteType
 import com.example.cahier.navigation.NavigationDestination
 import com.example.cahier.ui.viewmodels.HomeScreenViewModel
+import com.example.cahier.ui.viewmodels.NoteListUiState
 import kotlinx.coroutines.launch
 
 
@@ -123,8 +128,8 @@ fun HomePane(
                 putExtra(AppArgs.NOTE_TYPE_KEY, noteType)
                 putExtra(AppArgs.NOTE_ID_KEY, noteId)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
-                    Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                        Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+                        Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
             }
             context.startActivity(intent)
         }
@@ -156,6 +161,39 @@ fun HomePane(
         }
     }
 
+    CahierNavigationSuite(
+        modifier = modifier,
+        currentDestination = currentDestination,
+        onDestinationChanged = { newDestination -> currentDestination = newDestination },
+        navigator = navigator,
+        homeScreenViewModel = homeScreenViewModel,
+        paneExpansionState = paneExpansionState,
+        noteList = noteList,
+        isCompact = isCompact,
+        selectedNoteUIState = selectedNoteUIState,
+        navigateToCanvas = navigateToCanvas,
+        navigateToDrawingCanvas = navigateToDrawingCanvas,
+        navigateUp = navigateUp
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+private fun CahierNavigationSuite(
+    modifier: Modifier = Modifier,
+    currentDestination: AppDestinations,
+    onDestinationChanged: (AppDestinations) -> Unit,
+    navigator: ThreePaneScaffoldNavigator<Note>,
+    homeScreenViewModel: HomeScreenViewModel,
+    paneExpansionState: PaneExpansionState,
+    noteList: NoteListUiState,
+    isCompact: Boolean,
+    selectedNoteUIState: CahierUiState,
+    navigateToCanvas: (Long) -> Unit,
+    navigateToDrawingCanvas: (Long) -> Unit,
+    navigateUp: () -> Unit
+) {
     NavigationSuiteScaffold(
         modifier = modifier,
         navigationItems = {
@@ -174,7 +212,7 @@ fun HomePane(
                     selected = isSelected,
                     onClick = {
                         if (currentDestination != destination) {
-                            currentDestination = destination
+                            onDestinationChanged(destination)
                             if (destination != AppDestinations.Home
                                 && navigator.currentDestination?.pane ==
                                 ListDetailPaneScaffoldRole.Detail
@@ -275,7 +313,6 @@ fun HomePane(
 
         }
     )
-
 }
 
 

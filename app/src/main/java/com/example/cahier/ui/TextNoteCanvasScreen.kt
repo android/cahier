@@ -66,10 +66,10 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -77,7 +77,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -86,9 +85,6 @@ import com.example.cahier.data.Note
 import com.example.cahier.ui.theme.CahierAppTheme
 import com.example.cahier.ui.utils.createDropTarget
 import com.example.cahier.ui.viewmodels.CanvasScreenViewModel
-import com.example.cahier.utils.FileHelper
-import kotlinx.coroutines.launch
-import java.io.File
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
@@ -145,6 +141,9 @@ fun TextNoteCanvasScreen(
                 permissions
             )
         },
+        onCreateShareableUri = { uriString ->
+            canvasScreenViewModel.createShareableUri(uriString)
+        },
         modifier = modifier,
     )
 }
@@ -161,6 +160,7 @@ fun NoteCanvasContent(
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
     onToggleFavorite: () -> Unit,
     onDroppedUri: (Uri, DragAndDropPermissions?) -> Unit,
+    onCreateShareableUri: suspend (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var focusedFieldEnum by rememberSaveable { mutableStateOf(FocusedFieldEnum.None) }
@@ -227,6 +227,7 @@ fun NoteCanvasContent(
                 onBodyChange = onBodyChange,
                 bodyFocusRequester = bodyFocusRequester,
                 onBodyFocusChanged = { if (it.isFocused) focusedFieldEnum = FocusedFieldEnum.Body },
+                onCreateShareableUri = onCreateShareableUri,
             )
         }
     }
@@ -237,7 +238,7 @@ private fun NoteCanvasTopBar(
     titleState: TextFieldValue,
     onTitleChange: (TextFieldValue) -> Unit,
     titleFocusRequester: FocusRequester,
-    onTitleFocusChanged: (androidx.compose.ui.focus.FocusState) -> Unit,
+    onTitleFocusChanged: (FocusState) -> Unit,
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
@@ -370,8 +371,9 @@ private fun NoteCanvasBody(
     bodyState: TextFieldValue,
     onBodyChange: (TextFieldValue) -> Unit,
     bodyFocusRequester: FocusRequester,
-    onBodyFocusChanged: (androidx.compose.ui.focus.FocusState) -> Unit,
-    modifier: Modifier = Modifier
+    onBodyFocusChanged: (FocusState) -> Unit,
+    onCreateShareableUri: suspend (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
         item {
@@ -380,26 +382,29 @@ private fun NoteCanvasBody(
                     value = bodyState,
                     placeholder = { Text(stringResource(R.string.note)) },
                     onValueChange = onBodyChange,
-                    keyboardOptions = KeyboardOptions(
-                        autoCorrectEnabled = true,
-                        capitalization = KeyboardCapitalization.Sentences
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .focusRequester(bodyFocusRequester)
-                        .onFocusChanged(onBodyFocusChanged),
-                    textStyle = MaterialTheme.typography.bodyLarge
+                    keyboardOptions =
+                        KeyboardOptions(
+                            autoCorrectEnabled = true,
+                            capitalization = KeyboardCapitalization.Sentences,
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .focusRequester(bodyFocusRequester)
+                            .onFocusChanged(onBodyFocusChanged),
+                    textStyle = MaterialTheme.typography.bodyLarge,
                 )
             }
         }
 
         items(
             items = note.imageUriList ?: emptyList(),
-            key = { it }
+            key = { it },
         ) { imageUriString ->
             NoteImage(
                 imageUriString = imageUriString,
+                onCreateShareableUri = onCreateShareableUri,
             )
         }
     }
@@ -409,45 +414,44 @@ private fun NoteCanvasBody(
 @Composable
 private fun NoteImage(
     imageUriString: String,
-    modifier: Modifier = Modifier
+    onCreateShareableUri: suspend (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val fileHelper = FileHelper(LocalContext.current)
     var clipData by remember { mutableStateOf<ClipData?>(null) }
 
     LaunchedEffect(imageUriString) {
-        launch {
-            val imageFile = imageUriString
-                .toUri().path?.let { File(it) } ?: return@launch
-
-            val shareableUri = fileHelper.createShareableUri(imageFile)
-
-            clipData = ClipData(
-                ClipDescription("Image", arrayOf("image/*")),
-                ClipData.Item(shareableUri)
-            )
+        val shareableUri = onCreateShareableUri(imageUriString)
+        shareableUri.let {
+            clipData =
+                ClipData(
+                    ClipDescription("Image", arrayOf("image/*")),
+                    ClipData.Item(shareableUri.toString()),
+                )
         }
     }
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .dragAndDropSource { _ ->
-                clipData?.let {
-                    DragAndDropTransferData(
-                        clipData = it,
-                        flags = View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ,
-                    )
-                }
-            }
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .dragAndDropSource { _ ->
+                    clipData?.let {
+                        DragAndDropTransferData(
+                            clipData = it,
+                            flags = View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ,
+                        )
+                    }
+                },
     ) {
         AsyncImage(
             model = imageUriString,
             contentDescription = stringResource(R.string.uploaded_image),
             contentScale = ContentScale.FillWidth,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 }
@@ -471,6 +475,7 @@ fun NoteCanvasScreenPreview(
             ),
             onToggleFavorite = {},
             onDroppedUri = { _, _ -> },
+            onCreateShareableUri = { _ -> }
         )
     }
 }
