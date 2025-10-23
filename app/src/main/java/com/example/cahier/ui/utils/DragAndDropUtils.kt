@@ -18,8 +18,9 @@
 
 package com.example.cahier.ui.utils
 
-import android.app.Activity
 import android.net.Uri
+import android.view.DragAndDropPermissions
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
@@ -27,22 +28,16 @@ import androidx.compose.ui.draganddrop.toAndroidDragEvent
 
 @OptIn(ExperimentalFoundationApi::class)
 fun createDropTarget(
-    activity: Activity,
-    onUriReceived: (Uri) -> Unit
+    activity: ComponentActivity?,
+    onUriReceived: (Uri, DragAndDropPermissions?) -> Unit
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
             val dragEvent = event.toAndroidDragEvent()
-            val permission = activity.requestDragAndDropPermissions(dragEvent)
-            if (permission != null) {
-                try {
-                    val uri = dragEvent.clipData.getItemAt(0)?.uri
-                    uri?.let {
-                        onUriReceived(it)
-                    }
-                } finally {
-                    permission.release()
-                }
+            val permission = activity?.requestDragAndDropPermissions(dragEvent)
+            val uri = dragEvent.clipData.getItemAt(0)?.uri
+            uri?.let {
+                onUriReceived(it, permission)
             }
             return true
         }

@@ -21,6 +21,7 @@ package com.example.cahier.ui
 import android.content.ClipData
 import android.content.ClipDescription
 import android.net.Uri
+import android.view.DragAndDropPermissions
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -29,8 +30,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -57,19 +58,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -77,7 +77,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -86,21 +85,15 @@ import com.example.cahier.data.Note
 import com.example.cahier.ui.theme.CahierAppTheme
 import com.example.cahier.ui.utils.createDropTarget
 import com.example.cahier.ui.viewmodels.CanvasScreenViewModel
-import com.example.cahier.utils.FileHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import java.io.File
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-fun NoteCanvas(
+fun TextNoteCanvasScreen(
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
     canvasScreenViewModel: CanvasScreenViewModel = hiltViewModel()
 ) {
     val uiState by canvasScreenViewModel.uiState.collectAsStateWithLifecycle()
-    val coroutineScope = rememberCoroutineScope()
-    val activity = LocalActivity.current as ComponentActivity
 
     var titleState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(uiState.note.title))
@@ -123,10 +116,7 @@ fun NoteCanvas(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         uri?.let {
-            coroutineScope.launch {
-                val localUri = canvasScreenViewModel.fileHelper.copyUriToInternalStorage(it)
-                canvasScreenViewModel.addImage(localUri)
-            }
+            canvasScreenViewModel.handlePickedImageUri(it)
         }
     }
 
@@ -145,9 +135,16 @@ fun NoteCanvas(
         onExit = onExit,
         imagePickerLauncher = imagePickerLauncher,
         onToggleFavorite = { canvasScreenViewModel.toggleFavorite() },
-        onDroppedUri = { uri -> canvasScreenViewModel.handleDroppedUri(uri) },
+        onDroppedUri = { uri, permissions ->
+            canvasScreenViewModel.handleDroppedUri(
+                uri,
+                permissions
+            )
+        },
+        onCreateShareableUri = { uriString ->
+            canvasScreenViewModel.createShareableUri(uriString)
+        },
         modifier = modifier,
-        activity = activity
     )
 }
 
@@ -162,14 +159,14 @@ fun NoteCanvasContent(
     onExit: () -> Unit,
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
     onToggleFavorite: () -> Unit,
-    onDroppedUri: (Uri) -> Unit,
+    onDroppedUri: (Uri, DragAndDropPermissions?) -> Unit,
+    onCreateShareableUri: suspend (String) -> Unit,
     modifier: Modifier = Modifier,
-    activity: ComponentActivity
 ) {
     var focusedFieldEnum by rememberSaveable { mutableStateOf(FocusedFieldEnum.None) }
     val titleFocusRequester = remember { FocusRequester() }
     val bodyFocusRequester = remember { FocusRequester() }
-    val coroutineScope = rememberCoroutineScope()
+    val activity = LocalActivity.current as? ComponentActivity
 
     LaunchedEffect(focusedFieldEnum) {
         when (focusedFieldEnum) {
@@ -188,7 +185,7 @@ fun NoteCanvasContent(
         }
     }
 
-    val dropTarget = remember {
+    val dropTarget: DragAndDropTarget = remember {
         createDropTarget(activity, onDroppedUri)
     }
 
@@ -230,8 +227,7 @@ fun NoteCanvasContent(
                 onBodyChange = onBodyChange,
                 bodyFocusRequester = bodyFocusRequester,
                 onBodyFocusChanged = { if (it.isFocused) focusedFieldEnum = FocusedFieldEnum.Body },
-                coroutineScope = coroutineScope,
-                view = LocalView.current
+                onCreateShareableUri = onCreateShareableUri,
             )
         }
     }
@@ -242,7 +238,7 @@ private fun NoteCanvasTopBar(
     titleState: TextFieldValue,
     onTitleChange: (TextFieldValue) -> Unit,
     titleFocusRequester: FocusRequester,
-    onTitleFocusChanged: (androidx.compose.ui.focus.FocusState) -> Unit,
+    onTitleFocusChanged: (FocusState) -> Unit,
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
@@ -375,10 +371,9 @@ private fun NoteCanvasBody(
     bodyState: TextFieldValue,
     onBodyChange: (TextFieldValue) -> Unit,
     bodyFocusRequester: FocusRequester,
-    onBodyFocusChanged: (androidx.compose.ui.focus.FocusState) -> Unit,
-    coroutineScope: CoroutineScope,
-    view: View,
-    modifier: Modifier = Modifier
+    onBodyFocusChanged: (FocusState) -> Unit,
+    onCreateShareableUri: suspend (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
         item {
@@ -387,89 +382,76 @@ private fun NoteCanvasBody(
                     value = bodyState,
                     placeholder = { Text(stringResource(R.string.note)) },
                     onValueChange = onBodyChange,
-                    keyboardOptions = KeyboardOptions(
-                        autoCorrectEnabled = true,
-                        capitalization = KeyboardCapitalization.Sentences
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .focusRequester(bodyFocusRequester)
-                        .onFocusChanged(onBodyFocusChanged),
-                    textStyle = MaterialTheme.typography.bodyLarge
+                    keyboardOptions =
+                        KeyboardOptions(
+                            autoCorrectEnabled = true,
+                            capitalization = KeyboardCapitalization.Sentences,
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .focusRequester(bodyFocusRequester)
+                            .onFocusChanged(onBodyFocusChanged),
+                    textStyle = MaterialTheme.typography.bodyLarge,
                 )
             }
         }
 
         items(
             items = note.imageUriList ?: emptyList(),
-            key = { it }
+            key = { it },
         ) { imageUriString ->
             NoteImage(
                 imageUriString = imageUriString,
-                coroutineScope = coroutineScope,
-                view = view
+                onCreateShareableUri = onCreateShareableUri,
             )
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NoteImage(
     imageUriString: String,
-    coroutineScope: CoroutineScope,
-    view: View,
-    modifier: Modifier = Modifier
+    onCreateShareableUri: suspend (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val fileHelper = FileHelper(LocalContext.current)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .pointerInput(imageUriString) {
-                detectDragGesturesAfterLongPress(
-                    onDragStart = {
-                        val fileUri = imageUriString.toUri()
-                        val originalFile = fileUri.path?.let { File(it) }
+    var clipData by remember { mutableStateOf<ClipData?>(null) }
 
-                        if (originalFile != null && originalFile.exists()) {
-                            coroutineScope.launch {
-                                val contentUri = fileHelper.createShareableUri(originalFile)
-
-                                val clipData = ClipData(
-                                    ClipDescription(
-                                        "Image",
-                                        arrayOf("image/*")
-                                    ),
-                                    ClipData.Item(contentUri)
-                                )
-                                val dragShadowBuilder = View.DragShadowBuilder(view)
-
-                                view.startDragAndDrop(
-                                    clipData,
-                                    dragShadowBuilder,
-                                    null,
-                                    View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ
-                                )
-                            }
-                        }
-                    },
-                    onDrag = { change, _ ->
-                        change.consume()
-                    },
-                    onDragEnd = {
-                        // Do nothing.
-                    }
+    LaunchedEffect(imageUriString) {
+        val shareableUri = onCreateShareableUri(imageUriString)
+        shareableUri.let {
+            clipData =
+                ClipData(
+                    ClipDescription("Image", arrayOf("image/*")),
+                    ClipData.Item(shareableUri.toString()),
                 )
-            }
+        }
+    }
+
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .dragAndDropSource { _ ->
+                    clipData?.let {
+                        DragAndDropTransferData(
+                            clipData = it,
+                            flags = View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ,
+                        )
+                    }
+                },
     ) {
         AsyncImage(
             model = imageUriString,
             contentDescription = stringResource(R.string.uploaded_image),
             contentScale = ContentScale.FillWidth,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 }
@@ -480,7 +462,6 @@ fun NoteCanvasScreenPreview(
     @PreviewParameter(NotePreviewParameterProvider::class) note: Note
 ) {
     CahierAppTheme {
-        val activity = LocalActivity.current as ComponentActivity
         NoteCanvasContent(
             uiState = CahierUiState(note = note),
             titleState = TextFieldValue(note.title),
@@ -493,8 +474,8 @@ fun NoteCanvasScreenPreview(
                 onResult = {}
             ),
             onToggleFavorite = {},
-            onDroppedUri = {},
-            activity = activity
+            onDroppedUri = { _, _ -> },
+            onCreateShareableUri = { _ -> }
         )
     }
 }

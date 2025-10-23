@@ -26,6 +26,10 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
@@ -33,10 +37,12 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.withSaveLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.graphics.withSave
 import androidx.ink.authoring.compose.InProgressStrokes
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
+import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import coil3.compose.AsyncImage
@@ -131,4 +137,34 @@ fun DrawingSurface(
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun DrawingSurfacePreview() {
+    val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
+    var currentBrush by remember {
+        mutableStateOf(
+            Brush.createWithComposeColor(
+                family = StockBrushes.highlighterLatest,
+                color = androidx.compose.ui.graphics.Color.Blue,
+                size = 10F,
+                epsilon = 0.01F
+            )
+        )
+    }
+
+    DrawingSurface(
+        strokes = emptyList(),
+        canvasStrokeRenderer = canvasStrokeRenderer,
+        onStrokesFinished = {},
+        onErase = { _, _ -> },
+        onEraseStart = {},
+        onEraseEnd = {},
+        currentBrush = currentBrush,
+        onGetNextBrush = { currentBrush },
+        isEraserMode = false,
+        backgroundImageUri = null,
+        onStartDrag = {}
+    )
 }

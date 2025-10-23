@@ -127,7 +127,8 @@ class DrawingCanvasViewModel @Inject constructor(
                             it.brushFamily.clientBrushFamilyId == id
                         }
                         customBrush?.let {
-                            _selectedBrush.value = _selectedBrush.value.copy(family = it.brushFamily)
+                            _selectedBrush.value =
+                                _selectedBrush.value.copy(family = it.brushFamily)
                         }
                     }
 
@@ -151,7 +152,8 @@ class DrawingCanvasViewModel @Inject constructor(
         loadCustomBrushes()
     }
 
-    fun addImageWithLocalUri(localUri: Uri) {
+    fun addImageWithLocalUri(localUri: Uri?) {
+        if (localUri == null) return
         val newImageUri = localUri.toString()
         val updatedNote = _uiState.value.note.copy(imageUriList = listOf(newImageUri))
         viewModelScope.launch {
@@ -196,6 +198,12 @@ class DrawingCanvasViewModel @Inject constructor(
     fun toggleFavorite() {
         viewModelScope.launch {
             noteRepository.toggleFavorite(noteId)
+        }
+    }
+
+    fun processAndAddImageFromPicker(uri: Uri?) {
+        viewModelScope.launch {
+            processAndAddImage(uri)
         }
     }
 
@@ -275,6 +283,12 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
+    fun onTitleChanged(newTitle: String) {
+        viewModelScope.launch {
+            updateNoteTitle(newTitle)
+        }
+    }
+
     suspend fun updateNoteTitle(newTitle: String) {
         val updatedNote = _uiState.value.note.copy(title = newTitle)
         noteRepository.updateNote(updatedNote)
@@ -337,6 +351,7 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrush(brushFamily: BrushFamily) {
+        setEraserMode(false)
         _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily)
             val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
@@ -400,10 +415,14 @@ class DrawingCanvasViewModel @Inject constructor(
         clearImages()
     }
 
-    fun handleDroppedUri(uri: Uri) {
+    fun handleDroppedUri(uri: Uri, permissions: android.view.DragAndDropPermissions?) {
         viewModelScope.launch {
-            val localUri = fileHelper.copyUriToInternalStorage(uri)
-            addImageWithLocalUri(localUri)
+            try {
+                val localUri = fileHelper.copyUriToInternalStorage(uri)
+                addImageWithLocalUri(localUri)
+            } finally {
+                permissions?.release()
+            }
         }
     }
 
