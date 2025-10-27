@@ -81,7 +81,7 @@ class DrawingCanvasViewModel @Inject constructor(
 
     private val _defaultBrush = MutableStateFlow(
         Brush.createWithComposeColor(
-            family = StockBrushes.pressurePenLatest,
+            family = StockBrushes.pressurePen(),
             color = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES)
                 Color.White else Color.Gray,
             size = 5F,
@@ -111,6 +111,8 @@ class DrawingCanvasViewModel @Inject constructor(
     private val _customBrushes = MutableStateFlow<List<CustomBrush>>(emptyList())
     val customBrushes: StateFlow<List<CustomBrush>> = _customBrushes.asStateFlow()
 
+    private var isBrushSelectedInSession = false
+
     init {
         viewModelScope.launch {
             noteRepository.getNoteStream(noteId)
@@ -123,12 +125,14 @@ class DrawingCanvasViewModel @Inject constructor(
                     }
 
                     note.clientBrushFamilyId?.let { id ->
-                        val customBrush = customBrushes.value.find {
-                            it.brushFamily.clientBrushFamilyId == id
-                        }
-                        customBrush?.let {
-                            _selectedBrush.value =
-                                _selectedBrush.value.copy(family = it.brushFamily)
+                        if (!isBrushSelectedInSession) {
+                            val customBrush = customBrushes.value.find {
+                                it.brushFamily.clientBrushFamilyId == id
+                            }
+                            customBrush?.let {
+                                _selectedBrush.value =
+                                    _selectedBrush.value.copy(family = it.brushFamily)
+                            }
                         }
                     }
 
@@ -337,7 +341,8 @@ class DrawingCanvasViewModel @Inject constructor(
         if (prev == null) return currentStrokes
 
         val segment = MutableSegment(prev, MutableVec(currentX, currentY))
-        val parallelogram = MutableParallelogram.fromSegmentAndPadding(segment, eraserPadding)
+        val parallelogram = MutableParallelogram()
+            .populateFromSegmentAndPadding(segment, eraserPadding)
 
         val strokesToRemove = currentStrokes.filter { stroke ->
             stroke.shape.intersects(parallelogram, AffineTransform.IDENTITY)
@@ -352,9 +357,10 @@ class DrawingCanvasViewModel @Inject constructor(
 
     fun changeBrush(brushFamily: BrushFamily) {
         setEraserMode(false)
+        isBrushSelectedInSession = true
         _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily)
-            val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
+            val colorToApply = if (newBrush.family == StockBrushes.highlighter()) {
                 newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
             } else {
                 newBrush.composeColor.copy(alpha = 1f)
@@ -364,9 +370,10 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrushAndSize(brushFamily: BrushFamily, size: Float) {
+        isBrushSelectedInSession = true
         _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily, size = size)
-            val colorToApply = if (newBrush.family == StockBrushes.highlighterLatest) {
+            val colorToApply = if (newBrush.family == StockBrushes.highlighter()) {
                 newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
             } else {
                 newBrush.composeColor.copy(alpha = 1f)
@@ -377,7 +384,7 @@ class DrawingCanvasViewModel @Inject constructor(
 
     fun changeBrushColor(color: Color) {
         _selectedBrush.update { currentBrush ->
-            val colorToApply = if (currentBrush.family == StockBrushes.highlighterLatest) {
+            val colorToApply = if (currentBrush.family == StockBrushes.highlighter()) {
                 color.copy(alpha = HIGHLIGHTER_ALPHA)
             } else {
                 color.copy(alpha = 1f)

@@ -445,7 +445,7 @@ fun BrushesDropdownMenu(
                     contentDescription = stringResource(R.string.pressure_pen)
                 )
             },
-            onClick = { onBrushChange(StockBrushes.pressurePenLatest) }
+            onClick = { onBrushChange(StockBrushes.pressurePen()) }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.marker)) },
@@ -455,7 +455,7 @@ fun BrushesDropdownMenu(
                     contentDescription = stringResource(R.string.marker)
                 )
             },
-            onClick = { onBrushChange(StockBrushes.markerLatest) }
+            onClick = { onBrushChange(StockBrushes.marker()) }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.highlighter)) },
@@ -465,7 +465,7 @@ fun BrushesDropdownMenu(
                     contentDescription = stringResource(R.string.highlighter)
                 )
             },
-            onClick = { onBrushChange(StockBrushes.highlighterLatest) }
+            onClick = { onBrushChange(StockBrushes.highlighter()) }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(R.string.dashed_line)) },
@@ -475,7 +475,7 @@ fun BrushesDropdownMenu(
                     contentDescription = stringResource(R.string.dashed_line)
                 )
             },
-            onClick = { onBrushChange(StockBrushes.dashedLineLatest) }
+            onClick = { onBrushChange(StockBrushes.dashedLine()) }
         )
         if (customBrushes.isNotEmpty()) {
             HorizontalDivider()
