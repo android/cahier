@@ -383,6 +383,7 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrushColor(color: Color) {
+        isBrushSelectedInSession = true
         _selectedBrush.update { currentBrush ->
             val colorToApply = if (currentBrush.family == StockBrushes.highlighter()) {
                 color.copy(alpha = HIGHLIGHTER_ALPHA)
@@ -394,6 +395,7 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     fun changeBrushSize(size: Float) {
+        isBrushSelectedInSession = true
         _selectedBrush.update { currentBrush ->
             currentBrush.copy(size = size)
         }
