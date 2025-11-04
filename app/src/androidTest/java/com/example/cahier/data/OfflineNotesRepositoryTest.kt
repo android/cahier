@@ -8,7 +8,6 @@ import androidx.ink.strokes.ImmutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
 import androidx.test.core.app.ApplicationProvider
 import com.example.cahier.ui.Converters
-import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -17,6 +16,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -54,7 +54,7 @@ class OfflineNotesRepositoryTest {
         val brush = Brush(StockBrushes.marker(), 1f, 1f)
         val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
         val serializedStroke = Converters().serializeStroke(stroke)
-        val strokesJson = Gson().toJson(listOf(serializedStroke))
+        val strokesJson = Json.encodeToString(listOf(serializedStroke))
         val note = Note(id = 1, strokesData = strokesJson)
 
         whenever(noteDao.getNoteById(1L)).thenReturn(note)

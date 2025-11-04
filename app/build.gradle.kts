@@ -19,6 +19,7 @@ plugins {
     alias(libs.plugins.ksp)
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
     id("kotlin-parcelize")
+    kotlin("plugin.serialization")
     id("com.google.dagger.hilt.android")
 }
 
@@ -129,10 +130,6 @@ dependencies {
 
     //Motion prediction
     implementation(libs.androidx.input.motionprediction)
-
-
-    // Gson
-    implementation(libs.gson)
 
     //Kotlin serialization
     implementation(libs.kotlinx.serialization.json)

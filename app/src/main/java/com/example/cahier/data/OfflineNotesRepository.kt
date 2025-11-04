@@ -22,9 +22,8 @@ import android.content.Context
 import androidx.ink.strokes.Stroke
 import com.example.cahier.ui.Converters
 import com.example.cahier.ui.CustomBrushes
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.Json
 
 class OfflineNotesRepository(
     private val notesDao: NoteDao,
@@ -51,7 +50,7 @@ class OfflineNotesRepository(
         clientBrushFamilyId: String?
     ) {
         val strokesData = strokes.map { converters.serializeStroke(it) }
-        val strokesJson = Gson().toJson(strokesData)
+        val strokesJson = Json.encodeToString(strokesData)
 
         val note = notesDao.getNoteById(noteId)
         if (note != null) {
@@ -66,8 +65,7 @@ class OfflineNotesRepository(
         val strokesJson = note?.strokesData ?: return emptyList()
         val customBrushes = CustomBrushes.getBrushes(context)
 
-        val strokesData: List<String> =
-            Gson().fromJson(strokesJson, object : TypeToken<List<String>>() {}.type)
+        val strokesData = Json.decodeFromString<List<String>>(strokesJson)
         return strokesData.mapNotNull { converters.deserializeStrokeFromString(it, customBrushes) }
     }
 

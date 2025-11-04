@@ -63,7 +63,7 @@ Cahier is built with a focus on modern Android development:
 * **Navigation:** [Jetpack Navigation for Compose](https://developer.android.com/jetpack/compose/navigation)
 * **Adaptive Layouts:** [Material 3 Adaptive Layouts](https://m3.material.io/foundations/layout/applying-layout/overview)
 * **Image Loading:** [Coil](https://coil-kt.github.io/coil/)
-* **Serialization:** [Gson](https://github.com/google/gson)
+* **Serialization:** [Kotlinx Serialization](https://github.com/Kotlin/kotlinx.serialization)
 * **System Integration:**
     * [RoleManager API](https://developer.android.com/reference/android/app/role/RoleManager)
     * [ActivityResultContracts](https://developer.android.com/training/basics/intents/result)
