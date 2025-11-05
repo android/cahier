@@ -41,7 +41,7 @@ private const val TAG = "Converters"
 
 class Converters {
 
-    private val json = Json
+    private val json = Json { ignoreUnknownKeys = true }
 
     companion object {
         private val stockBrushToEnumValues = mapOf(
