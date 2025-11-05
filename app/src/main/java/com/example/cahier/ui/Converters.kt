@@ -33,18 +33,15 @@ import com.example.cahier.data.CustomBrush
 import com.example.cahier.data.SerializedBrush
 import com.example.cahier.data.SerializedStockBrush
 import com.example.cahier.data.SerializedStroke
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.json.Json
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.lang.reflect.Type
 
 private const val TAG = "Converters"
 
 class Converters {
 
-    private val gson: Gson = GsonBuilder().create()
+    private val json = Json { ignoreUnknownKeys = true }
 
     companion object {
         private val stockBrushToEnumValues = mapOf(
@@ -79,7 +76,7 @@ class Converters {
             inputs = encodedSerializedInputs,
             brush = serializedBrush
         )
-        return gson.toJson(serializedStroke)
+        return json.encodeToString(serializedStroke)
     }
 
     private fun deserializeStroke(
@@ -113,13 +110,13 @@ class Converters {
     }
 
     fun deserializeStrokeFromString(data: String, customBrushes: List<CustomBrush>): Stroke? {
-        val serializedStroke = gson.fromJson(data, SerializedStroke::class.java)
+        val serializedStroke = json.decodeFromString<SerializedStroke>(data)
         return deserializeStroke(serializedStroke, customBrushes)
     }
 
     @TypeConverter
     fun fromStringList(list: List<String>?): String? {
-        return list?.let { gson.toJson(it) }
+        return list?.let { json.encodeToString(it) }
     }
 
     @TypeConverter
@@ -127,9 +124,8 @@ class Converters {
         if (jsonString == null) {
             return emptyList()
         }
-        val listType: Type = object : TypeToken<List<String>>() {}.type
         return try {
-            gson.fromJson(jsonString, listType) ?: emptyList()
+            json.decodeFromString<List<String>>(jsonString)
         } catch (e: Exception) {
             Log.e(
                 TAG,
