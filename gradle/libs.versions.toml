@@ -28,6 +28,7 @@ ksp = "2.2.20-2.0.3"
 roomCompiler = "2.8.1"
 material3AdaptiveNavigationSuiteAndroidVersion = "1.4.0"
 inputMotionprediction = "1.0.0-beta06"
+screenshotTesting = "0.0.1-alpha11"
 
 #Tests
 mockito = "5.20.0"
@@ -100,3 +101,4 @@ androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+screenshotTesting = { id = "com.android.compose.screenshot", version.ref="screenshotTesting"}

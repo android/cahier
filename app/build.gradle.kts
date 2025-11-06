@@ -17,6 +17,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.screenshotTesting)
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
@@ -61,6 +62,8 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
 dependencies {
@@ -145,6 +148,10 @@ dependencies {
     //Coil
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+
+    //Screenshot Testing
+    screenshotTestImplementation(platform(libs.androidx.compose.bom))
+    screenshotTestImplementation (libs.androidx.ui.tooling)
 }
 java {
     toolchain {
