@@ -28,3 +28,11 @@ jobs:
 
       - name: Build debug app
         run: ./gradlew :app:assembleDebug
+
+      - name: Run Android tests on Large Desktop Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          device: desktop_large
+          arch: x86_64
+          script: ./gradlew :app:connectedAndroidTest
