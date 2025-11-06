@@ -37,6 +37,7 @@ coreTesting = "2.2.0"
 kotlinxCoroutinesTest = "1.10.2"
 turbine = "1.2.1"
 material3WindowSizeClass = "1.4.0"
+screenshotValidationApi = "0.0.1-alpha11"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -95,6 +96,7 @@ hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", vers
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockito" }
 androidx-compose-material3-window-size-class1 = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3WindowSizeClass" }
+screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshotValidationApi" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

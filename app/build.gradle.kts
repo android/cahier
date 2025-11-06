@@ -90,6 +90,7 @@ dependencies {
     //Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.compose.material3.window.size.class1)
+    implementation(libs.screenshot.validation.api)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
