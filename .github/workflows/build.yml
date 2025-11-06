@@ -29,6 +29,9 @@ jobs:
       - name: Build debug app
         run: ./gradlew :app:assembleDebug
 
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest
+
       - name: Run Android tests on Large Desktop Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
