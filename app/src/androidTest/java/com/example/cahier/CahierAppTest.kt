@@ -21,9 +21,8 @@
 
 package com.example.cahier
 
-import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -63,5 +62,26 @@ class CahierAppTest {
         composeTestRule.onNodeWithContentDescription("Brush").assertExists()
         composeTestRule.onNodeWithContentDescription("Color").assertExists()
         composeTestRule.onNodeWithContentDescription("Eraser").assertExists()
+    }
+
+    @Test
+    fun homeScreen_navigateToSettings() {
+        composeTestRule.onNodeWithText("Settings").assertExists().performClick()
+        composeTestRule.onNodeWithText("Default notes app").assertExists()
+    }
+
+    @Test
+    fun homeScreen_displaysAndNavigatesToText() {
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule
+                .onAllNodesWithContentDescription("Add note")
+                .fetchSemanticsNodes().size == 1
+        }
+
+        composeTestRule.onNodeWithContentDescription("Add note").performClick()
+        composeTestRule.onNodeWithContentDescription("Text note").performClick()
+
+        composeTestRule.onNodeWithText("Title", useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText("Note", useUnmergedTree = true).assertExists()
     }
 }
