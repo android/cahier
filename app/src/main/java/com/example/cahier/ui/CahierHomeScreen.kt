@@ -56,6 +56,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -342,7 +343,7 @@ private fun ListPaneContent(
         onDeleteNote = onDeleteNote,
         onToggleFavorite = onToggleFavorite,
         onNewWindow = onNewWindow,
-        modifier = modifier
+        modifier = modifier.testTag("List")
     )
 }
 
@@ -357,6 +358,6 @@ private fun DetailPaneContent(
         note = note,
         strokes = strokes,
         onClickToEdit = onClickToEdit,
-        modifier = modifier
+        modifier = modifier.testTag("Detail")
     )
 }
