@@ -36,7 +36,7 @@ kotlinxCoroutinesTest = "1.10.2"
 turbine = "1.2.1"
 material3WindowSizeClass = "1.4.0"
 robolectric = "4.11.1"
-roborazzi = "1.8.0-alpha-5"
+roborazzi = "1.51.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
