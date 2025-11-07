@@ -40,7 +40,7 @@ class ScreenshotTest {
     fun globalNavigation_showNavRail() {
         composeTestRule.setContent { HomeContent() }
 
-        composeTestRule.onRoot().captureRoboImage("screenshots/screenshot_navrail.png")
+        composeTestRule.onRoot().captureRoboImage("reference_screenshot_navrail.png")
     }
 
     @Config(qualifiers = RobolectricDeviceQualifiers.Pixel7Pro)
@@ -48,6 +48,6 @@ class ScreenshotTest {
     fun globalNavigation_showBottomNavBar() {
         composeTestRule.setContent { HomeContent() }
 
-        composeTestRule.onRoot().captureRoboImage("screenshots/screenshot_bottomnavbar.png")
+        composeTestRule.onRoot().captureRoboImage("reference_screenshot_bottomnavbar.png")
     }
 }
