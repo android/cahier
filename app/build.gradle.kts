@@ -68,7 +68,7 @@ android {
         }
     }
     roborazzi {
-        outputDir.set(file("build/screenshots"))
+        outputDir.set(file("../screenshots"))
     }
 }
 
