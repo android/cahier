@@ -17,6 +17,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.roborazzi)
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
@@ -103,6 +104,9 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.rule)
 
     // Android Testing - For instrumented tests
     androidTestImplementation(libs.androidx.junit)
