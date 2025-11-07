@@ -3,7 +3,6 @@ agp = "8.13.0"
 appcompatV7 = "1.7.1"
 coilCompose = "3.3.0"
 foundation = "1.9.2"
-gson = "2.13.2"
 hiltAndroid = "2.57.1"
 hiltNavigationCompose = "1.3.0"
 ink = "1.0.0-beta01"
@@ -28,7 +27,6 @@ ksp = "2.2.20-2.0.3"
 roomCompiler = "2.8.1"
 material3AdaptiveNavigationSuiteAndroidVersion = "1.4.0"
 inputMotionprediction = "1.0.0-beta06"
-screenshotTesting = "0.0.1-alpha11"
 
 #Tests
 mockito = "5.20.0"
@@ -37,7 +35,6 @@ coreTesting = "2.2.0"
 kotlinxCoroutinesTest = "1.10.2"
 turbine = "1.2.1"
 material3WindowSizeClass = "1.4.0"
-screenshotValidationApi = "0.0.1-alpha11"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,7 +53,6 @@ appcompat-v7 = { module = "androidx.appcompat:appcompat", version.ref = "appcomp
 appcompat-v7-resources = { module = "androidx.appcompat:appcompat-resources", version.ref = "appcompatV7" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -96,11 +92,9 @@ hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", vers
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockito" }
 androidx-compose-material3-window-size-class1 = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3WindowSizeClass" }
-screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshotValidationApi" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-screenshotTesting = { id = "com.android.compose.screenshot", version.ref="screenshotTesting"}
