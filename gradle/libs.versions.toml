@@ -27,6 +27,7 @@ ksp = "2.2.20-2.0.3"
 roomCompiler = "2.8.1"
 material3AdaptiveNavigationSuiteAndroidVersion = "1.4.0"
 inputMotionprediction = "1.0.0-beta06"
+robolectric = "4.11.1"
 
 #Tests
 mockito = "5.20.0"
@@ -92,6 +93,7 @@ hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", vers
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockito" }
 androidx-compose-material3-window-size-class1 = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3WindowSizeClass" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
