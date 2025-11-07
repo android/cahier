@@ -27,7 +27,7 @@ jobs:
           ./gradlew app:recordRoborazziDebug --stacktrace
 
       # Upload screenshots to GitHub Actions Artifacts
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: screenshots
           path: app/build/screenshots
