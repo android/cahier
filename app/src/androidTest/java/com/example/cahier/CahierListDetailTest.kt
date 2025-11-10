@@ -1,5 +1,6 @@
 package com.example.cahier
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -25,19 +26,9 @@ class CahierListDetailTest {
     fun homeScreen_showListOnly() {
         composeTestRule.setContent {
             DeviceConfigurationOverride(
-                DeviceConfigurationOverride.ForcedSize(
-                    DpSize(
-                        width = 400.dp,
-                        height = 900.dp
-                    )
-                )
+                DeviceConfigurationOverride.ForcedSize(compatWidthWindow)
             ) {
-                HomePane(
-                    navigateToCanvas = { _ -> },
-                    navigateToDrawingCanvas = { _ -> },
-                    navigateUp = {},
-                    homeScreenViewModel = fakeViewModel
-                )
+                HomeContent()
             }
         }
 
@@ -49,23 +40,34 @@ class CahierListDetailTest {
     fun homeScreen_showListAndDetail() {
         composeTestRule.setContent {
             DeviceConfigurationOverride(
-                DeviceConfigurationOverride.ForcedSize(
-                    DpSize(
-                        width = 1200.dp,
-                        height = 900.dp
-                    )
-                )
+                DeviceConfigurationOverride.ForcedSize(mediumWidthWindow)
             ) {
-                HomePane(
-                    navigateToCanvas = { _ -> },
-                    navigateToDrawingCanvas = { _ -> },
-                    navigateUp = {},
-                    homeScreenViewModel = fakeViewModel
-                )
+                HomeContent()
             }
         }
 
         composeTestRule.onNodeWithTag("List").assertExists()
         composeTestRule.onNodeWithTag("Detail").assertExists()
+    }
+
+
+    private val mediumWidthWindow = DpSize(
+        width = 1200.dp,
+        height = 900.dp
+    )
+
+    private val compatWidthWindow = DpSize(
+        width = 400.dp,
+        height = 900.dp
+    )
+
+    @Composable
+    private fun HomeContent() {
+        HomePane(
+            navigateToCanvas = { _ -> },
+            navigateToDrawingCanvas = { _ -> },
+            navigateUp = {},
+            homeScreenViewModel = fakeViewModel
+        )
     }
 }
