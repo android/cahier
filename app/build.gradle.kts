@@ -17,6 +17,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.roborazzi)
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
@@ -61,6 +62,14 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+    roborazzi {
+        outputDir.set(file("../screenshots"))
+    }
 }
 
 dependencies {
@@ -97,6 +106,12 @@ dependencies {
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.rule)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
 
     // Android Testing - For instrumented tests
     androidTestImplementation(libs.androidx.junit)

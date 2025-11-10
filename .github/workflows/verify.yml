@@ -1,4 +1,4 @@
-name: Build cahier
+name: Build and verify cahier
 
 on:
   workflow_dispatch:
@@ -11,7 +11,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout codebase
+        uses: actions/checkout@v4
 
       - name: Set Up JDK
         uses: actions/setup-java@v4
@@ -31,7 +32,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: Checkout codebase
         uses: actions/checkout@v4
 
       - name: Enable KVM
@@ -50,3 +51,9 @@ jobs:
           device: desktop_large
           arch: x86_64
           script: ./gradlew :app:connectedAndroidTest
+
+      - name: Run Roborazzi
+        id: verify-test
+        run: |
+          # If there is a difference between the screenshots, the test will fail.
+          ./gradlew app:verifyRoborazziDebug --stacktrace
