@@ -21,10 +21,15 @@
 
 package com.example.cahier
 
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -32,6 +37,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.compose.ui.test.hasText
 
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
@@ -83,5 +89,32 @@ class CahierAppTest {
 
         composeTestRule.onNodeWithText("Title", useUnmergedTree = true).assertExists()
         composeTestRule.onNodeWithText("Note", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun textNoteCanvasScreen_savedState() {
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule
+                .onAllNodesWithContentDescription("Add note")
+                .fetchSemanticsNodes().size == 1
+        }
+
+        composeTestRule.onNodeWithContentDescription("Add note").performClick()
+        composeTestRule.onNodeWithContentDescription("Text note").performClick()
+
+        val titleText = "My test title"
+        composeTestRule.onNode(hasSetTextAction() and hasText("Title"))
+            .performTextInput(titleText)
+
+        val noteText = "This is a test note."
+        composeTestRule.onNode(hasSetTextAction() and hasText("Note"))
+            .performTextInput(noteText)
+
+        // Recreate the activity
+        composeTestRule.activityRule.scenario.recreate()
+
+        // Verify the text is still there
+        composeTestRule.onNodeWithText(titleText, useUnmergedTree = true).assertExists()
+        composeTestRule.onNodeWithText(noteText, useUnmergedTree = true).assertExists()
     }
 }
