@@ -21,14 +21,11 @@
 
 package com.example.cahier
 
-import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -87,8 +84,14 @@ class CahierAppTest {
         composeTestRule.onNodeWithContentDescription("Add note").performClick()
         composeTestRule.onNodeWithContentDescription("Text note").performClick()
 
-        composeTestRule.onNodeWithText("Title", useUnmergedTree = true).assertExists()
-        composeTestRule.onNodeWithText("Note", useUnmergedTree = true).assertExists()
+        composeTestRule
+            .onNodeWithText(composeTestRule.activity.getString(R.string.title),
+                useUnmergedTree = true)
+            .assertExists()
+        composeTestRule
+            .onNodeWithText(composeTestRule.activity.getString(R.string.note),
+                useUnmergedTree = true)
+            .assertExists()
     }
 
     @Test
@@ -103,11 +106,13 @@ class CahierAppTest {
         composeTestRule.onNodeWithContentDescription("Text note").performClick()
 
         val titleText = "My test title"
-        composeTestRule.onNode(hasSetTextAction() and hasText("Title"))
+        composeTestRule.onNode(hasSetTextAction() and
+                hasText(composeTestRule.activity.getString(R.string.title)))
             .performTextInput(titleText)
 
         val noteText = "This is a test note."
-        composeTestRule.onNode(hasSetTextAction() and hasText("Note"))
+        composeTestRule.onNode(hasSetTextAction() and
+                hasText(composeTestRule.activity.getString(R.string.note)))
             .performTextInput(noteText)
 
         // Recreate the activity
