@@ -26,10 +26,10 @@
     <string name="title">Title</string>
     <string name="note">Note</string>
     <string name="drawing_note">Drawing note</string>
-    <string name="drawing_title">Drawing title</string>"
+    <string name="drawing_title">Drawing title</string>
     <string name="text_note">Text note</string>
     <string name="drawing">Drawing</string>
-    <string name="add_note">Add note</string>"
+    <string name="add_note">Add note</string>
     <string name="delete_note">Delete note</string>
     <string name="open_new_window">Open in new window</string>
 
@@ -56,10 +56,10 @@
     <string name="no_notes_yet">No notes yet.</string>
     <string name="favorite">Favorite</string>
     <string name="add_to_favorites">Add to favorites</string>
-    <string name="unfavorite">Remove fom favorite</string>
+    <string name="unfavorite">Remove from favorite</string>
     <string name="delete">Delete</string>
-    <string name="other_notes">Others</string>"
-    <string name="add_image">Add image</string>"
+    <string name="other_notes">Others</string>
+    <string name="add_image">Add image</string>
     <string name="background_image">Background image</string>
     <string name="undo">Undo</string>
     <string name="redo">Redo</string>
