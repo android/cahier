@@ -78,9 +78,9 @@ object HomeDestination : NavigationDestination {
 }
 
 enum class AppDestinations(
-    @StringRes val label: Int,
-    @DrawableRes val icon: Int,
-    @StringRes val contentDescription: Int
+    @param:StringRes val label: Int,
+    @param:DrawableRes val icon: Int,
+    @param:StringRes val contentDescription: Int
 ) {
     Home(
         label = R.string.home,
@@ -242,7 +242,6 @@ private fun CahierNavigationSuite(
                                         LocalMinimumInteractiveComponentSize
                                             .current,
                                         interactionSource,
-                                        state.defaultDragHandleSemantics()
                                     ),
                             )
                         },
