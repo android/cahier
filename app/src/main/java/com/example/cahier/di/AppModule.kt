@@ -43,7 +43,7 @@ object AppModule {
         return Room.databaseBuilder(
             context,
             NoteDatabase::class.java,
-            "note_database"
+            NoteDatabase.DATABASE_NAME
         )
             .addMigrations(MIGRATION_7_8)
             .build()
