@@ -39,7 +39,7 @@ import javax.inject.Inject
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param: ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _isRoleAvailable = MutableStateFlow(false)
