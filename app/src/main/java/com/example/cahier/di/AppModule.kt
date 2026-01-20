@@ -19,7 +19,9 @@
 package com.example.cahier.di
 
 import android.content.Context
+import androidx.room.Room
 import coil3.ImageLoader
+import com.example.cahier.data.MIGRATION_7_8
 import com.example.cahier.data.NoteDatabase
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.data.OfflineNotesRepository
@@ -38,7 +40,13 @@ object AppModule {
     @Provides
     @Singleton
     fun provideNoteDatabase(@ApplicationContext context: Context): NoteDatabase {
-        return NoteDatabase.getDatabase(context)
+        return Room.databaseBuilder(
+            context,
+            NoteDatabase::class.java,
+            NoteDatabase.DATABASE_NAME
+        )
+            .addMigrations(MIGRATION_7_8)
+            .build()
     }
 
     @Provides
