@@ -29,6 +29,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
@@ -43,7 +44,10 @@ fun DrawingDetailThumbnail(
     modifier: Modifier = Modifier,
     backgroundImageUri: String? = null,
 ) {
-    val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
+    val context = LocalContext.current
+    val canvasStrokeRenderer = remember {
+        CanvasStrokeRenderer.create(textureStore = CahierTextureBitmapStore(context))
+    }
 
     Box(
         modifier = modifier

@@ -50,6 +50,7 @@ import coil3.toBitmap
 import com.example.cahier.data.CustomBrush
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.navigation.DrawingCanvasDestination
+import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.CahierUiState
 import com.example.cahier.ui.CustomBrushes
 import com.example.cahier.utils.FileHelper
@@ -127,7 +128,7 @@ class DrawingCanvasViewModel @Inject constructor(
                     note.clientBrushFamilyId?.let { id ->
                         if (!isBrushSelectedInSession) {
                             val customBrush = customBrushes.value.find {
-                                it.brushFamily.clientBrushFamilyId == id
+                                it.name == id
                             }
                             customBrush?.let {
                                 _selectedBrush.value =
@@ -269,7 +270,10 @@ class DrawingCanvasViewModel @Inject constructor(
             canvas.drawBitmap(bmp, matrix, null)
         }
 
-        val strokeRenderer = CanvasStrokeRenderer.create(forcePathRendering = true)
+        val strokeRenderer = CanvasStrokeRenderer.create(
+            forcePathRendering = true,
+            textureStore = CahierTextureBitmapStore(context)
+        )
         strokes.forEach { stroke ->
             strokeRenderer.draw(canvas, stroke, android.graphics.Matrix())
         }
@@ -279,8 +283,8 @@ class DrawingCanvasViewModel @Inject constructor(
     suspend fun saveStrokes() {
         if (historyIndex >= 0 && historyIndex < history.size) {
             val strokesToSave = history[historyIndex]
-            val clientBrushFamilyId =
-                strokesToSave.firstOrNull()?.brush?.family?.clientBrushFamilyId
+            val currentBrushFamily = strokesToSave.lastOrNull()?.brush?.family
+            val clientBrushFamilyId = _customBrushes.value.find { it.brushFamily == currentBrushFamily }?.name
             noteRepository.updateNoteStrokes(noteId, strokesToSave, clientBrushFamilyId)
         } else if (history.isEmpty()) {
             noteRepository.updateNoteStrokes(noteId, emptyList(), null)

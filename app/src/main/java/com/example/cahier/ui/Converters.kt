@@ -55,18 +55,19 @@ class Converters {
             stockBrushToEnumValues.entries.associate { (key, value) -> value to key }
     }
 
-    private fun serializeBrush(brush: Brush): SerializedBrush {
+    private fun serializeBrush(brush: Brush, customBrushes: List<CustomBrush>): SerializedBrush {
+        val customBrushName = customBrushes.find { it.brushFamily == brush.family }?.name
         return SerializedBrush(
             size = brush.size,
             color = brush.colorLong,
             epsilon = brush.epsilon,
             stockBrush = stockBrushToEnumValues[brush.family] ?: SerializedStockBrush.MarkerLatest,
-            clientBrushFamilyId = brush.family.clientBrushFamilyId
+            clientBrushFamilyId = customBrushName
         )
     }
 
-    fun serializeStroke(stroke: Stroke): String {
-        val serializedBrush = serializeBrush(stroke.brush)
+    fun serializeStroke(stroke: Stroke, customBrushes: List<CustomBrush>): String {
+        val serializedBrush = serializeBrush(stroke.brush, customBrushes)
         val encodedSerializedInputs = ByteArrayOutputStream().use { outputStream ->
             stroke.inputs.encode(outputStream)
             outputStream.toByteArray()
@@ -96,7 +97,7 @@ class Converters {
     ): Brush {
         val stockBrushFamily = enumToStockBrush[serializedBrush.stockBrush]
         val customBrush = customBrushes.find {
-            it.brushFamily.clientBrushFamilyId == serializedBrush.clientBrushFamilyId
+            it.name == serializedBrush.clientBrushFamilyId
         }
 
         val brushFamily = customBrush?.brushFamily ?: stockBrushFamily ?: StockBrushes.marker()
