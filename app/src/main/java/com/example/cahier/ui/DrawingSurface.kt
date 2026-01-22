@@ -42,6 +42,7 @@ import androidx.core.graphics.withSave
 import androidx.ink.authoring.compose.InProgressStrokes
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
+import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
@@ -53,6 +54,7 @@ import com.example.cahier.utils.pointerInputWithSiblingFallthrough
 fun DrawingSurface(
     strokes: List<Stroke>,
     canvasStrokeRenderer: CanvasStrokeRenderer,
+    textureStore: TextureBitmapStore? = null,
     onStrokesFinished: (List<Stroke>) -> Unit,
     onErase: (offsetX: Float, offsetY: Float) -> Unit,
     onEraseStart: () -> Unit,
@@ -130,7 +132,14 @@ fun DrawingSurface(
                     }
             )
         } else {
-            InProgressStrokes(
+            textureStore?.let {
+                InProgressStrokes(
+                    defaultBrush = currentBrush,
+                    nextBrush = onGetNextBrush,
+                    onStrokesFinished = onStrokesFinished,
+                    textureBitmapStore = it
+                )
+            } ?: InProgressStrokes(
                 defaultBrush = currentBrush,
                 nextBrush = onGetNextBrush,
                 onStrokesFinished = onStrokesFinished,

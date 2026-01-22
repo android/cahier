@@ -41,7 +41,6 @@ object CustomBrushes {
 
     @OptIn(ExperimentalInkCustomBrushApi::class)
     private fun loadCustomBrushes(context: Context): List<CustomBrush> {
-
         val brushFiles = mapOf(
             "Calligraphy" to (R.raw.calligraphy to R.drawable.draw_24px),
             "Flag Banner" to (R.raw.flag_banner to R.drawable.flag_24px),
@@ -61,7 +60,7 @@ object CustomBrushes {
                 val brushFamily = context.resources.openRawResource(resourceId).use { inputStream ->
                     BrushFamily.decode(inputStream)
                 }
-                CustomBrush(name, icon, brushFamily.copy(clientBrushFamilyId = name))
+                CustomBrush(name, icon, brushFamily)
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading custom brush $name", e)
                 null

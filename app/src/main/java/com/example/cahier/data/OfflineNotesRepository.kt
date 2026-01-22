@@ -49,7 +49,8 @@ class OfflineNotesRepository(
         strokes: List<Stroke>,
         clientBrushFamilyId: String?
     ) {
-        val strokesData = strokes.map { converters.serializeStroke(it) }
+        val customBrushes = CustomBrushes.getBrushes(context)
+        val strokesData = strokes.map { converters.serializeStroke(it, customBrushes) }
         val strokesJson = Json.encodeToString(strokesData)
 
         val note = notesDao.getNoteById(noteId)

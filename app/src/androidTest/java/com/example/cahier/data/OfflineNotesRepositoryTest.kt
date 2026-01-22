@@ -53,7 +53,7 @@ class OfflineNotesRepositoryTest {
     fun getNoteStrokes_deserializes_strokes_correctly() = runTest {
         val brush = Brush(StockBrushes.marker(), 1f, 1f)
         val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
-        val serializedStroke = Converters().serializeStroke(stroke)
+        val serializedStroke = Converters().serializeStroke(stroke, emptyList())
         val strokesJson = Json.encodeToString(listOf(serializedStroke))
         val note = Note(id = 1, strokesData = strokesJson)
 

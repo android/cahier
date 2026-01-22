@@ -63,6 +63,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -275,7 +276,11 @@ private fun DrawingSurfaceWithTarget(
     val currentBrush by drawingCanvasViewModel.currentBrush.collectAsStateWithLifecycle()
     val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
     val strokes = remember { mutableStateListOf<Stroke>() }
-    val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
+    val context = LocalContext.current
+    val textureStore = remember { CahierTextureBitmapStore(context) }
+    val canvasStrokeRenderer = remember {
+        CanvasStrokeRenderer.create(textureStore = textureStore)
+    }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     val view = LocalView.current
     val activity = LocalActivity.current as ComponentActivity
@@ -360,6 +365,7 @@ private fun DrawingSurfaceWithTarget(
             onGetNextBrush = drawingCanvasViewModel::getCurrentBrush,
             isEraserMode = isEraserMode,
             backgroundImageUri = uiState.note.imageUriList?.firstOrNull(),
+            textureStore = textureStore,
             modifier = Modifier.fillMaxSize()
         )
     }
