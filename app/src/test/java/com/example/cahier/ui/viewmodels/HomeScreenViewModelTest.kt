@@ -113,12 +113,12 @@ class HomeScreenViewModelTest {
         val noteId =
             runBlocking { notesRepository.addNote(Note(title = "My Note", isFavorite = false)) }
 
-        viewModel.toggleFavorite(noteId)
-
-        notesRepository.getNoteStream(noteId).test {
-            assertTrue(awaitItem().isFavorite)
-            cancelAndIgnoreRemainingEvents()
-        }
+                viewModel.toggleFavorite(noteId)
+         
+                 notesRepository.getNoteStream(noteId).test {
+                     assertTrue(awaitItem()!!.isFavorite)
+                     cancelAndIgnoreRemainingEvents()
+                 }
     }
 
     @Test

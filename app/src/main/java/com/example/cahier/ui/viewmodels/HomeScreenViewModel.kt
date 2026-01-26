@@ -27,6 +27,8 @@ import com.example.cahier.data.NotesRepository
 import com.example.cahier.ui.CahierUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -51,6 +53,8 @@ class HomeScreenViewModel @Inject constructor(
     private val _newWindowEvent = Channel<Pair<NoteType, Long>>()
     val newWindowEvent = _newWindowEvent.receiveAsFlow()
 
+    private var selectNoteJob: Job? = null
+
     /**
      * Holds ui state for the list of notes on the home pane.
      * The list of items are retrieved from [NotesRepository] and mapped to
@@ -65,7 +69,8 @@ class HomeScreenViewModel @Inject constructor(
             )
 
     fun selectNote(noteId: Long) {
-        viewModelScope.launch {
+        selectNoteJob?.cancel()
+        selectNoteJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 noteRepository.getNoteStream(noteId)
@@ -79,6 +84,7 @@ class HomeScreenViewModel @Inject constructor(
                         _uiState.value = CahierUiState(note = note, strokes = strokes)
                     }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     error = "Error retrieving note: ${e.message}",
                     isLoading = false
@@ -129,6 +135,9 @@ class HomeScreenViewModel @Inject constructor(
         try {
             viewModelScope.launch {
                 noteRepository.deleteNote(noteToDelete)
+                if (_uiState.value.note.id == noteToDelete.id) {
+                    clearSelection()
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting note: ${e.message}")
@@ -143,7 +152,9 @@ class HomeScreenViewModel @Inject constructor(
                 noteRepository.toggleFavorite(noteId)
                 if (_uiState.value.note.id == noteId) {
                     val updatedNote = noteRepository.getNoteStream(noteId).first()
-                    _uiState.update { it.copy(note = updatedNote) }
+                    updatedNote?.let { note ->
+                        _uiState.update { it.copy(note = note) }
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error toggling favorite: ${e.message}")
@@ -152,6 +163,7 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     fun clearSelection() {
+        selectNoteJob?.cancel()
         _uiState.update { CahierUiState() }
     }
 

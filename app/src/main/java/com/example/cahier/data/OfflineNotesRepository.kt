@@ -34,7 +34,7 @@ class OfflineNotesRepository(
 
     override fun getAllNotesStream(): Flow<List<Note>> = notesDao.getAllNotes()
 
-    override fun getNoteStream(id: Long): Flow<Note> = notesDao.getNote(id)
+    override fun getNoteStream(id: Long): Flow<Note?> = notesDao.getNote(id)
 
     override suspend fun addNote(note: Note): Long {
         return notesDao.addNote(note)

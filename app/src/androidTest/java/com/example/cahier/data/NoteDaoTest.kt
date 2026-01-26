@@ -65,7 +65,7 @@ class NoteDaoTest {
         val updatedNote = Note(id = 1, title = "Updated Title")
         noteDao.updateNote(updatedNote)
         val retrievedNote = noteDao.getNote(1).first()
-        assertEquals(retrievedNote.title, "Updated Title")
+        assertEquals(retrievedNote?.title, "Updated Title")
     }
 
     @Test
