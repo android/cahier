@@ -42,8 +42,8 @@ class FakeNotesRepository : NotesRepository {
             .map { it.values.toList().sortedByDescending { note -> note.id } }
     }
 
-    override fun getNoteStream(id: Long): Flow<Note> {
-        return notesFlow.asStateFlow().mapNotNull { it[id] }
+    override fun getNoteStream(id: Long): Flow<Note?> {
+        return notesFlow.asStateFlow().map { it[id] }
     }
 
     override suspend fun addNote(note: Note): Long {

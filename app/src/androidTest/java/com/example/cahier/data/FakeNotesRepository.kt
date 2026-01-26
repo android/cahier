@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 
 class FakeNotesRepository : NotesRepository {
@@ -42,8 +41,8 @@ class FakeNotesRepository : NotesRepository {
             .map { it.values.toList().sortedByDescending { note -> note.id } }
     }
 
-    override fun getNoteStream(id: Long): Flow<Note> {
-        return notesFlow.asStateFlow().mapNotNull { it[id] }
+    override fun getNoteStream(id: Long): Flow<Note?> {
+        return notesFlow.asStateFlow().map { it[id] }
     }
 
     override suspend fun addNote(note: Note): Long {

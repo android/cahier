@@ -112,11 +112,10 @@ class HomeScreenViewModelTest {
     fun toggleFavorite_toggles_favorite_status_in_repository() = runTest {
         val noteId =
             runBlocking { notesRepository.addNote(Note(title = "My Note", isFavorite = false)) }
-
         viewModel.toggleFavorite(noteId)
 
         notesRepository.getNoteStream(noteId).test {
-            assertTrue(awaitItem().isFavorite)
+            assertTrue(awaitItem()!!.isFavorite)
             cancelAndIgnoreRemainingEvents()
         }
     }

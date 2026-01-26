@@ -81,7 +81,7 @@ class CanvasScreenViewModelTest {
         viewModel.updateNoteTitle(newTitle)
 
         notesRepository.getNoteStream(noteId).test {
-            assertEquals(newTitle, awaitItem().title)
+            assertEquals(newTitle, awaitItem()!!.title)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -92,7 +92,7 @@ class CanvasScreenViewModelTest {
         viewModel.updateNoteText(newText)
 
         notesRepository.getNoteStream(noteId).test {
-            assertEquals(newText, awaitItem().text)
+            assertEquals(newText, awaitItem()!!.text)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -102,7 +102,7 @@ class CanvasScreenViewModelTest {
         viewModel.toggleFavorite()
 
         notesRepository.getNoteStream(noteId).test {
-            assertTrue(awaitItem().isFavorite)
+            assertTrue(awaitItem()!!.isFavorite)
             cancelAndIgnoreRemainingEvents()
         }
     }
