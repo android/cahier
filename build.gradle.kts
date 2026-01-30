@@ -10,5 +10,5 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid) version "2.3.0" apply false
     alias(libs.plugins.ksp) version "2.3.4" apply false
     kotlin("plugin.serialization") version "2.3.0"
-    id("com.google.dagger.hilt.android") version "2.57.2" apply false
+    id("com.google.dagger.hilt.android") version "2.59" apply false
 }
