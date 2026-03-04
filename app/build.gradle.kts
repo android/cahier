@@ -15,10 +15,9 @@
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.ksp)
     alias(libs.plugins.roborazzi)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.3.0"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.3.10"
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
     id("com.google.dagger.hilt.android")
@@ -67,9 +66,10 @@ android {
             isIncludeAndroidResources = true
         }
     }
-    roborazzi {
-        outputDir.set(file("../screenshots"))
-    }
+}
+
+roborazzi {
+    outputDir.set(file("../screenshots"))
 }
 
 dependencies {
