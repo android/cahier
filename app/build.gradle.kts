@@ -15,7 +15,6 @@
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.ksp)
     alias(libs.plugins.roborazzi)
     id("org.jetbrains.kotlin.plugin.compose") version "2.3.10"
@@ -67,9 +66,10 @@ android {
             isIncludeAndroidResources = true
         }
     }
-    roborazzi {
-        outputDir.set(file("../screenshots"))
-    }
+}
+
+roborazzi {
+    outputDir.set(file("../screenshots"))
 }
 
 dependencies {
