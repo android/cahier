@@ -37,7 +37,6 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.layout.PaneExpansionState
-import androidx.compose.material3.adaptive.layout.defaultDragHandleSemantics
 import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.material3.adaptive.navigation.ThreePaneScaffoldNavigator
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
@@ -104,6 +103,7 @@ enum class AppDestinations(
 fun HomePane(
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
+    navigateToBrushDesigner: () -> Unit,
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
@@ -174,6 +174,7 @@ fun HomePane(
         selectedNoteUIState = selectedNoteUIState,
         navigateToCanvas = navigateToCanvas,
         navigateToDrawingCanvas = navigateToDrawingCanvas,
+        navigateToBrushDesigner = navigateToBrushDesigner,
         navigateUp = navigateUp
     )
 }
@@ -193,6 +194,7 @@ private fun CahierNavigationSuite(
     selectedNoteUIState: CahierUiState,
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
+    navigateToBrushDesigner: () -> Unit,
     navigateUp: () -> Unit
 ) {
     NavigationSuiteScaffold(
@@ -306,6 +308,7 @@ private fun CahierNavigationSuite(
 
                 AppDestinations.Settings -> {
                     SettingsScreen(
+                        navigateToBrushDesigner = navigateToBrushDesigner,
                         modifier = Modifier.fillMaxSize()
                     )
                 }

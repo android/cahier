@@ -30,6 +30,7 @@ class ScreenshotTest {
         HomePane(
             navigateToCanvas = { _ -> },
             navigateToDrawingCanvas = { _ -> },
+            navigateToBrushDesigner = {},
             navigateUp = {},
             homeScreenViewModel = fakeViewModel
         )

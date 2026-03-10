@@ -30,6 +30,7 @@ import com.example.cahier.ui.DrawingCanvas
 import com.example.cahier.ui.HomeDestination
 import com.example.cahier.ui.HomePane
 import com.example.cahier.ui.TextNoteCanvasScreen
+import com.example.cahier.ui.brushdesigner.BrushDesignerScreen
 
 
 @OptIn(ExperimentalComposeApi::class)
@@ -50,6 +51,9 @@ fun CahierNavHost(
                 },
                 navigateToDrawingCanvas = { noteId ->
                     navController.navigate("${DrawingCanvasDestination.route}/$noteId")
+                },
+                navigateToBrushDesigner = {
+                    navController.navigate(BrushDesignerDestination.route)
                 },
                 navigateUp = {
                     navController.navigateUp()
@@ -76,6 +80,11 @@ fun CahierNavHost(
                 navigateUp = { navController.navigateUp() },
             )
         }
+        composable(route = BrushDesignerDestination.route) {
+            BrushDesignerScreen(
+                onNavigateUp = { navController.navigateUp() }
+            )
+        }
     }
 }
 
@@ -90,4 +99,8 @@ object DrawingCanvasDestination : NavigationDestination {
     override val route = "drawing_canvas"
     const val NOTE_ID_ARG = "noteId"
     val routeWithArgs = "$route/{$NOTE_ID_ARG}"
+}
+
+object BrushDesignerDestination : NavigationDestination {
+    override val route = "brush_designer"
 }

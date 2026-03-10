@@ -160,6 +160,13 @@ dependencies {
     //Coil
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+
+    //Protobuf
+    implementation(project(":ink-proto"))
+    implementation(libs.protobuf.javalite)
+
+    //Color Picker
+    implementation(libs.compose.color.picker.android)
 }
 java {
     toolchain {
