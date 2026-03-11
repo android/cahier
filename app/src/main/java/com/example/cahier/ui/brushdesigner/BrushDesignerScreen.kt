@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -108,11 +109,44 @@ fun BrushDesignerScreen(
 
     var stockBrushMenuExpanded by remember { mutableStateOf(false) }
 
+    var showSavePaletteDialog by remember { mutableStateOf(false) }
+    var paletteBrushNameInput by remember { mutableStateOf("") }
+
+    val savedBrushes by viewModel.savedPaletteBrushes.collectAsState()
+    var paletteMenuExpanded by remember { mutableStateOf(false) }
+
     LaunchedEffect(isCompact, hasSetInitialProportion) {
         if (!isCompact && !hasSetInitialProportion) {
-            paneExpansionState.setFirstPaneProportion(0.25f)
+            paneExpansionState.setFirstPaneProportion(0.35f)
             hasSetInitialProportion = true
         }
+    }
+
+    if (showSavePaletteDialog) {
+        AlertDialog(
+            onDismissRequest = { showSavePaletteDialog = false },
+            title = { Text("Save to Cahier Palette") },
+            text = {
+                OutlinedTextField(
+                    value = paletteBrushNameInput,
+                    onValueChange = { paletteBrushNameInput = it },
+                    label = { Text("Brush Name") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (paletteBrushNameInput.isNotBlank()) {
+                        viewModel.saveToPalette(paletteBrushNameInput)
+                        showSavePaletteDialog = false
+                        paletteBrushNameInput = ""
+                    }
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSavePaletteDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     Scaffold(
@@ -140,26 +174,56 @@ fun BrushDesignerScreen(
                             DropdownMenuItem(
                                 text = { Text("Highlighter") },
                                 onClick = {
-                                    viewModel.loadStockBrush(StockBrushes.highlighter());
+                                    viewModel.loadStockBrush(StockBrushes.highlighter())
                                     stockBrushMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text("Marker") },
                                 onClick = {
-                                    viewModel.loadStockBrush(StockBrushes.marker());
+                                    viewModel.loadStockBrush(StockBrushes.marker())
                                     stockBrushMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text("Pressure Pen") },
                                 onClick = {
-                                    viewModel.loadStockBrush(StockBrushes.pressurePen());
+                                    viewModel.loadStockBrush(StockBrushes.pressurePen())
                                     stockBrushMenuExpanded = false
                                 }
                             )
                         }
                     }
+                    Box {
+                        TextButton(onClick = { paletteMenuExpanded = true }) {
+                            Text("My Palette")
+                        }
+                        DropdownMenu(
+                            expanded = paletteMenuExpanded,
+                            onDismissRequest = { paletteMenuExpanded = false }
+                        ) {
+                            if (savedBrushes.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text("No saved brushes yet") },
+                                    onClick = { paletteMenuExpanded = false }
+                                )
+                            } else {
+                                savedBrushes.forEach { brush ->
+                                    DropdownMenuItem(
+                                        text = { Text(brush.name) },
+                                        onClick = {
+                                            viewModel.loadFromPalette(brush)
+                                            paletteMenuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    TextButton(
+                        onClick =
+                            { showSavePaletteDialog = true }) { Text("Save to Palette") }
                     TextButton(onClick = { viewModel.clearCanvas() }) { Text("Clear") }
                     TextButton(onClick = {
                         importLauncher.launch(arrayOf("application/octet-stream", "*/*"))
@@ -240,9 +304,49 @@ private fun ControlsPane(
 
     var textFieldsLocked by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
-    val currentTip = activeProto.coatsList.firstOrNull()?.tip
-        ?: ProtoBrushTip.getDefaultInstance()
+
+    val currentTip = activeProto.coatsList.firstOrNull()?.tip ?: ProtoBrushTip.getDefaultInstance()
     val inputModel = activeProto.inputModel
+
+    var showTextureDialog by remember { mutableStateOf(false) }
+    var pendingTextureUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var textureIdInput by remember { mutableStateOf("") }
+
+    val texturePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let {
+            pendingTextureUri = it
+            showTextureDialog = true
+        }
+    }
+
+    if (showTextureDialog) {
+        AlertDialog(
+            onDismissRequest = { showTextureDialog = false },
+            title = { Text("Name Texture") },
+            text = {
+                OutlinedTextField(
+                    value = textureIdInput,
+                    onValueChange = { textureIdInput = it },
+                    label = { Text("Texture ID (e.g. pattern_1)") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (textureIdInput.isNotBlank() && pendingTextureUri != null) {
+                        viewModel.addCustomTexture(pendingTextureUri!!, textureIdInput)
+                        showTextureDialog = false
+                        textureIdInput = ""
+                    }
+                }) { Text("Load") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTextureDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -311,7 +415,8 @@ private fun ControlsPane(
                     .menuAnchor()
                     .fillMaxWidth()
             )
-            ExposedDropdownMenu (
+
+            DropdownMenu(
                 expanded = expandedModelMenu,
                 onDismissRequest = { expandedModelMenu = false }
             ) {
@@ -337,16 +442,15 @@ private fun ControlsPane(
                     }
                 )
             }
-
         }
-
 
         if (inputModel.hasSlidingWindowModel() || (!inputModel.hasSpringModel()
                     && !inputModel.hasExperimentalNaiveModel())
         ) {
             val swModel = inputModel.slidingWindowModel
             val windowMs =
-                if (swModel.hasWindowSizeSeconds()) (swModel.windowSizeSeconds * 1000).toLong() else 20L
+                if (swModel.hasWindowSizeSeconds()) (swModel.windowSizeSeconds * 1000)
+                    .toLong() else 20L
             val upsamplingHz = if (swModel.hasExperimentalUpsamplingPeriodSeconds()) {
                 val period = swModel.experimentalUpsamplingPeriodSeconds
                 if (period == Float.POSITIVE_INFINITY || period == 0f) 0 else (1f / period).toInt()
@@ -365,7 +469,8 @@ private fun ControlsPane(
                         valueRange = 1f..100f,
                         onValueChange = { newValue ->
                             viewModel.updateSlidingWindowModel(
-                                newValue.toLong(), upsamplingHz)
+                                newValue.toLong(), upsamplingHz
+                            )
                         }
                     )
                     BrushSliderControl(
@@ -374,7 +479,8 @@ private fun ControlsPane(
                         valueRange = 0f..500f,
                         onValueChange = { newValue ->
                             viewModel.updateSlidingWindowModel(
-                                windowMs, newValue.toInt())
+                                windowMs, newValue.toInt()
+                            )
                         }
                     )
                 }
@@ -391,7 +497,11 @@ private fun ControlsPane(
             Tab(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 },
-                text = { Text("Paint & Color") })
+                text = { Text("Paint") })
+            Tab(
+                selected = selectedTab == 2,
+                onClick = { selectedTab = 2 },
+                text = { Text("Behaviors") })
         }
 
         if (selectedTab == 0) {
@@ -429,7 +539,7 @@ private fun ControlsPane(
             BrushSliderControl(
                 label = "Slant (Radians)",
                 value = if (currentTip.hasSlantRadians()) currentTip.slantRadians else 0f,
-                valueRange = -1.57f..1.57f, // -PI/2 to PI/2
+                valueRange = -1.57f..1.57f,
                 onValueChange = { newValue -> viewModel.updateTip { it.setSlantRadians(newValue) } }
             )
 
@@ -440,7 +550,7 @@ private fun ControlsPane(
                 onValueChange = { newValue -> viewModel.updateTip { it.setPinch(newValue) } }
             )
 
-        } else {
+        } else if (selectedTab == 1) {
             val currentPaint =
                 activeProto.coatsList.firstOrNull()?.paintPreferencesList?.firstOrNull()
                     ?: ProtoBrushPaint.getDefaultInstance()
@@ -498,6 +608,222 @@ private fun ControlsPane(
                 valueRange = 0f..2f,
                 onValueChange = { viewModel.updateOpacityMultiplier(it) }
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+
+            Text(
+                text = "Textures",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+            Button(
+                onClick = {
+                    texturePickerLauncher.launch(
+                        androidx.activity.result.PickVisualMediaRequest(
+                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                        )
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Import Texture from Gallery")
+            }
+
+            val textureCount = activeProto.textureIdToBitmapMap.size
+            Text("Loaded Textures: $textureCount", style = MaterialTheme.typography.bodySmall)
+
+        } else if (selectedTab == 2) {
+            Text(
+                "Dynamics & Behaviors",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            Text(
+                "Map stylus/mouse inputs to dynamic brush properties.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            val behaviors = activeProto.coatsList.firstOrNull()?.tip?.behaviorsList ?: emptyList()
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (behaviors.isEmpty()) {
+                        Text("No behaviors defined.", style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        behaviors.forEachIndexed { bIndex, behavior ->
+                            val sourceNode =
+                                behavior.nodesList.find { it.hasSourceNode() }?.sourceNode
+                            val targetNode =
+                                behavior.nodesList.find { it.hasTargetNode() }?.targetNode
+
+                            val sourceStr =
+                                sourceNode?.source?.name?.replace(
+                                    "SOURCE_", ""
+                                )?.lowercase() ?: "input"
+                            val targetStr =
+                                targetNode?.target?.name?.replace(
+                                    "TARGET_", ""
+                                )?.lowercase() ?: "output"
+
+                            Text(
+                                text = "Layer ${bIndex + 1}: $sourceStr ➔ $targetStr",
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    if (behaviors.isNotEmpty()) {
+                        TextButton(onClick = { viewModel.clearBehaviors() }) {
+                            Text("Clear All Behaviors", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
+                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                                .setSource(
+                                    ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE
+                                )
+                                .setSourceValueRangeStart(0f)
+                                .setSourceValueRangeEnd(1f)
+                                .setSourceOutOfRangeBehavior(
+                                    ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                                )
+                        ).build()
+                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
+                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                                .setTarget(ink.proto.BrushBehavior.Target.TARGET_SIZE_MULTIPLIER)
+                                .setTargetModifierRangeStart(0.2f)
+                                .setTargetModifierRangeEnd(2.0f)
+                        ).build()
+                        viewModel.addBehavior(listOf(source, target))
+                    }
+                ) { Text("+ Pressure affects Size") }
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
+                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                                .setSource(
+                                    ink.proto.BrushBehavior.Source
+                                        .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND
+                                )
+                                .setSourceValueRangeStart(0f)
+                                .setSourceValueRangeEnd(50f)
+                                .setSourceOutOfRangeBehavior(
+                                    ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                                )
+                        ).build()
+                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
+                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                                .setTarget(ink.proto.BrushBehavior.Target.TARGET_SIZE_MULTIPLIER)
+                                .setTargetModifierRangeStart(1.0f)
+                                .setTargetModifierRangeEnd(3.0f)
+                        ).build()
+                        viewModel.addBehavior(listOf(source, target))
+                    }
+                ) { Text("+ Speed affects Size") }
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
+                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                                .setSource(
+                                    ink.proto.BrushBehavior.Source
+                                        .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND
+                                )
+                                .setSourceValueRangeStart(5f)
+                                .setSourceValueRangeEnd(40f)
+                                .setSourceOutOfRangeBehavior(
+                                    ink.proto.BrushBehavior.OutOfRange
+                                        .OUT_OF_RANGE_CLAMP
+                                )
+                        ).build()
+                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
+                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                                .setTarget(
+                                    ink.proto.BrushBehavior.Target
+                                        .TARGET_OPACITY_MULTIPLIER
+                                )
+                                .setTargetModifierRangeStart(1.0f)
+                                .setTargetModifierRangeEnd(0.0f)
+                        ).build()
+                        viewModel.addBehavior(listOf(source, target))
+                    }
+                ) { Text("+ Speed affects Opacity") }
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
+                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                                .setSource(ink.proto.BrushBehavior.Source.SOURCE_TILT_IN_RADIANS)
+                                .setSourceValueRangeStart(0f)
+                                .setSourceValueRangeEnd(1.57f)
+                                .setSourceOutOfRangeBehavior(
+                                    ink.proto.BrushBehavior.OutOfRange
+                                        .OUT_OF_RANGE_CLAMP
+                                )
+                        ).build()
+                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
+                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                                .setTarget(
+                                    ink.proto.BrushBehavior.Target
+                                        .TARGET_SLANT_OFFSET_IN_RADIANS
+                                )
+                                .setTargetModifierRangeStart(0f)
+                                .setTargetModifierRangeEnd(1.57f)
+                        ).build()
+                        viewModel.addBehavior(listOf(source, target))
+                    }
+                ) { Text("+ Tilt affects Slant") }
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
+                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                                .setSource(
+                                    ink.proto.BrushBehavior.Source
+                                        .SOURCE_ORIENTATION_IN_RADIANS
+                                )
+                                .setSourceValueRangeStart(0f)
+                                .setSourceValueRangeEnd(6.28f)
+                                .setSourceOutOfRangeBehavior(
+                                    ink.proto.BrushBehavior.OutOfRange
+                                        .OUT_OF_RANGE_REPEAT
+                                )
+                        ).build()
+                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
+                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                                .setTarget(
+                                    ink.proto.BrushBehavior.Target
+                                        .TARGET_ROTATION_OFFSET_IN_RADIANS
+                                )
+                                .setTargetModifierRangeStart(0f)
+                                .setTargetModifierRangeEnd(6.28f)
+                        ).build()
+                        viewModel.addBehavior(listOf(source, target))
+                    }
+                ) { Text("+ Orientation affects Rotation") }
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))

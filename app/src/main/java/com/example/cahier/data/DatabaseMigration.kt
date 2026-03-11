@@ -28,3 +28,11 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         db.execSQL("UPDATE notes SET type = 'Drawing' WHERE type = 'DRAWING'")
     }
 }
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `custom_brushes` (`name` TEXT NOT NULL, `brushBytes` BLOB NOT NULL, PRIMARY KEY(`name`))"
+        )
+    }
+}

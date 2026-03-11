@@ -1,6 +1,8 @@
 package com.example.cahier.ui.brushdesigner
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.ui.graphics.Color
 import androidx.ink.brush.Brush
@@ -12,35 +14,40 @@ import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.protobuf.ByteString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
-import javax.inject.Inject
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.ColorFunction as ProtoColorFunction
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalInkCustomBrushApi::class)
+@OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
 @HiltViewModel
 class BrushDesignerViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val repository: BrushDesignerRepository
+    private val repository: BrushDesignerRepository,
+    private val customBrushDao: CustomBrushDao
 ) : ViewModel() {
 
     val activeBrushProto: StateFlow<ProtoBrushFamily> = repository.activeBrushProto.asStateFlow()
@@ -93,6 +100,38 @@ class BrushDesignerViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = null
     )
+
+    private val autoSaveFile = File(context.cacheDir, "autosave.brush")
+
+    init {
+        if (autoSaveFile.exists()) {
+            loadBrushFromFile(Uri.fromFile(autoSaveFile))
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.activeBrushProto
+                .debounce(1000L)
+                .collect { proto ->
+                    try {
+                        autoSaveFile.outputStream().use { outputStream ->
+                            GZIPOutputStream(outputStream).use { gzip ->
+                                gzip.write(proto.toByteArray())
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+        }
+    }
+
+    val savedPaletteBrushes: StateFlow<List<CustomBrushEntity>> =
+        customBrushDao.getAllCustomBrushes()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     fun getActiveBrush(): Brush? = activeBrush.value
 
@@ -183,6 +222,7 @@ class BrushDesignerViewModel @Inject constructor(
             familyBuilder.addCoats(
                 ProtoBrushCoat.newBuilder()
                     .setTip(ProtoBrushTip.newBuilder())
+                    .addPaintPreferences(ProtoBrushPaint.newBuilder())
             )
         }
 
@@ -283,7 +323,9 @@ class BrushDesignerViewModel @Inject constructor(
         val familyBuilder = repository.activeBrushProto.value.toBuilder()
         val inputModelBuilder = familyBuilder.inputModel.toBuilder()
 
-        inputModelBuilder.setExperimentalNaiveModel(ink.proto.BrushFamily.ExperimentalNaiveModel.getDefaultInstance())
+        inputModelBuilder.setExperimentalNaiveModel(
+            ink.proto.BrushFamily.ExperimentalNaiveModel.getDefaultInstance()
+        )
 
         familyBuilder.setInputModel(inputModelBuilder)
         repository.activeBrushProto.value = familyBuilder.build()
@@ -295,5 +337,89 @@ class BrushDesignerViewModel @Inject constructor(
 
     fun setBrushSize(size: Float) {
         _brushSize.value = size
+    }
+
+
+    fun saveToPalette(brushName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val rawBytes = repository.activeBrushProto.value.toByteArray()
+                val baos = ByteArrayOutputStream()
+                GZIPOutputStream(baos).use { it.write(rawBytes) }
+
+                customBrushDao.saveCustomBrush(
+                    CustomBrushEntity(name = brushName, brushBytes = baos.toByteArray())
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun loadFromPalette(entity: CustomBrushEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                ByteArrayInputStream(entity.brushBytes).use { bais ->
+                    GZIPInputStream(bais).use { gzip ->
+                        val rawBytes = gzip.readBytes()
+                        val loadedProto = ProtoBrushFamily.parseFrom(rawBytes)
+
+                        withContext(Dispatchers.Main) {
+                            repository.activeBrushProto.value = loadedProto
+                            clearCanvas()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun addCustomTexture(uri: Uri, textureId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+
+                val baos = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
+                val pngBytes = baos.toByteArray()
+
+                val builder = repository.activeBrushProto.value.toBuilder()
+                builder.putTextureIdToBitmap(textureId, ByteString.copyFrom(pngBytes))
+
+                repository.activeBrushProto.value = builder.build()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun addBehavior(nodes: List<ink.proto.BrushBehavior.Node>) {
+        val familyBuilder = repository.activeBrushProto.value.toBuilder()
+        if (familyBuilder.coatsCount == 0) return
+        val coatBuilder = familyBuilder.getCoats(0).toBuilder()
+        val tipBuilder = coatBuilder.tip.toBuilder()
+
+        val behavior = ink.proto.BrushBehavior.newBuilder()
+            .addAllNodes(nodes)
+            .build()
+
+        tipBuilder.addBehaviors(behavior)
+
+        coatBuilder.setTip(tipBuilder)
+        familyBuilder.setCoats(0, coatBuilder)
+        repository.activeBrushProto.value = familyBuilder.build()
+    }
+
+    fun clearBehaviors() {
+        val familyBuilder = repository.activeBrushProto.value.toBuilder()
+        val coatBuilder = familyBuilder.getCoats(0).toBuilder()
+        val tipBuilder = coatBuilder.tip.toBuilder()
+        tipBuilder.clearBehaviors()
+        coatBuilder.setTip(tipBuilder)
+        familyBuilder.setCoats(0, coatBuilder)
+        repository.activeBrushProto.value = familyBuilder.build()
     }
 }

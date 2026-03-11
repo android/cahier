@@ -22,9 +22,11 @@ import android.content.Context
 import androidx.room.Room
 import coil3.ImageLoader
 import com.example.cahier.data.MIGRATION_7_8
+import com.example.cahier.data.MIGRATION_8_9
 import com.example.cahier.data.NoteDatabase
 import com.example.cahier.data.NotesRepository
 import com.example.cahier.data.OfflineNotesRepository
+import com.example.cahier.ui.brushdesigner.CustomBrushDao
 import com.example.cahier.utils.FileHelper
 import dagger.Module
 import dagger.Provides
@@ -45,7 +47,7 @@ object AppModule {
             NoteDatabase::class.java,
             NoteDatabase.DATABASE_NAME
         )
-            .addMigrations(MIGRATION_7_8)
+            .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
             .build()
     }
 
@@ -56,6 +58,12 @@ object AppModule {
         @ApplicationContext context: Context
     ): NotesRepository {
         return OfflineNotesRepository(database.noteDao(), context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCustomBrushDao(database: NoteDatabase): CustomBrushDao {
+        return database.customBrushDao()
     }
 
     @Provides

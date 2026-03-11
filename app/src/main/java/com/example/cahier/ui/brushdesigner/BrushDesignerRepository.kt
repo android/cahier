@@ -1,13 +1,12 @@
 package com.example.cahier.ui.brushdesigner
 
 import androidx.ink.strokes.Stroke
-import kotlinx.coroutines.flow.MutableStateFlow
+import ink.proto.BrushCoat as ProtoBrushCoat
+import ink.proto.BrushFamily as ProtoBrushFamily
+import ink.proto.BrushTip as ProtoBrushTip
 import javax.inject.Inject
 import javax.inject.Singleton
-
-import ink.proto.BrushFamily as ProtoBrushFamily
-import ink.proto.BrushCoat as ProtoBrushCoat
-import ink.proto.BrushTip as ProtoBrushTip
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Singleton
 class BrushDesignerRepository @Inject constructor() {
@@ -16,17 +15,27 @@ class BrushDesignerRepository @Inject constructor() {
         .addCoats(
             ProtoBrushCoat.newBuilder()
                 .setTip(
-                    ProtoBrushTip.newBuilder()
-                        .setScaleX(1f)
-                        .setScaleY(1f)
-                        .setCornerRounding(1f)
+                    ProtoBrushTip.newBuilder().setScaleX(1f).setScaleY(1f).setCornerRounding(1f)
+                )
+                .addPaintPreferences(
+                    ink.proto.BrushPaint.newBuilder()
+                        .setSelfOverlap(ink.proto.BrushPaint.SelfOverlap.SELF_OVERLAP_ANY)
+                        .addColorFunctions(
+                            ink.proto.ColorFunction.newBuilder()
+                                .setOpacityMultiplier(1f)
+                        )
+                )
+        )
+        .setInputModel(
+            ink.proto.BrushFamily.InputModel.newBuilder()
+                .setSlidingWindowModel(
+                    ink.proto.BrushFamily.SlidingWindowModel.newBuilder()
+                        .setWindowSizeSeconds(0.02f)
+                        .setExperimentalUpsamplingPeriodSeconds(0.005f)
                 )
         )
         .build()
 
-    // Holds the protobuf state across app navigation
     val activeBrushProto = MutableStateFlow(initialProto)
-
-    // Holds the strokes across app navigation
     val testStrokes = MutableStateFlow<List<Stroke>>(emptyList())
 }
