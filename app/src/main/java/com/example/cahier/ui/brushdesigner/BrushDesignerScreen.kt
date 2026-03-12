@@ -65,6 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -74,9 +75,11 @@ import androidx.ink.brush.StockBrushes
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.R
+import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.DrawingSurface
 import com.godaddy.android.colorpicker.ClassicColorPicker
 import com.godaddy.android.colorpicker.HsvColor
+import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 
@@ -305,7 +308,8 @@ private fun ControlsPane(
     var textFieldsLocked by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    val currentTip = activeProto.coatsList.firstOrNull()?.tip ?: ProtoBrushTip.getDefaultInstance()
+    val currentTip = activeProto
+        .coatsList.firstOrNull()?.tip ?: ProtoBrushTip.getDefaultInstance()
     val inputModel = activeProto.inputModel
 
     var showTextureDialog by remember { mutableStateOf(false) }
@@ -550,16 +554,171 @@ private fun ControlsPane(
                 onValueChange = { newValue -> viewModel.updateTip { it.setPinch(newValue) } }
             )
 
+            HorizontalDivider()
+            Text("Particle Settings (Stamps)", style = MaterialTheme.typography.titleSmall)
+
+            BrushSliderControl(
+                label = "Gap Distance Scale",
+                value = if (currentTip.hasParticleGapDistanceScale()) currentTip
+                    .particleGapDistanceScale else 0f,
+                valueRange = 0f..5f,
+                onValueChange = { newValue ->
+                    viewModel.updateTip { it.setParticleGapDistanceScale(newValue) }
+                }
+            )
+
+            BrushSliderControl(
+                label = "Gap Duration (ms)",
+                value = if (currentTip.hasParticleGapDurationSeconds()) currentTip
+                    .particleGapDurationSeconds * 1000f else 0f,
+                valueRange = 0f..250f,
+                onValueChange = { newValue ->
+                    viewModel.updateTip { it.setParticleGapDurationSeconds(newValue / 1000f) }
+                }
+            )
+
         } else if (selectedTab == 1) {
             val currentPaint =
                 activeProto.coatsList.firstOrNull()?.paintPreferencesList?.firstOrNull()
                     ?: ProtoBrushPaint.getDefaultInstance()
 
+            val currentLayer = currentPaint.textureLayersList.firstOrNull()
+                ?: ProtoBrushPaint.TextureLayer.getDefaultInstance()
+
             Text(
-                "Paint Preferences",
+                text= "Paint & Texture",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(top = 8.dp)
             )
+
+            Text("Active Texture", style = MaterialTheme.typography.labelLarge)
+            var textureIdExpanded by remember { mutableStateOf(false) }
+            val availableTextures = activeProto.textureIdToBitmapMap.keys.toList()
+
+            ExposedDropdownMenuBox(
+                expanded = textureIdExpanded,
+                onExpandedChange = { textureIdExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = currentLayer.clientTextureId.ifEmpty { "No Texture Selected" },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Texture ID") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults
+                            .TrailingIcon(expanded = textureIdExpanded)
+                    },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = textureIdExpanded,
+                    onDismissRequest = { textureIdExpanded = false })
+                {
+                    availableTextures.forEach { id ->
+                        DropdownMenuItem(
+                            text = { Text(id) },
+                            onClick = {
+                                viewModel.updateTextureLayer { it.setClientTextureId(id) }
+                                textureIdExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            // --- 2. MAPPING MODE ---
+            Text("Mapping Mode", style = MaterialTheme.typography.labelLarge)
+            var mappingExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = mappingExpanded,
+                onExpandedChange = { mappingExpanded = it })
+            {
+                OutlinedTextField(
+                    value = currentLayer.mapping.name,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults
+                        .TrailingIcon(expanded = mappingExpanded)
+                    },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = mappingExpanded,
+                    onDismissRequest = { mappingExpanded = false })
+                {
+                    ProtoBrushPaint.TextureLayer.Mapping.entries.filter {
+                        it != ProtoBrushPaint.TextureLayer.Mapping.MAPPING_UNSPECIFIED }
+                        .forEach { mode ->
+                            DropdownMenuItem(
+                                text = { Text(mode.name) },
+                                onClick = { viewModel.updateTextureLayer {
+                                    it.setMapping(mode) }; mappingExpanded = false }
+                        )
+                    }
+                }
+            }
+
+            // --- 3. SIZE & POSITION SLIDERS ---
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    BrushSliderControl(
+                        label = "Texture Scale X",
+                        value = if (currentLayer.hasSizeX()) currentLayer.sizeX else 100f,
+                        valueRange = 1f..1000f,
+                        onValueChange = { viewModel.updateTextureLayer { b -> b.setSizeX(it) } }
+                    )
+                    BrushSliderControl(
+                        label = "Texture Scale Y",
+                        value = if (currentLayer.hasSizeY()) currentLayer.sizeY else 100f,
+                        valueRange = 1f..1000f,
+                        onValueChange = { viewModel.updateTextureLayer { b -> b.setSizeY(it) } }
+                    )
+                    BrushSliderControl(
+                        label = "Rotation (Degrees)",
+                        value = if (currentLayer.hasRotationInRadians()) (currentLayer
+                            .rotationInRadians * 57.29f) else 0f,
+                        valueRange = 0f..360f,
+                        onValueChange = { viewModel.updateTextureLayer {
+                            b -> b.setRotationInRadians(it / 57.29f) }
+                        }
+                    )
+                }
+            }
+
+            // --- 4. BLEND MODE ---
+            Text("Blend Mode", style = MaterialTheme.typography.labelLarge)
+            var blendExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = blendExpanded,
+                onExpandedChange = { blendExpanded = it })
+            {
+                OutlinedTextField(
+                    value = currentLayer.blendMode.name,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(
+                        expanded = blendExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = blendExpanded,
+                    onDismissRequest = { blendExpanded = false })
+                {
+                    ProtoBrushPaint.TextureLayer.BlendMode.entries.filter { it != ProtoBrushPaint
+                        .TextureLayer.BlendMode.BLEND_MODE_UNSPECIFIED }.forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(mode.name) },
+                            onClick = { viewModel.updateTextureLayer {
+                                it.setBlendMode(mode) }; blendExpanded = false }
+                        )
+                    }
+                }
+            }
 
             var overlapExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
@@ -645,7 +804,8 @@ private fun ControlsPane(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            val behaviors = activeProto.coatsList.firstOrNull()?.tip?.behaviorsList ?: emptyList()
+            val behaviors = activeProto
+                .coatsList.firstOrNull()?.tip?.behaviorsList ?: emptyList()
 
             Card(
                 colors = CardDefaults.cardColors(
@@ -694,20 +854,20 @@ private fun ControlsPane(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
-                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
+                            ProtoBrushBehavior.SourceNode.newBuilder()
                                 .setSource(
-                                    ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE
+                                    ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE
                                 )
                                 .setSourceValueRangeStart(0f)
                                 .setSourceValueRangeEnd(1f)
                                 .setSourceOutOfRangeBehavior(
-                                    ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                                    ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
                                 )
                         ).build()
-                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
-                            ink.proto.BrushBehavior.TargetNode.newBuilder()
-                                .setTarget(ink.proto.BrushBehavior.Target.TARGET_SIZE_MULTIPLIER)
+                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
+                            ProtoBrushBehavior.TargetNode.newBuilder()
+                                .setTarget(ProtoBrushBehavior.Target.TARGET_SIZE_MULTIPLIER)
                                 .setTargetModifierRangeStart(0.2f)
                                 .setTargetModifierRangeEnd(2.0f)
                         ).build()
@@ -718,21 +878,21 @@ private fun ControlsPane(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
-                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
+                            ProtoBrushBehavior.SourceNode.newBuilder()
                                 .setSource(
-                                    ink.proto.BrushBehavior.Source
+                                    ProtoBrushBehavior.Source
                                         .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND
                                 )
                                 .setSourceValueRangeStart(0f)
                                 .setSourceValueRangeEnd(50f)
                                 .setSourceOutOfRangeBehavior(
-                                    ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                                    ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
                                 )
                         ).build()
-                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
-                            ink.proto.BrushBehavior.TargetNode.newBuilder()
-                                .setTarget(ink.proto.BrushBehavior.Target.TARGET_SIZE_MULTIPLIER)
+                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
+                            ProtoBrushBehavior.TargetNode.newBuilder()
+                                .setTarget(ProtoBrushBehavior.Target.TARGET_SIZE_MULTIPLIER)
                                 .setTargetModifierRangeStart(1.0f)
                                 .setTargetModifierRangeEnd(3.0f)
                         ).build()
@@ -743,23 +903,23 @@ private fun ControlsPane(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
-                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
+                            ProtoBrushBehavior.SourceNode.newBuilder()
                                 .setSource(
-                                    ink.proto.BrushBehavior.Source
+                                    ProtoBrushBehavior.Source
                                         .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND
                                 )
                                 .setSourceValueRangeStart(5f)
                                 .setSourceValueRangeEnd(40f)
                                 .setSourceOutOfRangeBehavior(
-                                    ink.proto.BrushBehavior.OutOfRange
+                                    ProtoBrushBehavior.OutOfRange
                                         .OUT_OF_RANGE_CLAMP
                                 )
                         ).build()
-                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
-                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
+                            ProtoBrushBehavior.TargetNode.newBuilder()
                                 .setTarget(
-                                    ink.proto.BrushBehavior.Target
+                                    ProtoBrushBehavior.Target
                                         .TARGET_OPACITY_MULTIPLIER
                                 )
                                 .setTargetModifierRangeStart(1.0f)
@@ -772,20 +932,20 @@ private fun ControlsPane(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
-                            ink.proto.BrushBehavior.SourceNode.newBuilder()
-                                .setSource(ink.proto.BrushBehavior.Source.SOURCE_TILT_IN_RADIANS)
+                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
+                            ProtoBrushBehavior.SourceNode.newBuilder()
+                                .setSource(ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS)
                                 .setSourceValueRangeStart(0f)
                                 .setSourceValueRangeEnd(1.57f)
                                 .setSourceOutOfRangeBehavior(
-                                    ink.proto.BrushBehavior.OutOfRange
+                                    ProtoBrushBehavior.OutOfRange
                                         .OUT_OF_RANGE_CLAMP
                                 )
                         ).build()
-                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
-                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
+                            ProtoBrushBehavior.TargetNode.newBuilder()
                                 .setTarget(
-                                    ink.proto.BrushBehavior.Target
+                                    ProtoBrushBehavior.Target
                                         .TARGET_SLANT_OFFSET_IN_RADIANS
                                 )
                                 .setTargetModifierRangeStart(0f)
@@ -798,23 +958,23 @@ private fun ControlsPane(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        val source = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
-                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
+                            ProtoBrushBehavior.SourceNode.newBuilder()
                                 .setSource(
-                                    ink.proto.BrushBehavior.Source
+                                    ProtoBrushBehavior.Source
                                         .SOURCE_ORIENTATION_IN_RADIANS
                                 )
                                 .setSourceValueRangeStart(0f)
                                 .setSourceValueRangeEnd(6.28f)
                                 .setSourceOutOfRangeBehavior(
-                                    ink.proto.BrushBehavior.OutOfRange
+                                    ProtoBrushBehavior.OutOfRange
                                         .OUT_OF_RANGE_REPEAT
                                 )
                         ).build()
-                        val target = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
-                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
+                            ProtoBrushBehavior.TargetNode.newBuilder()
                                 .setTarget(
-                                    ink.proto.BrushBehavior.Target
+                                    ProtoBrushBehavior.Target
                                         .TARGET_ROTATION_OFFSET_IN_RADIANS
                                 )
                                 .setTargetModifierRangeStart(0f)
@@ -838,7 +998,8 @@ private fun BrushSliderControl(
     onValueChange: (Float) -> Unit
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween)
+        {
             Text(text = label, style = MaterialTheme.typography.bodyMedium)
             Text(text = String.format("%.2f", value), style = MaterialTheme.typography.bodySmall)
         }
@@ -857,11 +1018,19 @@ private fun PreviewPane(
     viewModel: BrushDesignerViewModel
 ) {
     val activeBrush by viewModel.activeBrush.collectAsState()
-
+    val context = LocalContext.current
+    val textureStore = remember { CahierTextureBitmapStore(context) }
     val strokesState by viewModel.testStrokes.collectAsState()
     val brushColor by viewModel.brushColor.collectAsState()
     val brushSize by viewModel.brushSize.collectAsState()
-    val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
+
+    LaunchedEffect(textureStore) {
+        viewModel.setTextureStore(textureStore)
+    }
+
+    val canvasStrokeRenderer = remember(textureStore) {
+        CanvasStrokeRenderer.create(textureStore = textureStore)
+    }
     val localStrokes = remember { mutableStateListOf<Stroke>() }
     var showCustomColorPicker by remember { mutableStateOf(false) }
 
@@ -880,6 +1049,9 @@ private fun PreviewPane(
             viewModel.replaceStrokes(updatedStrokes)
         }
     }
+
+
+
 
     Box(
         modifier = modifier

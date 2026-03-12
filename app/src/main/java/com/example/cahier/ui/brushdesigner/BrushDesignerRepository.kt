@@ -39,3 +39,18 @@ class BrushDesignerRepository @Inject constructor() {
     val activeBrushProto = MutableStateFlow(initialProto)
     val testStrokes = MutableStateFlow<List<Stroke>>(emptyList())
 }
+
+//@Singleton
+//class BrushDesignerRepository @Inject constructor() {
+//    // A guaranteed valid, minimal brush
+//    private val initialProto: ProtoBrushFamily = ProtoBrushFamily.newBuilder()
+//        .addCoats(
+//            ProtoBrushCoat.newBuilder()
+//                .setTip(ProtoBrushTip.newBuilder().setScaleX(1f).setScaleY(1f).setCornerRounding(1f))
+//                .addPaintPreferences(ink.proto.BrushPaint.newBuilder().build())
+//        )
+//        .build()
+//
+//    val activeBrushProto = MutableStateFlow(initialProto)
+//    val testStrokes = MutableStateFlow<List<Stroke>>(emptyList())
+//}
