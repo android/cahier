@@ -27,9 +27,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.IntentCompat
-import com.example.cahier.data.NoteType
-import com.example.cahier.ui.CahierApp
-import com.example.cahier.ui.theme.CahierAppTheme
+import com.example.cahier.core.data.NoteType
+import com.example.cahier.features.home.CahierApp
+import com.example.cahier.core.ui.theme.CahierAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

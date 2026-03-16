@@ -4,9 +4,9 @@ package com.example.cahier
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
-import com.example.cahier.data.FakeNotesRepository
-import com.example.cahier.ui.HomePane
-import com.example.cahier.ui.viewmodels.HomeScreenViewModel
+import com.example.cahier.core.data.FakeNotesRepository
+import com.example.cahier.features.home.HomePane
+import com.example.cahier.features.home.viewmodel.HomeScreenViewModel
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
