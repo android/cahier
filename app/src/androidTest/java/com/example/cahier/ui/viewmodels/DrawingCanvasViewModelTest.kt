@@ -34,11 +34,14 @@ import androidx.test.core.app.ApplicationProvider
 import coil3.ImageLoader
 import com.example.cahier.data.FakeNotesRepository
 import com.example.cahier.navigation.DrawingCanvasDestination
+import com.example.cahier.ui.brushdesigner.CustomBrushDao
+import com.example.cahier.ui.brushdesigner.CustomBrushEntity
 import com.example.cahier.utils.FileHelper
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -48,10 +51,12 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
 @ExperimentalCoroutinesApi
@@ -76,6 +81,10 @@ class DrawingCanvasViewModelTest {
     private lateinit var viewModel: DrawingCanvasViewModel
     private var noteId: Long = 0L
 
+    @Inject
+    lateinit var customBrushDao: CustomBrushDao
+
+
     @Before
     fun setup() {
         hiltRule.inject()
@@ -90,7 +99,12 @@ class DrawingCanvasViewModelTest {
         )
         val context = ApplicationProvider.getApplicationContext<Context>()
         viewModel = DrawingCanvasViewModel(
-            context, savedStateHandle, notesRepository, fileHelper, imageLoader
+            context,
+            savedStateHandle,
+            notesRepository,
+            fileHelper,
+            imageLoader,
+            customBrushDao
         )
     }
 
@@ -211,5 +225,25 @@ class DrawingCanvasViewModelTest {
             "Calling changeBrush should disable eraser mode.",
             viewModel.isEraserMode.value
         )
+    }
+
+    @Test
+    fun loadCustomBrushes_merges_database_brushes_with_built_ins() = runTest {
+        val baos = ByteArrayOutputStream()
+        val dummyProto = ink.proto.BrushFamily.getDefaultInstance()
+        java.util.zip.GZIPOutputStream(baos).use { gZIPOutputStream ->
+            gZIPOutputStream.write(dummyProto.toByteArray())
+        }
+        val brushBytes = baos.toByteArray()
+
+        val customBrush = CustomBrushEntity("User Brush", brushBytes)
+        customBrushDao.saveCustomBrush(customBrush)
+
+        val brushes = viewModel.customBrushes.first { it.any { b -> b.name == "User Brush" } }
+
+        val userBrush = brushes.find { it.name == "User Brush" }
+        assertNotNull("User brush from DB should be in the list", userBrush)
+
+        assertTrue(brushes.any { it.name == "Calligraphy" })
     }
 }

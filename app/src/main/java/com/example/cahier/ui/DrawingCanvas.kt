@@ -277,7 +277,8 @@ private fun DrawingSurfaceWithTarget(
     val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
     val strokes = remember { mutableStateListOf<Stroke>() }
     val context = LocalContext.current
-    val textureStore = remember { CahierTextureBitmapStore(context) }
+//    val textureStore = remember { CahierTextureBitmapStore(context) }
+    val textureStore = drawingCanvasViewModel.textureStore
     val canvasStrokeRenderer = remember {
         CanvasStrokeRenderer.create(textureStore = textureStore)
     }

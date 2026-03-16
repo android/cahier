@@ -394,7 +394,11 @@ message BrushPaint {
     // axes.
     optional float rotation_in_radians = 8;
 
-    reserved 9 to 15;
+    optional int32 animation_frames = 9 [default = 1];
+    optional int32 animation_rows = 10 [default = 1];
+    optional int32 animation_columns = 11 [default = 1];
+    optional float animation_duration_seconds = 12 [default = 0];
+    reserved 13 to 15;
 
     // The rule by which the texture layers up to and including this one are
     // combined with the subsequent layer.

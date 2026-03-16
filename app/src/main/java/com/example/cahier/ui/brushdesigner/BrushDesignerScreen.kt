@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,11 +27,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +43,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -68,6 +75,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
@@ -79,7 +87,6 @@ import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.DrawingSurface
 import com.godaddy.android.colorpicker.ClassicColorPicker
 import com.godaddy.android.colorpicker.HsvColor
-import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 
@@ -130,12 +137,41 @@ fun BrushDesignerScreen(
             onDismissRequest = { showSavePaletteDialog = false },
             title = { Text("Save to Cahier Palette") },
             text = {
-                OutlinedTextField(
-                    value = paletteBrushNameInput,
-                    onValueChange = { paletteBrushNameInput = it },
-                    label = { Text("Brush Name") },
-                    singleLine = true
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.info_24px),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                text = "• This brush will appear in the main Cahier toolbox.\n" +
+                                        "• Large textures are stored in RAM. Avoid saving many " +
+                                        "texture-heavy brushes to prevent performance lag or" +
+                                        " memory issues.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = paletteBrushNameInput,
+                        onValueChange = { paletteBrushNameInput = it },
+                        label = { Text("Brush Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -211,11 +247,29 @@ fun BrushDesignerScreen(
                                     onClick = { paletteMenuExpanded = false }
                                 )
                             } else {
-                                savedBrushes.forEach { brush ->
+                                savedBrushes.forEach { entity ->
                                     DropdownMenuItem(
-                                        text = { Text(brush.name) },
+                                        text = {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(entity.name, modifier = Modifier.weight(1f))
+                                                IconButton(onClick = {
+                                                    viewModel.deleteFromPalette(entity.name) })
+                                                {
+                                                    Icon(
+                                                        painterResource(R.drawable.delete_24px),
+                                                        contentDescription = "Delete",
+                                                        tint = MaterialTheme.colorScheme.error,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+                                        },
                                         onClick = {
-                                            viewModel.loadFromPalette(brush)
+                                            viewModel.loadFromPalette(entity)
                                             paletteMenuExpanded = false
                                         }
                                     )
@@ -324,6 +378,7 @@ private fun ControlsPane(
             showTextureDialog = true
         }
     }
+    val selectedCoatIndex by viewModel.selectedCoatIndex.collectAsState()
 
     if (showTextureDialog) {
         AlertDialog(
@@ -358,6 +413,41 @@ private fun ControlsPane(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+
+        Text("Brush Layers (Coats)", style = MaterialTheme.typography.titleMedium)
+
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Loop through existing coats
+            activeProto.coatsList.forEachIndexed { index, _ ->
+                FilterChip(
+                    selected = selectedCoatIndex == index,
+                    onClick = { viewModel.setSelectedCoat(index) },
+                    label = { Text("Coat ${index + 1}") }
+                )
+            }
+
+            // "Add Coat" Button
+            IconButton(onClick = { viewModel.addNewCoat() }) {
+                Icon(painterResource(R.drawable.add_24px), contentDescription = "Add Layer")
+            }
+
+            // "Delete Selected" Button
+            if (activeProto.coatsList.size > 1) {
+                IconButton(onClick = { viewModel.deleteSelectedCoat() }) {
+                    Icon(
+                        painterResource(R.drawable.delete_24px),
+                        contentDescription = "Delete Layer",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+
+        HorizontalDivider()
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(
@@ -508,485 +598,596 @@ private fun ControlsPane(
                 text = { Text("Behaviors") })
         }
 
-        if (selectedTab == 0) {
-            Text(
-                "Tip Geometry",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+        when (selectedTab) {
+            0 -> {
+                Text(
+                    "Tip Geometry",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
 
-            BrushSliderControl(
-                label = "Scale X",
-                value = if (currentTip.hasScaleX()) currentTip.scaleX else 1f,
-                valueRange = 0.1f..5f,
-                onValueChange = { newValue -> viewModel.updateTip { it.setScaleX(newValue) } }
-            )
+                BrushSliderControl(
+                    label = "Scale X",
+                    value = if (currentTip.hasScaleX()) currentTip.scaleX else 1f,
+                    valueRange = 0.1f..5f,
+                    onValueChange = { newValue -> viewModel.updateTip { it.setScaleX(newValue) } }
+                )
 
-            BrushSliderControl(
-                label = "Scale Y",
-                value = if (currentTip.hasScaleY()) currentTip.scaleY else 1f,
-                valueRange = 0.1f..5f,
-                onValueChange = { newValue -> viewModel.updateTip { it.setScaleY(newValue) } }
-            )
+                BrushSliderControl(
+                    label = "Scale Y",
+                    value = if (currentTip.hasScaleY()) currentTip.scaleY else 1f,
+                    valueRange = 0.1f..5f,
+                    onValueChange = { newValue -> viewModel.updateTip { it.setScaleY(newValue) } }
+                )
 
-            BrushSliderControl(
-                label = "Corner Rounding",
-                value = if (currentTip.hasCornerRounding()) currentTip.cornerRounding else 1f,
-                valueRange = 0f..1f,
-                onValueChange = { newValue ->
-                    viewModel.updateTip {
-                        it.setCornerRounding(newValue)
+                BrushSliderControl(
+                    label = "Corner Rounding",
+                    value = if (currentTip.hasCornerRounding()) currentTip.cornerRounding else 1f,
+                    valueRange = 0f..1f,
+                    onValueChange = { newValue ->
+                        viewModel.updateTip {
+                            it.setCornerRounding(newValue)
+                        }
+                    }
+                )
+
+                BrushSliderControl(
+                    label = "Slant (Radians)",
+                    value = if (currentTip.hasSlantRadians()) currentTip.slantRadians else 0f,
+                    valueRange = -1.57f..1.57f,
+                    onValueChange = { newValue -> viewModel.updateTip { it.setSlantRadians(newValue) } }
+                )
+
+                BrushSliderControl(
+                    label = "Pinch",
+                    value = if (currentTip.hasPinch()) currentTip.pinch else 0f,
+                    valueRange = 0f..1f,
+                    onValueChange = { newValue -> viewModel.updateTip { it.setPinch(newValue) } }
+                )
+
+                HorizontalDivider()
+                Text("Particle Settings (Stamps)", style = MaterialTheme.typography.titleSmall)
+
+                BrushSliderControl(
+                    label = "Gap Distance Scale",
+                    value = if (currentTip.hasParticleGapDistanceScale()) currentTip
+                        .particleGapDistanceScale else 0f,
+                    valueRange = 0f..5f,
+                    onValueChange = { newValue ->
+                        viewModel.updateTip { it.setParticleGapDistanceScale(newValue) }
+                    }
+                )
+
+                BrushSliderControl(
+                    label = "Gap Duration (ms)",
+                    value = if (currentTip.hasParticleGapDurationSeconds()) currentTip
+                        .particleGapDurationSeconds * 1000f else 0f,
+                    valueRange = 0f..250f,
+                    onValueChange = { newValue ->
+                        viewModel.updateTip { it.setParticleGapDurationSeconds(newValue / 1000f) }
+                    }
+                )
+
+            }
+
+            1 -> {
+                val currentPaint =
+                    activeProto.coatsList.firstOrNull()?.paintPreferencesList?.firstOrNull()
+                        ?: ProtoBrushPaint.getDefaultInstance()
+
+                val currentLayer = currentPaint.textureLayersList.firstOrNull()
+                    ?: ProtoBrushPaint.TextureLayer.getDefaultInstance()
+
+                Text(
+                    text = "Paint & Texture",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                Text("Active Texture", style = MaterialTheme.typography.labelLarge)
+                var textureIdExpanded by remember { mutableStateOf(false) }
+                val availableTextures = activeProto.textureIdToBitmapMap.keys.toList()
+
+                ExposedDropdownMenuBox(
+                    expanded = textureIdExpanded,
+                    onExpandedChange = { textureIdExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = currentLayer.clientTextureId.ifEmpty { "No Texture Selected" },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Texture ID") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults
+                                .TrailingIcon(expanded = textureIdExpanded)
+                        },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = textureIdExpanded,
+                        onDismissRequest = { textureIdExpanded = false })
+                    {
+                        availableTextures.forEach { id ->
+                            DropdownMenuItem(
+                                text = { Text(id) },
+                                onClick = {
+                                    viewModel.updateTextureLayer { it.setClientTextureId(id) }
+                                    textureIdExpanded = false
+                                }
+                            )
+                        }
                     }
                 }
-            )
 
-            BrushSliderControl(
-                label = "Slant (Radians)",
-                value = if (currentTip.hasSlantRadians()) currentTip.slantRadians else 0f,
-                valueRange = -1.57f..1.57f,
-                onValueChange = { newValue -> viewModel.updateTip { it.setSlantRadians(newValue) } }
-            )
-
-            BrushSliderControl(
-                label = "Pinch",
-                value = if (currentTip.hasPinch()) currentTip.pinch else 0f,
-                valueRange = 0f..1f,
-                onValueChange = { newValue -> viewModel.updateTip { it.setPinch(newValue) } }
-            )
-
-            HorizontalDivider()
-            Text("Particle Settings (Stamps)", style = MaterialTheme.typography.titleSmall)
-
-            BrushSliderControl(
-                label = "Gap Distance Scale",
-                value = if (currentTip.hasParticleGapDistanceScale()) currentTip
-                    .particleGapDistanceScale else 0f,
-                valueRange = 0f..5f,
-                onValueChange = { newValue ->
-                    viewModel.updateTip { it.setParticleGapDistanceScale(newValue) }
-                }
-            )
-
-            BrushSliderControl(
-                label = "Gap Duration (ms)",
-                value = if (currentTip.hasParticleGapDurationSeconds()) currentTip
-                    .particleGapDurationSeconds * 1000f else 0f,
-                valueRange = 0f..250f,
-                onValueChange = { newValue ->
-                    viewModel.updateTip { it.setParticleGapDurationSeconds(newValue / 1000f) }
-                }
-            )
-
-        } else if (selectedTab == 1) {
-            val currentPaint =
-                activeProto.coatsList.firstOrNull()?.paintPreferencesList?.firstOrNull()
-                    ?: ProtoBrushPaint.getDefaultInstance()
-
-            val currentLayer = currentPaint.textureLayersList.firstOrNull()
-                ?: ProtoBrushPaint.TextureLayer.getDefaultInstance()
-
-            Text(
-                text= "Paint & Texture",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-
-            Text("Active Texture", style = MaterialTheme.typography.labelLarge)
-            var textureIdExpanded by remember { mutableStateOf(false) }
-            val availableTextures = activeProto.textureIdToBitmapMap.keys.toList()
-
-            ExposedDropdownMenuBox(
-                expanded = textureIdExpanded,
-                onExpandedChange = { textureIdExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = currentLayer.clientTextureId.ifEmpty { "No Texture Selected" },
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Texture ID") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults
-                            .TrailingIcon(expanded = textureIdExpanded)
-                    },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = textureIdExpanded,
-                    onDismissRequest = { textureIdExpanded = false })
+                // --- 2. MAPPING MODE ---
+                Text("Mapping Mode", style = MaterialTheme.typography.labelLarge)
+                var mappingExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = mappingExpanded,
+                    onExpandedChange = { mappingExpanded = it })
                 {
-                    availableTextures.forEach { id ->
-                        DropdownMenuItem(
-                            text = { Text(id) },
-                            onClick = {
-                                viewModel.updateTextureLayer { it.setClientTextureId(id) }
-                                textureIdExpanded = false
+                    OutlinedTextField(
+                        value = currentLayer.mapping.name,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults
+                                .TrailingIcon(expanded = mappingExpanded)
+                        },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = mappingExpanded,
+                        onDismissRequest = { mappingExpanded = false })
+                    {
+                        ProtoBrushPaint.TextureLayer.Mapping.entries.filter {
+                            it != ProtoBrushPaint.TextureLayer.Mapping.MAPPING_UNSPECIFIED
+                        }
+                            .forEach { mode ->
+                                DropdownMenuItem(
+                                    text = { Text(mode.name) },
+                                    onClick = {
+                                        viewModel.updateTextureLayer {
+                                            it.setMapping(mode)
+                                        }; mappingExpanded = false
+                                    }
+                                )
+                            }
+                    }
+                }
+
+                // ANIMATION CONTROL
+                if (currentLayer.mapping == ProtoBrushPaint.TextureLayer.Mapping.MAPPING_STAMPING)
+                {
+                    Text(
+                        text = "Texture Animation",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme
+                                .colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            BrushSliderControl(
+                                label = "Rows",
+                                value = if (currentLayer.hasAnimationRows())
+                                    currentLayer.animationRows.toFloat() else 1f,
+                                valueRange = 1f..10f,
+                                onValueChange = {
+                                    viewModel.updateTextureAnimation(
+                                        it.toInt(),
+                                        currentLayer.animationColumns,
+                                        currentLayer.animationFrames,
+                                        currentLayer.animationDurationSeconds)
+                                }
+                            )
+                            BrushSliderControl(
+                                label = "Columns",
+                                value = if (currentLayer.hasAnimationColumns())
+                                    currentLayer.animationColumns.toFloat() else 1f,
+                                valueRange = 1f..10f,
+                                onValueChange = {
+                                    viewModel.updateTextureAnimation(
+                                        currentLayer.animationRows,
+                                        it.toInt(),
+                                        currentLayer.animationFrames,
+                                        currentLayer.animationDurationSeconds)
+                                }
+                            )
+                            BrushSliderControl(
+                                label = "Total Frames",
+                                value = if (currentLayer.hasAnimationFrames())
+                                    currentLayer.animationFrames.toFloat() else 1f,
+                                valueRange = 1f..64f,
+                                onValueChange = {
+                                    viewModel.updateTextureAnimation(
+                                        currentLayer.animationRows,
+                                        currentLayer.animationColumns,
+                                        it.toInt(),
+                                        currentLayer.animationDurationSeconds)
+                                }
+                            )
+                            BrushSliderControl(
+                                label = "Duration (Seconds)",
+                                value = if (currentLayer.hasAnimationDurationSeconds())
+                                    currentLayer.animationDurationSeconds else 0f,
+                                valueRange = 0f..5f,
+                                onValueChange = {
+                                    viewModel.updateTextureAnimation(
+                                        currentLayer.animationRows,
+                                        currentLayer.animationColumns,
+                                        currentLayer.animationFrames,
+                                        it)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // --- 3. SIZE & POSITION SLIDERS ---
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        BrushSliderControl(
+                            label = "Texture Scale X",
+                            value = if (currentLayer.hasSizeX()) currentLayer.sizeX else 100f,
+                            valueRange = 1f..1000f,
+                            onValueChange = { viewModel.updateTextureLayer { b -> b.setSizeX(it) } }
+                        )
+                        BrushSliderControl(
+                            label = "Texture Scale Y",
+                            value = if (currentLayer.hasSizeY()) currentLayer.sizeY else 100f,
+                            valueRange = 1f..1000f,
+                            onValueChange = { viewModel.updateTextureLayer {
+                                b -> b.setSizeY(it) }
+                            }
+                        )
+                        BrushSliderControl(
+                            label = "Rotation (Degrees)",
+                            value = if (currentLayer.hasRotationInRadians()) (currentLayer
+                                .rotationInRadians * 57.29f) else 0f,
+                            valueRange = 0f..360f,
+                            onValueChange = {
+                                viewModel.updateTextureLayer {
+                                    b -> b.setRotationInRadians(it / 57.29f)
+                                }
                             }
                         )
                     }
                 }
-            }
 
-            // --- 2. MAPPING MODE ---
-            Text("Mapping Mode", style = MaterialTheme.typography.labelLarge)
-            var mappingExpanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = mappingExpanded,
-                onExpandedChange = { mappingExpanded = it })
-            {
-                OutlinedTextField(
-                    value = currentLayer.mapping.name,
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults
-                        .TrailingIcon(expanded = mappingExpanded)
-                    },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = mappingExpanded,
-                    onDismissRequest = { mappingExpanded = false })
+                // --- 4. BLEND MODE ---
+                Text("Blend Mode", style = MaterialTheme.typography.labelLarge)
+                var blendExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = blendExpanded,
+                    onExpandedChange = { blendExpanded = it })
                 {
-                    ProtoBrushPaint.TextureLayer.Mapping.entries.filter {
-                        it != ProtoBrushPaint.TextureLayer.Mapping.MAPPING_UNSPECIFIED }
-                        .forEach { mode ->
+                    OutlinedTextField(
+                        value = currentLayer.blendMode.name,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                expanded = blendExpanded
+                            )
+                        },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = blendExpanded,
+                        onDismissRequest = { blendExpanded = false })
+                    {
+                        ProtoBrushPaint.TextureLayer.BlendMode.entries.filter {
+                            it != ProtoBrushPaint
+                                .TextureLayer.BlendMode.BLEND_MODE_UNSPECIFIED
+                        }.forEach { mode ->
                             DropdownMenuItem(
                                 text = { Text(mode.name) },
-                                onClick = { viewModel.updateTextureLayer {
-                                    it.setMapping(mode) }; mappingExpanded = false }
-                        )
-                    }
-                }
-            }
-
-            // --- 3. SIZE & POSITION SLIDERS ---
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    BrushSliderControl(
-                        label = "Texture Scale X",
-                        value = if (currentLayer.hasSizeX()) currentLayer.sizeX else 100f,
-                        valueRange = 1f..1000f,
-                        onValueChange = { viewModel.updateTextureLayer { b -> b.setSizeX(it) } }
-                    )
-                    BrushSliderControl(
-                        label = "Texture Scale Y",
-                        value = if (currentLayer.hasSizeY()) currentLayer.sizeY else 100f,
-                        valueRange = 1f..1000f,
-                        onValueChange = { viewModel.updateTextureLayer { b -> b.setSizeY(it) } }
-                    )
-                    BrushSliderControl(
-                        label = "Rotation (Degrees)",
-                        value = if (currentLayer.hasRotationInRadians()) (currentLayer
-                            .rotationInRadians * 57.29f) else 0f,
-                        valueRange = 0f..360f,
-                        onValueChange = { viewModel.updateTextureLayer {
-                            b -> b.setRotationInRadians(it / 57.29f) }
-                        }
-                    )
-                }
-            }
-
-            // --- 4. BLEND MODE ---
-            Text("Blend Mode", style = MaterialTheme.typography.labelLarge)
-            var blendExpanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = blendExpanded,
-                onExpandedChange = { blendExpanded = it })
-            {
-                OutlinedTextField(
-                    value = currentLayer.blendMode.name,
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(
-                        expanded = blendExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = blendExpanded,
-                    onDismissRequest = { blendExpanded = false })
-                {
-                    ProtoBrushPaint.TextureLayer.BlendMode.entries.filter { it != ProtoBrushPaint
-                        .TextureLayer.BlendMode.BLEND_MODE_UNSPECIFIED }.forEach { mode ->
-                        DropdownMenuItem(
-                            text = { Text(mode.name) },
-                            onClick = { viewModel.updateTextureLayer {
-                                it.setBlendMode(mode) }; blendExpanded = false }
-                        )
-                    }
-                }
-            }
-
-            var overlapExpanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = overlapExpanded,
-                onExpandedChange = { overlapExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = currentPaint.selfOverlap.name.replace("_", " "),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Self Overlap") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(
-                            expanded = overlapExpanded
-                        )
-                    },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = overlapExpanded,
-                    onDismissRequest = { overlapExpanded = false }) {
-                    ProtoBrushPaint.SelfOverlap.entries
-                        .filter { it != ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_UNSPECIFIED }
-                        .forEach { overlap ->
-                            DropdownMenuItem(
-                                text = { Text(overlap.name) },
                                 onClick = {
-                                    viewModel.updateSelfOverlap(overlap); overlapExpanded = false
+                                    viewModel.updateTextureLayer {
+                                        it.setBlendMode(mode)
+                                    }; blendExpanded = false
                                 }
                             )
                         }
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("Color Functions", style = MaterialTheme.typography.titleMedium)
-
-            val currentOpacity =
-                currentPaint.colorFunctionsList.firstOrNull()?.opacityMultiplier ?: 1f
-            BrushSliderControl(
-                label = "Opacity Multiplier",
-                value = currentOpacity,
-                valueRange = 0f..2f,
-                onValueChange = { viewModel.updateOpacityMultiplier(it) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
-
-            Text(
-                text = "Textures",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-            Button(
-                onClick = {
-                    texturePickerLauncher.launch(
-                        androidx.activity.result.PickVisualMediaRequest(
-                            ActivityResultContracts.PickVisualMedia.ImageOnly
-                        )
-                    )
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Import Texture from Gallery")
-            }
-
-            val textureCount = activeProto.textureIdToBitmapMap.size
-            Text("Loaded Textures: $textureCount", style = MaterialTheme.typography.bodySmall)
-
-        } else if (selectedTab == 2) {
-            Text(
-                "Dynamics & Behaviors",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            Text(
-                "Map stylus/mouse inputs to dynamic brush properties.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            val behaviors = activeProto
-                .coatsList.firstOrNull()?.tip?.behaviorsList ?: emptyList()
-
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                var overlapExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = overlapExpanded,
+                    onExpandedChange = { overlapExpanded = it }
                 ) {
-                    if (behaviors.isEmpty()) {
-                        Text("No behaviors defined.", style = MaterialTheme.typography.bodyMedium)
-                    } else {
-                        behaviors.forEachIndexed { bIndex, behavior ->
-                            val sourceNode =
-                                behavior.nodesList.find { it.hasSourceNode() }?.sourceNode
-                            val targetNode =
-                                behavior.nodesList.find { it.hasTargetNode() }?.targetNode
+                    OutlinedTextField(
+                        value = currentPaint.selfOverlap.name.replace("_", " "),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Self Overlap") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                expanded = overlapExpanded
+                            )
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = overlapExpanded,
+                        onDismissRequest = { overlapExpanded = false }) {
+                        ProtoBrushPaint.SelfOverlap.entries
+                            .filter { it != ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_UNSPECIFIED }
+                            .forEach { overlap ->
+                                DropdownMenuItem(
+                                    text = { Text(overlap.name) },
+                                    onClick = {
+                                        viewModel
+                                            .updateSelfOverlap(overlap); overlapExpanded = false
+                                    }
+                                )
+                            }
+                    }
+                }
 
-                            val sourceStr =
-                                sourceNode?.source?.name?.replace(
-                                    "SOURCE_", ""
-                                )?.lowercase() ?: "input"
-                            val targetStr =
-                                targetNode?.target?.name?.replace(
-                                    "TARGET_", ""
-                                )?.lowercase() ?: "output"
+                Spacer(modifier = Modifier.height(8.dp))
 
-                            Text(
-                                text = "Layer ${bIndex + 1}: $sourceStr ➔ $targetStr",
-                                fontWeight = FontWeight.Bold
+                Text("Color Functions", style = MaterialTheme.typography.titleMedium)
+
+                val currentOpacity =
+                    currentPaint.colorFunctionsList.firstOrNull()?.opacityMultiplier ?: 1f
+                BrushSliderControl(
+                    label = "Opacity Multiplier",
+                    value = currentOpacity,
+                    valueRange = 0f..2f,
+                    onValueChange = { viewModel.updateOpacityMultiplier(it) }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider()
+
+                Text(
+                    text = "Textures",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+                Button(
+                    onClick = {
+                        texturePickerLauncher.launch(
+                            androidx.activity.result.PickVisualMediaRequest(
+                                ActivityResultContracts.PickVisualMedia.ImageOnly
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Import Texture from Gallery")
+                }
+
+                val textureCount = activeProto.textureIdToBitmapMap.size
+                Text("Loaded Textures: $textureCount", style = MaterialTheme.typography.bodySmall)
+
+            }
+
+            2 -> {
+                Text(
+                    "Dynamics & Behaviors",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                // --- 1. CURRENT STACK LIST ---
+                val behaviors = activeProto
+                    .coatsList.getOrNull(selectedCoatIndex)?.tip?.behaviorsList
+                    ?: emptyList()
+
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (behaviors.isEmpty()) {
+                            Text(text = "No behaviors defined.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        } else {
+                            behaviors.forEachIndexed { bIndex, behavior ->
+                                val chainParts = behavior.nodesList.map { node ->
+                                    when (node.nodeCase) {
+                                        ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE ->
+                                            node.sourceNode.source.name
+                                                .replace("SOURCE_", "")
+
+                                        ink.proto.BrushBehavior.Node.NodeCase
+                                            .DAMPING_NODE -> "SMOOTH"
+
+                                        ink.proto.BrushBehavior.Node.NodeCase
+                                            .NOISE_NODE -> "JITTER"
+
+                                        ink.proto.BrushBehavior.Node.NodeCase
+                                            .TARGET_NODE ->
+                                            node.targetNode.target.name
+                                                .replace("TARGET_", "")
+
+                                        else -> "MATH"
+                                    }
+                                }
+                                Text(
+                                    "${bIndex + 1}. ${chainParts.joinToString(" ➔ ")}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+
+                        if (behaviors.isNotEmpty()) {
+                            TextButton(onClick = { viewModel.clearBehaviors() }) {
+                                Text(
+                                    text = "Clear All Behaviors",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // --- 2. STANDARD DYNAMICS (The Original 3) ---
+                Text("Standard Dynamics", style = MaterialTheme.typography.labelLarge)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(modifier = Modifier.weight(1f), onClick = {
+                            val s = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
+                                ink.proto.BrushBehavior.SourceNode.newBuilder()
+                                    .setSource(
+                                        ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE
+                                    )
+                                    .setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f)
+                                    .setSourceOutOfRangeBehavior(
+                                        ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                                    )
+                            ).build()
+                            val t = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
+                                ink.proto.BrushBehavior.TargetNode.newBuilder()
+                                    .setTarget(ink.proto.BrushBehavior.Target
+                                        .TARGET_SIZE_MULTIPLIER)
+                                    .setTargetModifierRangeStart(0.5f).setTargetModifierRangeEnd(1.5f)
+                            ).build()
+                            viewModel.addBehavior(listOf(s, t))
+                        }) { Text("+ Pressure Size") }
+
+                        Button(modifier = Modifier.weight(1f), onClick = {
+                            val s = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
+                                ink.proto.BrushBehavior.SourceNode.newBuilder()
+                                    .setSource(
+                                        ink.proto.BrushBehavior.Source
+                                            .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND
+                                    )
+                                    .setSourceValueRangeStart(0f).setSourceValueRangeEnd(50f)
+                                    .setSourceOutOfRangeBehavior(
+                                        ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                                    )
+                            ).build()
+                            val t = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
+                                ink.proto.BrushBehavior.TargetNode.newBuilder()
+                                    .setTarget(ink.proto.BrushBehavior.Target
+                                        .TARGET_SIZE_MULTIPLIER)
+                                    .setTargetModifierRangeStart(0.2f).setTargetModifierRangeEnd(2.0f)
+                            ).build()
+                            viewModel.addBehavior(listOf(s, t))
+                        }) { Text("+ Speed Size") }
+                    }
+
+                    Button(modifier = Modifier.fillMaxWidth(), onClick = {
+                        val s = ink.proto.BrushBehavior.Node.newBuilder().setSourceNode(
+                            ink.proto.BrushBehavior.SourceNode.newBuilder()
+                                .setSource(
+                                    ink.proto.BrushBehavior.Source
+                                        .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND
+                                )
+                                .setSourceValueRangeStart(5f).setSourceValueRangeEnd(40f)
+                                .setSourceOutOfRangeBehavior(
+                                    ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                                )
+                        ).build()
+                        val t = ink.proto.BrushBehavior.Node.newBuilder().setTargetNode(
+                            ink.proto.BrushBehavior.TargetNode.newBuilder()
+                                .setTarget(ink.proto.BrushBehavior.Target
+                                    .TARGET_OPACITY_MULTIPLIER)
+                                .setTargetModifierRangeStart(1.0f).setTargetModifierRangeEnd(0.1f)
+                        ).build()
+                        viewModel.addBehavior(listOf(s, t))
+                    }) { Text("+ Speed affects Opacity") }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // --- 3. COMPLEX DYNAMICS (The New Math Nodes) ---
+                Text("Add Advanced Dynamics", style = MaterialTheme.typography.labelLarge)
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            viewModel.addSmoothedBehavior(
+                                ink.proto.BrushBehavior.Source
+                                    .SOURCE_NORMALIZED_PRESSURE,
+                                ink.proto.BrushBehavior.Target
+                                    .TARGET_SIZE_MULTIPLIER
                             )
                         }
+                    ) {
+                        Icon(
+                            painterResource(
+                                R.drawable.brush_24px
+                            ),
+                            null,
+                            Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Smooth Pressure ➔ Size")
                     }
 
-                    if (behaviors.isNotEmpty()) {
-                        TextButton(onClick = { viewModel.clearBehaviors() }) {
-                            Text("Clear All Behaviors", color = MaterialTheme.colorScheme.error)
+                    FilledTonalButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            viewModel.addJitterBehavior(
+                                ink.proto.BrushBehavior.Target
+                                    .TARGET_SLANT_OFFSET_IN_RADIANS
+                            )
                         }
+                    ) {
+                        Icon(
+                            painterResource(
+                                R.drawable.texture_24px
+                            ),
+                            null,
+                            Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Add Pencil Jitter (Slant)")
+                    }
+
+                    FilledTonalButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            viewModel.addSmoothedBehavior(
+                                ink.proto.BrushBehavior.Source
+                                    .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND,
+                                ink.proto.BrushBehavior.Target
+                                    .TARGET_OPACITY_MULTIPLIER,
+                                dampingSeconds = 0.3f
+                            )
+                        }
+                    ) {
+                        Icon(
+                            painterResource(
+                                R.drawable.opacity_24px
+                            ),
+                            null,
+                            Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Smooth Speed ➔ Opacity")
                     }
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
-                            ProtoBrushBehavior.SourceNode.newBuilder()
-                                .setSource(
-                                    ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE
-                                )
-                                .setSourceValueRangeStart(0f)
-                                .setSourceValueRangeEnd(1f)
-                                .setSourceOutOfRangeBehavior(
-                                    ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
-                                )
-                        ).build()
-                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
-                            ProtoBrushBehavior.TargetNode.newBuilder()
-                                .setTarget(ProtoBrushBehavior.Target.TARGET_SIZE_MULTIPLIER)
-                                .setTargetModifierRangeStart(0.2f)
-                                .setTargetModifierRangeEnd(2.0f)
-                        ).build()
-                        viewModel.addBehavior(listOf(source, target))
-                    }
-                ) { Text("+ Pressure affects Size") }
-
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
-                            ProtoBrushBehavior.SourceNode.newBuilder()
-                                .setSource(
-                                    ProtoBrushBehavior.Source
-                                        .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND
-                                )
-                                .setSourceValueRangeStart(0f)
-                                .setSourceValueRangeEnd(50f)
-                                .setSourceOutOfRangeBehavior(
-                                    ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
-                                )
-                        ).build()
-                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
-                            ProtoBrushBehavior.TargetNode.newBuilder()
-                                .setTarget(ProtoBrushBehavior.Target.TARGET_SIZE_MULTIPLIER)
-                                .setTargetModifierRangeStart(1.0f)
-                                .setTargetModifierRangeEnd(3.0f)
-                        ).build()
-                        viewModel.addBehavior(listOf(source, target))
-                    }
-                ) { Text("+ Speed affects Size") }
-
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
-                            ProtoBrushBehavior.SourceNode.newBuilder()
-                                .setSource(
-                                    ProtoBrushBehavior.Source
-                                        .SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND
-                                )
-                                .setSourceValueRangeStart(5f)
-                                .setSourceValueRangeEnd(40f)
-                                .setSourceOutOfRangeBehavior(
-                                    ProtoBrushBehavior.OutOfRange
-                                        .OUT_OF_RANGE_CLAMP
-                                )
-                        ).build()
-                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
-                            ProtoBrushBehavior.TargetNode.newBuilder()
-                                .setTarget(
-                                    ProtoBrushBehavior.Target
-                                        .TARGET_OPACITY_MULTIPLIER
-                                )
-                                .setTargetModifierRangeStart(1.0f)
-                                .setTargetModifierRangeEnd(0.0f)
-                        ).build()
-                        viewModel.addBehavior(listOf(source, target))
-                    }
-                ) { Text("+ Speed affects Opacity") }
-
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
-                            ProtoBrushBehavior.SourceNode.newBuilder()
-                                .setSource(ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS)
-                                .setSourceValueRangeStart(0f)
-                                .setSourceValueRangeEnd(1.57f)
-                                .setSourceOutOfRangeBehavior(
-                                    ProtoBrushBehavior.OutOfRange
-                                        .OUT_OF_RANGE_CLAMP
-                                )
-                        ).build()
-                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
-                            ProtoBrushBehavior.TargetNode.newBuilder()
-                                .setTarget(
-                                    ProtoBrushBehavior.Target
-                                        .TARGET_SLANT_OFFSET_IN_RADIANS
-                                )
-                                .setTargetModifierRangeStart(0f)
-                                .setTargetModifierRangeEnd(1.57f)
-                        ).build()
-                        viewModel.addBehavior(listOf(source, target))
-                    }
-                ) { Text("+ Tilt affects Slant") }
-
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        val source = ProtoBrushBehavior.Node.newBuilder().setSourceNode(
-                            ProtoBrushBehavior.SourceNode.newBuilder()
-                                .setSource(
-                                    ProtoBrushBehavior.Source
-                                        .SOURCE_ORIENTATION_IN_RADIANS
-                                )
-                                .setSourceValueRangeStart(0f)
-                                .setSourceValueRangeEnd(6.28f)
-                                .setSourceOutOfRangeBehavior(
-                                    ProtoBrushBehavior.OutOfRange
-                                        .OUT_OF_RANGE_REPEAT
-                                )
-                        ).build()
-                        val target = ProtoBrushBehavior.Node.newBuilder().setTargetNode(
-                            ProtoBrushBehavior.TargetNode.newBuilder()
-                                .setTarget(
-                                    ProtoBrushBehavior.Target
-                                        .TARGET_ROTATION_OFFSET_IN_RADIANS
-                                )
-                                .setTargetModifierRangeStart(0f)
-                                .setTargetModifierRangeEnd(6.28f)
-                        ).build()
-                        viewModel.addBehavior(listOf(source, target))
-                    }
-                ) { Text("+ Orientation affects Rotation") }
-            }
+            else -> Spacer(modifier = Modifier.height(32.dp))
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -1023,6 +1224,7 @@ private fun PreviewPane(
     val strokesState by viewModel.testStrokes.collectAsState()
     val brushColor by viewModel.brushColor.collectAsState()
     val brushSize by viewModel.brushSize.collectAsState()
+    val previewBrushFamily by viewModel.previewBrushFamily.collectAsState()
 
     LaunchedEffect(textureStore) {
         viewModel.setTextureStore(textureStore)
@@ -1181,11 +1383,22 @@ private fun PreviewPane(
                 }
             }
         } else {
-            Text(
-                text = "Invalid Brush Configuration\nCheck Constraints",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyLarge
-            )
+            val activeProto by viewModel.activeBrushProto.collectAsState()
+
+            if (activeProto.coatsCount == 0) {
+                Text(
+                    text = "Invalid Brush Configuration\nCheck Constraints",
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
         }
     }
 }

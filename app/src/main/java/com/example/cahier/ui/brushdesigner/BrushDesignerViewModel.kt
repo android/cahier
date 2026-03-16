@@ -18,6 +18,7 @@ import com.example.cahier.ui.CahierTextureBitmapStore
 import com.google.protobuf.ByteString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import ink.proto.BrushBehavior
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,7 +100,7 @@ class BrushDesignerViewModel @Inject constructor(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
+        started = SharingStarted.Eagerly,
         initialValue = null
     )
 
@@ -145,6 +146,10 @@ class BrushDesignerViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
+
+
+    private val _selectedCoatIndex = MutableStateFlow(0)
+    val selectedCoatIndex: StateFlow<Int> = _selectedCoatIndex.asStateFlow()
 
     private fun syncProtobufTexturesToStore(map: Map<String, ByteString>) {
         map.forEach { (id, byteString) ->
@@ -247,23 +252,14 @@ class BrushDesignerViewModel @Inject constructor(
 
     fun updateTip(updateBlock: (ProtoBrushTip.Builder) -> Unit) {
         val familyBuilder = repository.activeBrushProto.value.toBuilder()
+        val index = _selectedCoatIndex.value
 
-        if (familyBuilder.coatsCount == 0) {
-            familyBuilder.addCoats(
-                ProtoBrushCoat.newBuilder()
-                    .setTip(ProtoBrushTip.newBuilder())
-                    .addPaintPreferences(ProtoBrushPaint.newBuilder())
-            )
-        }
-
-        val coatBuilder = familyBuilder.getCoats(0).toBuilder()
+        val coatBuilder = familyBuilder.getCoats(index).toBuilder()
         val tipBuilder = coatBuilder.tip.toBuilder()
-
         updateBlock(tipBuilder)
 
         coatBuilder.setTip(tipBuilder)
-        familyBuilder.setCoats(0, coatBuilder)
-
+        familyBuilder.setCoats(index, coatBuilder)
         repository.activeBrushProto.value = familyBuilder.build()
     }
 
@@ -369,16 +365,23 @@ class BrushDesignerViewModel @Inject constructor(
         _brushSize.value = size
     }
 
-
     fun saveToPalette(brushName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val rawBytes = repository.activeBrushProto.value.toByteArray()
-                val baos = ByteArrayOutputStream()
-                GZIPOutputStream(baos).use { it.write(rawBytes) }
+                val baos = java.io.ByteArrayOutputStream()
+
+                GZIPOutputStream(baos).use { gzip ->
+                    gzip.write(rawBytes)
+                }
+
+                val finalCompressedBytes = baos.toByteArray()
 
                 customBrushDao.saveCustomBrush(
-                    CustomBrushEntity(name = brushName, brushBytes = baos.toByteArray())
+                    CustomBrushEntity(
+                        name = brushName,
+                        brushBytes = finalCompressedBytes
+                    )
                 )
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -460,22 +463,32 @@ class BrushDesignerViewModel @Inject constructor(
         }
     }
 
-    fun addBehavior(nodes: List<ink.proto.BrushBehavior.Node>) {
-        val familyBuilder = repository.activeBrushProto.value.toBuilder()
-        if (familyBuilder.coatsCount == 0) return
-        val coatBuilder = familyBuilder.getCoats(0).toBuilder()
-        val tipBuilder = coatBuilder.tip.toBuilder()
+fun addBehavior(nodes: List<BrushBehavior.Node>) {
+    val familyBuilder = repository.activeBrushProto.value.toBuilder()
 
-        val behavior = ink.proto.BrushBehavior.newBuilder()
-            .addAllNodes(nodes)
-            .build()
+    // Use the dynamic index from your selection StateFlow
+    val index = selectedCoatIndex.value
 
-        tipBuilder.addBehaviors(behavior)
+    // Safety check: ensure the coat we want to modify actually exists
+    if (familyBuilder.coatsCount <= index) return
 
-        coatBuilder.setTip(tipBuilder)
-        familyBuilder.setCoats(0, coatBuilder)
-        repository.activeBrushProto.value = familyBuilder.build()
-    }
+    val coatBuilder = familyBuilder.getCoats(index).toBuilder()
+    val tipBuilder = coatBuilder.tip.toBuilder()
+
+    val behavior = BrushBehavior.newBuilder()
+        .addAllNodes(nodes)
+        .build()
+
+    // Append the behavior to the list (Stacking)
+    tipBuilder.addBehaviors(behavior)
+
+    // Repackage the updated tip into the specific coat index
+    coatBuilder.setTip(tipBuilder)
+    familyBuilder.setCoats(index, coatBuilder)
+
+    // Update the global state
+    repository.activeBrushProto.value = familyBuilder.build()
+}
 
     fun clearBehaviors() {
         val familyBuilder = repository.activeBrushProto.value.toBuilder()
@@ -531,4 +544,116 @@ class BrushDesignerViewModel @Inject constructor(
     fun setTextureStore(store: CahierTextureBitmapStore) {
         this.textureStore = store
     }
+
+    fun setSelectedCoat(index: Int) {
+        _selectedCoatIndex.value = index
+    }
+
+    fun addNewCoat() {
+        val familyBuilder = repository.activeBrushProto.value.toBuilder()
+
+        val newCoat = ProtoBrushCoat.newBuilder()
+            .setTip(ProtoBrushTip.newBuilder().setScaleX(1f).setScaleY(1f).setCornerRounding(1f))
+            .addPaintPreferences(ink.proto.BrushPaint.newBuilder().build())
+            .build()
+
+        familyBuilder.addCoats(newCoat)
+        repository.activeBrushProto.value = familyBuilder.build()
+
+        _selectedCoatIndex.value = familyBuilder.coatsCount - 1
+    }
+
+    fun deleteSelectedCoat() {
+        val familyBuilder = repository.activeBrushProto.value.toBuilder()
+        if (familyBuilder.coatsCount <= 1) return
+
+        val indexToRemove = _selectedCoatIndex.value
+        familyBuilder.removeCoats(indexToRemove)
+
+        repository.activeBrushProto.value = familyBuilder.build()
+
+        _selectedCoatIndex.value = (indexToRemove - 1).coerceAtLeast(0)
+    }
+
+    /**
+     * Adds a "Smooth Dynamics" behavior:
+     * Logic: Source (Input) -> Damping (Smoothing) -> Target (Output)
+     */
+    fun addSmoothedBehavior(
+        sourceType: BrushBehavior.Source,
+        targetType: BrushBehavior.Target,
+        dampingSeconds: Float = 0.1f
+    ) {
+        val source = BrushBehavior.Node.newBuilder().setSourceNode(
+            BrushBehavior.SourceNode.newBuilder()
+                .setSource(sourceType)
+                .setSourceValueRangeStart(0f)
+                .setSourceValueRangeEnd(1f)
+                .setSourceOutOfRangeBehavior(BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
+        ).build()
+
+        val damping = BrushBehavior.Node.newBuilder().setDampingNode(
+            BrushBehavior.DampingNode.newBuilder()
+                .setDampingSource(BrushBehavior.ProgressDomain.PROGRESS_DOMAIN_TIME_IN_SECONDS)
+                .setDampingGap(dampingSeconds)
+        ).build()
+
+        val target = BrushBehavior.Node.newBuilder().setTargetNode(
+            BrushBehavior.TargetNode.newBuilder()
+                .setTarget(targetType)
+                .setTargetModifierRangeStart(0.5f)
+                .setTargetModifierRangeEnd(1.5f)
+        ).build()
+
+        addBehavior(listOf(source, damping, target))
+    }
+
+    /**
+     * Adds a "Random Jitter" behavior:
+     * Logic: Noise (Random) -> Target (Output)
+     */
+    fun addJitterBehavior(targetType: BrushBehavior.Target) {
+        val noise = BrushBehavior.Node.newBuilder().setNoiseNode(
+            BrushBehavior.NoiseNode.newBuilder()
+                .setSeed(kotlin.random.Random.nextInt())
+                .setVaryOver(
+                    BrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_CENTIMETERS
+                )
+                .setBasePeriod(0.5f)
+        ).build()
+
+        val target = BrushBehavior.Node.newBuilder().setTargetNode(
+            BrushBehavior.TargetNode.newBuilder()
+                .setTarget(targetType)
+                .setTargetModifierRangeStart(0.8f)
+                .setTargetModifierRangeEnd(1.2f)
+        ).build()
+
+        addBehavior(listOf(noise, target))
+    }
+
+    fun deleteFromPalette(name: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            customBrushDao.deleteCustomBrush(name)
+        }
+    }
+
+    fun updateTextureAnimation(
+        rows: Int,
+        cols: Int,
+        frames: Int,
+        animationDurationSeconds: Float
+    ) {
+        updateTextureLayer {
+            it.setAnimationRows(rows)
+                .setAnimationColumns(cols)
+                .setAnimationFrames(frames)
+                .setAnimationDurationSeconds(animationDurationSeconds)
+        }
+    }
+
+    companion object {
+        private const val TAG = "BrushDesignerViewModel"
+    }
+
 }
