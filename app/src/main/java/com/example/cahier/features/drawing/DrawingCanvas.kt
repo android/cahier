@@ -79,7 +79,7 @@ import com.example.cahier.R
 import com.example.cahier.core.ui.ColorPickerDialog
 import com.example.cahier.core.ui.ConfirmationDialog
 import com.example.cahier.core.ui.DrawingSurface
-import com.example.cahier.features.home.FocusedFieldEnum
+import com.example.cahier.core.ui.FocusedFieldEnum
 import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.utils.createDropTarget

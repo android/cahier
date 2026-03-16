@@ -19,7 +19,7 @@
  */
 
 
-package com.example.cahier.features.drawing.viewmodel
+package com.example.cahier.features.text.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle

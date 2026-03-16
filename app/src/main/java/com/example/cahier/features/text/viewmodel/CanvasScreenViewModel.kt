@@ -16,7 +16,7 @@
  *
  */
 
-package com.example.cahier.features.drawing.viewmodel
+package com.example.cahier.features.text.viewmodel
 
 import android.net.Uri
 import android.util.Log
@@ -28,7 +28,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.cahier.core.data.Note
 import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.navigation.TextCanvasDestination
-import com.example.cahier.features.home.CahierUiState
+import com.example.cahier.core.ui.CahierUiState
 import com.example.cahier.core.utils.FileHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

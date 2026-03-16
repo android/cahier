@@ -51,7 +51,7 @@ import com.example.cahier.core.data.CustomBrush
 import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.ui.CahierTextureBitmapStore
-import com.example.cahier.features.home.CahierUiState
+import com.example.cahier.core.ui.CahierUiState
 import com.example.cahier.features.drawing.CustomBrushes
 import com.example.cahier.core.utils.FileHelper
 import dagger.hilt.android.lifecycle.HiltViewModel

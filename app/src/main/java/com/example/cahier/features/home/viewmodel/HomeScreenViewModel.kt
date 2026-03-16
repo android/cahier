@@ -24,7 +24,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.cahier.core.data.Note
 import com.example.cahier.core.data.NoteType
 import com.example.cahier.core.data.NotesRepository
-import com.example.cahier.features.home.CahierUiState
+import com.example.cahier.core.ui.CahierUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException

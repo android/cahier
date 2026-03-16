@@ -16,7 +16,7 @@
  *
  */
 
-package com.example.cahier.features.home
+package com.example.cahier.core.ui
 
 enum class FocusedFieldEnum {
     None, Title, Body

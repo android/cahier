@@ -84,9 +84,9 @@ import com.example.cahier.R
 import com.example.cahier.core.data.Note
 import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.core.utils.createDropTarget
-import com.example.cahier.features.drawing.viewmodel.CanvasScreenViewModel
-import com.example.cahier.features.home.CahierUiState
-import com.example.cahier.features.home.FocusedFieldEnum
+import com.example.cahier.features.text.viewmodel.CanvasScreenViewModel
+import com.example.cahier.core.ui.CahierUiState
+import com.example.cahier.core.ui.FocusedFieldEnum
 import com.example.cahier.features.home.NotePreviewParameterProvider
 
 @Composable

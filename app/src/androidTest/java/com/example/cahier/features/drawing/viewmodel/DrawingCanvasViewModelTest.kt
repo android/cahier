@@ -82,7 +82,7 @@ class DrawingCanvasViewModelTest {
         Dispatchers.setMain(testDispatcher)
         notesRepository = FakeNotesRepository()
         noteId = runBlocking {
-            notesRepository.addNote(com.example.cahier.data.Note(title = "Drawing Test"))
+            notesRepository.addNote(com.example.cahier.core.data.Note(title = "Drawing Test"))
         }
 
         val savedStateHandle = SavedStateHandle(

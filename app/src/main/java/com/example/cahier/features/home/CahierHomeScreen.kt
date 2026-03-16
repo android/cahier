@@ -37,7 +37,6 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.layout.PaneExpansionState
-import androidx.compose.material3.adaptive.layout.defaultDragHandleSemantics
 import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.material3.adaptive.navigation.ThreePaneScaffoldNavigator
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
@@ -68,6 +67,7 @@ import com.example.cahier.R
 import com.example.cahier.core.data.Note
 import com.example.cahier.core.data.NoteType
 import com.example.cahier.core.navigation.NavigationDestination
+import com.example.cahier.core.ui.CahierUiState
 import com.example.cahier.features.home.viewmodel.HomeScreenViewModel
 import com.example.cahier.features.home.viewmodel.NoteListUiState
 import kotlinx.coroutines.launch
