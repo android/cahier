@@ -27,6 +27,8 @@ import ink.proto.ColorFunction as ProtoColorFunction
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Singleton
 class BrushDesignerRepository @Inject constructor() {
@@ -56,6 +58,17 @@ class BrushDesignerRepository @Inject constructor() {
         )
         .build()
 
-    val activeBrushProto: MutableStateFlow<ProtoBrushFamily> = MutableStateFlow(initialProto)
-    val testStrokes: MutableStateFlow<List<Stroke>> = MutableStateFlow(emptyList())
+    private val _activeBrushProto = MutableStateFlow(initialProto)
+    val activeBrushProto: StateFlow<ProtoBrushFamily> = _activeBrushProto.asStateFlow()
+
+    private val _testStrokes = MutableStateFlow<List<Stroke>>(emptyList())
+    val testStrokes: StateFlow<List<Stroke>> = _testStrokes.asStateFlow()
+
+    fun updateActiveBrushProto(proto: ProtoBrushFamily) {
+        _activeBrushProto.value = proto
+    }
+
+    fun updateTestStrokes(strokes: List<Stroke>) {
+        _testStrokes.value = strokes
+    }
 }
