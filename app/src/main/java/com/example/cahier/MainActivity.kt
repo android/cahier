@@ -30,6 +30,7 @@ import androidx.core.content.IntentCompat
 import com.example.cahier.core.data.NoteType
 import com.example.cahier.features.home.CahierApp
 import com.example.cahier.core.ui.theme.CahierAppTheme
+import com.example.cahier.core.utils.createDragAndDropTarget
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -48,7 +49,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             CahierAppTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .createDragAndDropTarget(this),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     CahierApp(noteId = noteId, noteType = noteType)

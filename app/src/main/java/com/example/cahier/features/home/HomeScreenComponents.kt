@@ -18,6 +18,7 @@
 
 package com.example.cahier.features.home
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -75,6 +76,7 @@ import com.example.cahier.R
 import com.example.cahier.core.data.Note
 import com.example.cahier.core.data.NoteType
 import com.example.cahier.core.ui.theme.CahierAppTheme
+import com.example.cahier.core.utils.createDragAndDropSource
 import com.example.cahier.features.drawing.DrawingDetailThumbnail
 
 @Composable
@@ -212,6 +214,7 @@ fun NoteItem(
             .fillMaxWidth()
             .clip(CardDefaults.outlinedShape)
             .clickable { onClick() }
+            .createDragAndDropSource(LocalActivity.current, note)
     ) {
         NoteItemContent(note)
         NoteItemActions(onToggleFavorite, note, onDelete, onNewWindow, isCompact)
