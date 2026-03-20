@@ -30,7 +30,7 @@ inputMotionprediction = "1.0.0"
 
 #Tests
 mockito = "5.23.0"
-mockitoKotlin = "6.2.3"
+mockitoKotlin = "6.3.0"
 coreTesting = "2.2.0"
 kotlinxCoroutinesTest = "1.10.2"
 turbine = "1.2.1"
