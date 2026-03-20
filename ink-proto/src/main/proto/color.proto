@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package ink.proto;
+
+option java_package = "ink.proto";
+option java_multiple_files = true;
+
+message Color {
+  optional float red = 1;
+  optional float green = 2;
+  optional float blue = 3;
+  optional float alpha = 4;
+}

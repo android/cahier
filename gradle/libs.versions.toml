@@ -20,6 +20,7 @@ lifecycleRuntimeCompose = "2.10.0"
 adaptiveNavigationAndroid = "1.2.0"
 navigationRuntimeKtx = "2.9.7"
 navigationCompose = "2.9.7"
+protobufJavalite = "4.34.0"
 roomKtx = "2.8.4"
 roomRuntime = "2.8.4"
 windowCore = "1.5.1"
@@ -98,6 +99,7 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
 roborazzi-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
+protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
