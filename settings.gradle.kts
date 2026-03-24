@@ -23,5 +23,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Cahier"
-include(":app")
+include(":app", ":ink-proto")
  
