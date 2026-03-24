@@ -205,18 +205,20 @@ fun NoteItem(
     modifier: Modifier = Modifier
 ) {
     OutlinedCard(
+        onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
             else MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(CardDefaults.outlinedShape)
-            .clickable { onClick() }
-            .createDragAndDropSource(LocalActivity.current, note)
+        modifier = modifier.fillMaxWidth()
     ) {
-        NoteItemContent(note)
+        NoteItemContent(
+            note = note,
+            modifier = Modifier
+                .fillMaxWidth()
+                .createDragAndDropSource(LocalActivity.current, note)
+        )
         NoteItemActions(onToggleFavorite, note, onDelete, onNewWindow, isCompact)
     }
 }

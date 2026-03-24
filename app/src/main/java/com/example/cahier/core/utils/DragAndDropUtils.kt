@@ -31,7 +31,6 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropSource
-import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
@@ -73,26 +72,6 @@ fun Modifier.createDragAndDropSource(
 } else {
     this
 }
-
-fun Modifier.createDragAndDropTarget(
-    activity: Activity
-): Modifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-    dragAndDropTarget(
-        shouldStartDragAndDrop = { event ->
-            event.toAndroidDragEvent().clipDescription?.hasMimeType(ClipDescription.MIMETYPE_TEXT_INTENT) ?: false
-        },
-        target = object : DragAndDropTarget {
-            override fun onDrop(event: DragAndDropEvent): Boolean =
-                event.toAndroidDragEvent().clipData?.getItemAt(0)?.intent?.let {
-                    activity.startActivity(it)
-                    true
-                } ?: false
-        }
-    )
-} else {
-    this
-}
-
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 fun getClipData(activity: Activity, note: Note): ClipData {
