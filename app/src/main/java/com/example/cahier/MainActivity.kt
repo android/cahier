@@ -34,7 +34,6 @@ import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
 import com.example.cahier.developer.brushgraph.data.DisplayText
 import com.example.cahier.features.home.CahierApp
-import com.example.cahier.core.utils.createDragAndDropTarget
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -70,12 +69,10 @@ class MainActivity : ComponentActivity() {
                 androidx.compose.runtime.CompositionLocalProvider(LocalTextureStore provides textureStore) {
                     Surface(
                         modifier = Modifier
-                        .fillMaxSize()
-                        .createDragAndDropTarget(this),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        CahierApp(
-                            noteId = noteId,
+                        .fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    CahierApp(noteId = noteId,
                             noteType = noteType,
                             navigateToBrushGraph = navigateToBrushGraph,
                             onNavigateToBrushGraphHandled = {
