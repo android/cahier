@@ -33,4 +33,9 @@ class CahierTextureBitmapStore(context: Context) : TextureBitmapStore {
         return BitmapFactory.decodeResource(resources, drawable)
             ?: throw IllegalStateException("Could not load bitmap for resource $drawable")
     }
+
+    fun loadTexture(textureId: String, bitmap: Bitmap) {
+        val id = getShortName(textureId)
+        loadedBitmaps[id] = bitmap
+    }
 }
