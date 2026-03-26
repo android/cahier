@@ -48,7 +48,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             CahierAppTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     CahierApp(noteId = noteId, noteType = noteType)
