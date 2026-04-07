@@ -81,6 +81,9 @@ import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 import kotlin.math.roundToInt
 
+import androidx.ink.brush.TextureBitmapStore
+import com.example.cahier.ui.CahierTextureBitmapStore
+
 /**
  * A composable that renders an infinite canvas for the node graph. Handles panning, zooming, and
  * node interaction.
@@ -104,13 +107,14 @@ fun NodeGraphCanvas(
   selectedEdge: GraphEdge? = null,
   onNodeDataUpdate: (String, NodeData) -> Unit = { _, _ -> },
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
-  allTextureIds: Set<String>,
+  textureStore: TextureBitmapStore,
   onLoadTexture: () -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
   textFieldsLocked: Boolean,
   brush: Brush,
   bottomPadding: Dp = 16.dp,
 ) {
+  val allTextureIds = (textureStore as? CahierTextureBitmapStore)?.getAllIds() ?: emptySet()
   var pointerPos by remember { mutableStateOf<Offset?>(null) }
   var draggingNodeId by remember { mutableStateOf<String?>(null) }
   var draggingPointerPos by remember { mutableStateOf<Offset?>(null) } // In parent Box space

@@ -2,6 +2,11 @@
 
 package com.example.cahier.ui.brushgraph.ui
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.expandVertically
@@ -11,6 +16,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -51,14 +57,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,9 +82,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
+import androidx.ink.brush.StockTextureBitmapStore
 import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
+import androidx.ink.storage.AndroidBrushFamilySerialization
+import androidx.ink.storage.BrushFamilyDecodeCallback
+import androidx.ink.storage.decode
+import androidx.ink.storage.encode
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cahier.ui.ClassicColorPickerDialog
+import com.example.cahier.ui.DrawingSurface
 import com.example.cahier.ui.brushgraph.BrushGraphViewModel
 import com.example.cahier.ui.brushgraph.inspectors.EdgeInspector
 import com.example.cahier.ui.brushgraph.inspectors.NodeInspector
@@ -88,21 +107,26 @@ import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
-import com.example.cahier.ui.theme.extendedColorScheme
-import com.example.cahier.ui.DrawingSurface
+import com.example.cahier.ui.brushgraph.model.toBrushFamily
 import com.example.cahier.ui.theme.CahierAppTheme
-import androidx.ink.brush.StockTextureBitmapStore
+import com.example.cahier.ui.theme.extendedColorScheme
+import kotlinx.coroutines.launch
 
-import com.example.cahier.ui.ClassicColorPickerDialog
+import com.example.cahier.ui.CahierTextureBitmapStore
 
 /** The main UI for the Brush Graph studio. */
 @Composable
 fun BrushGraphWidget(
   onNavigateUp: () -> Unit,
 ) {
-  val viewModel: BrushGraphViewModel = viewModel()
+  val viewModel: BrushGraphViewModel = hiltViewModel()
   val context = LocalContext.current
-  val textureStore = remember { StockTextureBitmapStore(context.resources) }
+  val scope = rememberCoroutineScope()
+  
+  // Use existing CahierTextureBitmapStore
+  val textureStore = remember { CahierTextureBitmapStore(context) }
+  var allTextureIds by remember { mutableStateOf(textureStore.getAllIds()) }
+  
   val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
 
   var showColorPicker by remember { mutableStateOf(false) }
@@ -117,12 +141,157 @@ fun BrushGraphWidget(
     )
   }
 
+  // Texture picking logic
+  var showTextureNameDialog by remember { mutableStateOf(false) }
+  var pendingTextureUri by remember { mutableStateOf<Uri?>(null) }
+  var textureNameInput by remember { mutableStateOf("") }
+
+  val texturePickerLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.OpenDocument()
+  ) { uri: Uri? ->
+    if (uri != null) {
+      pendingTextureUri = uri
+      showTextureNameDialog = true
+    }
+  }
+
+  if (showTextureNameDialog) {
+    AlertDialog(
+      onDismissRequest = { showTextureNameDialog = false },
+      title = { Text("Name Texture") },
+      text = {
+        OutlinedTextField(
+          value = textureNameInput,
+          onValueChange = { textureNameInput = it },
+          label = { Text("Texture ID") },
+          singleLine = true,
+          modifier = Modifier.fillMaxWidth()
+        )
+      },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            if (textureNameInput.isNotBlank() && pendingTextureUri != null) {
+              val uri = pendingTextureUri!!
+              val name = textureNameInput
+              scope.launch {
+                val bitmap = context.contentResolver.openInputStream(uri)?.use { 
+                    BitmapFactory.decodeStream(it)
+                }
+                if (bitmap != null) {
+                  textureStore.loadTexture(name, bitmap)
+                }
+              }
+              showTextureNameDialog = false
+              textureNameInput = ""
+            }
+          }
+        ) {
+          Text("OK")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showTextureNameDialog = false }) {
+          Text("Cancel")
+        }
+      }
+    )
+  }
+
+  val brushFilePickerLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.OpenDocument()
+  ) { uri: Uri? ->
+    uri?.let {
+      scope.launch {
+        try {
+          val family = context.contentResolver.openInputStream(it)?.use { stream ->
+            AndroidBrushFamilySerialization.decode(
+              stream,
+              BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
+                if (bitmap != null) {
+                  textureStore.loadTexture(id, bitmap)
+                }
+                id
+              }
+            )
+          } ?: throw Exception("Could not decode brush family")
+
+          viewModel.loadBrushFamily(family)
+          viewModel.postDebug("Brush loaded successfully")
+        } catch (e: Exception) {
+          android.util.Log.e("BrushGraphWidget", "Failed to load brush", e)
+          viewModel.postDebug("Failed to load brush: ${e.message}")
+        }
+      }
+    }
+  }
+
+  val brushExportLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.CreateDocument("application/octet-stream")
+  ) { uri: Uri? ->
+    uri?.let {
+      scope.launch {
+        try {
+          context.contentResolver.openOutputStream(it)?.use { outputStream -> 
+            AndroidBrushFamilySerialization.encode(
+              viewModel.brush.family,
+              outputStream,
+              textureStore
+            )
+          }
+          viewModel.postDebug("Brush exported successfully")
+        } catch (e: Exception) {
+          android.util.Log.e("BrushGraphWidget", "Failed to export brush", e)
+          viewModel.postDebug("Failed to export brush: ${e.message}")
+        }
+      }
+    }
+  }
+
+  // Save to palette logic
+  var showSavePaletteDialog by remember { mutableStateOf(false) }
+  var paletteBrushNameInput by remember { mutableStateOf("") }
+
+  if (showSavePaletteDialog) {
+    AlertDialog(
+      onDismissRequest = { showSavePaletteDialog = false },
+      title = { Text("Save to Cahier Palette") },
+      text = {
+        OutlinedTextField(
+          value = paletteBrushNameInput,
+          onValueChange = { paletteBrushNameInput = it },
+          label = { Text("Brush Name") },
+          singleLine = true,
+          modifier = Modifier.fillMaxWidth()
+        )
+      },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            if (paletteBrushNameInput.isNotBlank()) {
+              viewModel.saveToPalette(paletteBrushNameInput, textureStore)
+              showSavePaletteDialog = false
+              paletteBrushNameInput = ""
+            }
+          }
+        ) {
+          Text("Save")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showSavePaletteDialog = false }) {
+          Text("Cancel")
+        }
+      }
+    )
+  }
+
   CahierAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       BrushGraphStudio(
-        allTextureIds = emptySet(), // TODO: Connect to actual texture IDs
-        onLoadTexture = { /* TODO */ },
-        onLoadBrushFile = { /* TODO */ },
+        viewModel = viewModel,
+        onLoadTexture = { texturePickerLauncher.launch(arrayOf("image/*")) },
+        onLoadBrushFile = { brushFilePickerLauncher.launch(arrayOf("*/*")) },
         onChooseColor = { initialColor, onColorSelected ->
           colorPickerInitialColor = initialColor
           colorPickerOnColorSelected = onColorSelected
@@ -130,7 +299,14 @@ fun BrushGraphWidget(
         },
         strokeRenderer = renderer,
         textureStore = textureStore,
-        onSave = { /* TODO */ },
+        onExport = { 
+          brushExportLauncher.launch("brush_${System.currentTimeMillis()}.brushfamily")
+        },
+        onSaveToPalette = {
+          paletteBrushNameInput = ""
+          showSavePaletteDialog = true
+        },
+        onNavigateUp = onNavigateUp,
       )
     }
   }
@@ -139,15 +315,16 @@ fun BrushGraphWidget(
 /** The main UI for the Brush Graph studio. */
 @Composable
 fun BrushGraphStudio(
-  allTextureIds: Set<String>,
+  viewModel: BrushGraphViewModel,
   onLoadTexture: () -> Unit,
   onLoadBrushFile: () -> Unit,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
   textureStore: TextureBitmapStore,
-  onSave: () -> Unit,
+  onExport: () -> Unit,
+  onSaveToPalette: () -> Unit,
+  onNavigateUp: () -> Unit,
 ) {
-  val viewModel: BrushGraphViewModel = viewModel()
   val context = LocalContext.current
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -201,7 +378,7 @@ fun BrushGraphStudio(
           activeEdgeSourceId = viewModel.activeEdgeSourceId,
           onNodeDataUpdate = { id, data -> viewModel.updateNodeData(id, data) },
           onChooseColor = onChooseColor,
-          allTextureIds = allTextureIds,
+          textureStore = textureStore,
           onLoadTexture = onLoadTexture,
           strokeRenderer = strokeRenderer,
           textFieldsLocked = viewModel.textFieldsLocked,
@@ -215,7 +392,7 @@ fun BrushGraphStudio(
           isLandscape = isLandscape,
           viewModel = viewModel,
           onChooseColor = onChooseColor,
-          allTextureIds = allTextureIds,
+          textureStore = textureStore,
           onLoadTexture = onLoadTexture,
           strokeRenderer = strokeRenderer,
           modifier =
@@ -281,9 +458,12 @@ fun BrushGraphStudio(
 
         // Floating Action Menu on the left.
         FloatingActionMenu(
-          onClose = { (context as? android.app.Activity)?.finish() },
-          onExport = onSave,
+          onClose = onNavigateUp,
+          onExport = onExport,
           onLoadBrushFile = onLoadBrushFile,
+          onSaveToPalette = onSaveToPalette,
+          viewModel = viewModel,
+          textureStore = textureStore,
           onOrganize = viewModel::reorganize,
           onDeleteBrush = { viewModel.clearGraph() },
           modifier = Modifier.align(Alignment.TopStart).padding(16.dp).zIndex(2f),
@@ -444,7 +624,7 @@ fun AdaptiveInspectorPane(
   isLandscape: Boolean,
   viewModel: BrushGraphViewModel,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
-  allTextureIds: Set<String>,
+  textureStore: TextureBitmapStore,
   onLoadTexture: () -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
   modifier: Modifier = Modifier,
@@ -452,6 +632,8 @@ fun AdaptiveInspectorPane(
   val selectedNode = viewModel.graph.nodes.find { it.id == viewModel.selectedNodeId }
   val selectedEdge = viewModel.selectedEdge
   val density = androidx.compose.ui.platform.LocalDensity.current.density
+  
+  val allTextureIds = (textureStore as? CahierTextureBitmapStore)?.getAllIds() ?: emptySet()
 
   AnimatedVisibility(
     visible = selectedNode != null || selectedEdge != null,
@@ -622,6 +804,7 @@ fun CollapsiblePreviewPane(
           },
       ) {
         CanvasSection(
+          viewModel = viewModel,
           strokeList = viewModel.strokeList,
           strokeRenderer = strokeRenderer,
           textureStore = textureStore,
@@ -636,6 +819,7 @@ fun CollapsiblePreviewPane(
 
 @Composable
 fun CanvasSection(
+  viewModel: BrushGraphViewModel,
   strokeList: List<androidx.ink.strokes.Stroke>,
   strokeRenderer: CanvasStrokeRenderer,
   textureStore: TextureBitmapStore,
@@ -664,7 +848,7 @@ fun CanvasSection(
       onEraseStart = {},
       onEraseEnd = {},
       currentBrush = brush,
-      onGetNextBrush = { brush },
+      onGetNextBrush = { viewModel.brush },
       isEraserMode = false,
       backgroundImageUri = null,
       onStartDrag = {},
@@ -677,13 +861,19 @@ fun FloatingActionMenu(
   onClose: () -> Unit,
   onExport: () -> Unit,
   onLoadBrushFile: () -> Unit,
+  onSaveToPalette: () -> Unit,
+  viewModel: BrushGraphViewModel,
+  textureStore: TextureBitmapStore,
   onOrganize: () -> Unit,
   onDeleteBrush: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var showMoreMenu by remember { mutableStateOf(false) }
+  var showPaletteMenu by remember { mutableStateOf(false) }
   var showClearConfirmation by remember { mutableStateOf(false) }
   var showReorganizeConfirmation by remember { mutableStateOf(false) }
+
+  val savedBrushes by viewModel.savedPaletteBrushes.collectAsState()
 
   if (showClearConfirmation) {
     AlertDialog(
@@ -790,14 +980,57 @@ fun FloatingActionMenu(
         }
       }
 
+      Box {
+        TextButton(onClick = { showPaletteMenu = true }) {
+          Text("My Palette")
+        }
+
+        DropdownMenu(expanded = showPaletteMenu, onDismissRequest = { showPaletteMenu = false }) {
+          if (savedBrushes.isEmpty()) {
+            DropdownMenuItem(
+              text = { Text("No saved brushes yet") },
+              onClick = { showPaletteMenu = false },
+            )
+          } else {
+            savedBrushes.forEach { entity ->
+              DropdownMenuItem(
+                text = {
+                  Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                  ) {
+                    Text(entity.name, modifier = Modifier.weight(1f))
+                    IconButton(onClick = {
+                      viewModel.deleteFromPalette(entity.name)
+                    }) {
+                      Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(18.dp)
+                      )
+                    }
+                  }
+                },
+                onClick = {
+                  viewModel.loadFromPalette(entity, textureStore)
+                  showPaletteMenu = false
+                }
+              )
+            }
+          }
+        }
+      }
+
       Spacer(Modifier.width(8.dp))
 
       Button(
-        onClick = { /* Do nothing for now */ },
+        onClick = onSaveToPalette,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.height(40.dp),
       ) {
-        Text("Save")
+        Text("Save to Palette")
       }
     }
   }
@@ -980,7 +1213,7 @@ fun NotificationGroup(
             shape = RoundedCornerShape(4.dp),
           ) {
             Text(
-              text = issue.message ?: "Unknown issue",
+              text = issue.message,
               modifier = Modifier.padding(8.dp),
               style = MaterialTheme.typography.bodySmall,
               color = color,

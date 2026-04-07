@@ -64,8 +64,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import dagger.hilt.android.AndroidEntryPoint
+
 /** Activity that allows a user to design a brush using a node graph based approach. */
 @OptIn(ExperimentalInkCustomBrushApi::class)
+@AndroidEntryPoint
 class BrushGraphActivity : ComponentActivity() {
 
   companion object {
@@ -194,7 +197,7 @@ class BrushGraphActivity : ComponentActivity() {
           }
 
           BrushGraphStudio(
-            allTextureIds = allTextureIds.collectAsState().value,
+            viewModel = viewModel,
             onLoadTexture = { openTextureResultLauncher.launch(arrayOf("image/*")) },
             onLoadBrushFile = { openBrushResultLauncher.launch(arrayOf("*/*")) },
             onChooseColor = { originalColor, onNewColor ->
@@ -204,7 +207,9 @@ class BrushGraphActivity : ComponentActivity() {
             },
             strokeRenderer = renderer,
             textureStore = textureStore,
-            onSave = { openBrushShareDialog(viewModel.brush.family) },
+            onExport = { openBrushShareDialog(viewModel.brush.family) },
+            onSaveToPalette = { /* TODO: Support saving to palette from activity if needed */ },
+            onNavigateUp = { finish() },
           )
         }
       }

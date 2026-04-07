@@ -95,13 +95,11 @@ object BrushGraphConverter {
     var currentY = y
     for (behavior in tip.behaviorsList) {
       // Reconstruct the graph from the post-order list of nodes.
-      val terminalNodeIds = convertBehaviorGraph(behavior, nodes, edges, x, currentY)
+      val (terminalNodeIds, behaviorMaxY) = convertBehaviorGraph(behavior, nodes, edges, x, currentY)
       for (terminalId in terminalNodeIds) {
         edges.add(GraphEdge(fromNodeId = terminalId, toNodeId = tipId, toInputIndex = 0))
       }
-      // Since we don't have maxY from convertBehaviorGraph yet, we'll need to handle it.
-      // For now, let's just increment currentY.
-      currentY += (terminalNodeIds.size * 100f) + VERTICAL_GAP
+      currentY = behaviorMaxY + VERTICAL_GAP
     }
 
     return tipId to maxOf(y + tipData.height(), currentY - VERTICAL_GAP)
@@ -156,33 +154,78 @@ object BrushGraphConverter {
     edges: MutableList<GraphEdge>,
     tipX: Float,
     startY: Float,
-  ): List<String> {
-    val nodeStack = mutableListOf<String>()
-    var currentY = startY
-    val terminalNodeIds = mutableListOf<String>()
+  ): Pair<List<String>, Float> {
+    val nodeStack = mutableListOf<InternalNodeInfo>()
+    val behaviorNodes = mutableListOf<InternalNodeInfo>()
 
     for (protoNode in behavior.nodesList) {
       val nodeId = UUID.randomUUID().toString()
       val nodeData = NodeData.Behavior(protoNode)
-      val x = tipX - (nodeStack.size + 1) * (nodeData.width() + HORIZONTAL_GAP)
-      nodes.add(GraphNode(id = nodeId, data = nodeData, position = Offset(x, currentY)))
-      currentY += nodeData.height() + VERTICAL_GAP
-
       val inputCount = nodeData.inputLabels().size
+      
+      val children = mutableListOf<InternalNodeInfo>()
       for (i in 0 until inputCount) {
         if (nodeStack.isNotEmpty()) {
-          val fromId = nodeStack.removeAt(nodeStack.size - 1)
-          edges.add(GraphEdge(fromNodeId = fromId, toNodeId = nodeId, toInputIndex = inputCount - 1 - i))
+          children.add(0, nodeStack.removeAt(nodeStack.size - 1))
         }
       }
-
-      if (protoNode.nodeCase == ProtoBrushBehavior.Node.NodeCase.TARGET_NODE ||
-          protoNode.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
-        terminalNodeIds.add(nodeId)
-      } else {
-        nodeStack.add(nodeId)
+      
+      val info = InternalNodeInfo(nodeId, nodeData, children)
+      behaviorNodes.add(info)
+      
+      if (protoNode.nodeCase != ProtoBrushBehavior.Node.NodeCase.TARGET_NODE &&
+          protoNode.nodeCase != ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+        nodeStack.add(info)
       }
     }
-    return terminalNodeIds
+
+    val terminalNodeInfos = behaviorNodes.filter { it.data.node.let { n -> 
+        n.nodeCase == ProtoBrushBehavior.Node.NodeCase.TARGET_NODE || 
+        n.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE 
+    }}
+    
+    var currentY = startY
+    val assignedNodes = mutableSetOf<String>()
+    var maxYReached = startY
+
+    fun layoutNode(info: InternalNodeInfo, depth: Int): Float {
+        if (assignedNodes.contains(info.id)) {
+            // Find existing position if already assigned
+            return nodes.find { it.id == info.id }?.position?.y?.plus(info.data.height() / 2f) ?: 0f
+        }
+        
+        val x = tipX - (depth + 1) * (info.data.width() + HORIZONTAL_GAP)
+        
+        val centerY = if (info.children.isEmpty()) {
+            val y = currentY + info.data.height() / 2f
+            currentY += info.data.height() + VERTICAL_GAP
+            y
+        } else {
+            val childYCenters = info.children.map { layoutNode(it, depth + 1) }
+            childYCenters.average().toFloat()
+        }
+        
+        val finalY = centerY - info.data.height() / 2f
+        nodes.add(GraphNode(id = info.id, data = info.data, position = Offset(x, finalY)))
+        maxYReached = maxOf(maxYReached, finalY + info.data.height())
+        
+        info.children.forEachIndexed { index, child ->
+            edges.add(GraphEdge(fromNodeId = child.id, toNodeId = info.id, toInputIndex = index))
+        }
+        assignedNodes.add(info.id)
+        return centerY
+    }
+
+    for (root in terminalNodeInfos) {
+        layoutNode(root, 0)
+    }
+    
+    return terminalNodeInfos.map { it.id } to maxYReached
   }
+
+  private data class InternalNodeInfo(
+    val id: String, 
+    val data: NodeData.Behavior, 
+    val children: List<InternalNodeInfo>
+  )
 }

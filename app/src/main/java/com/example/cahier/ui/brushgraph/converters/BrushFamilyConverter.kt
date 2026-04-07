@@ -32,6 +32,11 @@ object BrushFamilyConverter {
    * @throws IllegalStateException if the graph is invalid.
    */
   fun convert(graph: BrushGraph): BrushFamily {
+    return convertIntoProto(graph).toBrushFamily()
+  }
+
+  /** Converts a [BrushGraph] into a [ProtoBrushFamily]. */
+  fun convertIntoProto(graph: BrushGraph): ProtoBrushFamily {
     val issues = validateAll(graph)
     val criticalErrors = issues.filter { it.severity == ValidationSeverity.ERROR }
     if (criticalErrors.isNotEmpty()) {
@@ -57,14 +62,12 @@ object BrushFamilyConverter {
       createCoat(coatNode, graph, behaviorCache)
     }
 
-    val proto = ProtoBrushFamily.newBuilder()
+    return ProtoBrushFamily.newBuilder()
       .addAllCoats(coats)
       .setInputModel(familyData.inputModel)
       .setClientBrushFamilyId(familyData.clientBrushFamilyId)
       .setDeveloperComment(familyData.developerComment)
       .build()
-
-    return proto.toBrushFamily()
   }
 
   private fun createCoat(

@@ -14,8 +14,24 @@ import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushBehavior
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
+import androidx.ink.brush.TextureBitmapStore
+import androidx.ink.storage.AndroidBrushFamilySerialization
+import androidx.ink.storage.BrushFamilyDecodeCallback
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.cahier.ui.CahierTextureBitmapStore
+import com.example.cahier.ui.brushdesigner.CustomBrushDao
+import com.example.cahier.ui.brushdesigner.CustomBrushEntity
+import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.zip.GZIPOutputStream
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import com.example.cahier.ui.brushgraph.converters.BrushFamilyConverter
 import com.example.cahier.ui.brushgraph.converters.BrushGraphConverter
 import com.example.cahier.ui.brushgraph.model.BrushGraph
@@ -37,7 +53,20 @@ import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.ColorFunction as ProtoColorFunction
 
 /** ViewModel to manage the state of the brush graph. */
-class BrushGraphViewModel : ViewModel() {
+@HiltViewModel
+class BrushGraphViewModel @Inject constructor(
+  private val customBrushDao: CustomBrushDao
+) : ViewModel() {
+
+  /** Saved brushes in the palette. */
+  val savedPaletteBrushes: StateFlow<List<CustomBrushEntity>> =
+    customBrushDao.getAllCustomBrushes()
+      .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+      )
+
   /** The current state of the brush graph. */
   var graph by mutableStateOf(BrushGraph())
     private set
@@ -107,6 +136,19 @@ class BrushGraphViewModel : ViewModel() {
 
   init {
     android.util.Log.d(TAG, "Initializing BrushGraphViewModel")
+    // Initialize with a default brush structure: Family -> Coat -> (Tip, Paint)
+    val defaultTip = ProtoBrushTip.getDefaultInstance()
+    val defaultPaint = ProtoBrushPaint.getDefaultInstance()
+    val defaultCoat = ProtoBrushCoat.newBuilder()
+      .setTip(defaultTip)
+      .addPaintPreferences(defaultPaint)
+      .build()
+    val defaultProto = ProtoBrushFamily.newBuilder()
+      .addCoats(defaultCoat)
+      .build()
+    
+    graph = BrushGraphConverter.fromProtoBrushFamily(defaultProto)
+    validate()
   }
 
   /** Posts a transient debug message. */
@@ -506,5 +548,51 @@ class BrushGraphViewModel : ViewModel() {
   /** Toggles the text fields locked state. */
   fun toggleTextFieldsLocked() {
     textFieldsLocked = !textFieldsLocked
+  }
+
+  /** Saves the current brush to the palette. */
+  fun saveToPalette(brushName: String, textureStore: TextureBitmapStore) {
+    viewModelScope.launch(Dispatchers.IO) {
+      try {
+        val baos = java.io.ByteArrayOutputStream()
+        AndroidBrushFamilySerialization.encode(brush.family, baos, textureStore)
+        val finalCompressedBytes = baos.toByteArray()
+
+        customBrushDao.saveCustomBrush(
+          CustomBrushEntity(name = brushName, brushBytes = finalCompressedBytes)
+        )
+      } catch (e: Exception) {
+        android.util.Log.e(TAG, "Failed to save brush to palette", e)
+      }
+    }
+  }
+
+  /** Deletes a brush from the palette. */
+  fun deleteFromPalette(name: String) {
+    viewModelScope.launch(Dispatchers.IO) {
+      customBrushDao.deleteCustomBrush(name)
+    }
+  }
+
+  /** Loads a brush from the palette. */
+  fun loadFromPalette(entity: CustomBrushEntity, textureStore: TextureBitmapStore) {
+    viewModelScope.launch(Dispatchers.IO) {
+      try {
+        val family = AndroidBrushFamilySerialization.decode(
+          java.io.ByteArrayInputStream(entity.brushBytes),
+          BrushFamilyDecodeCallback { id, bitmap ->
+            if (bitmap != null && textureStore is CahierTextureBitmapStore) {
+              textureStore.loadTexture(id, bitmap)
+            }
+            id
+          }
+        )
+        withContext(Dispatchers.Main) {
+           loadBrushFamily(family)
+        }
+      } catch (e: Exception) {
+        android.util.Log.e(TAG, "Failed to load brush from palette", e)
+      }
+    }
   }
 }

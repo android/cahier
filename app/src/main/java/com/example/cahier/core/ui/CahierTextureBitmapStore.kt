@@ -47,6 +47,11 @@ class CahierTextureBitmapStore(context: Context) : TextureBitmapStore {
         }
     }
 
+    /** Returns all available texture IDs. */
+    fun getAllIds(): Set<String> {
+        return textureResources.keys + loadedBitmaps.keys
+    }
+
     private fun getShortName(clientTextureId: String): String =
         clientTextureId.removePrefix("ink://ink").removePrefix("/texture:")
 
