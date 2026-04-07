@@ -8,17 +8,22 @@ package com.example.cahier.ui.brushgraph.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -1047,15 +1052,18 @@ fun NodeFields(
       is NodeData.ColorFunc -> {
         val function = data.function
         var expandedType by remember { mutableStateOf(false) }
+        val currentType =
+          if (function.hasOpacityMultiplier()) "Opacity Multiplier" else "Replace Color"
+
         ExposedDropdownMenuBox(
           expanded = expandedType,
           onExpandedChange = { expandedType = it }
         ) {
           OutlinedTextField(
-            value = if (function.hasOpacityMultiplier()) "OPACITY" else "REPLACE",
+            value = currentType,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Type") },
+            label = { Text("Function Type") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
             modifier = Modifier.menuAnchor().fillMaxWidth()
           )
@@ -1063,17 +1071,32 @@ fun NodeFields(
             expanded = expandedType,
             onDismissRequest = { expandedType = false }
           ) {
-            arrayOf("OPACITY", "REPLACE").forEach { type ->
+            listOf("Opacity Multiplier", "Replace Color").forEach { type ->
               DropdownMenuItem(
                 text = { Text(type) },
                 onClick = {
-                  onUpdate(
-                    if (type == "OPACITY") {
-                      NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build())
-                    } else {
-                      NodeData.ColorFunc(ProtoColorFunction.newBuilder().setReplaceColor(ink.proto.Color.newBuilder().setAlpha(1f).build()).build())
-                    }
-                  )
+                  if (type != currentType) {
+                    onUpdate(
+                      if (type == "Opacity Multiplier") {
+                        NodeData.ColorFunc(
+                          ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
+                        )
+                      } else {
+                        NodeData.ColorFunc(
+                          ProtoColorFunction.newBuilder()
+                            .setReplaceColor(
+                              ink.proto.Color.newBuilder()
+                                .setRed(0f)
+                                .setGreen(0f)
+                                .setBlue(0f)
+                                .setAlpha(1f)
+                                .build()
+                            )
+                            .build()
+                        )
+                      }
+                    )
+                  }
                   expandedType = false
                 }
               )
@@ -1087,37 +1110,42 @@ fun NodeFields(
             valueRange = 0f..2f,
             onValueChange = { onUpdate(NodeData.ColorFunc(function.safeCopy(opacityMultiplier = it))) }
           )
-        } else {
+        } else if (function.hasReplaceColor()) {
           val color = function.replaceColor
-          val composeColor = Color(red = color.red, green = color.green, blue = color.blue, alpha = color.alpha)
-          Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Color: ")
-            OutlinedIconButton(
+          val composeColor =
+            Color(red = color.red, green = color.green, blue = color.blue, alpha = color.alpha)
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(vertical = 8.dp)
+          ) {
+            Text("Color: ", style = MaterialTheme.typography.bodyMedium)
+            Surface(
               onClick = {
                 onChooseColor(composeColor) { newColor ->
                   onUpdate(
                     NodeData.ColorFunc(
                       function.safeCopy(
-                        replaceColor = ink.proto.Color.newBuilder()
-                          .setRed(newColor.red)
-                          .setGreen(newColor.green)
-                          .setBlue(newColor.blue)
-                          .setAlpha(newColor.alpha)
-                          .build()
+                        replaceColor =
+                          ink.proto.Color.newBuilder()
+                            .setRed(newColor.red)
+                            .setGreen(newColor.green)
+                            .setBlue(newColor.blue)
+                            .setAlpha(newColor.alpha)
+                            .build()
                       )
                     )
                   )
                 }
               },
-              enabled = true,
-            ) {
-              androidx.compose.foundation.Canvas(modifier = Modifier.size(24.dp).padding(4.dp)) {
-                drawCircle(color = composeColor)
-              }
-            }
+              shape = RoundedCornerShape(4.dp),
+              color = composeColor,
+              border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+              modifier = Modifier.size(40.dp)
+            ) {}
+            Spacer(Modifier.width(8.dp))
             Text(
-              text = String.format("RGBA (%.2f, %.2f, %.2f, %.2f)", color.red, color.green, color.blue, color.alpha),
-              modifier = Modifier.padding(start = 8.dp),
+              text = String.format("ARGB #%08X", (composeColor.toArgb())),
+              style = MaterialTheme.typography.bodySmall,
             )
           }
         }
@@ -1376,7 +1404,8 @@ internal fun createDefaultNode(typeName: String): NodeData {
     "Coat" -> NodeData.Coat
     "Paint" -> NodeData.Paint(ProtoBrushPaint.getDefaultInstance())
     "TextureLayer" -> NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance())
-    "ColorFunction" -> NodeData.ColorFunc(ProtoColorFunction.getDefaultInstance())
+    "ColorFunction" ->
+      NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build())
     "BrushFamily" -> NodeData.Family()
     else ->
       NodeData.Behavior(

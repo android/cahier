@@ -93,6 +93,8 @@ import com.example.cahier.ui.DrawingSurface
 import com.example.cahier.ui.theme.CahierAppTheme
 import androidx.ink.brush.StockTextureBitmapStore
 
+import com.example.cahier.ui.ClassicColorPickerDialog
+
 /** The main UI for the Brush Graph studio. */
 @Composable
 fun BrushGraphWidget(
@@ -103,13 +105,29 @@ fun BrushGraphWidget(
   val textureStore = remember { StockTextureBitmapStore(context.resources) }
   val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
 
+  var showColorPicker by remember { mutableStateOf(false) }
+  var colorPickerInitialColor by remember { mutableStateOf(Color.Black) }
+  var colorPickerOnColorSelected by remember { mutableStateOf({ _: Color -> }) }
+
+  if (showColorPicker) {
+    ClassicColorPickerDialog(
+      initialColor = colorPickerInitialColor,
+      onColorSelected = colorPickerOnColorSelected,
+      onDismissRequest = { showColorPicker = false }
+    )
+  }
+
   CahierAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       BrushGraphStudio(
         allTextureIds = emptySet(), // TODO: Connect to actual texture IDs
         onLoadTexture = { /* TODO */ },
         onLoadBrushFile = { /* TODO */ },
-        onChooseColor = { _, _ -> /* TODO */ },
+        onChooseColor = { initialColor, onColorSelected ->
+          colorPickerInitialColor = initialColor
+          colorPickerOnColorSelected = onColorSelected
+          showColorPicker = true
+        },
         strokeRenderer = renderer,
         textureStore = textureStore,
         onSave = { /* TODO */ },
