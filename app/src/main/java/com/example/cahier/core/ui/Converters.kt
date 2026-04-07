@@ -85,7 +85,7 @@ class Converters {
         customBrushes: List<CustomBrush>
     ): Stroke? {
         val inputs = ByteArrayInputStream(serializedStroke.inputs).use { inputStream ->
-            StrokeInputBatch.decode(inputStream)
+            androidx.ink.strokes.StrokeInputBatch.decode(inputStream)
         }
         val brush = deserializeBrush(serializedStroke.brush, customBrushes)
         return Stroke(brush = brush, inputs = inputs)

@@ -105,6 +105,7 @@ fun HomePane(
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
     navigateToBrushDesigner: () -> Unit = {},
+    navigateToBrushGraph: () -> Unit = {},
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     forceCompact: Boolean? = null,
@@ -178,6 +179,7 @@ fun HomePane(
         navigateToCanvas = navigateToCanvas,
         navigateToDrawingCanvas = navigateToDrawingCanvas,
         navigateToBrushDesigner = navigateToBrushDesigner,
+        navigateToBrushGraph = navigateToBrushGraph,
         navigateUp = navigateUp
     )
 }
@@ -198,6 +200,7 @@ private fun CahierNavigationSuite(
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
     navigateToBrushDesigner: () -> Unit,
+    navigateToBrushGraph: () -> Unit,
     navigateUp: () -> Unit
 ) {
     NavigationSuiteScaffold(
@@ -312,6 +315,7 @@ private fun CahierNavigationSuite(
                 AppDestinations.Settings -> {
                     SettingsScreen(
                         navigateToBrushDesigner = navigateToBrushDesigner,
+                        navigateToBrushGraph = navigateToBrushGraph,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
