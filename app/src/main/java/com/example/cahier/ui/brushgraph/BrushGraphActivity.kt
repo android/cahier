@@ -148,6 +148,7 @@ class BrushGraphActivity : ComponentActivity() {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
           val viewModel: BrushGraphViewModel = viewModels<BrushGraphViewModel>().value
           val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
+          val allTextureIds by allTextureIds.collectAsState()
 
           var showColorPicker by remember { mutableStateOf(false) }
           var colorPickerOriginalColor by remember { mutableStateOf(Color.Black) }
@@ -207,6 +208,7 @@ class BrushGraphActivity : ComponentActivity() {
             },
             strokeRenderer = renderer,
             textureStore = textureStore,
+            allTextureIds = allTextureIds,
             onExport = { openBrushShareDialog(viewModel.brush.family) },
             onSaveToPalette = { /* TODO: Support saving to palette from activity if needed */ },
             onNavigateUp = { finish() },
@@ -329,7 +331,9 @@ class BrushGraphActivity : ComponentActivity() {
         contentResolver.openInputStream(uri).use { stream ->
           val proto = ink.proto.BrushFamily.parseFrom(stream!!)
           syncTexturesFromProto(proto)
+          _allTextureIds.value = textureStore.getAllIds()
           proto.toBrushFamily()
+
         }
       }
     }

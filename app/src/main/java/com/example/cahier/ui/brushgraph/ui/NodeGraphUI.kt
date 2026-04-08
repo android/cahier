@@ -108,13 +108,13 @@ fun NodeGraphCanvas(
   onNodeDataUpdate: (String, NodeData) -> Unit = { _, _ -> },
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   textureStore: TextureBitmapStore,
+  allTextureIds: Set<String>,
   onLoadTexture: () -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
   textFieldsLocked: Boolean,
   brush: Brush,
   bottomPadding: Dp = 16.dp,
 ) {
-  val allTextureIds = (textureStore as? CahierTextureBitmapStore)?.getAllIds() ?: emptySet()
   var pointerPos by remember { mutableStateOf<Offset?>(null) }
   var draggingNodeId by remember { mutableStateOf<String?>(null) }
   var draggingPointerPos by remember { mutableStateOf<Offset?>(null) } // In parent Box space

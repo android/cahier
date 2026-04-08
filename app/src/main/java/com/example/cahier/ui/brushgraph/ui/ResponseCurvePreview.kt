@@ -1,0 +1,451 @@
+@file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
+
+package com.example.cahier.ui.brushgraph.ui
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.drawscope.Stroke as DrawStroke
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.ui.brushgraph.model.displayString
+import com.example.cahier.ui.brushgraph.model.safeCopy
+import ink.proto.BrushBehavior as ProtoBrushBehavior
+import ink.proto.CubicBezierEasingFunction as ProtoCubicBezier
+import ink.proto.StepsEasingFunction as ProtoSteps
+
+@Composable
+fun ResponseCurveEditor(
+  responseNode: ProtoBrushBehavior.ResponseNode,
+  onResponseNodeChanged: (ProtoBrushBehavior.ResponseNode) -> Unit,
+) {
+  Column {
+    CurvePreviewWidget(
+      responseNode = responseNode,
+      modifier = Modifier.padding(bottom = 8.dp)
+    )
+    ResponseCurveWidget(
+      responseNode = responseNode,
+      onResponseNodeChanged = onResponseNodeChanged
+    )
+  }
+}
+
+@Composable
+fun CurvePreviewWidget(
+  responseNode: ProtoBrushBehavior.ResponseNode,
+  modifier: Modifier = Modifier,
+) {
+  BoxWithConstraints(
+    modifier = modifier
+      .height(120.dp)
+      .fillMaxWidth()
+      .border(1.dp, MaterialTheme.colorScheme.outlineVariant)
+  ) {
+    val widthPx = constraints.maxWidth.toFloat()
+    val heightPx = constraints.maxHeight.toFloat()
+
+    val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val primaryColor = MaterialTheme.colorScheme.primary
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+      // Background and Grid
+      drawRect(backgroundColor)
+      val centerY = heightPx * 0.8f
+      val scaleY = heightPx * 0.6f
+
+      // Zero line
+      drawLine(Color.Gray, Offset(0f, centerY), Offset(widthPx, centerY))
+      // One line
+      drawLine(Color.LightGray, Offset(0f, centerY - scaleY), Offset(widthPx, centerY - scaleY))
+
+      val path = androidx.compose.ui.graphics.Path()
+      when (responseNode.responseCurveCase) {
+        ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE -> {
+          val c = responseNode.cubicBezierResponseCurve
+          path.moveTo(0f, centerY)
+          path.cubicTo(
+            c.x1 * widthPx,
+            centerY - c.y1 * scaleY,
+            c.x2 * widthPx,
+            centerY - c.y2 * scaleY,
+            widthPx,
+            centerY - scaleY
+          )
+        }
+        ProtoBrushBehavior.ResponseNode.ResponseCurveCase.STEPS_RESPONSE_CURVE -> {
+          val s = responseNode.stepsResponseCurve
+          val steps = s.stepCount.coerceAtLeast(1)
+          val position = s.stepPosition
+          path.moveTo(0f, centerY)
+          val numSamples = 200
+          for (i in 0..numSamples) {
+            val x = i.toFloat() / numSamples
+            val yVal = evaluateSteps(x, steps, position)
+            val px = x * widthPx
+            val py = centerY - yVal * scaleY
+            if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+          }
+        }
+        ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE -> {
+          val l = responseNode.linearResponseCurve
+          val xs = l.xList
+          val ys = l.yList
+          path.moveTo(0f, centerY)
+          if (xs.isEmpty()) {
+            path.lineTo(widthPx, centerY - scaleY)
+          } else {
+            for (i in xs.indices) {
+              path.lineTo(xs[i] * widthPx, centerY - ys[i] * scaleY)
+            }
+            path.lineTo(widthPx, centerY - scaleY)
+          }
+        }
+        ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE -> {
+          val func = responseNode.predefinedResponseCurve
+          when (func) {
+            ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> {
+              path.moveTo(0f, centerY)
+              path.lineTo(widthPx, centerY - scaleY)
+            }
+            ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> {
+              path.moveTo(0f, centerY - scaleY)
+              path.lineTo(widthPx, centerY - scaleY)
+            }
+            ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> {
+              path.moveTo(0f, centerY)
+              path.lineTo(widthPx, centerY)
+              path.lineTo(widthPx, centerY - scaleY)
+            }
+            else -> {
+              // Cubic approximations for ease, ease-in, ease-out, ease-in-out
+              val (x1, y1, x2, y2) =
+                when (func) {
+                  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE ->
+                    listOf(0.25f, 0.1f, 0.25f, 1f)
+                  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN ->
+                    listOf(0.42f, 0f, 1f, 1f)
+                  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT ->
+                    listOf(0f, 0f, 0.58f, 1f)
+                  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT ->
+                    listOf(0.42f, 0f, 0.58f, 1f)
+                  else -> listOf(0f, 0f, 1f, 1f)
+                }
+              path.moveTo(0f, centerY)
+              path.cubicTo(
+                x1 * widthPx,
+                centerY - y1 * scaleY,
+                x2 * widthPx,
+                centerY - y2 * scaleY,
+                widthPx,
+                centerY - scaleY
+              )
+            }
+          }
+        }
+        else -> {
+          path.moveTo(0f, centerY)
+          path.lineTo(widthPx, centerY - scaleY)
+        }
+      }
+      drawPath(
+        path,
+        primaryColor,
+        style = DrawStroke(width = 3.dp.toPx())
+      )
+    }
+  }
+}
+
+private fun evaluateSteps(x: Float, n: Int, position: ink.proto.StepPosition): Float {
+  val xClamped = x.coerceIn(0f, 1f)
+  return when (position) {
+    ink.proto.StepPosition.STEP_POSITION_JUMP_START -> {
+      kotlin.math.ceil(xClamped * n).coerceAtLeast(1f) / n
+    }
+    ink.proto.StepPosition.STEP_POSITION_JUMP_BOTH -> {
+      kotlin.math.floor(xClamped * (n + 1) + 1f) / (n + 1)
+    }
+    ink.proto.StepPosition.STEP_POSITION_JUMP_NONE -> {
+      if (n <= 1) xClamped else kotlin.math.floor(xClamped * (n - 1)) / (n - 1)
+    }
+    else -> {
+      // Default jump-end
+      kotlin.math.floor(xClamped * n) / n
+    }
+  }
+}
+
+@Composable
+fun ResponseCurveWidget(
+  responseNode: ProtoBrushBehavior.ResponseNode,
+  onResponseNodeChanged: (ProtoBrushBehavior.ResponseNode) -> Unit,
+) {
+  val currentCase = responseNode.responseCurveCase
+  val tabs =
+    listOf(
+      ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE,
+      ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE,
+      ProtoBrushBehavior.ResponseNode.ResponseCurveCase.STEPS_RESPONSE_CURVE,
+      ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE,
+    )
+
+  val selectedTabIndex = tabs.indexOf(currentCase).coerceAtLeast(0)
+
+  Column {
+    TabRow(selectedTabIndex = selectedTabIndex) {
+      tabs.forEachIndexed { index, case ->
+        Tab(
+          selected = selectedTabIndex == index,
+          onClick = {
+            if (currentCase != case) {
+              val builder = responseNode.toBuilder()
+              when (case) {
+                ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE ->
+                  builder.setPredefinedResponseCurve(
+                    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR
+                  )
+                ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE ->
+                  builder.setCubicBezierResponseCurve(
+                    ProtoCubicBezier.newBuilder()
+                      .setX1(0.5f)
+                      .setY1(0f)
+                      .setX2(0.5f)
+                      .setY2(1f)
+                      .build()
+                  )
+                ProtoBrushBehavior.ResponseNode.ResponseCurveCase.STEPS_RESPONSE_CURVE ->
+                  builder.setStepsResponseCurve(
+                    ProtoSteps.newBuilder()
+                      .setStepCount(3)
+                      .setStepPosition(ink.proto.StepPosition.STEP_POSITION_JUMP_START)
+                      .build()
+                  )
+                ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE ->
+                  builder.setLinearResponseCurve(
+                    ink.proto.LinearEasingFunction.getDefaultInstance()
+                  )
+                else -> {}
+              }
+              onResponseNodeChanged(builder.build())
+            }
+          },
+          text = { Text(caseToDisplayString(case)) }
+        )
+      }
+    }
+
+    Box(
+      modifier =
+        Modifier.padding(vertical = 8.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+      when (currentCase) {
+        ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE ->
+          CubicBezierWidget(responseNode.cubicBezierResponseCurve) {
+            onResponseNodeChanged(responseNode.toBuilder().setCubicBezierResponseCurve(it).build())
+          }
+        ProtoBrushBehavior.ResponseNode.ResponseCurveCase.STEPS_RESPONSE_CURVE ->
+          StepsWidget(responseNode.stepsResponseCurve) {
+            onResponseNodeChanged(responseNode.toBuilder().setStepsResponseCurve(it).build())
+          }
+        ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE ->
+          PredefinedFunctionWidget(responseNode.predefinedResponseCurve) {
+            onResponseNodeChanged(responseNode.toBuilder().setPredefinedResponseCurve(it).build())
+          }
+        ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE ->
+          LinearWidget(responseNode.linearResponseCurve) {
+            onResponseNodeChanged(responseNode.toBuilder().setLinearResponseCurve(it).build())
+          }
+        else -> Text("Unknown curve type", modifier = Modifier.padding(16.dp))
+      }
+    }
+  }
+}
+
+@Composable
+fun LinearWidget(
+  curve: ink.proto.LinearEasingFunction,
+  onCurveChanged: (ink.proto.LinearEasingFunction) -> Unit,
+) {
+  Column(modifier = Modifier.padding(8.dp)) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      Text(text = "Points", style = MaterialTheme.typography.titleSmall)
+      IconButton(
+        onClick = {
+          val builder = curve.toBuilder()
+          val newX = if (curve.xCount > 0) (curve.getX(curve.xCount - 1) + 1f) / 2f else 0.5f
+          val newY = if (curve.yCount > 0) (curve.getY(curve.yCount - 1) + 1f) / 2f else 0.5f
+          builder.addX(newX).addY(newY).build()
+          onCurveChanged(builder.build())
+        }
+      ) {
+        Icon(Icons.Default.Add, contentDescription = "Add Point")
+      }
+    }
+
+    for (i in 0 until curve.xCount) {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+          BrushSliderControl("X", curve.getX(i), 0f..1f) { newValue ->
+            val builder = curve.toBuilder()
+            builder.setX(i, newValue)
+            onCurveChanged(builder.build())
+          }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+          BrushSliderControl("Y", curve.getY(i), -2f..2f) { newValue ->
+            val builder = curve.toBuilder()
+            builder.setY(i, newValue)
+            onCurveChanged(builder.build())
+          }
+        }
+        IconButton(
+          onClick = {
+            val newXs = curve.xList.toMutableList()
+            val newYs = curve.yList.toMutableList()
+            if (i < newXs.size && i < newYs.size) {
+              newXs.removeAt(i)
+              newYs.removeAt(i)
+            }
+            onCurveChanged(
+              curve.toBuilder()
+                .clearX().addAllX(newXs)
+                .clearY().addAllY(newYs)
+                .build()
+            )
+          }
+        ) {
+          Icon(Icons.Default.Remove, contentDescription = "Remove Point")
+        }
+      }
+    }
+  }
+}
+
+@Composable
+fun CubicBezierWidget(curve: ProtoCubicBezier, onCurveChanged: (ProtoCubicBezier) -> Unit) {
+  Column(modifier = Modifier.padding(8.dp)) {
+    BrushSliderControl("x1", curve.x1, 0f..1f) { onCurveChanged(curve.safeCopy(x1 = it)) }
+    BrushSliderControl("y1", curve.y1, -2f..2f) { onCurveChanged(curve.safeCopy(y1 = it)) }
+    BrushSliderControl("x2", curve.x2, 0f..1f) { onCurveChanged(curve.safeCopy(x2 = it)) }
+    BrushSliderControl("y2", curve.y2, -2f..2f) { onCurveChanged(curve.safeCopy(y2 = it)) }
+  }
+}
+
+@Composable
+fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
+  Column(modifier = Modifier.padding(8.dp)) {
+    BrushSliderControl("Step Count", curve.stepCount.toFloat(), 1f..20f) {
+      onCurveChanged(curve.safeCopy(stepCount = it.toInt()))
+    }
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+      OutlinedTextField(
+        value = curve.stepPosition.displayString(),
+        onValueChange = {},
+        readOnly = true,
+        label = { Text("Step Position") },
+        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+        modifier = Modifier.menuAnchor().fillMaxWidth()
+      )
+      ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ink.proto.StepPosition.values().forEach { position ->
+          if (
+            position != ink.proto.StepPosition.STEP_POSITION_UNSPECIFIED &&
+              position.ordinal >= 0
+          ) {
+            DropdownMenuItem(
+              text = { Text(position.displayString()) },
+              onClick = {
+                onCurveChanged(curve.safeCopy(stepPosition = position))
+                expanded = false
+              }
+            )
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+fun PredefinedFunctionWidget(
+  current: ink.proto.PredefinedEasingFunction,
+  onChanged: (ink.proto.PredefinedEasingFunction) -> Unit,
+) {
+  var expanded by remember { mutableStateOf(false) }
+  ExposedDropdownMenuBox(
+    expanded = expanded,
+    onExpandedChange = { expanded = it },
+    modifier = Modifier.padding(8.dp)
+  ) {
+    OutlinedTextField(
+      value = current.name.lowercase().replace("predefined_easing_", "").replace("_", " "),
+      onValueChange = {},
+      readOnly = true,
+      label = { Text("Predefined Function") },
+      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+      modifier = Modifier.menuAnchor().fillMaxWidth()
+    )
+    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+      ink.proto.PredefinedEasingFunction.values().forEach { func ->
+        if (
+          func != ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_UNSPECIFIED &&
+            func.ordinal >= 0
+        ) {
+          DropdownMenuItem(
+            text = {
+              Text(func.name.lowercase().replace("predefined_easing_", "").replace("_", " "))
+            },
+            onClick = {
+              onChanged(func)
+              expanded = false
+            }
+          )
+        }
+      }
+    }
+  }
+}
+
+private fun caseToDisplayString(case: ProtoBrushBehavior.ResponseNode.ResponseCurveCase): String =
+  when (case) {
+    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE -> "Predefined"
+    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE -> "Cubic Bezier"
+    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.STEPS_RESPONSE_CURVE -> "Steps"
+    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE -> "Linear"
+    else -> "None"
+  }

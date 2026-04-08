@@ -53,8 +53,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.fillMaxWidth
 import com.example.cahier.ui.brushdesigner.BrushSliderControl
 
-import com.example.cahier.ui.brushgraph.ui.TipPreviewWidget
 import com.example.cahier.ui.brushgraph.model.*
+import com.example.cahier.ui.brushgraph.ui.TipPreviewWidget
 
 /** Renders the editable fields for a node. */
 @Composable
@@ -119,38 +119,52 @@ fun NodeFields(
         when (behaviorNode.nodeCase) {
           ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> {
             val sourceNode = behaviorNode.sourceNode
-            var expanded by remember { mutableStateOf(false) }
+            val limits = sourceNode.source.getNumericLimits()
+            var expandedSource by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
-              expanded = expanded,
-              onExpandedChange = { expanded = it }
+              expanded = expandedSource,
+              onExpandedChange = { expandedSource = it }
             ) {
               OutlinedTextField(
                 value = prettyDisplayString(sourceNode.source),
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Source") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
                 modifier = Modifier.menuAnchor().fillMaxWidth()
               )
               ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+                expanded = expandedSource,
+                onDismissRequest = { expandedSource = false }
               ) {
                 ALL_SOURCES.forEach { source ->
                   DropdownMenuItem(
                     text = { Text(prettyDisplayString(source)) },
                     onClick = {
-                      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(source = source))))
-                      expanded = false
+                      val needsClamp = source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
+                                      source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
+                      val newOor = if (needsClamp) ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP else sourceNode.sourceOutOfRangeBehavior
+                      onUpdate(
+                        NodeData.Behavior(
+                          behaviorNode.safeCopy(
+                            sourceNode = sourceNode.safeCopy(
+                              source = source,
+                              sourceOutOfRangeBehavior = newOor
+                            )
+                          )
+                        )
+                      )
+                      expandedSource = false
                     }
                   )
                 }
+
               }
             }
             BrushSliderControl(
               label = "Range Start",
               value = sourceNode.sourceValueRangeStart,
-              valueRange = 0f..1f,
+              valueRange = limits.min..limits.max,
               onValueChange = {
                 onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeStart = it))))
               }
@@ -158,11 +172,13 @@ fun NodeFields(
             BrushSliderControl(
               label = "Range End",
               value = sourceNode.sourceValueRangeEnd,
-              valueRange = 0f..1f,
+              valueRange = limits.min..limits.max,
               onValueChange = {
                 onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeEnd = it))))
               }
             )
+            val isTimeSinceSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
+                                    sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
             var expandedOor by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
               expanded = expandedOor,
@@ -181,15 +197,25 @@ fun NodeFields(
                 onDismissRequest = { expandedOor = false }
               ) {
                 ALL_OUT_OF_RANGE.forEach { oor ->
+                  val isEnabled = !isTimeSinceSource || oor == ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
                   DropdownMenuItem(
                     text = { Text(prettyDisplayString(oor)) },
                     onClick = {
                       onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
                       expandedOor = false
-                    }
+                    },
+                    enabled = isEnabled
                   )
                 }
               }
+            }
+            if (isTimeSinceSource) {
+              Text(
+                text = "This source is only compatible with 'clamp' behavior.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(top = 4.dp)
+              )
             }
           }
           ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> {
@@ -199,18 +225,25 @@ fun NodeFields(
               value = constantNode.value,
               valueRange = -100f..100f,
               onValueChange = {
-                onUpdate(NodeData.Behavior(behaviorNode.safeCopy(constantNode = constantNode.safeCopy(value = it))))
+                onUpdate(
+                  NodeData.Behavior(behaviorNode.safeCopy(constantNode = constantNode.safeCopy(value = it)))
+                )
               }
             )
           }
           ProtoBrushBehavior.Node.NodeCase.NOISE_NODE -> {
             val noiseNode = behaviorNode.noiseNode
+            val limits = noiseNode.varyOver.getNumericLimits(ProgressDomainContext.NOISE)
             BrushSliderControl(
               label = "Seed",
               value = noiseNode.seed.toFloat(),
               valueRange = 0f..100f,
               onValueChange = {
-                onUpdate(NodeData.Behavior(behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(seed = it.toInt()))))
+                onUpdate(
+                  NodeData.Behavior(
+                    behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(seed = it.toInt()))
+                  )
+                )
               }
             )
             var expandedVary by remember { mutableStateOf(false) }
@@ -234,7 +267,11 @@ fun NodeFields(
                   DropdownMenuItem(
                     text = { Text(prettyDisplayString(domain)) },
                     onClick = {
-                      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(varyOver = domain))))
+                      onUpdate(
+                        NodeData.Behavior(
+                          behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(varyOver = domain))
+                        )
+                      )
                       expandedVary = false
                     }
                   )
@@ -244,9 +281,13 @@ fun NodeFields(
             BrushSliderControl(
               label = "Base Period",
               value = noiseNode.basePeriod,
-              valueRange = 0.001f..100f,
+              valueRange = limits.min..limits.max,
               onValueChange = {
-                onUpdate(NodeData.Behavior(behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(basePeriod = it))))
+                onUpdate(
+                  NodeData.Behavior(
+                    behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(basePeriod = it))
+                  )
+                )
               }
             )
           }
@@ -280,6 +321,7 @@ fun NodeFields(
           }
           ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> {
             val dampingNode = behaviorNode.dampingNode
+            val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
             var expandedSource by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
               expanded = expandedSource,
@@ -317,7 +359,7 @@ fun NodeFields(
             BrushSliderControl(
               label = "Damping Gap",
               value = dampingNode.dampingGap,
-              valueRange = 0f..10f,
+              valueRange = limits.min..limits.max,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
@@ -328,12 +370,21 @@ fun NodeFields(
             )
           }
           ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> {
-            // ResponseNode editing is complex, typically involves a curve editor.
-            // For now, we'll just show it's a response node.
-            Text("Response Node: (Curve editing not yet implemented in this view)")
+            val responseNode = behaviorNode.responseNode
+            ResponseCurveEditor(
+              responseNode = responseNode,
+              onResponseNodeChanged = {
+                onUpdate(
+                  NodeData.Behavior(
+                    behaviorNode.safeCopy(responseNode = it)
+                  )
+                )
+              }
+            )
           }
           ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE -> {
             val integralNode = behaviorNode.integralNode
+            val limits = integralNode.integrateOver.getNumericLimits(ProgressDomainContext.INTEGRAL)
             var expandedOver by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
               expanded = expandedOver,
@@ -371,7 +422,7 @@ fun NodeFields(
             BrushSliderControl(
               label = "Range Start",
               value = integralNode.integralValueRangeStart,
-              valueRange = 0f..100f,
+              valueRange = limits.min..limits.max,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
@@ -385,7 +436,7 @@ fun NodeFields(
             BrushSliderControl(
               label = "Range End",
               value = integralNode.integralValueRangeEnd,
-              valueRange = 0f..100f,
+              valueRange = limits.min..limits.max,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
@@ -507,6 +558,7 @@ fun NodeFields(
           }
           ProtoBrushBehavior.Node.NodeCase.TARGET_NODE -> {
             val targetNode = behaviorNode.targetNode
+            val limits = targetNode.target.getNumericLimits()
             var expandedTarget by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
               expanded = expandedTarget,
@@ -542,7 +594,7 @@ fun NodeFields(
             BrushSliderControl(
               label = "Range Start",
               value = targetNode.targetModifierRangeStart,
-              valueRange = 0f..1f,
+              valueRange = limits.min..limits.max,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
@@ -556,16 +608,19 @@ fun NodeFields(
             BrushSliderControl(
               label = "Range End",
               value = targetNode.targetModifierRangeEnd,
-              valueRange = 0f..1f,
+              valueRange = limits.min..limits.max,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
-                    behaviorNode.safeCopy(targetNode = targetNode.safeCopy(targetModifierRangeEnd = it))
+                    behaviorNode.safeCopy(
+                      targetNode = targetNode.safeCopy(targetModifierRangeEnd = it)
+                    )
                   )
                 )
               }
             )
           }
+
           ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
             val polarNode = behaviorNode.polarTargetNode
             var expandedPolar by remember { mutableStateOf(false) }
@@ -602,10 +657,12 @@ fun NodeFields(
                 }
               }
             }
+            // Angle (All targets): -360° to 360° (mapped to radians 0 to 2pi for now, 
+            // but the user specified -360 to 360 degrees)
             BrushSliderControl(
               label = "Angle Start",
               value = polarNode.angleRangeStart,
-              valueRange = 0f..6.28f,
+              valueRange = -6.28f..6.28f,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
@@ -617,7 +674,7 @@ fun NodeFields(
             BrushSliderControl(
               label = "Angle End",
               value = polarNode.angleRangeEnd,
-              valueRange = 0f..6.28f,
+              valueRange = -6.28f..6.28f,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
@@ -626,10 +683,16 @@ fun NodeFields(
                 )
               }
             )
+            val magLimits = if (polarNode.target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE ||
+                                polarNode.target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE) {
+                NumericLimits(-10.0f, 10.0f, 0.01f)
+            } else {
+                NumericLimits(0.0f, 1.0f, 0.1f)
+            }
             BrushSliderControl(
               label = "Mag Start",
               value = polarNode.magnitudeRangeStart,
-              valueRange = 0f..100f,
+              valueRange = magLimits.min..magLimits.max,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
@@ -643,7 +706,7 @@ fun NodeFields(
             BrushSliderControl(
               label = "Mag End",
               value = polarNode.magnitudeRangeEnd,
-              valueRange = 0f..100f,
+              valueRange = magLimits.min..magLimits.max,
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
@@ -758,296 +821,13 @@ fun NodeFields(
         }
       }
       is NodeData.TextureLayer -> {
-        val layer = data.layer
-        Row(verticalAlignment = Alignment.Bottom) {
-          Box(modifier = Modifier.weight(1f)) {
-            var expanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expanded,
-              onExpandedChange = { expanded = it }
-            ) {
-              OutlinedTextField(
-                value = prettyDisplayString(layer.clientTextureId),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Texture ID") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-              ) {
-                allTextureIds.forEach { id ->
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(id)) },
-                    onClick = {
-                      onUpdate(NodeData.TextureLayer(layer.safeCopy(clientTextureId = id)))
-                      expanded = false
-                    }
-                  )
-                }
-              }
-            }
-          }
-          IconButton(onClick = onLoadTexture, enabled = true) {
-            Icon(Icons.Default.Upload, contentDescription = "Upload Texture")
-          }
-        }
-        TextureLayerPreviewWidget(textureLayer = layer, renderer = strokeRenderer)
-        BrushSliderControl(
-          label = "Size X",
-          value = layer.sizeX,
-          valueRange = 0.1f..1000f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeX = it))) }
+        TextureLayerInspector(
+          layer = data.layer,
+          allTextureIds = allTextureIds,
+          onLoadTexture = onLoadTexture,
+          onUpdate = { onUpdate(it) },
+          strokeRenderer = strokeRenderer
         )
-        BrushSliderControl(
-          label = "Size Y",
-          value = layer.sizeY,
-          valueRange = 0.1f..1000f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeY = it))) }
-        )
-        var expandedMapping by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-          expanded = expandedMapping,
-          onExpandedChange = { expandedMapping = it }
-        ) {
-          OutlinedTextField(
-            value = prettyDisplayString(layer.mapping),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Mapping") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMapping) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
-            expanded = expandedMapping,
-            onDismissRequest = { expandedMapping = false }
-          ) {
-            arrayOf(
-              ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING,
-              ProtoBrushPaint.TextureLayer.Mapping.MAPPING_STAMPING,
-            ).forEach { mapping ->
-              DropdownMenuItem(
-                text = { Text(prettyDisplayString(mapping)) },
-                onClick = {
-                  onUpdate(NodeData.TextureLayer(layer.safeCopy(mapping = mapping)))
-                  expandedMapping = false
-                }
-              )
-            }
-          }
-        }
-        var expandedUnit by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-          expanded = expandedUnit,
-          onExpandedChange = { expandedUnit = it }
-        ) {
-          OutlinedTextField(
-            value = prettyDisplayString(layer.sizeUnit),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Size Unit") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedUnit) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
-            expanded = expandedUnit,
-            onDismissRequest = { expandedUnit = false }
-          ) {
-            arrayOf(
-              ProtoBrushPaint.TextureLayer.SizeUnit.SIZE_UNIT_BRUSH_SIZE,
-              ProtoBrushPaint.TextureLayer.SizeUnit.SIZE_UNIT_STROKE_COORDINATES,
-            ).forEach { unit ->
-              DropdownMenuItem(
-                text = { Text(prettyDisplayString(unit)) },
-                onClick = {
-                  onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeUnit = unit)))
-                  expandedUnit = false
-                }
-              )
-            }
-          }
-        }
-        BrushSliderControl(
-          label = "Offset X",
-          value = layer.offsetX,
-          valueRange = -1f..1f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetX = it))) }
-        )
-        BrushSliderControl(
-          label = "Offset Y",
-          value = layer.offsetY,
-          valueRange = -1f..1f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetY = it))) }
-        )
-        BrushSliderControl(
-          label = "Rotation Degrees",
-          value = Math.toDegrees(layer.rotationInRadians.toDouble()).toFloat(),
-          valueRange = 0f..360f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(rotationInRadians = Math.toRadians(it.toDouble()).toFloat()))) }
-        )
-        BrushSliderControl(
-          label = "Animation Rows",
-          value = layer.animationRows.toFloat(),
-          valueRange = 1f..100f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationRows = it.toInt()))) }
-        )
-        BrushSliderControl(
-          label = "Animation Columns",
-          value = layer.animationColumns.toFloat(),
-          valueRange = 1f..100f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationColumns = it.toInt()))) }
-        )
-        BrushSliderControl(
-          label = "Animation Frames",
-          value = layer.animationFrames.toFloat(),
-          valueRange = 1f..100f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationFrames = it.toInt()))) }
-        )
-        BrushSliderControl(
-          label = "Animation Duration (ms)",
-          value = layer.animationDurationSeconds * 1000f,
-          valueRange = 1f..10000f,
-          onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationDurationSeconds = it / 1000f))) }
-        )
-        var expandedOrigin by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-          expanded = expandedOrigin,
-          onExpandedChange = { expandedOrigin = it }
-        ) {
-          OutlinedTextField(
-            value = prettyDisplayString(layer.origin),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Origin") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOrigin) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
-            expanded = expandedOrigin,
-            onDismissRequest = { expandedOrigin = false }
-          ) {
-            arrayOf(
-              ProtoBrushPaint.TextureLayer.Origin.ORIGIN_STROKE_SPACE_ORIGIN,
-              ProtoBrushPaint.TextureLayer.Origin.ORIGIN_FIRST_STROKE_INPUT,
-              ProtoBrushPaint.TextureLayer.Origin.ORIGIN_LAST_STROKE_INPUT,
-            ).forEach { origin ->
-              DropdownMenuItem(
-                text = { Text(prettyDisplayString(origin)) },
-                onClick = {
-                  onUpdate(NodeData.TextureLayer(layer.safeCopy(origin = origin)))
-                  expandedOrigin = false
-                }
-              )
-            }
-          }
-        }
-        var expandedWrapX by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-          expanded = expandedWrapX,
-          onExpandedChange = { expandedWrapX = it }
-        ) {
-          OutlinedTextField(
-            value = prettyDisplayString(layer.wrapX),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Wrap X") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedWrapX) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
-            expanded = expandedWrapX,
-            onDismissRequest = { expandedWrapX = false }
-          ) {
-            arrayOf(
-              ProtoBrushPaint.TextureLayer.Wrap.WRAP_REPEAT,
-              ProtoBrushPaint.TextureLayer.Wrap.WRAP_MIRROR,
-              ProtoBrushPaint.TextureLayer.Wrap.WRAP_CLAMP,
-            ).forEach { wrap ->
-              DropdownMenuItem(
-                text = { Text(prettyDisplayString(wrap)) },
-                onClick = {
-                  onUpdate(NodeData.TextureLayer(layer.safeCopy(wrapX = wrap)))
-                  expandedWrapX = false
-                }
-              )
-            }
-          }
-        }
-        var expandedWrapY by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-          expanded = expandedWrapY,
-          onExpandedChange = { expandedWrapY = it }
-        ) {
-          OutlinedTextField(
-            value = prettyDisplayString(layer.wrapY),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Wrap Y") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedWrapY) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
-            expanded = expandedWrapY,
-            onDismissRequest = { expandedWrapY = false }
-          ) {
-            arrayOf(
-              ProtoBrushPaint.TextureLayer.Wrap.WRAP_REPEAT,
-              ProtoBrushPaint.TextureLayer.Wrap.WRAP_MIRROR,
-              ProtoBrushPaint.TextureLayer.Wrap.WRAP_CLAMP,
-            ).forEach { wrap ->
-              DropdownMenuItem(
-                text = { Text(prettyDisplayString(wrap)) },
-                onClick = {
-                  onUpdate(NodeData.TextureLayer(layer.safeCopy(wrapY = wrap)))
-                  expandedWrapY = false
-                }
-              )
-            }
-          }
-        }
-        var expandedBlend by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-          expanded = expandedBlend,
-          onExpandedChange = { expandedBlend = it }
-        ) {
-          OutlinedTextField(
-            value = prettyDisplayString(layer.blendMode),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Blend Mode") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBlend) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
-            expanded = expandedBlend,
-            onDismissRequest = { expandedBlend = false }
-          ) {
-            arrayOf(
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_SRC_OVER,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_SRC,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_MODULATE,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST_OVER,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_SRC_IN,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST_IN,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_SRC_OUT,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST_OUT,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_SRC_ATOP,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST_ATOP,
-              ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_XOR,
-            ).forEach { mode ->
-              DropdownMenuItem(
-                text = { Text(prettyDisplayString(mode)) },
-                onClick = {
-                  onUpdate(NodeData.TextureLayer(layer.safeCopy(blendMode = mode)))
-                  expandedBlend = false
-                }
-              )
-            }
-          }
-        }
       }
       is NodeData.ColorFunc -> {
         val function = data.function
@@ -1422,23 +1202,23 @@ internal fun createDefaultNode(typeName: String): NodeData {
   }
 }
 
-private fun prettyDisplayString(any: Any?): String =
+internal fun prettyDisplayString(any: Any?): String =
   when (any) {
-    is ProtoBrushBehavior.Source -> any.name
-    is ProtoBrushBehavior.Target -> any.name
-    is ProtoBrushBehavior.PolarTarget -> any.name
-    is ProtoBrushBehavior.BinaryOp -> any.name
-    is ProtoBrushBehavior.OutOfRange -> any.name
-    is ProtoBrushBehavior.ProgressDomain -> any.name
-    is ProtoBrushBehavior.Interpolation -> any.name
-    is ProtoBrushPaint.SelfOverlap -> any.name
-    is ProtoBrushPaint.TextureLayer.SizeUnit -> any.name
-    is ProtoBrushPaint.TextureLayer.Origin -> any.name
-    is ProtoBrushPaint.TextureLayer.Mapping -> any.name
-    is ProtoBrushPaint.TextureLayer.Wrap -> any.name
-    is ProtoBrushPaint.TextureLayer.BlendMode -> any.name
-    is InputToolType -> any.toString()
-    is ink.proto.StepPosition -> any.name
+    is ProtoBrushBehavior.Source -> any.displayString()
+    is ProtoBrushBehavior.Target -> any.displayString()
+    is ProtoBrushBehavior.PolarTarget -> any.displayString()
+    is ProtoBrushBehavior.BinaryOp -> any.displayString()
+    is ProtoBrushBehavior.OutOfRange -> any.displayString()
+    is ProtoBrushBehavior.ProgressDomain -> any.displayString()
+    is ProtoBrushBehavior.Interpolation -> any.displayString()
+    is ProtoBrushPaint.SelfOverlap -> any.displayString()
+    is ProtoBrushPaint.TextureLayer.SizeUnit -> any.displayString()
+    is ProtoBrushPaint.TextureLayer.Origin -> any.displayString()
+    is ProtoBrushPaint.TextureLayer.Mapping -> any.displayString()
+    is ProtoBrushPaint.TextureLayer.Wrap -> any.displayString()
+    is ProtoBrushPaint.TextureLayer.BlendMode -> any.displayString()
+    is InputToolType -> any.displayString()
+    is ink.proto.StepPosition -> any.displayString()
     is NodeData.ColorFunc -> "color function"
     is String ->
       any.replace("([a-z])([A-Z])".toRegex(), "$1 $2").lowercase().replaceFirstChar {

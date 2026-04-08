@@ -180,6 +180,7 @@ fun BrushGraphWidget(
                 }
                 if (bitmap != null) {
                   textureStore.loadTexture(name, bitmap)
+                  allTextureIds = textureStore.getAllIds()
                 }
               }
               showTextureNameDialog = false
@@ -210,6 +211,7 @@ fun BrushGraphWidget(
               BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
                 if (bitmap != null) {
                   textureStore.loadTexture(id, bitmap)
+                  allTextureIds = textureStore.getAllIds()
                 }
                 id
               }
@@ -299,7 +301,8 @@ fun BrushGraphWidget(
         },
         strokeRenderer = renderer,
         textureStore = textureStore,
-        onExport = { 
+        allTextureIds = allTextureIds,
+        onExport = {
           brushExportLauncher.launch("brush_${System.currentTimeMillis()}.brushfamily")
         },
         onSaveToPalette = {
@@ -321,6 +324,7 @@ fun BrushGraphStudio(
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
   textureStore: TextureBitmapStore,
+  allTextureIds: Set<String>,
   onExport: () -> Unit,
   onSaveToPalette: () -> Unit,
   onNavigateUp: () -> Unit,
@@ -379,6 +383,7 @@ fun BrushGraphStudio(
           onNodeDataUpdate = { id, data -> viewModel.updateNodeData(id, data) },
           onChooseColor = onChooseColor,
           textureStore = textureStore,
+          allTextureIds = allTextureIds,
           onLoadTexture = onLoadTexture,
           strokeRenderer = strokeRenderer,
           textFieldsLocked = viewModel.textFieldsLocked,
@@ -393,6 +398,7 @@ fun BrushGraphStudio(
           viewModel = viewModel,
           onChooseColor = onChooseColor,
           textureStore = textureStore,
+          allTextureIds = allTextureIds,
           onLoadTexture = onLoadTexture,
           strokeRenderer = strokeRenderer,
           modifier =
@@ -625,6 +631,7 @@ fun AdaptiveInspectorPane(
   viewModel: BrushGraphViewModel,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   textureStore: TextureBitmapStore,
+  allTextureIds: Set<String>,
   onLoadTexture: () -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
   modifier: Modifier = Modifier,
@@ -632,8 +639,6 @@ fun AdaptiveInspectorPane(
   val selectedNode = viewModel.graph.nodes.find { it.id == viewModel.selectedNodeId }
   val selectedEdge = viewModel.selectedEdge
   val density = androidx.compose.ui.platform.LocalDensity.current.density
-  
-  val allTextureIds = (textureStore as? CahierTextureBitmapStore)?.getAllIds() ?: emptySet()
 
   AnimatedVisibility(
     visible = selectedNode != null || selectedEdge != null,

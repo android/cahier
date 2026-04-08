@@ -122,7 +122,7 @@ sealed interface NodeData {
 
     override fun title() = "Paint"
 
-    override fun subtitle() = "overlap: ${paint.selfOverlap.name}"
+    override fun subtitle() = "overlap: ${paint.selfOverlap.displayString()}"
   }
 
   /** Wraps a [ProtoBrushPaint.TextureLayer]. */
@@ -174,17 +174,25 @@ sealed interface NodeData {
 
     override fun subtitle(): String {
       return when (node.nodeCase) {
-        ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> node.sourceNode.source.name
+        ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> node.sourceNode.source.displayString()
         ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> "%.1f".format(node.constantNode.value)
         ProtoBrushBehavior.Node.NodeCase.NOISE_NODE -> node.noiseNode.seed.toString()
-        ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> "Tool Filter"
-        ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> node.dampingNode.dampingSource.name
-        ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> "Curve"
-        ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE -> node.integralNode.integrateOver.name
-        ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> node.binaryOpNode.operation.name
-        ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> node.interpolationNode.interpolation.name
-        ProtoBrushBehavior.Node.NodeCase.TARGET_NODE -> node.targetNode.target.name
-        ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> node.polarTargetNode.target.name
+        ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {
+          val bitmask = node.toolTypeFilterNode.enabledToolTypes
+          val enabled = mutableListOf<String>()
+          if (bitmask and (1 shl 0) != 0) enabled.add("unknown")
+          if (bitmask and (1 shl 1) != 0) enabled.add("mouse")
+          if (bitmask and (1 shl 2) != 0) enabled.add("touch")
+          if (bitmask and (1 shl 3) != 0) enabled.add("stylus")
+          if (enabled.isEmpty()) "none" else enabled.joinToString(", ")
+        }
+        ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> node.dampingNode.dampingSource.displayString()
+        ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> node.responseNode.displayString()
+        ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE -> node.integralNode.integrateOver.displayString()
+        ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> node.binaryOpNode.operation.displayString()
+        ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> node.interpolationNode.interpolation.displayString()
+        ProtoBrushBehavior.Node.NodeCase.TARGET_NODE -> node.targetNode.target.displayString()
+        ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> node.polarTargetNode.target.displayString()
         else -> node.nodeCase.name
       }
     }

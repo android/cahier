@@ -23,12 +23,15 @@ fun ProtoBrushBehavior.Source.displayString(): String =
     ProtoBrushBehavior.Source.SOURCE_NORMALIZED_DIRECTION_X -> "normalized direction X"
     ProtoBrushBehavior.Source.SOURCE_NORMALIZED_DIRECTION_Y -> "normalized direction Y"
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE -> "distance traveled"
-    ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_SECONDS -> "time of input"
+    ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_SECONDS -> "time of input (s)"
+    ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_MILLIS -> "time of input (ms)"
     ProtoBrushBehavior.Source.SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE ->
       "predicted distance traveled"
-    ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS -> "predicted time elapsed"
+    ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS -> "predicted time elapsed (s)"
+    ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS -> "predicted time elapsed (ms)"  
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_IN_MULTIPLES_OF_BRUSH_SIZE -> "distance remaining"
-    ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS -> "time since input"
+    ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS -> "time since input (s)"
+    ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_MILLIS -> "time since input (ms)"
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS -> "time since stroke end"
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED ->
       "acceleration"
@@ -149,6 +152,25 @@ fun EasingFunction.StepPosition.displayString(): String =
     EasingFunction.StepPosition.JUMP_BOTH -> "jump both"
     EasingFunction.StepPosition.JUMP_NONE -> "jump none"
     else -> this.toString()
+  }
+
+fun ink.proto.StepPosition.displayString(): String =
+  when (this) {
+    ink.proto.StepPosition.STEP_POSITION_JUMP_START -> "jump start"
+    ink.proto.StepPosition.STEP_POSITION_JUMP_END -> "jump end"
+    ink.proto.StepPosition.STEP_POSITION_JUMP_BOTH -> "jump both"
+    ink.proto.StepPosition.STEP_POSITION_JUMP_NONE -> "jump none"
+    else -> this.toString()
+  }
+
+fun ProtoBrushBehavior.ResponseNode.displayString(): String =
+  when (this.responseCurveCase) {
+    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE ->
+      this.predefinedResponseCurve.name.lowercase().replace("predefined_easing_", "").replace("_", " ")
+    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE -> "cubic bezier"
+    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE -> "linear"
+    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.STEPS_RESPONSE_CURVE -> "steps"
+    else -> "curve"
   }
 
 fun InputToolType.displayString(): String =

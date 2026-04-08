@@ -145,17 +145,104 @@ fun TipPreviewWidget(brushTip: ProtoBrushTip, renderer: CanvasStrokeRenderer) {
 }
 
 @Composable
-fun TextureLayerPreviewWidget(textureLayer: ProtoBrushPaint.TextureLayer, renderer: CanvasStrokeRenderer) {
+fun TextureLayerPreviewWidget(
+  textureLayer: ProtoBrushPaint.TextureLayer,
+  renderer: CanvasStrokeRenderer,
+) {
   val family =
     runCatching {
-      ProtoBrushFamily.newBuilder()
-        .addCoats(ProtoBrushCoat.newBuilder().addPaintPreferences(
-          ProtoBrushPaint.newBuilder().addTextureLayers(textureLayer).build()
-        ).build())
-        .build()
-        .toBrushFamily()
-    }.getOrDefault(BrushFamily())
-  StrokePreviewWidget(family, renderer = renderer, brushSize = 20f)
+        ProtoBrushFamily.newBuilder()
+          .addCoats(
+            ProtoBrushCoat.newBuilder()
+              .setTip(ProtoBrushTip.newBuilder().setCornerRounding(0f).build())
+              .addPaintPreferences(ProtoBrushPaint.newBuilder().addTextureLayers(textureLayer).build())
+              .build()
+          )
+          .build()
+          .toBrushFamily()
+      }
+      .getOrDefault(BrushFamily())
+  StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
+}
+
+@Composable
+fun TextureWrapPreviewWidget(
+  wrapX: ProtoBrushPaint.TextureLayer.Wrap,
+  wrapY: ProtoBrushPaint.TextureLayer.Wrap,
+  renderer: CanvasStrokeRenderer,
+  clientTextureId: String = "",
+) {
+  val textureLayer =
+    ProtoBrushPaint.TextureLayer.newBuilder()
+      .setClientTextureId(clientTextureId)
+      .setSizeX(1f / 3f)
+      .setSizeY(1f / 3f)
+      .setWrapX(wrapX)
+      .setWrapY(wrapY)
+      .setMapping(ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING)
+      .setSizeUnit(ProtoBrushPaint.TextureLayer.SizeUnit.SIZE_UNIT_BRUSH_SIZE)
+      .build()
+
+  val family =
+    runCatching {
+        ProtoBrushFamily.newBuilder()
+          .addCoats(
+            ProtoBrushCoat.newBuilder()
+              .setTip(ProtoBrushTip.newBuilder().setCornerRounding(0f).build())
+              .addPaintPreferences(ProtoBrushPaint.newBuilder().addTextureLayers(textureLayer).build())
+              .build()
+          )
+          .build()
+          .toBrushFamily()
+      }
+      .getOrDefault(BrushFamily())
+  StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
+}
+
+@Composable
+fun BlendModePreviewWidget(
+  blendMode: ProtoBrushPaint.TextureLayer.BlendMode,
+  renderer: CanvasStrokeRenderer,
+  clientTextureId: String = "",
+) {
+  // We use two layers to show blending. 
+  // One is a base texture, the other is the one with the blend mode.
+  val topLayer =
+    ProtoBrushPaint.TextureLayer.newBuilder()
+      .setClientTextureId(clientTextureId)
+      .setBlendMode(blendMode)
+      .setSizeX(1f)
+      .setSizeY(1f)
+      .build()
+      
+  val bottomLayer = 
+    ProtoBrushPaint.TextureLayer.newBuilder()
+      .setClientTextureId(clientTextureId) // Or another one if available
+      .setOffsetX(0.2f)
+      .setOffsetY(0.2f)
+      .setSizeX(1f)
+      .setSizeY(1f)
+      .build()
+
+  val family =
+    runCatching {
+        ProtoBrushFamily.newBuilder()
+          .addCoats(
+            ProtoBrushCoat.newBuilder()
+              .setTip(ProtoBrushTip.newBuilder().setCornerRounding(0f).build())
+              .addPaintPreferences(
+                ProtoBrushPaint.newBuilder()
+                  .addTextureLayers(bottomLayer)
+                  .addTextureLayers(topLayer)
+                  .build()
+              )
+              .build()
+          )
+          .build()
+          .toBrushFamily()
+      }
+      .getOrDefault(BrushFamily())
+  StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
 @Composable
