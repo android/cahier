@@ -26,6 +26,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.cahier.developer.brushdesigner.ui.BrushDesignerScreen
 import com.example.cahier.features.drawing.DrawingCanvas
 import com.example.cahier.features.home.HomeDestination
 import com.example.cahier.features.home.HomePane
@@ -54,7 +55,11 @@ fun CahierNavHost(
                 navigateUp = {
                     navController.navigateUp()
                 },
-            )
+                navigateToBrushDesigner = {
+                    navController.navigate(BrushDesignerDestination.route)
+                },
+
+                )
         }
         composable(
             route = TextCanvasDestination.routeWithArgs,
@@ -76,6 +81,12 @@ fun CahierNavHost(
                 navigateUp = { navController.navigateUp() },
             )
         }
+        composable(route = BrushDesignerDestination.route) {
+            BrushDesignerScreen(
+                onNavigateUp = { navController.navigateUp() }
+            )
+        }
+
     }
 }
 
@@ -90,4 +101,8 @@ object DrawingCanvasDestination : NavigationDestination {
     override val route = "drawing_canvas"
     const val NOTE_ID_ARG = "noteId"
     val routeWithArgs = "$route/{$NOTE_ID_ARG}"
+}
+
+object BrushDesignerDestination : NavigationDestination {
+    override val route = "brush_designer"
 }

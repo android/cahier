@@ -104,6 +104,7 @@ enum class AppDestinations(
 fun HomePane(
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
+    navigateToBrushDesigner: () -> Unit = {},
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
@@ -174,6 +175,7 @@ fun HomePane(
         selectedNoteUIState = selectedNoteUIState,
         navigateToCanvas = navigateToCanvas,
         navigateToDrawingCanvas = navigateToDrawingCanvas,
+        navigateToBrushDesigner = navigateToBrushDesigner,
         navigateUp = navigateUp
     )
 }
@@ -193,6 +195,7 @@ private fun CahierNavigationSuite(
     selectedNoteUIState: CahierUiState,
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
+    navigateToBrushDesigner: () -> Unit,
     navigateUp: () -> Unit
 ) {
     NavigationSuiteScaffold(
@@ -306,6 +309,7 @@ private fun CahierNavigationSuite(
 
                 AppDestinations.Settings -> {
                     SettingsScreen(
+                        navigateToBrushDesigner = navigateToBrushDesigner,
                         modifier = Modifier.fillMaxSize()
                     )
                 }

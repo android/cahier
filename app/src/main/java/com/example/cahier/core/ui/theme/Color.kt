@@ -27,3 +27,10 @@ val Pink80 = Color(0xFFEFB8C8)
 val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
+
+// Brush Designer: color picker presets
+val BrushBlack = Color(0xFF000000)
+val BrushRed = Color(0xFFFF0000)
+val BrushBlue = Color(0xFF0000FF)
+val BrushGreen = Color(0xFF00FF00)
+val BrushYellow = Color(0xFFFFFF00)
