@@ -108,9 +108,7 @@ class BrushDesignerViewModelTest {
         val brushName = "Test Persistence Brush"
         viewModel.updateClientBrushFamilyId("test-id")
 
-        viewModel.saveToPalette(brushName)
-
-        kotlinx.coroutines.delay(500)
+        viewModel.saveToPalette(brushName).join()
 
         val savedBrushes = customBrushDao.getAllCustomBrushes().first()
         assertTrue(savedBrushes.any { it.name == brushName })

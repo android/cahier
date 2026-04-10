@@ -43,6 +43,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import ink.proto.BrushBehavior
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -361,8 +362,8 @@ class BrushDesignerViewModel @Inject constructor(
         _brushSize.value = size
     }
 
-    fun saveToPalette(brushName: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+    fun saveToPalette(brushName: String): Job {
+        return viewModelScope.launch(Dispatchers.IO) {
             try {
                 val rawBytes = repository.activeBrushProto.value.toByteArray()
                 val baos = ByteArrayOutputStream()
