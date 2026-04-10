@@ -107,8 +107,9 @@ fun HomePane(
     navigateToBrushDesigner: () -> Unit = {},
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
-    homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
-) {
+    forceCompact: Boolean? = null,
+    homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
+    ) {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.Home) }
     val navigator = rememberListDetailPaneScaffoldNavigator<Note>()
     val noteList by homeScreenViewModel.noteList.collectAsStateWithLifecycle()
@@ -120,7 +121,8 @@ fun HomePane(
     var hasSetInitialProportion by remember {
         mutableStateOf(false)
     }
-    val isCompact = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact
+    val isCompact = forceCompact
+        ?: (windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact)
     val context = LocalContext.current
 
 

@@ -73,9 +73,17 @@ internal fun <T> EditableListWidget(
     itemHeader: @Composable (T) -> String,
     editorContent: @Composable (item: T, onItemChanged: (T) -> Unit) -> Unit
 ) {
-    var itemStates by remember(items) {
-        mutableStateOf(items.map { CheckableItem(it, true) })
-    }
+    var itemStates by remember { mutableStateOf(items
+        .map { CheckableItem(it, true) }) }
+
+
+    if (itemStates.size != items.size ||
+        itemStates.zip(items).any { (s, i) -> s.item != i }) {
+            itemStates = items.mapIndexed { index, item ->
+                CheckableItem(item, itemStates
+                    .getOrNull(index)?.enabled ?: true)
+            }
+        }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     fun emitEnabledItems() {

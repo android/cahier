@@ -83,6 +83,7 @@ class BrushDesignerViewModel @Inject constructor(
     val brushColor: StateFlow<Color> = _brushColor.asStateFlow()
 
     val previewBrushFamily: StateFlow<BrushFamily?> = repository.activeBrushProto
+        .debounce(150)
         .map { proto ->
             withContext(Dispatchers.IO) {
                 try {
@@ -287,14 +288,15 @@ class BrushDesignerViewModel @Inject constructor(
 
     fun updateSelfOverlap(overlap: ProtoBrushPaint.SelfOverlap) {
         val familyBuilder = repository.activeBrushProto.value.toBuilder()
+        val index = _selectedCoatIndex.value
 
-        if (familyBuilder.coatsCount == 0) {
+        if (familyBuilder.coatsCount <= index) {
             familyBuilder.addCoats(
                 ProtoBrushCoat.newBuilder()
                     .setTip(ProtoBrushTip.newBuilder())
             )
         }
-        val coatBuilder = familyBuilder.getCoats(0).toBuilder()
+        val coatBuilder = familyBuilder.getCoats(index).toBuilder()
 
         if (coatBuilder.paintPreferencesCount == 0) {
             coatBuilder.addPaintPreferences(ProtoBrushPaint.newBuilder())
@@ -304,7 +306,7 @@ class BrushDesignerViewModel @Inject constructor(
         paintBuilder.selfOverlap = overlap
 
         coatBuilder.setPaintPreferences(0, paintBuilder)
-        familyBuilder.setCoats(0, coatBuilder)
+        familyBuilder.setCoats(index, coatBuilder)
         repository.updateActiveBrushProto(familyBuilder.build())
     }
 
@@ -406,8 +408,9 @@ class BrushDesignerViewModel @Inject constructor(
     fun addCustomTexture(uri: Uri, textureId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val bitmap = BitmapFactory.decodeStream(inputStream) ?: return@launch
+                val bitmap = context.contentResolver.openInputStream(uri)?.use {
+                    BitmapFactory.decodeStream(it)
+                } ?: return@launch
 
                 textureStore?.loadTexture(textureId, bitmap)
 
@@ -420,13 +423,14 @@ class BrushDesignerViewModel @Inject constructor(
                     ByteString.copyFrom(baos.toByteArray())
                 )
 
-                if (builder.coatsCount == 0) {
+                val index = _selectedCoatIndex.value
+                if (builder.coatsCount <= index) {
                     builder.addCoats(
                         ProtoBrushCoat
                             .newBuilder().setTip(ProtoBrushTip.newBuilder())
                     )
                 }
-                val coatBuilder = builder.getCoats(0).toBuilder()
+                val coatBuilder = builder.getCoats(index).toBuilder()
 
                 if (coatBuilder.paintPreferencesCount == 0) {
                     coatBuilder.addPaintPreferences(ProtoBrushPaint.newBuilder())
@@ -446,7 +450,7 @@ class BrushDesignerViewModel @Inject constructor(
                 paintBuilder.addTextureLayers(textureLayer)
 
                 coatBuilder.setPaintPreferences(0, paintBuilder)
-                builder.setCoats(0, coatBuilder)
+                builder.setCoats(index, coatBuilder)
 
                 withContext(Dispatchers.Main) {
                     repository.updateActiveBrushProto(builder.build())
@@ -480,11 +484,12 @@ class BrushDesignerViewModel @Inject constructor(
 
     fun clearBehaviors() {
         val familyBuilder = repository.activeBrushProto.value.toBuilder()
-        val coatBuilder = familyBuilder.getCoats(0).toBuilder()
+        val index = _selectedCoatIndex.value
+        val coatBuilder = familyBuilder.getCoats(index).toBuilder()
         val tipBuilder = coatBuilder.tip.toBuilder()
         tipBuilder.clearBehaviors()
         coatBuilder.setTip(tipBuilder)
-        familyBuilder.setCoats(0, coatBuilder)
+        familyBuilder.setCoats(index, coatBuilder)
         repository.updateActiveBrushProto(familyBuilder.build())
     }
 
@@ -523,9 +528,6 @@ class BrushDesignerViewModel @Inject constructor(
 
     fun setTextureStore(store: CahierTextureBitmapStore) {
         this.textureStore = store
-        // Re-sync existing textures into the new store (e.g., after config change
-        // when remember {} creates a fresh empty store). The Flow-based sync
-        // uses distinctUntilChanged() and won't re-emit if the proto hasn't changed.
         syncProtobufTexturesToStore(repository.activeBrushProto.value.textureIdToBitmapMap)
     }
 

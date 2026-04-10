@@ -110,6 +110,8 @@ class BrushDesignerViewModelTest {
 
         viewModel.saveToPalette(brushName)
 
+        kotlinx.coroutines.delay(500)
+
         val savedBrushes = customBrushDao.getAllCustomBrushes().first()
         assertTrue(savedBrushes.any { it.name == brushName })
     }
