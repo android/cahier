@@ -7,7 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.drag
@@ -379,6 +379,11 @@ fun NodeWidget(
   var isPressed by remember { mutableStateOf(false) }
   val density = LocalDensity.current
 
+  androidx.compose.runtime.DisposableEffect(node.data.inputLabels(), node.data.hasOutput()) {
+    nodeRegistry.clearNode(node.id)
+    onDispose {}
+  }
+
   // Fix jank by using updated callbacks.
   val currentOnMove by androidx.compose.runtime.rememberUpdatedState(onMove)
   val currentOnDragStart by androidx.compose.runtime.rememberUpdatedState(onDragStart)
@@ -424,7 +429,7 @@ fun NodeWidget(
           )
         }
         .pointerInput(node.id, isSelected) {
-          detectDragGesturesAfterLongPress(
+          detectDragGestures(
             onDragStart = { currentOnDragStart() },
             onDragEnd = { currentOnDragEnd() },
             onDragCancel = { currentOnDragEnd() },

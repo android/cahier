@@ -222,8 +222,26 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Updates the data/properties of a node. */
   fun updateNodeData(nodeId: String, newData: NodeData) {
+    val oldNode = graph.nodes.find { it.id == nodeId }
+    val oldData = oldNode?.data
+
     graph =
       graph.copy(nodes = graph.nodes.map { if (it.id == nodeId) it.copy(data = newData) else it })
+
+    if (oldData != null) {
+      val oldPortCount = oldData.inputLabels().size
+      val newPortCount = newData.inputLabels().size
+
+      if (newPortCount < oldPortCount) {
+        // Delete edges that connect to ports that no longer exist.
+        graph = graph.copy(
+          edges = graph.edges.filter { edge ->
+            !(edge.toNodeId == nodeId && edge.toInputIndex >= newPortCount)
+          }
+        )
+      }
+    }
+
     validate()
   }
 
@@ -468,7 +486,7 @@ class BrushGraphViewModel @Inject constructor(
         } else {
           android.util.Log.e(TAG, "Validation conversion failed", e)
           graphIssues =
-            (graphIssues + GraphValidationException("Internal error during validation"))
+            (graphIssues + GraphValidationException("Internal error during validation: ${e.message ?: e.javaClass.simpleName}"))
               .distinctBy { it.message + (it.nodeId ?: "") + it.severity }
         }
       }

@@ -397,6 +397,22 @@ object BrushFamilyConverter {
         }
       }
 
+      if (node.data is NodeData.Behavior) {
+        val behaviorNode = node.data.node
+        if (behaviorNode.nodeCase == ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE) {
+          val sourceNode = behaviorNode.sourceNode
+          if (sourceNode.sourceValueRangeStart == sourceNode.sourceValueRangeEnd) {
+            issues.add(
+              GraphValidationException(
+                "Source node \"${node.data.subtitle()}\" cannot have equal range start and end values.",
+                node.id,
+                if (isActive) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+              )
+            )
+          }
+        }
+      }
+
       // Property validation is unnecessary since properties are edited through the UI, and we
       // control the ranges for the properties.
     }

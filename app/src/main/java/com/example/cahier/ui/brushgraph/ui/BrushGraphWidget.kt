@@ -5,6 +5,8 @@ package com.example.cahier.ui.brushgraph.ui
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.content.Context
+import androidx.compose.runtime.LaunchedEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -129,6 +131,56 @@ fun BrushGraphWidget(
   
   val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
 
+  LaunchedEffect(Unit) {
+    val prefs = context.getSharedPreferences("brush_graph_prefs", Context.MODE_PRIVATE)
+    val savedBrushBase64 = prefs.getString("auto_save_brush", null)
+    android.util.Log.e("BrushGraphWidget", "onCreate: savedBrushBase64 from prefs is null? ${savedBrushBase64 == null}")
+    if (savedBrushBase64 != null) {
+      try {
+        val decodedBytes = android.util.Base64.decode(savedBrushBase64, android.util.Base64.DEFAULT)
+        val bais = java.io.ByteArrayInputStream(decodedBytes)
+        val family = androidx.ink.storage.AndroidBrushFamilySerialization.decode(
+          bais,
+          androidx.ink.storage.BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
+            if (bitmap != null) {
+              textureStore.loadTexture(id, bitmap)
+              allTextureIds = textureStore.getAllIds()
+            }
+            id
+          }
+        )
+        android.util.Log.e("BrushGraphWidget", "onCreate: loading brush from prefs")
+        viewModel.loadBrushFamily(family)
+      } catch (e: Exception) {
+        android.util.Log.e("BrushGraphWidget", "Failed to decode brush family from prefs", e)
+      }
+    }
+  }
+
+  LaunchedEffect(viewModel.graph) {
+    // Debounce to avoid saving on every single slider movement frame.
+    kotlinx.coroutines.delay(500)
+    android.util.Log.e("BrushGraphWidget", "LaunchedEffect: saving brush to prefs")
+    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+      try {
+        val stream = java.io.ByteArrayOutputStream()
+        androidx.ink.storage.AndroidBrushFamilySerialization.encode(
+          viewModel.brush.family,
+          stream,
+          textureStore
+        )
+        val encodedBrushFamily = stream.toByteArray()
+        val prefs = context.getSharedPreferences("brush_graph_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString(
+          "auto_save_brush",
+          android.util.Base64.encodeToString(encodedBrushFamily, android.util.Base64.DEFAULT),
+        ).apply()
+      } catch (e: Exception) {
+        android.util.Log.e("BrushGraphWidget", "Failed to save brush to prefs", e)
+      }
+    }
+  }
+
   var showColorPicker by remember { mutableStateOf(false) }
   var colorPickerInitialColor by remember { mutableStateOf(Color.Black) }
   var colorPickerOnColorSelected by remember { mutableStateOf({ _: Color -> }) }
@@ -206,20 +258,32 @@ fun BrushGraphWidget(
       scope.launch {
         try {
           val family = context.contentResolver.openInputStream(it)?.use { stream ->
-            AndroidBrushFamilySerialization.decode(
-              stream,
-              BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
-                if (bitmap != null) {
-                  textureStore.loadTexture(id, bitmap)
-                  allTextureIds = textureStore.getAllIds()
+            try {
+              androidx.ink.storage.AndroidBrushFamilySerialization.decode(
+                stream,
+                androidx.ink.storage.BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
+                  if (bitmap != null) {
+                    textureStore.loadTexture(id, bitmap)
+                    allTextureIds = textureStore.getAllIds()
+                  }
+                  id
                 }
-                id
-              }
-            )
-          } ?: throw Exception("Could not decode brush family")
+              )
+            } catch (e: Exception) {
+              android.util.Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, trying legacy fallback")
+              null
+            }
+          }
 
-          viewModel.loadBrushFamily(family)
-          viewModel.postDebug("Brush loaded successfully")
+          if (family == null) {
+            // TODO: Implement legacy brush loading fallback if needed.
+            // Scrapped for now as we don't have a good proto to test with.
+            android.util.Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, and legacy fallback is disabled.")
+            viewModel.postDebug("Failed to load brush: Legacy format not supported yet.")
+          } else {
+            viewModel.loadBrushFamily(family)
+            viewModel.postDebug("Brush loaded successfully")
+          }
         } catch (e: Exception) {
           android.util.Log.e("BrushGraphWidget", "Failed to load brush", e)
           viewModel.postDebug("Failed to load brush: ${e.message}")

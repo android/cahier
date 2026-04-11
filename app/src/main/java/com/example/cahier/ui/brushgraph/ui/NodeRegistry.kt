@@ -47,6 +47,12 @@ class NodeRegistry {
     return nearestPort
   }
 
+  fun clearNode(nodeId: String) {
+    val keysToRemove = portPositions.keys.filter { it.first == nodeId }
+    keysToRemove.forEach { portPositions.remove(it) }
+    nodeSizes.remove(nodeId)
+  }
+
   fun clear() {
     portPositions.clear()
     nodeSizes.clear()
