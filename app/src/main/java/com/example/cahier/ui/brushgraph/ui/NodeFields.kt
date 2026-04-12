@@ -129,6 +129,19 @@ fun NodeFields(
     when (val data = node.data) {
       is NodeData.Behavior -> {
         val behaviorNode = data.node
+        if (behaviorNode.nodeCase == ProtoBrushBehavior.Node.NodeCase.TARGET_NODE ||
+            behaviorNode.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+          OutlinedTextField(
+            value = data.developerComment,
+            onValueChange = {
+              onUpdate(data.copy(developerComment = it))
+            },
+            label = { Text("Developer comment") },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            minLines = 2,
+            enabled = !textFieldsLocked,
+          )
+        }
         when (behaviorNode.nodeCase) {
           ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> {
             val sourceNode = behaviorNode.sourceNode
@@ -1004,7 +1017,7 @@ fun NodeFields(
           onExpandedChange = { expandedModel = it }
         ) {
           OutlinedTextField(
-            value = data.inputModel.toString().removeSuffix("_MODEL"),
+            value = data.inputModel.displayString(),
             onValueChange = {},
             readOnly = true,
             label = { Text("Input Model") },
@@ -1015,20 +1028,19 @@ fun NodeFields(
             expanded = expandedModel,
             onDismissRequest = { expandedModel = false }
           ) {
-            // "LEGACY_SPRING" removed as it's not in Cahier's Ink version
-            arrayOf("NAIVE", "SLIDING_WINDOW", "SPRING").forEach { model ->
+            arrayOf("Sliding Window Model", "Spring Model", "Naive Experimental Model").forEach { model ->
               DropdownMenuItem(
                 text = { Text(model) },
                 onClick = {
                   val newModel =
                     when (model) {
-                      "NAIVE" ->
+                      "Naive Experimental Model" ->
                         ProtoBrushFamily.InputModel.newBuilder()
                           .setExperimentalNaiveModel(
                             ProtoBrushFamily.ExperimentalNaiveModel.getDefaultInstance()
                           )
                           .build()
-                      "SLIDING_WINDOW" ->
+                      "Sliding Window Model" ->
                         ProtoBrushFamily.InputModel.newBuilder()
                           .setSlidingWindowModel(
                             ProtoBrushFamily.SlidingWindowModel.newBuilder()
@@ -1036,7 +1048,7 @@ fun NodeFields(
                               .setExperimentalUpsamplingPeriodSeconds(0.005f)
                           )
                           .build()
-                      "SPRING" ->
+                      "Spring Model" ->
                         ProtoBrushFamily.InputModel.newBuilder()
                           .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
                           .build()
@@ -1052,8 +1064,53 @@ fun NodeFields(
             }
           }
         }
+
+        if (data.inputModel.hasSlidingWindowModel()) {
+          val slidingModel = data.inputModel.slidingWindowModel
+          val windowSizeMs = slidingModel.windowSizeSeconds * 1000f
+          val upsamplingHz = if (slidingModel.experimentalUpsamplingPeriodSeconds > 0) 1f / slidingModel.experimentalUpsamplingPeriodSeconds else 0f
+
+          BrushSliderControl(
+            label = "Window Size (ms)",
+            value = windowSizeMs,
+            valueRange = 1f..100f,
+            onValueChange = { newMs ->
+              val newSeconds = newMs / 1000f
+              val newModel = data.inputModel.toBuilder()
+                .setSlidingWindowModel(
+                  slidingModel.toBuilder().setWindowSizeSeconds(newSeconds)
+                )
+                .build()
+              onUpdate(data.copy(inputModel = newModel))
+            }
+          )
+
+          BrushSliderControl(
+            label = "Upsampling Frequency (Hz)",
+            value = upsamplingHz,
+            valueRange = 0f..500f,
+            onValueChange = { newHz ->
+              val newPeriod = if (newHz > 0) 1f / newHz else 0f
+              val newModel = data.inputModel.toBuilder()
+                .setSlidingWindowModel(
+                  slidingModel.toBuilder().setExperimentalUpsamplingPeriodSeconds(newPeriod)
+                )
+                .build()
+              onUpdate(data.copy(inputModel = newModel))
+            }
+          )
+        }
       }
     }
+  }
+}
+
+private fun ProtoBrushFamily.InputModel.displayString(): String {
+  return when {
+    hasSlidingWindowModel() -> "Sliding Window Model"
+    hasSpringModel() -> "Spring Model"
+    hasExperimentalNaiveModel() -> "Naive Experimental Model"
+    else -> "Unknown Model"
   }
 }
 

@@ -144,8 +144,11 @@ sealed interface NodeData {
       listOf(if (function.hasOpacityMultiplier()) "opacity multiplier" else "replace color")
   }
 
-  /** Wraps a [ProtoBrushBehavior.Node]. */
-  data class Behavior(val node: ProtoBrushBehavior.Node) : NodeData {
+  data class Behavior(
+    val node: ProtoBrushBehavior.Node,
+    val developerComment: String = "",
+    val behaviorId: String = ""
+  ) : NodeData {
     override fun inputLabels(): List<String> {
       return when (node.nodeCase) {
         ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> listOf("Input")

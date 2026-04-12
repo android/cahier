@@ -123,7 +123,13 @@ object BrushFamilyConverter {
       val actualSourceNode = findActualSourceNode(graph, edge.fromNodeId)
       if (actualSourceNode != null) {
         collectBehaviorNodes(actualSourceNode.id, graph, behaviorCache, path, nodes)
-        builder.addBehaviors(ProtoBrushBehavior.newBuilder().addAllNodes(nodes).build())
+        val comment = (actualSourceNode.data as? NodeData.Behavior)?.developerComment ?: ""
+        builder.addBehaviors(
+          ProtoBrushBehavior.newBuilder()
+            .addAllNodes(nodes)
+            .setDeveloperComment(comment)
+            .build()
+        )
       }
     }
 

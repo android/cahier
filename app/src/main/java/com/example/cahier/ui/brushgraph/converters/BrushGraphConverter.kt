@@ -155,12 +155,17 @@ object BrushGraphConverter {
     tipX: Float,
     startY: Float,
   ): Pair<List<String>, Float> {
+    val behaviorId = UUID.randomUUID().toString()
     val nodeStack = mutableListOf<InternalNodeInfo>()
     val behaviorNodes = mutableListOf<InternalNodeInfo>()
 
     for (protoNode in behavior.nodesList) {
       val nodeId = UUID.randomUUID().toString()
-      val nodeData = NodeData.Behavior(protoNode)
+      val nodeData = NodeData.Behavior(
+        node = protoNode,
+        developerComment = behavior.developerComment,
+        behaviorId = behaviorId
+      )
       val inputCount = nodeData.inputLabels().size
       
       val children = mutableListOf<InternalNodeInfo>()

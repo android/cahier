@@ -120,6 +120,10 @@ import com.example.cahier.ui.theme.extendedColorScheme
 import kotlinx.coroutines.launch
 
 import com.example.cahier.ui.CahierTextureBitmapStore
+import com.example.cahier.ui.CustomBrushes
+import androidx.ink.brush.StockBrushes
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpOffset
 
 /** The main UI for the Brush Graph studio. */
 @Composable
@@ -135,6 +139,11 @@ fun BrushGraphWidget(
   var allTextureIds by remember { mutableStateOf(textureStore.getAllIds()) }
   
   val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
+
+  val primaryColor = MaterialTheme.colorScheme.primary
+  LaunchedEffect(primaryColor) {
+    viewModel.updateTestBrushColor(primaryColor)
+  }
 
   LaunchedEffect(Unit) {
     val prefs = context.getSharedPreferences("brush_graph_prefs", Context.MODE_PRIVATE)
@@ -1013,10 +1022,12 @@ fun FloatingActionMenu(
   onDeleteBrush: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val context = LocalContext.current
   var showMoreMenu by remember { mutableStateOf(false) }
   var showPaletteMenu by remember { mutableStateOf(false) }
   var showClearConfirmation by remember { mutableStateOf(false) }
   var showReorganizeConfirmation by remember { mutableStateOf(false) }
+  var showTemplatesMenu by remember { mutableStateOf(false) }
 
   val savedBrushes by viewModel.savedPaletteBrushes.collectAsState()
 
@@ -1114,6 +1125,72 @@ fun FloatingActionMenu(
               showReorganizeConfirmation = true
             },
           )
+          Box {
+            DropdownMenuItem(
+              text = { Text("Templates") },
+              onClick = { showTemplatesMenu = true },
+              trailingIcon = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
+            )
+            DropdownMenu(
+              expanded = showTemplatesMenu,
+              onDismissRequest = { showTemplatesMenu = false },
+              offset = DpOffset(x = 127.dp, y = (-56).dp)
+            ) {
+              DropdownMenuItem(
+                text = { Text("Pressure Pen") },
+                onClick = {
+                  viewModel.loadBrushFamily(StockBrushes.pressurePen())
+                  showTemplatesMenu = false
+                  showMoreMenu = false
+                }
+              )
+              DropdownMenuItem(
+                text = { Text("Marker") },
+                onClick = {
+                  viewModel.loadBrushFamily(StockBrushes.marker())
+                  showTemplatesMenu = false
+                  showMoreMenu = false
+                }
+              )
+              DropdownMenuItem(
+                text = { Text("Highlighter") },
+                onClick = {
+                  viewModel.loadBrushFamily(StockBrushes.highlighter())
+                  showTemplatesMenu = false
+                  showMoreMenu = false
+                }
+              )
+              DropdownMenuItem(
+                text = { Text("Dashed Line") },
+                onClick = {
+                  viewModel.loadBrushFamily(StockBrushes.dashedLine())
+                  showTemplatesMenu = false
+                  showMoreMenu = false
+                }
+              )
+              
+              val builtInBrushes = CustomBrushes.getBrushes(context)
+              if (builtInBrushes.isNotEmpty()) {
+                HorizontalDivider()
+                Text(
+                  text = "Custom Brushes",
+                  modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                  style = MaterialTheme.typography.labelLarge,
+                  color = MaterialTheme.colorScheme.primary
+                )
+                builtInBrushes.forEach { customBrush ->
+                  DropdownMenuItem(
+                    text = { Text(customBrush.name) },
+                    onClick = {
+                      viewModel.loadBrushFamily(customBrush.brushFamily)
+                      showTemplatesMenu = false
+                      showMoreMenu = false
+                    }
+                  )
+                }
+              }
+            }
+          }
           HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
           DropdownMenuItem(
             text = { Text("Delete Brush", color = MaterialTheme.colorScheme.error) },
