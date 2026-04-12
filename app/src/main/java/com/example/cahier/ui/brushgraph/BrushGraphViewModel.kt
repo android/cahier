@@ -23,7 +23,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.brushdesigner.CustomBrushDao
 import com.example.cahier.ui.brushdesigner.CustomBrushEntity
+import android.content.Context
+import androidx.ink.storage.decode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.zip.GZIPOutputStream
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +58,7 @@ import ink.proto.ColorFunction as ProtoColorFunction
 /** ViewModel to manage the state of the brush graph. */
 @HiltViewModel
 class BrushGraphViewModel @Inject constructor(
+  @ApplicationContext private val context: Context,
   private val customBrushDao: CustomBrushDao
 ) : ViewModel() {
 
@@ -129,6 +133,25 @@ class BrushGraphViewModel @Inject constructor(
   /** The current size of the graph viewport in pixels. */
   var viewportSize by mutableStateOf(Size.Zero)
     private set
+
+  /** Whether to auto update strokes in the test canvas. */
+  var testAutoUpdateStrokes by mutableStateOf(true)
+
+  /** The current color of the brush in the test canvas. */
+  var testBrushColor by mutableStateOf(Color.Black)
+
+  /** The current size of the brush in the test canvas. */
+  var testBrushSize by androidx.compose.runtime.mutableFloatStateOf(10f)
+
+  fun updateTestBrushColor(color: Color) {
+    testBrushColor = color
+    updateBrushFromFamily(brush.family)
+  }
+
+  fun updateTestBrushSize(size: Float) {
+    testBrushSize = size
+    updateBrushFromFamily(brush.family)
+  }
 
   companion object {
     private const val TAG = "BrushGraphViewModel"
@@ -445,6 +468,39 @@ class BrushGraphViewModel @Inject constructor(
     validate()
   }
 
+  /** Adds an operator node between two behavior nodes. */
+  fun addNodeBetween(edge: GraphEdge) {
+    val fromNode = graph.nodes.find { it.id == edge.fromNodeId } ?: return
+    val toNode = graph.nodes.find { it.id == edge.toNodeId } ?: return
+    
+    if (fromNode.data !is NodeData.Behavior || toNode.data !is NodeData.Behavior) {
+      return // Only for behavior nodes!
+    }
+    
+    val newNodeId = UUID.randomUUID().toString()
+    val newNode = GraphNode(
+      id = newNodeId,
+      data = NodeData.Behavior(
+        ProtoBrushBehavior.Node.newBuilder()
+          .setResponseNode(
+            ProtoBrushBehavior.ResponseNode.newBuilder()
+              .setPredefinedResponseCurve(ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR)
+          )
+          .build()
+      ),
+      position = (fromNode.position + toNode.position) / 2f
+    )
+    
+    val edge1 = GraphEdge(fromNodeId = edge.fromNodeId, toNodeId = newNodeId, toInputIndex = 0)
+    val edge2 = GraphEdge(fromNodeId = newNodeId, toNodeId = edge.toNodeId, toInputIndex = edge.toInputIndex)
+    
+    val newEdges = graph.edges.filter { it != edge } + edge1 + edge2
+    val newNodes = graph.nodes + newNode
+    
+    graph = graph.copy(nodes = newNodes, edges = newEdges)
+    validate()
+  }
+
   /** Clears the graph. */
   fun clearGraph() {
     dismissPanes()
@@ -555,10 +611,12 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Internal helper to update the brush and strokes from a [BrushFamily]. */
   private fun updateBrushFromFamily(family: BrushFamily) {
-    brush = Brush.createWithColorIntArgb(family, brush.colorIntArgb, brush.size, brush.epsilon)
-    // Update existing strokes to use the new brush.
-    for (i in strokeList.indices) {
-      strokeList[i] = strokeList[i].copy(brush = brush)
+    brush = Brush.createWithColorIntArgb(family, testBrushColor.toArgb(), testBrushSize, brush.epsilon)
+    // Update existing strokes to use the new brush if auto-update is enabled.
+    if (testAutoUpdateStrokes) {
+      for (i in strokeList.indices) {
+        strokeList[i] = strokeList[i].copy(brush = brush)
+      }
     }
   }
 

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
+import com.example.cahier.ui.brushgraph.model.NodeData
 
 /** Shows connection details between two nodes and allows deletion. */
 @Composable
@@ -39,6 +40,7 @@ fun EdgeInspector(
   onNodeFocus: (String) -> Unit,
   onDisableChange: (Boolean) -> Unit,
   onDelete: () -> Unit,
+  onAddNodeBetween: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -67,8 +69,18 @@ fun EdgeInspector(
   Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
     // From Node Section
     EdgeNodeInfo(label = "From", node = fromNode, onClick = { onNodeFocus(fromNode.id) })
-
-    Spacer(Modifier.height(16.dp))
+    if (fromNode.data is NodeData.Behavior && toNode.data is NodeData.Behavior) {
+      Spacer(Modifier.height(8.dp))
+      Button(
+        onClick = { onAddNodeBetween() },
+        modifier = Modifier.align(Alignment.CenterHorizontally)
+      ) {
+        Text("Add Node Between")
+      }
+      Spacer(Modifier.height(8.dp))
+    } else {
+      Spacer(Modifier.height(16.dp))
+    }
 
     // To Node Section
     EdgeNodeInfo(

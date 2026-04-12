@@ -102,6 +102,7 @@ fun NodeGraphCanvas(
   onAddEdge: (String, String, Int) -> Unit,
   onEdgeClick: (GraphEdge) -> Unit,
   onEdgeDelete: (GraphEdge) -> Unit,
+  onCanvasClick: () -> Unit = {},
   modifier: Modifier = Modifier,
   activeEdgeSourceId: String? = null,
   selectedNodeId: String? = null,
@@ -127,6 +128,7 @@ fun NodeGraphCanvas(
   val currentOffset by androidx.compose.runtime.rememberUpdatedState(offset)
   val currentOnZoomChange by androidx.compose.runtime.rememberUpdatedState(onZoomChange)
   val currentOnOffsetChange by androidx.compose.runtime.rememberUpdatedState(onOffsetChange)
+  val currentOnCanvasClick by androidx.compose.runtime.rememberUpdatedState(onCanvasClick)
 
   val currentGraph by androidx.compose.runtime.rememberUpdatedState(graph)
   val currentOnEdgeClick by androidx.compose.runtime.rememberUpdatedState(onEdgeClick)
@@ -176,6 +178,8 @@ fun NodeGraphCanvas(
                   .let { edge ->
                     if (edge != null) {
                       currentOnEdgeClick(edge)
+                    } else {
+                      currentOnCanvasClick()
                     }
                   }
               }

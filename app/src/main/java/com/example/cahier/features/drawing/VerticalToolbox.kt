@@ -42,6 +42,7 @@ internal fun VerticalToolbox(
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onExit: () -> Unit,
+    onEditActiveBrush: () -> Unit,
     onColorPickerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -94,6 +95,7 @@ internal fun VerticalToolbox(
                 drawingCanvasViewModel = drawingCanvasViewModel,
                 imagePickerLauncher = imagePickerLauncher,
                 onExit = onExit,
+                onEditActiveBrush = onEditActiveBrush,
                 isVertical = true
             )
         }

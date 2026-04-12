@@ -42,7 +42,9 @@ import androidx.ink.geometry.MutableParallelogram
 import androidx.ink.geometry.MutableSegment
 import androidx.ink.geometry.MutableVec
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
+import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.decode
+import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -454,6 +456,30 @@ class DrawingCanvasViewModel @Inject constructor(
 
     fun getCurrentBrush(): Brush {
         return _selectedBrush.value
+    }
+
+    @OptIn(ExperimentalInkCustomBrushApi::class)
+    suspend fun saveCurrentBrushToAutosave() {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val stream = java.io.ByteArrayOutputStream()
+                val textureStore = CahierTextureBitmapStore(context)
+                AndroidBrushFamilySerialization.encode(
+                    _selectedBrush.value.family,
+                    stream,
+                    textureStore
+                )
+                val encodedBrushFamily = stream.toByteArray()
+                val prefs = context.getSharedPreferences("brush_graph_prefs", Context.MODE_PRIVATE)
+                prefs.edit().putString(
+                    "auto_save_brush",
+                    android.util.Base64.encodeToString(encodedBrushFamily, android.util.Base64.DEFAULT),
+                ).apply()
+                Log.d(TAG, "Saved brush to prefs successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving brush to prefs", e)
+            }
+        }
     }
 
     @OptIn(ExperimentalInkCustomBrushApi::class)

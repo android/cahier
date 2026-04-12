@@ -17,6 +17,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,8 +54,11 @@ import androidx.compose.material.icons.filled.ShapeLine
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -442,6 +447,7 @@ fun BrushGraphStudio(
           onAddEdge = { from, to, index -> viewModel.addEdge(from, to, index) },
           onEdgeClick = { viewModel.onEdgeClick(it) },
           onEdgeDelete = { viewModel.deleteEdge(it) },
+          onCanvasClick = { viewModel.dismissPanes() },
           selectedEdge = viewModel.selectedEdge,
           activeEdgeSourceId = viewModel.activeEdgeSourceId,
           onNodeDataUpdate = { id, data -> viewModel.updateNodeData(id, data) },
@@ -523,6 +529,7 @@ fun BrushGraphStudio(
             viewModel = viewModel,
             strokeRenderer = strokeRenderer,
             textureStore = textureStore,
+            onChooseColor = onChooseColor,
           )
         }
 
@@ -796,6 +803,7 @@ fun AdaptiveInspectorPane(
                   },
                   onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
                   onDelete = { viewModel.deleteEdge(selectedEdge) },
+                  onAddNodeBetween = { viewModel.addNodeBetween(selectedEdge) },
                 )
               }
             }
@@ -807,10 +815,12 @@ fun AdaptiveInspectorPane(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun CollapsiblePreviewPane(
   viewModel: BrushGraphViewModel,
   strokeRenderer: CanvasStrokeRenderer,
   textureStore: TextureBitmapStore,
+  onChooseColor: (Color, (Color) -> Unit) -> Unit,
 ) {
   Column(modifier = Modifier.fillMaxWidth()) {
     // Toggle Tab (always visible)
@@ -860,6 +870,62 @@ fun CollapsiblePreviewPane(
               color = MaterialTheme.colorScheme.primary,
               fontWeight = FontWeight.Bold,
             )
+            Spacer(Modifier.width(16.dp))
+            
+            // Auto-update toggle
+            Row(verticalAlignment = Alignment.CenterVertically) {
+              Checkbox(
+                checked = viewModel.testAutoUpdateStrokes,
+                onCheckedChange = { viewModel.testAutoUpdateStrokes = it }
+              )
+              Spacer(Modifier.width(4.dp))
+              Text("Auto-update", style = MaterialTheme.typography.labelLarge)
+            }
+            Spacer(Modifier.width(16.dp))
+            
+            // Color picker
+            Box(
+              modifier = Modifier
+                .size(20.dp)
+                .background(viewModel.testBrushColor)
+                .border(1.dp, MaterialTheme.colorScheme.outline)
+                .clickable {
+                  onChooseColor(viewModel.testBrushColor) { newColor ->
+                    viewModel.updateTestBrushColor(newColor)
+                  }
+                }
+            )
+            Spacer(Modifier.width(16.dp))
+            
+            // Size selector
+            var sizeExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+              expanded = sizeExpanded,
+              onExpandedChange = { sizeExpanded = it },
+              modifier = Modifier.width(80.dp)
+            ) {
+              Text(
+                text = "${viewModel.testBrushSize.toInt()}px",
+                modifier = Modifier.menuAnchor().clickable { sizeExpanded = true },
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+              )
+              ExposedDropdownMenu(
+                expanded = sizeExpanded,
+                onDismissRequest = { sizeExpanded = false }
+              ) {
+                for (size in 10..50 step 10) {
+                  DropdownMenuItem(
+                    text = { Text("${size}px") },
+                    onClick = {
+                      viewModel.updateTestBrushSize(size.toFloat())
+                      sizeExpanded = false
+                    }
+                  )
+                }
+              }
+            }
           }
         }
       }

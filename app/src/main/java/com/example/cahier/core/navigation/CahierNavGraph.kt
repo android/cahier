@@ -82,6 +82,7 @@ fun CahierNavHost(
         ) { navBackStackEntry ->
             DrawingCanvas(
                 navigateUp = { navController.navigateUp() },
+                navigateToBrushGraph = { navController.navigate(BrushGraphDestination.route) }
             )
         }
         composable(route = BrushDesignerDestination.route) {
