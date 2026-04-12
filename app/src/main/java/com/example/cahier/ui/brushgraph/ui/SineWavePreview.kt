@@ -145,6 +145,27 @@ fun TipPreviewWidget(brushTip: ProtoBrushTip, renderer: CanvasStrokeRenderer) {
 }
 
 @Composable
+fun ColorFunctionPreviewWidget(
+  colorFunction: ink.proto.ColorFunction,
+  renderer: CanvasStrokeRenderer,
+) {
+  val family =
+    runCatching {
+        ProtoBrushFamily.newBuilder()
+          .addCoats(
+            ProtoBrushCoat.newBuilder()
+              .setTip(ProtoBrushTip.newBuilder().setCornerRounding(0f).build())
+              .addPaintPreferences(ProtoBrushPaint.newBuilder().addColorFunctions(colorFunction).build())
+              .build()
+          )
+          .build()
+          .toBrushFamily()
+      }
+      .getOrDefault(BrushFamily())
+  StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
+}
+
+@Composable
 fun TextureLayerPreviewWidget(
   textureLayer: ProtoBrushPaint.TextureLayer,
   renderer: CanvasStrokeRenderer,

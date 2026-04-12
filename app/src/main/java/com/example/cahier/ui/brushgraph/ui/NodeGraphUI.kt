@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -213,6 +214,7 @@ fun NodeGraphCanvas(
                   path = createSplinePath(start, end),
                   color = if (isSelected) selectedEdgeColor else outlineColor,
                   style = DrawStroke(width = if (isSelected) 6f else 3f),
+                  alpha = if (edge.isDisabled) 0.38f else 1f,
                 )
               }
             }
@@ -322,7 +324,8 @@ fun NodeGraphCanvas(
       }
 
       // Trash can UI.
-      if (draggingNodeId != null) {
+      val draggingNode = graph.nodes.find { it.id == draggingNodeId }
+      if (draggingNode != null && draggingNode.data !is NodeData.Family) {
         Surface(
           modifier =
             Modifier.align(Alignment.BottomCenter).padding(bottom = bottomPadding).graphicsLayer {
@@ -443,19 +446,25 @@ fun NodeWidget(
         .then(
           with(density) {
             val backgroundColor =
-              when (node.data) {
-                is NodeData.Coat -> MaterialTheme.colorScheme.primaryContainer
-                is NodeData.Tip,
-                is NodeData.Paint -> MaterialTheme.colorScheme.secondaryContainer
-                is NodeData.Family -> MaterialTheme.colorScheme.tertiaryContainer
-                is NodeData.TextureLayer,
-                is NodeData.ColorFunc -> MaterialTheme.colorScheme.surfaceVariant
-                else -> MaterialTheme.colorScheme.surfaceDim
+              if (node.isDisabled) {
+                MaterialTheme.colorScheme.surfaceDim
+              } else {
+                when (node.data) {
+                  is NodeData.Coat -> MaterialTheme.colorScheme.primaryContainer
+                  is NodeData.Tip,
+                  is NodeData.Paint -> MaterialTheme.colorScheme.secondaryContainer
+                  is NodeData.Family -> MaterialTheme.colorScheme.tertiaryContainer
+                  is NodeData.TextureLayer,
+                  is NodeData.ColorFunc -> MaterialTheme.colorScheme.surfaceVariant
+                  else -> MaterialTheme.colorScheme.surfaceDim
+                }
               }
             Modifier.width(w.toDp())
               .height(h.toDp())
               .background(
-                if (isActiveSource || isPressed || isSelected) {
+                if (node.isDisabled) {
+                  MaterialTheme.colorScheme.surfaceDim
+                } else if (isActiveSource || isPressed || isSelected) {
                   MaterialTheme.colorScheme.primaryContainer
                 } else if (node.hasError) {
                   MaterialTheme.colorScheme.errorContainer
@@ -467,17 +476,23 @@ fun NodeWidget(
                 RoundedCornerShape(8.dp),
               )
               .border(
-                if (node.hasError || node.hasWarning || isActiveSource || isPressed || isSelected) {
+                if (isActiveSource || isPressed || isSelected) {
+                  2.dp
+                } else if (node.isDisabled) {
+                  1.dp
+                } else if (node.hasError || node.hasWarning) {
                   2.dp
                 } else {
                   1.dp
                 },
-                if (node.hasError) {
+                if (isActiveSource || isPressed || isSelected) {
+                  MaterialTheme.colorScheme.primary
+                } else if (node.isDisabled) {
+                  MaterialTheme.colorScheme.outline.copy(alpha = 0.38f)
+                } else if (node.hasError) {
                   MaterialTheme.colorScheme.error
                 } else if (node.hasWarning) {
                   MaterialTheme.extendedColorScheme.warning
-                } else if (isActiveSource || isPressed || isSelected) {
-                  MaterialTheme.colorScheme.primary
                 } else {
                   MaterialTheme.colorScheme.outline
                 },
@@ -486,7 +501,8 @@ fun NodeWidget(
           }
         )
   ) {
-    Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) {
+    Box(modifier = Modifier.fillMaxSize().alpha(if (node.isDisabled) 0.38f else 1f)) {
+      Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) {
       val nodeWidthDp = with(density) { NODE_WIDTH.toDp() }
       val topPaddingDp = with(density) { NODE_PADDING_VERTICAL.toDp() }
       val bottomPaddingDp = with(density) { NODE_PADDING_BOTTOM.toDp() }
@@ -511,8 +527,7 @@ fun NodeWidget(
                   maxLines = 1,
                   overflow = TextOverflow.Ellipsis,
                 )
-                val subtitle = node.data.subtitle()
-                if (subtitle.isNotEmpty()) {
+                for (subtitle in node.data.subtitles()) {
                   Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -552,6 +567,17 @@ fun NodeWidget(
                   )
                 }
               }
+            }
+          }
+
+          if (node.data is NodeData.ColorFunc) {
+            Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
+              ColorFunctionPreviewWidget(node.data.function, strokeRenderer)
+            }
+          }
+          if (node.data is NodeData.TextureLayer) {
+            Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
+              TextureLayerPreviewWidget(node.data.layer, strokeRenderer)
             }
           }
 
@@ -658,6 +684,7 @@ fun NodeWidget(
       }
     }
   }
+}
 }
 
 /**

@@ -36,7 +36,7 @@ const val NODE_WIDTH = 300f
 const val NODE_PADDING_VERTICAL = 8f
 const val NODE_PADDING_BOTTOM = 12f
 const val TITLE_AREA_HEIGHT = 64f
-const val SUBTITLE_AREA_HEIGHT = 48f
+const val SUBTITLE_LINE_HEIGHT = 32f
 const val PREVIEW_AREA_HEIGHT = 64f
 const val INPUT_ROW_HEIGHT = 60f
 
@@ -53,6 +53,7 @@ data class GraphNode(
   val isExpanded: Boolean = false,
   val hasError: Boolean = false,
   val hasWarning: Boolean = false,
+  val isDisabled: Boolean = false,
 )
 
 /** Represents the core data/component within a node. */
@@ -68,7 +69,7 @@ sealed interface NodeData {
   fun title(): String
 
   /** Subtitle for additional context, if any. */
-  fun subtitle(): String = ""
+    fun subtitles(): List<String> = emptyList()
 
   /**
    * Total estimated width of the node on the canvas. The actual width may differ slightly due to
@@ -82,21 +83,24 @@ sealed interface NodeData {
    */
   fun height(): Float {
     val inputCount = inputLabels().size
+    val previewH = if (this is NodeData.ColorFunc || this is NodeData.TextureLayer) PREVIEW_AREA_HEIGHT else 0f
     return NODE_PADDING_VERTICAL +
       titleHeight() +
+      previewH +
       maxOf(inputCount, 1) * INPUT_ROW_HEIGHT +
       NODE_PADDING_BOTTOM
   }
 
   fun titleHeight(): Float {
-    return TITLE_AREA_HEIGHT +
-      (if (!subtitle().isEmpty()) {
-        SUBTITLE_AREA_HEIGHT
-      } else if (this is NodeData.Tip || this is NodeData.Coat) {
-        PREVIEW_AREA_HEIGHT
-      } else {
-        0f
-      })
+    val subs = subtitles()
+    val subtitleHeight = subs.size * SUBTITLE_LINE_HEIGHT
+    if (subtitleHeight > 0f) {
+      return TITLE_AREA_HEIGHT + subtitleHeight
+    }
+    if (this is NodeData.Tip || this is NodeData.Coat) {
+      return TITLE_AREA_HEIGHT + PREVIEW_AREA_HEIGHT
+    }
+    return TITLE_AREA_HEIGHT
   }
 
   fun getPortPosition(side: PortSide, index: Int): Offset {
@@ -122,22 +126,22 @@ sealed interface NodeData {
 
     override fun title() = "Paint"
 
-    override fun subtitle() = "overlap: ${paint.selfOverlap.displayString()}"
+        override fun subtitles() = listOf("overlap: ${paint.selfOverlap.displayString()}")
   }
 
   /** Wraps a [ProtoBrushPaint.TextureLayer]. */
   data class TextureLayer(val layer: ProtoBrushPaint.TextureLayer) : NodeData {
     override fun title() = "Texture Layer"
 
-    override fun subtitle() = layer.clientTextureId
+        override fun subtitles() = listOf(layer.clientTextureId)
   }
 
   /** Wraps a [ProtoColorFunction]. */
   data class ColorFunc(val function: ProtoColorFunction) : NodeData {
     override fun title() = "Color Function"
 
-    override fun subtitle() =
-      if (function.hasOpacityMultiplier()) "opacity multiplier" else "replace color"
+    override fun subtitles() =
+      listOf(if (function.hasOpacityMultiplier()) "opacity multiplier" else "replace color")
   }
 
   /** Wraps a [ProtoBrushBehavior.Node]. */
@@ -156,6 +160,17 @@ sealed interface NodeData {
       }
     }
 
+    val isOperator: Boolean
+      get() = when (node.nodeCase) {
+        ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE,
+        ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE,
+        ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE,
+        ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE,
+        ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE,
+        ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> true
+        else -> false
+      }
+
     override fun title() =
       when (node.nodeCase) {
         ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> "Source"
@@ -172,11 +187,12 @@ sealed interface NodeData {
         else -> "Unknown"
       }
 
-    override fun subtitle(): String {
-      return when (node.nodeCase) {
+    override fun subtitles(): List<String> {
+      val s = when (node.nodeCase) {
         ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> node.sourceNode.source.displayString()
         ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> "%.1f".format(node.constantNode.value)
-        ProtoBrushBehavior.Node.NodeCase.NOISE_NODE -> node.noiseNode.seed.toString()
+        ProtoBrushBehavior.Node.NodeCase.NOISE_NODE ->
+          return listOf(node.noiseNode.varyOver.displayString(), "period: ${node.noiseNode.basePeriod}")
         ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {
           val bitmask = node.toolTypeFilterNode.enabledToolTypes
           val enabled = mutableListOf<String>()
@@ -186,7 +202,16 @@ sealed interface NodeData {
           if (bitmask and (1 shl 3) != 0) enabled.add("stylus")
           if (enabled.isEmpty()) "none" else enabled.joinToString(", ")
         }
-        ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> node.dampingNode.dampingSource.displayString()
+        ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> {
+          val source = node.dampingNode.dampingSource
+          val unit = when (source) {
+            ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_CENTIMETERS -> "cm"
+            ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE -> "size"
+            ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_TIME_IN_SECONDS -> "s"
+            else -> ""
+          }
+          return listOf(source.displayString(), "gap: ${node.dampingNode.dampingGap}$unit")
+        }
         ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> node.responseNode.displayString()
         ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE -> node.integralNode.integrateOver.displayString()
         ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> node.binaryOpNode.operation.displayString()
@@ -195,6 +220,7 @@ sealed interface NodeData {
         ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> node.polarTargetNode.target.displayString()
         else -> node.nodeCase.name
       }
+      return listOf(s)
     }
   }
 
@@ -230,7 +256,7 @@ sealed interface NodeData {
 
     override fun title() = "Family"
 
-    override fun subtitle() = clientBrushFamilyId
+        override fun subtitles() = listOf(clientBrushFamilyId)
 
     override fun width() = 3 * NODE_WIDTH
 
@@ -259,7 +285,7 @@ data class GraphValidationException(
 ) : IllegalStateException(message)
 
 /** Represents a connection between two nodes. */
-data class GraphEdge(val fromNodeId: String, val toNodeId: String, val toInputIndex: Int = 0)
+data class GraphEdge(val fromNodeId: String, val toNodeId: String, val toInputIndex: Int = 0, val isDisabled: Boolean = false)
 
 /** Represents the entire node graph state. */
 data class BrushGraph(

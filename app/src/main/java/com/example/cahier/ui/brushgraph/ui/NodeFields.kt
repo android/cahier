@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,44 +72,56 @@ fun NodeFields(
     modifier =
       Modifier.padding(top = 8.dp).heightIn(max = 600.dp).verticalScroll(rememberScrollState())
   ) {
-    val nodeDataTypeName =
-      when (val data = node.data) {
-        is NodeData.Behavior -> data.node.nodeCase.name.removeSuffix("_NODE")
-        is NodeData.Tip -> "Tip"
-        is NodeData.Paint -> "Paint"
-        is NodeData.TextureLayer -> "TextureLayer"
-        is NodeData.ColorFunc -> "ColorFunction"
-        is NodeData.Coat -> "Coat"
-        is NodeData.Family -> "BrushFamily"
-      }
-
-    var expandedNodeTypes by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(
-      expanded = expandedNodeTypes,
-      onExpandedChange = { expandedNodeTypes = it }
-    ) {
-      OutlinedTextField(
-        value = prettyDisplayString(nodeDataTypeName),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text("Node Type") },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNodeTypes) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
+    if (node.data is NodeData.Behavior) {
+      val nodeDataTypeName = node.data.node.nodeCase.name.removeSuffix("_NODE")
+      var expandedNodeTypes by remember { mutableStateOf(false) }
+      ExposedDropdownMenuBox(
         expanded = expandedNodeTypes,
-        onDismissRequest = { expandedNodeTypes = false }
+        onExpandedChange = { expandedNodeTypes = it }
       ) {
-        NODE_TYPES.forEach { newTypeName ->
-          DropdownMenuItem(
-            text = { Text(prettyDisplayString(newTypeName)) },
-            onClick = {
-              if (newTypeName != nodeDataTypeName) {
-                onUpdate(createDefaultNode(newTypeName))
-              }
-              expandedNodeTypes = false
+        OutlinedTextField(
+          value = prettyDisplayString(nodeDataTypeName),
+          onValueChange = {},
+          readOnly = true,
+          label = { Text("Node Type") },
+          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNodeTypes) },
+          modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+          expanded = expandedNodeTypes,
+          onDismissRequest = { expandedNodeTypes = false }
+        ) {
+          @Composable
+          fun DropdownSection(label: String, types: List<String>) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+            ) {
+              HorizontalDivider(modifier = Modifier.weight(1f))
+              Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(horizontal = 8.dp)
+              )
+              HorizontalDivider(modifier = Modifier.weight(1f))
             }
-          )
+            types.forEach { type ->
+              DropdownMenuItem(
+                text = { Text(prettyDisplayString(type)) },
+                onClick = {
+                  if (type != nodeDataTypeName) {
+                    onUpdate(createDefaultNode(type))
+                  }
+                  expandedNodeTypes = false
+                }
+              )
+            }
+          }
+
+          DropdownSection("Start nodes:", NODE_TYPES_START)
+          DropdownSection("Operator nodes:", NODE_TYPES_OPERATOR)
+          DropdownSection("Terminal nodes:", NODE_TYPES_TERMINAL)
         }
       }
     }
@@ -137,28 +150,46 @@ fun NodeFields(
                 expanded = expandedSource,
                 onDismissRequest = { expandedSource = false }
               ) {
-                ALL_SOURCES.forEach { source ->
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(source)) },
-                    onClick = {
-                      val needsClamp = source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
-                                      source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
-                      val newOor = if (needsClamp) ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP else sourceNode.sourceOutOfRangeBehavior
-                      onUpdate(
-                        NodeData.Behavior(
-                          behaviorNode.safeCopy(
-                            sourceNode = sourceNode.safeCopy(
-                              source = source,
-                              sourceOutOfRangeBehavior = newOor
+                @Composable
+                fun SourceSection(label: String, sources: List<ProtoBrushBehavior.Source>) {
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+                  ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                    Text(
+                      text = label,
+                      style = MaterialTheme.typography.labelSmall,
+                      color = MaterialTheme.colorScheme.outline,
+                      modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                  }
+                  sources.forEach { source ->
+                    DropdownMenuItem(
+                      text = { Text(prettyDisplayString(source)) },
+                      onClick = {
+                        val needsClamp = source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
+                                        source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
+                        val newOor = if (needsClamp) ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP else sourceNode.sourceOutOfRangeBehavior
+                        onUpdate(
+                          NodeData.Behavior(
+                            behaviorNode.safeCopy(
+                              sourceNode = sourceNode.safeCopy(source = source, sourceOutOfRangeBehavior = newOor)
                             )
                           )
                         )
-                      )
-                      expandedSource = false
-                    }
-                  )
+                        expandedSource = false
+                      }
+                    )
+                  }
                 }
 
+                SourceSection("Input:", SOURCES_INPUT)
+                SourceSection("Movement:", SOURCES_MOVEMENT)
+                SourceSection("Distance:", SOURCES_DISTANCE)
+                SourceSection("Time:", SOURCES_TIME)
+                SourceSection("Acceleration:", SOURCES_ACCELERATION)
               }
             }
             BrushSliderControl(
@@ -576,19 +607,39 @@ fun NodeFields(
                 expanded = expandedTarget,
                 onDismissRequest = { expandedTarget = false }
               ) {
-                ALL_TARGETS.forEach { target ->
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(target)) },
-                    onClick = {
-                      onUpdate(
-                        NodeData.Behavior(
-                          behaviorNode.safeCopy(targetNode = targetNode.safeCopy(target = target))
+                @Composable
+                fun TargetSection(label: String, targets: List<ProtoBrushBehavior.Target>) {
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+                  ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                    Text(
+                      text = label,
+                      style = MaterialTheme.typography.labelSmall,
+                      color = MaterialTheme.colorScheme.outline,
+                      modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                  }
+                  targets.forEach { target ->
+                    DropdownMenuItem(
+                      text = { Text(prettyDisplayString(target)) },
+                      onClick = {
+                        onUpdate(
+                          NodeData.Behavior(
+                            behaviorNode.safeCopy(targetNode = targetNode.safeCopy(target = target))
+                          )
                         )
-                      )
-                      expandedTarget = false
-                    }
-                  )
+                        expandedTarget = false
+                      }
+                    )
+                  }
                 }
+
+                TargetSection("Size & Shape:", TARGETS_SIZE_SHAPE)
+                TargetSection("Position:", TARGETS_POSITION)
+                TargetSection("Color & Opacity:", TARGETS_COLOR_OPACITY)
               }
             }
             BrushSliderControl(
@@ -1006,15 +1057,83 @@ fun NodeFields(
   }
 }
 
-private val ALL_SOURCES =
-  ProtoBrushBehavior.Source.values()
-    .filter { it != ProtoBrushBehavior.Source.SOURCE_UNSPECIFIED && it.ordinal >= 0 }
-    .toTypedArray()
+internal val SOURCES_INPUT = listOf(
+  ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE,
+  ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS,
+  ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS,
+  ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS,
+  ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS,
+  ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS
+)
 
-private val ALL_TARGETS =
-  ProtoBrushBehavior.Target.values()
-    .filter { it != ProtoBrushBehavior.Target.TARGET_UNSPECIFIED && it.ordinal >= 0 }
-    .toTypedArray()
+internal val SOURCES_MOVEMENT = listOf(
+  ProtoBrushBehavior.Source.SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_SPEED_IN_CENTIMETERS_PER_SECOND,
+  ProtoBrushBehavior.Source.SOURCE_VELOCITY_X_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_VELOCITY_X_IN_CENTIMETERS_PER_SECOND,
+  ProtoBrushBehavior.Source.SOURCE_VELOCITY_Y_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND,
+  ProtoBrushBehavior.Source.SOURCE_DIRECTION_IN_RADIANS,
+  ProtoBrushBehavior.Source.SOURCE_DIRECTION_ABOUT_ZERO_IN_RADIANS,
+  ProtoBrushBehavior.Source.SOURCE_NORMALIZED_DIRECTION_X,
+  ProtoBrushBehavior.Source.SOURCE_NORMALIZED_DIRECTION_Y
+)
+
+internal val SOURCES_DISTANCE = listOf(
+  ProtoBrushBehavior.Source.SOURCE_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS,
+  ProtoBrushBehavior.Source.SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE,
+  ProtoBrushBehavior.Source.SOURCE_PREDICTED_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS,
+  ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_IN_MULTIPLES_OF_BRUSH_SIZE,
+  ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH
+)
+
+internal val SOURCES_TIME = listOf(
+  ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_SECONDS,
+  ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_MILLIS,
+  ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS,
+  ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS,
+  ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS,
+  ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_MILLIS,
+  ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
+)
+
+internal val SOURCES_ACCELERATION = listOf(
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_X_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_Y_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_FORWARD_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_LATERAL_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
+  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED
+)
+
+internal val TARGETS_SIZE_SHAPE = listOf(
+  ProtoBrushBehavior.Target.TARGET_WIDTH_MULTIPLIER,
+  ProtoBrushBehavior.Target.TARGET_HEIGHT_MULTIPLIER,
+  ProtoBrushBehavior.Target.TARGET_SIZE_MULTIPLIER,
+  ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS,
+  ProtoBrushBehavior.Target.TARGET_PINCH_OFFSET,
+  ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS,
+  ProtoBrushBehavior.Target.TARGET_CORNER_ROUNDING_OFFSET
+)
+
+internal val TARGETS_POSITION = listOf(
+  ProtoBrushBehavior.Target.TARGET_POSITION_OFFSET_X_IN_MULTIPLES_OF_BRUSH_SIZE,
+  ProtoBrushBehavior.Target.TARGET_POSITION_OFFSET_Y_IN_MULTIPLES_OF_BRUSH_SIZE,
+  ProtoBrushBehavior.Target.TARGET_POSITION_OFFSET_FORWARD_IN_MULTIPLES_OF_BRUSH_SIZE,
+  ProtoBrushBehavior.Target.TARGET_POSITION_OFFSET_LATERAL_IN_MULTIPLES_OF_BRUSH_SIZE
+)
+
+internal val TARGETS_COLOR_OPACITY = listOf(
+  ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS,
+  ProtoBrushBehavior.Target.TARGET_SATURATION_MULTIPLIER,
+  ProtoBrushBehavior.Target.TARGET_LUMINOSITY,
+  ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER
+)
 
 private val ALL_POLAR_TARGETS =
   ProtoBrushBehavior.PolarTarget.values()
@@ -1046,26 +1165,9 @@ private val ALL_INTERPOLATIONS =
 private val ALL_TOOL_TYPES =
   arrayOf(InputToolType.STYLUS, InputToolType.TOUCH, InputToolType.MOUSE, InputToolType.UNKNOWN)
 
-private val NODE_TYPES =
-  arrayOf(
-    "Source",
-    "Constant",
-    "Noise",
-    "ToolTypeFilter",
-    "Damping",
-    "Response",
-    "Integral",
-    "BinaryOp",
-    "Interpolation",
-    "Target",
-    "PolarTarget",
-    "Tip",
-    "Coat",
-    "Paint",
-    "TextureLayer",
-    "ColorFunction",
-    "BrushFamily",
-  )
+internal val NODE_TYPES_START = listOf("Source", "Constant", "Noise")
+internal val NODE_TYPES_OPERATOR = listOf("ToolTypeFilter", "Damping", "Response", "Integral", "BinaryOp", "Interpolation")
+internal val NODE_TYPES_TERMINAL = listOf("Target", "PolarTarget")
 
 internal fun createDefaultNode(typeName: String): NodeData {
   return when (typeName) {
@@ -1190,12 +1292,11 @@ internal fun createDefaultNode(typeName: String): NodeData {
     else ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
-          .setSourceNode(
-            ProtoBrushBehavior.SourceNode.newBuilder()
-              .setSource(ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE)
-              .setSourceValueRangeStart(0f)
-              .setSourceValueRangeEnd(1f)
-              .setSourceOutOfRangeBehavior(ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
+          .setTargetNode(
+            ProtoBrushBehavior.TargetNode.newBuilder()
+              .setTarget(ProtoBrushBehavior.Target.TARGET_WIDTH_MULTIPLIER)
+              .setTargetModifierRangeStart(0f)
+              .setTargetModifierRangeEnd(1f)
           )
           .build()
       )

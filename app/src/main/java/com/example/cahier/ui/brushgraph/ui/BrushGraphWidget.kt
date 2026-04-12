@@ -631,14 +631,6 @@ fun CreateNodeFAB(
         ) {
           Column(modifier = Modifier.padding(vertical = 8.dp)) {
             DropdownMenuItem(
-              text = { Text("Family") },
-              leadingIcon = { Icon(Icons.Default.Folder, contentDescription = null) },
-              onClick = {
-                viewModel.addFamilyNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
               text = { Text("Coat") },
               leadingIcon = { Icon(Icons.Default.Layers, contentDescription = null) },
               onClick = {
@@ -667,6 +659,22 @@ fun CreateNodeFAB(
               leadingIcon = { Icon(Icons.Default.Psychology, contentDescription = null) },
               onClick = {
                 viewModel.addBehaviorNode(centerInCanvas)
+                expanded = false
+              },
+            )
+            DropdownMenuItem(
+              text = { Text("Color Function") },
+              leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null) },
+              onClick = {
+                viewModel.addColorFunctionNode(centerInCanvas)
+                expanded = false
+              },
+            )
+            DropdownMenuItem(
+              text = { Text("Texture Layer") },
+              leadingIcon = { Icon(Icons.Default.Layers, contentDescription = null) },
+              onClick = {
+                viewModel.addTextureLayerNode(centerInCanvas)
                 expanded = false
               },
             )
@@ -767,6 +775,7 @@ fun AdaptiveInspectorPane(
               NodeInspector(
                 node = selectedNode,
                 onUpdate = { viewModel.updateNodeData(selectedNode.id, it) },
+                onDisableChange = { viewModel.setNodeDisabled(selectedNode.id, it) },
                 onChooseColor = onChooseColor,
                 allTextureIds = allTextureIds,
                 onLoadTexture = onLoadTexture,
@@ -779,12 +788,13 @@ fun AdaptiveInspectorPane(
               val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toNodeId }
               if (fromNode != null && toNode != null) {
                 EdgeInspector(
+                  edge = selectedEdge,
                   fromNode = fromNode,
                   toNode = toNode,
-                  toInputIndex = selectedEdge.toInputIndex,
                   onNodeFocus = { nodeId: String ->
                     viewModel.centerNode(nodeId, isLandscape, density)
                   },
+                  onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
                   onDelete = { viewModel.deleteEdge(selectedEdge) },
                 )
               }

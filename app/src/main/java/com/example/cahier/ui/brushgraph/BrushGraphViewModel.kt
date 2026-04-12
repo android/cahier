@@ -134,9 +134,7 @@ class BrushGraphViewModel @Inject constructor(
     private const val TAG = "BrushGraphViewModel"
   }
 
-  init {
-    android.util.Log.d(TAG, "Initializing BrushGraphViewModel")
-    // Initialize with a default brush structure: Family -> Coat -> (Tip, Paint)
+  private fun createDefaultGraph(): BrushGraph {
     val defaultTip = ProtoBrushTip.getDefaultInstance()
     val defaultPaint = ProtoBrushPaint.getDefaultInstance()
     val defaultCoat = ProtoBrushCoat.newBuilder()
@@ -146,8 +144,12 @@ class BrushGraphViewModel @Inject constructor(
     val defaultProto = ProtoBrushFamily.newBuilder()
       .addCoats(defaultCoat)
       .build()
-    
-    graph = BrushGraphConverter.fromProtoBrushFamily(defaultProto)
+    return BrushGraphConverter.fromProtoBrushFamily(defaultProto)
+  }
+
+  init {
+    android.util.Log.d(TAG, "Initializing BrushGraphViewModel")
+    graph = createDefaultGraph()
     validate()
   }
 
@@ -162,6 +164,8 @@ class BrushGraphViewModel @Inject constructor(
   fun addNode(data: NodeData, position: Offset) {
     val newNode = GraphNode(id = UUID.randomUUID().toString(), data = data, position = position)
     graph = graph.copy(nodes = graph.nodes + newNode)
+    selectedNodeId = newNode.id
+    selectedEdge = null
     validate()
   }
 
@@ -185,17 +189,26 @@ class BrushGraphViewModel @Inject constructor(
     addNode(NodeData.Tip(ProtoBrushTip.getDefaultInstance()), position)
   }
 
-  /** Adds a new Behavior node (SourceNode by default) at the specified position. */
+  /** Adds a new Color Function node at the specified position. */
+  fun addColorFunctionNode(position: Offset) {
+    addNode(NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), position)
+  }
+
+  /** Adds a new Texture Layer node at the specified position. */
+  fun addTextureLayerNode(position: Offset) {
+    addNode(NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()), position)
+  }
+
+  /** Adds a new Behavior node (TargetNode by default) at the specified position. */
   fun addBehaviorNode(position: Offset) {
     addNode(
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
-          .setSourceNode(
-            ProtoBrushBehavior.SourceNode.newBuilder()
-              .setSource(ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE)
-              .setSourceValueRangeStart(0f)
-              .setSourceValueRangeEnd(1f)
-              .setSourceOutOfRangeBehavior(ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
+          .setTargetNode(
+            ProtoBrushBehavior.TargetNode.newBuilder()
+              .setTarget(ProtoBrushBehavior.Target.TARGET_WIDTH_MULTIPLIER)
+              .setTargetModifierRangeStart(0f)
+              .setTargetModifierRangeEnd(1f)
           )
           .build()
       ),
@@ -242,6 +255,24 @@ class BrushGraphViewModel @Inject constructor(
       }
     }
 
+    validate()
+  }
+
+  /** Sets the disabled state of a node. */
+  fun setNodeDisabled(nodeId: String, isDisabled: Boolean) {
+    graph = graph.copy(
+      nodes = graph.nodes.map { if (it.id == nodeId) it.copy(isDisabled = isDisabled) else it }
+    )
+    validate()
+  }
+
+  /** Sets the disabled state of an edge. */
+  fun setEdgeDisabled(edge: GraphEdge, isDisabled: Boolean) {
+    val updatedEdge = edge.copy(isDisabled = isDisabled)
+    graph = graph.copy(
+      edges = graph.edges.map { if (it == edge) updatedEdge else it }
+    )
+    selectedEdge = updatedEdge
     validate()
   }
 
@@ -417,7 +448,7 @@ class BrushGraphViewModel @Inject constructor(
   /** Clears the graph. */
   fun clearGraph() {
     dismissPanes()
-    graph = BrushGraph()
+    graph = createDefaultGraph()
     graphIssues = emptyList()
     clearStrokes()
     validate()
@@ -426,6 +457,11 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Deletes a node and all associated edges. */
   fun deleteNode(nodeId: String) {
+    val node = graph.nodes.find { it.id == nodeId } ?: return
+    if (node.data is NodeData.Family) {
+      postDebug("Cannot delete Family node")
+      return
+    }
     if (selectedNodeId == nodeId) {
       selectedNodeId = null
     }
