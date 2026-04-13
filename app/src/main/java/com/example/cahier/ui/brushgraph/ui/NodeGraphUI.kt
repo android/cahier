@@ -74,8 +74,11 @@ import com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
 import com.example.cahier.ui.brushgraph.model.NODE_PADDING_BOTTOM
 import com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL
 import com.example.cahier.ui.brushgraph.model.NODE_WIDTH
+import com.example.cahier.ui.brushgraph.model.PREVIEW_AREA_HEIGHT
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.PortSide
+import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import com.example.cahier.ui.brushgraph.model.PortInfo
 import com.example.cahier.ui.theme.extendedColorScheme
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushPaint as ProtoBrushPaint
@@ -122,7 +125,7 @@ fun NodeGraphCanvas(
   var draggingPointerPos by remember { mutableStateOf<Offset?>(null) } // In parent Box space
   var activeSourcePort by remember { mutableStateOf<String?>(null) }
   var canvasCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
-  val nodeRegistry = remember { NodeRegistry() }
+  val nodeRegistry = remember(graph) { NodeRegistry() }
 
   val currentZoom by androidx.compose.runtime.rememberUpdatedState(zoom)
   val currentOffset by androidx.compose.runtime.rememberUpdatedState(offset)
@@ -385,8 +388,9 @@ fun NodeWidget(
 ) {
   var isPressed by remember { mutableStateOf(false) }
   val density = LocalDensity.current
+  val visiblePorts = node.getVisiblePorts(graph)
 
-  androidx.compose.runtime.DisposableEffect(node.data.inputLabels(), node.data.hasOutput()) {
+  androidx.compose.runtime.DisposableEffect(visiblePorts, node.data.hasOutput()) {
     nodeRegistry.clearNode(node.id)
     onDispose {}
   }
@@ -398,7 +402,7 @@ fun NodeWidget(
   val currentOnDragUpdate by androidx.compose.runtime.rememberUpdatedState(onDrag)
 
   val w = node.data.width()
-  val h = node.data.height()
+  val h = node.data.height(visiblePorts.size)
 
   Box(
     modifier =
@@ -588,7 +592,7 @@ fun NodeWidget(
           // Always show input labels row by row below the title.
           Box(modifier = Modifier.fillMaxWidth()) {
             Column {
-              for (label in node.data.inputLabels()) {
+              for (port in visiblePorts) {
                 with(density) {
                   Box(
                     modifier =
@@ -598,7 +602,7 @@ fun NodeWidget(
                     contentAlignment = Alignment.CenterStart,
                   ) {
                     Text(
-                      text = label,
+                      text = port.label,
                       style = MaterialTheme.typography.labelSmall,
                       color = MaterialTheme.colorScheme.onSurfaceVariant,
                       modifier = Modifier.align(Alignment.CenterStart),
@@ -629,11 +633,11 @@ fun NodeWidget(
         }
 
         // Ports (Inputs & Output for this part of the node)
-        for (index in node.data.inputLabels().indices) {
+        for (port in visiblePorts) {
           PortDot(
             side = PortSide.INPUT,
-            index = index,
-            count = node.data.inputLabels().size,
+            index = port.index,
+            count = visiblePorts.size,
             modifier = Modifier.align(Alignment.TopStart),
             nodeId = node.id,
             zoom = zoom,
@@ -642,7 +646,7 @@ fun NodeWidget(
             onDragEnd = onPortDragEnd,
             nodeRegistry = nodeRegistry,
             canvasCoordinates = canvasCoordinates,
-            portPosition = node.data.getPortPosition(PortSide.INPUT, index),
+            portPosition = node.data.getPortPosition(PortSide.INPUT, port.index),
           )
         }
         if (node.data.hasOutput()) {

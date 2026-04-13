@@ -81,13 +81,12 @@ sealed interface NodeData {
    * Total estimated height of the node on the canvas. The actual height may differ slightly due to
    * padding.
    */
-  fun height(): Float {
-    val inputCount = inputLabels().size
+  fun height(portCount: Int = inputLabels().size): Float {
     val previewH = if (this is NodeData.ColorFunc || this is NodeData.TextureLayer) PREVIEW_AREA_HEIGHT else 0f
     return NODE_PADDING_VERTICAL +
       titleHeight() +
       previewH +
-      maxOf(inputCount, 1) * INPUT_ROW_HEIGHT +
+      maxOf(portCount, 1) * INPUT_ROW_HEIGHT +
       NODE_PADDING_BOTTOM
   }
 
@@ -297,9 +296,14 @@ data class BrushGraph(
 ) {
   companion object {
     /** Returns whether a connection from [from] to [to] at [toIndex] is valid. */
-    fun isValidConnection(from: NodeData, to: NodeData, toIndex: Int): String? {
-      val inputLabels = to.inputLabels()
-      if (toIndex < 0 || toIndex >= inputLabels.size) {
+    fun isValidConnection(from: NodeData, to: NodeData, toIndex: Int, graph: BrushGraph = BrushGraph(), toNodeId: String = ""): String? {
+      val toNode = graph.nodes.find { it.id == toNodeId }
+      val maxAllowedIndex = if (toNode != null) {
+          toNode.getVisiblePorts(graph).size
+      } else {
+          to.inputLabels().size
+      }
+      if (toIndex < 0 || toIndex >= maxAllowedIndex) {
         return "Index out of bounds"
       }
 
@@ -326,14 +330,14 @@ data class BrushGraph(
             } else {
               "Coat can only accept input from Tip at the first port"
             }
-          } else if (toIndex == 1) {
+          } else if (toIndex >= 1) {
             if (from is NodeData.Paint) {
               null
             } else {
-              "Coat can only accept input from Paint at the second port"
+              "Coat can only accept input from Paint at ports after the first"
             }
           } else {
-            "Internal: Coat can only accept input at index 0 or 1"
+            "Internal: Coat can only accept input at index >= 0"
           }
         }
         is NodeData.Family -> {
@@ -344,8 +348,8 @@ data class BrushGraph(
           }
         }
         is NodeData.Tip -> {
-          if (toIndex != 0) {
-            "Internal: Tip should only accept input at index 0"
+          if (toIndex < 0) {
+            "Internal: Tip cannot accept input at negative index"
           } else if (
             !(from is NodeData.Behavior) ||
               (from.node.nodeCase != ProtoBrushBehavior.Node.NodeCase.TARGET_NODE &&
@@ -357,21 +361,19 @@ data class BrushGraph(
           }
         }
         is NodeData.Paint -> {
-          if (toIndex == 0) {
-            if (from is NodeData.TextureLayer) {
-              null
+            val connectedEdges = graph.edges.filter { it.toNodeId == toNodeId && !it.isDisabled }
+            val textureEdges = connectedEdges.filter { edge ->
+                val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+                fromNode?.data is NodeData.TextureLayer
+            }.sortedBy { it.toInputIndex }
+            
+            val numTextures = textureEdges.size
+            
+            if (toIndex <= numTextures) {
+                if (from is NodeData.TextureLayer) null else "Paint can only accept input from TextureLayer at texture ports"
             } else {
-              "Paint can only accept input from TextureLayer at the first port"
+                if (from is NodeData.ColorFunc) null else "Paint can only accept input from ColorFunction at color ports"
             }
-          } else if (toIndex == 1) {
-            if (from is NodeData.ColorFunc) {
-              null
-            } else {
-              "Paint can only accept input from ColorFunction at the second port"
-            }
-          } else {
-            "Internal: Paint can only accept input at index 0 or 1"
-          }
         }
         is NodeData.TextureLayer -> "TextureLayer cannot accept inputs"
         is NodeData.ColorFunc -> "ColorFunction cannot accept inputs"
@@ -393,4 +395,136 @@ data class BrushGraph(
       }
     }
   }
+}
+
+data class PortInfo(
+    val label: String,
+    val index: Int,
+    val isAddPort: Boolean = false
+)
+
+fun GraphNode.getVisiblePorts(graph: BrushGraph): List<PortInfo> {
+    val connectedEdges = graph.edges.filter { it.toNodeId == this.id }
+    val ports = mutableListOf<PortInfo>()
+
+    when (val data = this.data) {
+        is NodeData.Coat -> {
+            ports.add(PortInfo("Tip", 0))
+            val paintEdges = connectedEdges.filter { edge ->
+                val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+                fromNode?.data is NodeData.Paint
+            }.sortedBy { it.toInputIndex }
+            
+            var nextIndex = 1
+            for (edge in paintEdges) {
+                ports.add(PortInfo("Paint", nextIndex++))
+            }
+            ports.add(PortInfo("Add Paint...", nextIndex++, isAddPort = true))
+        }
+        is NodeData.Family -> {
+            for (i in 0 until data.numCoats) {
+                ports.add(PortInfo("Coat $i", i))
+            }
+            ports.add(PortInfo("Add Coat...", data.numCoats, isAddPort = true))
+        }
+        is NodeData.Paint -> {
+            val textureEdges = connectedEdges.filter { edge ->
+                val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+                fromNode?.data is NodeData.TextureLayer
+            }.sortedBy { it.toInputIndex }
+
+            val colorEdges = connectedEdges.filter { edge ->
+                val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+                fromNode?.data is NodeData.ColorFunc
+            }.sortedBy { it.toInputIndex }
+
+            var nextIndex = 0
+            
+            for (edge in textureEdges) {
+                ports.add(PortInfo("Texture", nextIndex++))
+            }
+            ports.add(PortInfo("Add Texture...", nextIndex++, isAddPort = true))
+
+            for (edge in colorEdges) {
+                ports.add(PortInfo("Color", nextIndex++))
+            }
+            ports.add(PortInfo("Add Color...", nextIndex++, isAddPort = true))
+        }
+         is NodeData.Behavior -> {
+             when (data.node.nodeCase) {
+                 ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
+                     ports.add(PortInfo("Value", 0))
+                     ports.add(PortInfo("Start", 1))
+                     ports.add(PortInfo("End", 2))
+                 }
+                 ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
+                     val sortedEdges = connectedEdges.sortedBy { it.toInputIndex }
+                     var nextIndex = 0
+                     for (edge in sortedEdges) {
+                         var n = nextIndex + 1
+                         val builder = StringBuilder()
+                         while (n > 0) {
+                             val m = (n - 1) % 26
+                             builder.append(('A'.code + m).toChar())
+                             n = (n - 1) / 26
+                         }
+                         val label = builder.reverse().toString()
+                         ports.add(PortInfo(label, nextIndex++))
+                     }
+                     ports.add(PortInfo("Add input...", nextIndex++, isAddPort = true))
+                 }
+                 ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
+                     val labels = data.inputLabels()
+                     if (connectedEdges.isEmpty()) {
+                         ports.add(PortInfo("Add inputs...", 0, isAddPort = true))
+                     } else {
+                         val connectedIndices = connectedEdges.map { it.toInputIndex }.sorted()
+                         val maxIndex = connectedIndices.maxOrNull() ?: -1
+                         val numSets = maxOf(1, (maxIndex + labels.size) / labels.size)
+                         var nextIndex = 0
+                         for (i in 0 until numSets) {
+                             for (label in labels) {
+                                 ports.add(PortInfo(label, nextIndex++))
+                             }
+                         }
+                         ports.add(PortInfo("Add inputs...", nextIndex++, isAddPort = true))
+                     }
+                 }
+                 else -> {
+                     val labels = data.inputLabels()
+                     if (labels.size == 1) {
+                          val sortedEdges = connectedEdges.sortedBy { it.toInputIndex }
+                          var nextIndex = 0
+                          for (edge in sortedEdges) {
+                              ports.add(PortInfo(labels[0], nextIndex++))
+                          }
+                          ports.add(PortInfo("Add input...", nextIndex++, isAddPort = true))
+                     } else {
+                          for (i in labels.indices) {
+                              ports.add(PortInfo(labels[i], i))
+                          }
+                     }
+                 }
+             }
+         }
+        is NodeData.Tip -> {
+            val behaviorEdges = connectedEdges.filter { edge ->
+                val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+                fromNode?.data is NodeData.Behavior
+            }.sortedBy { it.toInputIndex }
+            
+            var nextIndex = 0
+            for (edge in behaviorEdges) {
+                ports.add(PortInfo("Behavior", nextIndex++))
+            }
+            ports.add(PortInfo("Add behavior...", nextIndex++, isAddPort = true))
+        }
+        else -> {
+            val labels = data.inputLabels()
+            for (i in labels.indices) {
+                ports.add(PortInfo(labels[i], i))
+            }
+        }
+    }
+    return ports
 }

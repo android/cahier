@@ -233,7 +233,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun validateAll_passThroughMultiInputOperator_secondInputIgnored() {
+    fun validateAll_passThroughMultiInputOperator_secondInputRespected() {
         val sourceNode = GraphNode(
             id = "source",
             data = NodeData.Behavior(
@@ -309,8 +309,8 @@ class BrushFamilyConverterTest {
         val issues = BrushFamilyConverter.validateAll(graph)
         println("Test 4 issues: $issues")
         
-        // Should FAIL because BinaryOp only passes through input 0!
-        assertTrue(issues.any { it.message.contains("Missing source for pass-through connection") })
+        // Should NOT fail because BinaryOp now passes through ALL inputs!
+        org.junit.Assert.assertFalse(issues.any { it.message.contains("Missing source for pass-through connection") })
     }
 
     @Test
@@ -379,5 +379,592 @@ class BrushFamilyConverterTest {
         assertTrue(issues.any { it.nodeId == "tip" && it.message.contains("output is not used") })
         // Paint output should be reported as not used because Coat is disabled.
         assertTrue(issues.any { it.nodeId == "paint" && it.message.contains("output is not used") })
+    }
+
+    @Test
+    fun testStartNodeDuplication_WhenReachedMultipleTimes() {
+        val sourceNode = GraphNode(
+            id = "source",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder()
+                        .setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE)
+                        .setSourceValueRangeStart(0f)
+                        .setSourceValueRangeEnd(1f)
+                        .build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val dampingNodeA = GraphNode(
+            id = "dampingA",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setDampingNode(ink.proto.BrushBehavior.DampingNode.newBuilder().build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val dampingNodeB = GraphNode(
+            id = "dampingB",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setDampingNode(ink.proto.BrushBehavior.DampingNode.newBuilder().build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val binaryOpNode = GraphNode(
+            id = "binary_op",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setBinaryOpNode(ink.proto.BrushBehavior.BinaryOpNode.newBuilder().setOperation(ink.proto.BrushBehavior.BinaryOp.BINARY_OP_SUM))
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val targetNode = GraphNode(
+            id = "target",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val tipNode = GraphNode(
+            id = "tip",
+            data = NodeData.Tip(ink.proto.BrushTip.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val paintNode = GraphNode(
+            id = "paint",
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val coatNode = GraphNode(
+            id = "coat",
+            data = NodeData.Coat,
+            position = Offset.Zero
+        )
+        
+        val familyNode = GraphNode(
+            id = "family",
+            data = NodeData.Family(numCoats = 1),
+            position = Offset.Zero
+        )
+        
+        val edges = listOf(
+            GraphEdge(fromNodeId = "source", toNodeId = "dampingA", toInputIndex = 0),
+            GraphEdge(fromNodeId = "source", toNodeId = "dampingB", toInputIndex = 0),
+            GraphEdge(fromNodeId = "dampingA", toNodeId = "binary_op", toInputIndex = 0),
+            GraphEdge(fromNodeId = "dampingB", toNodeId = "binary_op", toInputIndex = 1),
+            GraphEdge(fromNodeId = "binary_op", toNodeId = "target", toInputIndex = 0),
+            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
+            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
+            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
+            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+        )
+        
+        val graph = BrushGraph(
+            nodes = listOf(familyNode, coatNode, tipNode, paintNode, targetNode, binaryOpNode, dampingNodeA, dampingNodeB, sourceNode),
+            edges = edges
+        )
+        
+        val brushFamily = try {
+            BrushFamilyConverter.convertIntoProto(graph)
+        } catch (e: com.example.cahier.ui.brushgraph.model.GraphValidationException) {
+            println("Validation failed: ${e.message}")
+            throw e
+        }
+        
+        val tip = brushFamily.getCoats(0).tip
+        org.junit.Assert.assertEquals(1, tip.behaviorsCount)
+        val behavior = tip.getBehaviors(0)
+        
+        val sourceNodeCount = behavior.nodesList.count { it.hasSourceNode() }
+        org.junit.Assert.assertEquals(2, sourceNodeCount)
+    }
+
+    @Test
+    fun testInterpolationNode_CreatesFullSetOfInputs() {
+        val valueNode = GraphNode(
+            id = "value",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val startNode = GraphNode(
+            id = "start",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setConstantNode(ink.proto.BrushBehavior.ConstantNode.newBuilder().setValue(0f).build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val endNode = GraphNode(
+            id = "end",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setConstantNode(ink.proto.BrushBehavior.ConstantNode.newBuilder().setValue(1f).build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val lerpNode = GraphNode(
+            id = "lerp",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setInterpolationNode(ink.proto.BrushBehavior.InterpolationNode.newBuilder().setInterpolation(ink.proto.BrushBehavior.Interpolation.INTERPOLATION_LERP).build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val targetNode = GraphNode(
+            id = "target",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val tipNode = GraphNode(
+            id = "tip",
+            data = NodeData.Tip(ink.proto.BrushTip.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val paintNode = GraphNode(
+            id = "paint",
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val coatNode = GraphNode(
+            id = "coat",
+            data = NodeData.Coat,
+            position = Offset.Zero
+        )
+        
+        val familyNode = GraphNode(
+            id = "family",
+            data = NodeData.Family(numCoats = 1),
+            position = Offset.Zero
+        )
+        
+        val edges = listOf(
+            GraphEdge(fromNodeId = "value", toNodeId = "lerp", toInputIndex = 0),
+            GraphEdge(fromNodeId = "start", toNodeId = "lerp", toInputIndex = 1),
+            GraphEdge(fromNodeId = "end", toNodeId = "lerp", toInputIndex = 2),
+            GraphEdge(fromNodeId = "lerp", toNodeId = "target", toInputIndex = 0),
+            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
+            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
+            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
+            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+        )
+        
+        val graph = BrushGraph(
+            nodes = listOf(familyNode, coatNode, tipNode, paintNode, targetNode, lerpNode, valueNode, startNode, endNode),
+            edges = edges
+        )
+        
+        val brushFamily = BrushFamilyConverter.convertIntoProto(graph)
+        
+        val tip = brushFamily.getCoats(0).tip
+        val behavior = tip.getBehaviors(0)
+        
+        // The nodes list should contain: [Value, Start, End, Lerp, Target]
+        // All connected! So 5 nodes!
+        org.junit.Assert.assertEquals(5, behavior.nodesCount)
+        org.junit.Assert.assertTrue(behavior.getNodes(3).hasInterpolationNode())
+    }
+
+    @Test
+    fun testCoatNode_SupportsMultiplePaints() {
+        val valueNode = GraphNode(
+            id = "value",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val targetNode = GraphNode(
+            id = "target",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val tipNode = GraphNode(
+            id = "tip",
+            data = NodeData.Tip(ink.proto.BrushTip.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val paintNode1 = GraphNode(
+            id = "paint1",
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val paintNode2 = GraphNode(
+            id = "paint2",
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val coatNode = GraphNode(
+            id = "coat",
+            data = NodeData.Coat,
+            position = Offset.Zero
+        )
+        
+        val familyNode = GraphNode(
+            id = "family",
+            data = NodeData.Family(numCoats = 1),
+            position = Offset.Zero
+        )
+        
+        val edges = listOf(
+            GraphEdge(fromNodeId = "value", toNodeId = "target", toInputIndex = 0),
+            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
+            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
+            GraphEdge(fromNodeId = "paint1", toNodeId = "coat", toInputIndex = 1),
+            GraphEdge(fromNodeId = "paint2", toNodeId = "coat", toInputIndex = 2),
+            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+        )
+        
+        val graph = BrushGraph(
+            nodes = listOf(familyNode, coatNode, tipNode, paintNode1, paintNode2, targetNode, valueNode),
+            edges = edges
+        )
+        
+        val brushFamily = BrushFamilyConverter.convertIntoProto(graph)
+        
+        val coat = brushFamily.getCoats(0)
+        org.junit.Assert.assertEquals(2, coat.paintPreferencesCount)
+    }
+
+    @Test
+    fun testTipNode_SupportsMultipleBehaviors() {
+        val valueNode1 = GraphNode(
+            id = "value1",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val targetNode1 = GraphNode(
+            id = "target1",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val valueNode2 = GraphNode(
+            id = "value2",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_TILT_IN_RADIANS).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val targetNode2 = GraphNode(
+            id = "target2",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .build()
+            ),
+            position = Offset.Zero
+        )
+        
+        val tipNode = GraphNode(
+            id = "tip",
+            data = NodeData.Tip(ink.proto.BrushTip.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val paintNode = GraphNode(
+            id = "paint",
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
+            position = Offset.Zero
+        )
+        
+        val coatNode = GraphNode(
+            id = "coat",
+            data = NodeData.Coat,
+            position = Offset.Zero
+        )
+        
+        val familyNode = GraphNode(
+            id = "family",
+            data = NodeData.Family(numCoats = 1),
+            position = Offset.Zero
+        )
+        
+        val edges = listOf(
+            GraphEdge(fromNodeId = "value1", toNodeId = "target1", toInputIndex = 0),
+            GraphEdge(fromNodeId = "target1", toNodeId = "tip", toInputIndex = 0),
+            GraphEdge(fromNodeId = "value2", toNodeId = "target2", toInputIndex = 0),
+            GraphEdge(fromNodeId = "target2", toNodeId = "tip", toInputIndex = 1),
+            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
+            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
+            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+        )
+        
+        val graph = BrushGraph(
+            nodes = listOf(familyNode, coatNode, tipNode, paintNode, targetNode1, targetNode2, valueNode1, valueNode2),
+            edges = edges
+        )
+        
+        val brushFamily = BrushFamilyConverter.convertIntoProto(graph)
+        
+        val tip = brushFamily.getCoats(0).tip
+        org.junit.Assert.assertEquals(2, tip.behaviorsCount)
+    }
+
+    @Test
+    fun testBinaryOpNode_ChainsInputs() {
+        val sourceNode1 = GraphNode(
+            id = "source1",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val sourceNode2 = GraphNode(
+            id = "source2",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val sourceNode3 = GraphNode(
+            id = "source3",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val binaryOpNode = GraphNode(
+            id = "binOp",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setBinaryOpNode(ink.proto.BrushBehavior.BinaryOpNode.newBuilder().build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val targetNode = GraphNode(
+            id = "target",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val tipNode = GraphNode(
+            id = "tip",
+            data = NodeData.Tip(ink.proto.BrushTip.newBuilder().build()),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val paintNode = GraphNode(
+            id = "paint",
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val coatNode = GraphNode(
+            id = "coat",
+            data = NodeData.Coat,
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val familyNode = GraphNode(
+            id = "family",
+            data = NodeData.Family(numCoats = 1),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val edges = listOf(
+            GraphEdge(fromNodeId = "source1", toNodeId = "binOp", toInputIndex = 0),
+            GraphEdge(fromNodeId = "source2", toNodeId = "binOp", toInputIndex = 1),
+            GraphEdge(fromNodeId = "source3", toNodeId = "binOp", toInputIndex = 2),
+            GraphEdge(fromNodeId = "binOp", toNodeId = "target", toInputIndex = 0),
+            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
+            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
+            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
+            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+        )
+        
+        val graph = BrushGraph(
+            nodes = listOf(familyNode, coatNode, tipNode, paintNode, targetNode, binaryOpNode, sourceNode1, sourceNode2, sourceNode3),
+            edges = edges
+        )
+        
+        val brushFamily = BrushFamilyConverter.convertIntoProto(graph)
+        
+        val coat = brushFamily.getCoats(0)
+        val tip = coat.tip
+        
+        org.junit.Assert.assertEquals(1, tip.behaviorsCount)
+        val behavior = tip.getBehaviors(0)
+        org.junit.Assert.assertEquals(6, behavior.nodesCount)
+        
+        org.junit.Assert.assertTrue(behavior.getNodes(0).hasSourceNode())
+        org.junit.Assert.assertTrue(behavior.getNodes(1).hasSourceNode())
+        org.junit.Assert.assertTrue(behavior.getNodes(2).hasBinaryOpNode())
+        org.junit.Assert.assertTrue(behavior.getNodes(3).hasSourceNode())
+        org.junit.Assert.assertTrue(behavior.getNodes(4).hasBinaryOpNode())
+        org.junit.Assert.assertTrue(behavior.getNodes(5).hasTargetNode())
+    }
+    
+    @Test
+    fun testPassThroughNode_PropagatesMultipleInputs() {
+        val source1 = GraphNode(
+            id = "source1",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val source2 = GraphNode(
+            id = "source2",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val disabledResponse = GraphNode(
+            id = "disabled_response",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setBinaryOpNode(ink.proto.BrushBehavior.BinaryOpNode.newBuilder().build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero,
+            isDisabled = true
+        )
+        
+        val target = GraphNode(
+            id = "target",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .build()
+            ),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val tipNode = GraphNode(
+            id = "tip",
+            data = NodeData.Tip(ink.proto.BrushTip.newBuilder().build()),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val paintNode = GraphNode(
+            id = "paint",
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val coatNode = GraphNode(
+            id = "coat",
+            data = NodeData.Coat,
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val familyNode = GraphNode(
+            id = "family",
+            data = NodeData.Family(numCoats = 1),
+            position = androidx.compose.ui.geometry.Offset.Zero
+        )
+        
+        val edges = listOf(
+            GraphEdge(fromNodeId = "source1", toNodeId = "disabled_response", toInputIndex = 0),
+            GraphEdge(fromNodeId = "source2", toNodeId = "disabled_response", toInputIndex = 1),
+            GraphEdge(fromNodeId = "disabled_response", toNodeId = "target", toInputIndex = 0),
+            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
+            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
+            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
+            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+        )
+        
+        val graph = BrushGraph(
+            nodes = listOf(familyNode, coatNode, tipNode, paintNode, target, disabledResponse, source1, source2),
+            edges = edges
+        )
+        
+        val brushFamily = BrushFamilyConverter.convertIntoProto(graph)
+        
+        val coat = brushFamily.getCoats(0)
+        val tip = coat.tip
+        
+        // Should produce 2 behaviors!
+        org.junit.Assert.assertEquals(2, tip.behaviorsCount)
+        
+        val behavior1 = tip.getBehaviors(0)
+        val behavior2 = tip.getBehaviors(1)
+        
+        // Each behavior should have 2 nodes (Source and Target)
+        org.junit.Assert.assertEquals(2, behavior1.nodesCount)
+        org.junit.Assert.assertEquals(2, behavior2.nodesCount)
+        
+        org.junit.Assert.assertTrue(behavior1.getNodes(0).hasSourceNode())
+        org.junit.Assert.assertTrue(behavior1.getNodes(1).hasTargetNode())
+        
+        org.junit.Assert.assertTrue(behavior2.getNodes(0).hasSourceNode())
+        org.junit.Assert.assertTrue(behavior2.getNodes(1).hasTargetNode())
     }
 }

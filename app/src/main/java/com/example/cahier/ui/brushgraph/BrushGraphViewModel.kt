@@ -406,6 +406,11 @@ class BrushGraphViewModel @Inject constructor(
     if (nodesById[fromId] == null) return
     val toNode = nodesById[toId] ?: return
 
+    // Enforce single-connection constraint.
+    if (graph.edges.any { it.toNodeId == toId && it.toInputIndex == toInputIndex }) {
+      return
+    }
+
     var newGraph = graph
 
     // Special handling for Brush Family ports.
@@ -418,12 +423,29 @@ class BrushGraphViewModel @Inject constructor(
           newGraph.copy(
             nodes = newGraph.nodes.map { if (it.id == toId) it.copy(data = newData) else it }
           )
-      } else {
-        // Connecting to an existing "Coat X" port.
-        // Enforce single-connection constraint.
-        if (newGraph.edges.any { it.toNodeId == toId && it.toInputIndex == toInputIndex }) {
-          return
-        }
+      }
+    } else if (toData is NodeData.Paint) {
+      val textureEdges = graph.edges.filter { edge ->
+        if (edge.isDisabled) return@filter false
+        if (edge.toNodeId != toId) return@filter false
+        val fromNode = nodesById[edge.fromNodeId]
+        fromNode != null && !fromNode.isDisabled && fromNode.data is NodeData.TextureLayer
+      }
+      val T = textureEdges.size
+      if (toInputIndex == T) {
+        // Connecting to "Add Texture..."
+        // Shift all color edges up by 1!
+        newGraph = newGraph.copy(
+          edges = newGraph.edges.map { edge ->
+            if (edge.toNodeId == toId) {
+              val fromNode = nodesById[edge.fromNodeId]
+              if (fromNode != null && fromNode.data is NodeData.ColorFunc) {
+                return@map edge.copy(toInputIndex = edge.toInputIndex + 1)
+              }
+            }
+            edge
+          }
+        )
       }
     }
 
@@ -442,26 +464,84 @@ class BrushGraphViewModel @Inject constructor(
     val toNode = newGraph.nodes.find { it.id == edge.toNodeId }
     val toData = toNode?.data
 
-    if (toData != null && toData is NodeData.Family) {
-      // Shifting logic for Brush Family coats.
-      val newData = toData.copy(numCoats = maxOf(0, toData.numCoats - 1))
-      newGraph =
-        newGraph.copy(
-          nodes =
-            newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it },
-          edges =
-            newGraph.edges
-              .filter { it != edge }
-              .map {
+    if (toData != null) {
+      val filteredEdges = newGraph.edges.filter { it != edge }
+      val remainingEdges = filteredEdges.filter { it.toNodeId == edge.toNodeId }
+      
+      val updatedEdges = when (toData) {
+        is NodeData.Coat -> {
+          if (edge.toInputIndex == 0) {
+            // Deleting Tip edge. No shifting!
+            filteredEdges
+          } else {
+            // Deleting Paint edge. Shift subsequent paint edges!
+            filteredEdges.map {
+              if (it.toNodeId == edge.toNodeId && it.toInputIndex > edge.toInputIndex) {
+                it.copy(toInputIndex = it.toInputIndex - 1)
+              } else {
+                it
+              }
+            }
+          }
+        }
+        is NodeData.Behavior -> {
+          val nodeCase = toData.node.nodeCase
+          if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+            // Polar Target: Shift only if a full set is empty!
+            val setIndex = edge.toInputIndex / 2
+            val hasAngle = remainingEdges.any { it.toInputIndex == setIndex * 2 }
+            val hasMag = remainingEdges.any { it.toInputIndex == setIndex * 2 + 1 }
+            
+            if (!hasAngle && !hasMag) {
+              // Set is empty! Delete it and shift subsequent sets up by 2!
+              filteredEdges.map {
                 if (it.toNodeId == edge.toNodeId && it.toInputIndex > edge.toInputIndex) {
-                  it.copy(toInputIndex = it.toInputIndex - 1)
+                  it.copy(toInputIndex = it.toInputIndex - 2)
                 } else {
                   it
                 }
-              },
-        )
-    } else {
-      newGraph = newGraph.copy(edges = newGraph.edges.filter { it != edge })
+              }
+            } else {
+              // Set not empty. No shifting!
+              filteredEdges
+            }
+          } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
+            // Interpolation: Fixed ports. No shifting!
+            filteredEdges
+          } else {
+            // Other behaviors (BinaryOp, Tip, etc.): Shift all subsequent edges!
+            filteredEdges.map {
+              if (it.toNodeId == edge.toNodeId && it.toInputIndex > edge.toInputIndex) {
+                it.copy(toInputIndex = it.toInputIndex - 1)
+              } else {
+                it
+              }
+            }
+          }
+        }
+        is NodeData.Family -> {
+          val updated = filteredEdges.map {
+            if (it.toNodeId == edge.toNodeId && it.toInputIndex > edge.toInputIndex) {
+              it.copy(toInputIndex = it.toInputIndex - 1)
+            } else {
+              it
+            }
+          }
+          updated
+        }
+        else -> filteredEdges
+      }
+      
+      newGraph = newGraph.copy(edges = updatedEdges)
+      
+      if (toData is NodeData.Family) {
+        val newData = toData.copy(numCoats = maxOf(0, toData.numCoats - 1))
+        newGraph =
+          newGraph.copy(
+            nodes =
+              newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
+          )
+      }
     }
 
     graph = newGraph
