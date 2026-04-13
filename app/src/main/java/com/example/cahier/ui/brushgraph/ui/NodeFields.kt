@@ -182,13 +182,29 @@ fun NodeFields(
                     DropdownMenuItem(
                       text = { Text(prettyDisplayString(source)) },
                       onClick = {
+                        val currentDisplayStart = if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
+                        val currentDisplayEnd = if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
+
+                        val newLimits = source.getNumericLimits()
+                        val clampedDisplayStart = currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
+                        val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
+
+                        val newProtoStart = if (source.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
+                        val newProtoEnd = if (source.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
+
                         val needsClamp = source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
                                         source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
                         val newOor = if (needsClamp) ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP else sourceNode.sourceOutOfRangeBehavior
+                        
                         onUpdate(
                           NodeData.Behavior(
                             behaviorNode.safeCopy(
-                              sourceNode = sourceNode.safeCopy(source = source, sourceOutOfRangeBehavior = newOor)
+                              sourceNode = sourceNode.safeCopy(
+                                source = source, 
+                                sourceOutOfRangeBehavior = newOor,
+                                sourceValueRangeStart = newProtoStart,
+                                sourceValueRangeEnd = newProtoEnd
+                              )
                             )
                           )
                         )
@@ -205,20 +221,33 @@ fun NodeFields(
                 SourceSection("Acceleration:", SOURCES_ACCELERATION)
               }
             }
+            val isAngleSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS ||
+                                sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS ||
+                                sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS ||
+                                sourceNode.source == ProtoBrushBehavior.Source.SOURCE_DIRECTION_IN_RADIANS ||
+                                sourceNode.source == ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS ||
+                                sourceNode.source == ProtoBrushBehavior.Source.SOURCE_DIRECTION_ABOUT_ZERO_IN_RADIANS ||
+                                sourceNode.source == ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS
+
+            val displayValueStart = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
+            val displayValueEnd = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
+
             BrushSliderControl(
               label = "Range Start",
-              value = sourceNode.sourceValueRangeStart,
-              valueRange = limits.min..limits.max,
+              value = displayValueStart,
+              limits = limits,
               onValueChange = {
-                onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeStart = it))))
+                val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
+                onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeStart = newValue))))
               }
             )
             BrushSliderControl(
               label = "Range End",
-              value = sourceNode.sourceValueRangeEnd,
-              valueRange = limits.min..limits.max,
+              value = displayValueEnd,
+              limits = limits,
               onValueChange = {
-                onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeEnd = it))))
+                val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
+                onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeEnd = newValue))))
               }
             )
             val isTimeSinceSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
@@ -311,9 +340,17 @@ fun NodeFields(
                   DropdownMenuItem(
                     text = { Text(prettyDisplayString(domain)) },
                     onClick = {
+                      val newLimits = domain.getNumericLimits(ProgressDomainContext.NOISE)
+                      val clampedBasePeriod = noiseNode.basePeriod.coerceIn(newLimits.min, newLimits.max)
+
                       onUpdate(
                         NodeData.Behavior(
-                          behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(varyOver = domain))
+                          behaviorNode.safeCopy(
+                            noiseNode = noiseNode.safeCopy(
+                              varyOver = domain,
+                              basePeriod = clampedBasePeriod
+                            )
+                          )
                         )
                       )
                       expandedVary = false
@@ -387,10 +424,16 @@ fun NodeFields(
                   DropdownMenuItem(
                     text = { Text(prettyDisplayString(domain)) },
                     onClick = {
+                      val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
+                      val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
+
                       onUpdate(
                         NodeData.Behavior(
                           behaviorNode.safeCopy(
-                            dampingNode = dampingNode.safeCopy(dampingSource = domain)
+                            dampingNode = dampingNode.safeCopy(
+                              dampingSource = domain,
+                              dampingGap = clampedGap
+                            )
                           )
                         )
                       )
@@ -450,10 +493,18 @@ fun NodeFields(
                   DropdownMenuItem(
                     text = { Text(prettyDisplayString(domain)) },
                     onClick = {
+                      val newLimits = domain.getNumericLimits(ProgressDomainContext.INTEGRAL)
+                      val clampedStart = integralNode.integralValueRangeStart.coerceIn(newLimits.min, newLimits.max)
+                      val clampedEnd = integralNode.integralValueRangeEnd.coerceIn(newLimits.min, newLimits.max)
+
                       onUpdate(
                         NodeData.Behavior(
                           behaviorNode.safeCopy(
-                            integralNode = integralNode.safeCopy(integrateOver = domain)
+                            integralNode = integralNode.safeCopy(
+                              integrateOver = domain,
+                              integralValueRangeStart = clampedStart,
+                              integralValueRangeEnd = clampedEnd
+                            )
                           )
                         )
                       )
@@ -639,9 +690,25 @@ fun NodeFields(
                     DropdownMenuItem(
                       text = { Text(prettyDisplayString(target)) },
                       onClick = {
+                        val currentDisplayStart = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeStart.toDouble()).toFloat() else targetNode.targetModifierRangeStart
+                        val currentDisplayEnd = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
+
+                        val newLimits = target.getNumericLimits()
+                        val clampedDisplayStart = currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
+                        val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
+
+                        val newProtoStart = if (target.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
+                        val newProtoEnd = if (target.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
+
                         onUpdate(
                           NodeData.Behavior(
-                            behaviorNode.safeCopy(targetNode = targetNode.safeCopy(target = target))
+                            behaviorNode.safeCopy(
+                              targetNode = targetNode.safeCopy(
+                                target = target,
+                                targetModifierRangeStart = newProtoStart,
+                                targetModifierRangeEnd = newProtoEnd
+                              )
+                            )
                           )
                         )
                         expandedTarget = false
@@ -655,15 +722,24 @@ fun NodeFields(
                 TargetSection("Color & Opacity:", TARGETS_COLOR_OPACITY)
               }
             }
+            val isAngleTarget = targetNode.target == ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS ||
+                                targetNode.target == ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS ||
+                                targetNode.target == ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS
+
+            val displayValueStart = if (isAngleTarget) Math.toDegrees(targetNode.targetModifierRangeStart.toDouble()).toFloat() else targetNode.targetModifierRangeStart
+            val displayValueEnd = if (isAngleTarget) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
+
             BrushSliderControl(
               label = "Range Start",
-              value = targetNode.targetModifierRangeStart,
+              value = displayValueStart,
               valueRange = limits.min..limits.max,
+              unit = limits.displayUnit,
               onValueChange = {
+                val newValue = if (isAngleTarget) Math.toRadians(it.toDouble()).toFloat() else it
                 onUpdate(
                   NodeData.Behavior(
                     behaviorNode.safeCopy(
-                      targetNode = targetNode.safeCopy(targetModifierRangeStart = it)
+                      targetNode = targetNode.safeCopy(targetModifierRangeStart = newValue)
                     )
                   )
                 )
@@ -671,13 +747,15 @@ fun NodeFields(
             )
             BrushSliderControl(
               label = "Range End",
-              value = targetNode.targetModifierRangeEnd,
+              value = displayValueEnd,
               valueRange = limits.min..limits.max,
+              unit = limits.displayUnit,
               onValueChange = {
+                val newValue = if (isAngleTarget) Math.toRadians(it.toDouble()).toFloat() else it
                 onUpdate(
                   NodeData.Behavior(
                     behaviorNode.safeCopy(
-                      targetNode = targetNode.safeCopy(targetModifierRangeEnd = it)
+                      targetNode = targetNode.safeCopy(targetModifierRangeEnd = newValue)
                     )
                   )
                 )
@@ -708,10 +786,23 @@ fun NodeFields(
                   DropdownMenuItem(
                     text = { Text(prettyDisplayString(target)) },
                     onClick = {
+                      val newMagLimits = if (target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE ||
+                                          target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE) {
+                          NumericLimits(-10.0f, 10.0f, 0.01f)
+                      } else {
+                          NumericLimits(0.0f, 1.0f, 0.1f)
+                      }
+                      val clampedMagStart = polarNode.magnitudeRangeStart.coerceIn(newMagLimits.min, newMagLimits.max)
+                      val clampedMagEnd = polarNode.magnitudeRangeEnd.coerceIn(newMagLimits.min, newMagLimits.max)
+
                       onUpdate(
                         NodeData.Behavior(
                           behaviorNode.safeCopy(
-                            polarTargetNode = polarNode.safeCopy(target = target)
+                            polarTargetNode = polarNode.safeCopy(
+                              target = target,
+                              magnitudeRangeStart = clampedMagStart,
+                              magnitudeRangeEnd = clampedMagEnd
+                            )
                           )
                         )
                       )
@@ -723,26 +814,31 @@ fun NodeFields(
             }
             // Angle (All targets): -360° to 360° (mapped to radians 0 to 2pi for now, 
             // but the user specified -360 to 360 degrees)
+            val displayAngleStart = Math.toDegrees(polarNode.angleRangeStart.toDouble()).toFloat()
+            val displayAngleEnd = Math.toDegrees(polarNode.angleRangeEnd.toDouble()).toFloat()
+
             BrushSliderControl(
               label = "Angle Start",
-              value = polarNode.angleRangeStart,
-              valueRange = -6.28f..6.28f,
+              value = displayAngleStart,
+              valueRange = -360f..360f,
+              unit = "°",
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
-                    behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeStart = it))
+                    behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeStart = Math.toRadians(it.toDouble()).toFloat()))
                   )
                 )
               }
             )
             BrushSliderControl(
               label = "Angle End",
-              value = polarNode.angleRangeEnd,
-              valueRange = -6.28f..6.28f,
+              value = displayAngleEnd,
+              valueRange = -360f..360f,
+              unit = "°",
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(
-                    behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeEnd = it))
+                    behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeEnd = Math.toRadians(it.toDouble()).toFloat()))
                   )
                 )
               }
@@ -1393,3 +1489,19 @@ private fun toolTypeBitIndex(toolType: InputToolType): Int =
     InputToolType.STYLUS -> 3
     else -> 0
   }
+
+internal fun ProtoBrushBehavior.Source.isAngle(): Boolean {
+  return this == ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS ||
+         this == ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS ||
+         this == ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS ||
+         this == ProtoBrushBehavior.Source.SOURCE_DIRECTION_IN_RADIANS ||
+         this == ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS ||
+         this == ProtoBrushBehavior.Source.SOURCE_DIRECTION_ABOUT_ZERO_IN_RADIANS ||
+         this == ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS
+}
+
+internal fun ProtoBrushBehavior.Target.isAngle(): Boolean {
+  return this == ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS ||
+         this == ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS ||
+         this == ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS
+}

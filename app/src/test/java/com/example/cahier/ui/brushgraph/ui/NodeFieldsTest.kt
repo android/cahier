@@ -2,6 +2,8 @@ package com.example.cahier.ui.brushgraph.ui
 
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class NodeFieldsTest {
@@ -52,5 +54,29 @@ class NodeFieldsTest {
     ).toSet()
 
     assertEquals("Not all behavior node types are accounted for!", allBehaviorNodes, categorizedNodeTypes)
+  }
+
+  @Test
+  fun testIsAngleSource() {
+    assertTrue(ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS.isAngle())
+    assertTrue(ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS.isAngle())
+    assertTrue(ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS.isAngle())
+    assertTrue(ProtoBrushBehavior.Source.SOURCE_DIRECTION_IN_RADIANS.isAngle())
+    assertTrue(ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS.isAngle())
+    assertTrue(ProtoBrushBehavior.Source.SOURCE_DIRECTION_ABOUT_ZERO_IN_RADIANS.isAngle())
+    assertTrue(ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS.isAngle())
+    
+    assertFalse(ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE.isAngle())
+    assertFalse(ProtoBrushBehavior.Source.SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND.isAngle())
+  }
+
+  @Test
+  fun testIsAngleTarget() {
+    assertTrue(ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS.isAngle())
+    assertTrue(ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS.isAngle())
+    assertTrue(ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS.isAngle())
+    
+    assertFalse(ProtoBrushBehavior.Target.TARGET_WIDTH_MULTIPLIER.isAngle())
+    assertFalse(ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER.isAngle())
   }
 }

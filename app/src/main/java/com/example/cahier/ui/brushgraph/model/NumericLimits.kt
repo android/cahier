@@ -29,10 +29,13 @@ fun ProtoBrushBehavior.Source.getNumericLimits(): NumericLimits {
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE,
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_IN_MULTIPLES_OF_BRUSH_SIZE -> NumericLimits(0f, 100f, 0.01f)
     ProtoBrushBehavior.Source.SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE -> NumericLimits(0f, 100f, 0.01f)
-    ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_SECONDS -> NumericLimits(0f, 10f, 0.001f, "s")
+    ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_SECONDS,
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS,
-    ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS -> NumericLimits(0f, 10f, 0.001f, "s")
-    ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS -> NumericLimits(0f, 1000f, 1f, "ms")
+    ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS,
+    ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS -> NumericLimits(0f, 10f, 0.001f, "s")
+    ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_MILLIS,
+    ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS,
+    ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_MILLIS -> NumericLimits(0f, 10000f, 1f, "ms")
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED -> NumericLimits(0f, 100000f, 1f, "/s²")
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_X_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_Y_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
@@ -76,6 +79,16 @@ fun ProtoBrushBehavior.Target.getNumericLimits(): NumericLimits {
   }
 }
 
+/** Returns the magnitude limits for a given [ProtoBrushBehavior.PolarTarget]. */
+fun ProtoBrushBehavior.PolarTarget.getMagnitudeLimits(): NumericLimits {
+  return when (this) {
+    ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE,
+    ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE -> 
+      NumericLimits(-10.0f, 10.0f, 0.01f)
+    else -> NumericLimits(0.0f, 1.0f, 0.1f)
+  }
+}
+
 /** Enum for progress domain context. */
 enum class ProgressDomainContext {
   DAMPING,
@@ -87,7 +100,7 @@ enum class ProgressDomainContext {
 fun ProtoBrushBehavior.ProgressDomain.getNumericLimits(context: ProgressDomainContext): NumericLimits {
   return when (context) {
     ProgressDomainContext.DAMPING -> when (this) {
-      ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_TIME_IN_SECONDS -> NumericLimits(0f, 1000f, 1f, "ms")
+      ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_TIME_IN_SECONDS -> NumericLimits(0f, 10f, 0.001f, "s")
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_CENTIMETERS -> NumericLimits(0f, 100f, 0.1f, "mm")
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE -> NumericLimits(0f, 10f, 0.01f)
       else -> NumericLimits(0f, 100f)

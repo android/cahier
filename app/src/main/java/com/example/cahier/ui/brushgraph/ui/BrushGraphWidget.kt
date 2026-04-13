@@ -67,6 +67,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
@@ -1028,6 +1029,7 @@ fun FloatingActionMenu(
   var showClearConfirmation by remember { mutableStateOf(false) }
   var showReorganizeConfirmation by remember { mutableStateOf(false) }
   var showTemplatesMenu by remember { mutableStateOf(false) }
+  var showOptionsDialog by remember { mutableStateOf(false) }
 
   val savedBrushes by viewModel.savedPaletteBrushes.collectAsState()
 
@@ -1049,6 +1051,32 @@ fun FloatingActionMenu(
         }
       },
       dismissButton = { Button(onClick = { showClearConfirmation = false }) { Text("Cancel") } },
+    )
+  }
+
+  if (showOptionsDialog) {
+    AlertDialog(
+      onDismissRequest = { showOptionsDialog = false },
+      title = { Text("Options") },
+      text = {
+        Column {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+          ) {
+            Text("Lock text fields", modifier = Modifier.weight(1f))
+            Switch(
+              checked = viewModel.textFieldsLocked,
+              onCheckedChange = { viewModel.toggleTextFieldsLocked() }
+            )
+          }
+        }
+      },
+      confirmButton = {
+        Button(onClick = { showOptionsDialog = false }) {
+          Text("OK")
+        }
+      }
     )
   }
 
@@ -1197,6 +1225,14 @@ fun FloatingActionMenu(
             onClick = {
               showMoreMenu = false
               showClearConfirmation = true
+            },
+          )
+          HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+          DropdownMenuItem(
+            text = { Text("Options") },
+            onClick = {
+              showMoreMenu = false
+              showOptionsDialog = true
             },
           )
         }
