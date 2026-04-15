@@ -127,6 +127,7 @@ object BrushGraphConverter {
     nodes.add(GraphNode(id = paintId, data = paintData, position = Offset(x, y)))
 
     var currentY = y
+    var layerIndex = 0
     for (layer in paint.textureLayersList) {
       val layerId = UUID.randomUUID().toString()
       val layerData = NodeData.TextureLayer(layer)
@@ -137,10 +138,11 @@ object BrushGraphConverter {
           position = Offset(x - layerData.width() - HORIZONTAL_GAP, currentY),
         )
       )
-      edges.add(GraphEdge(fromPort = Port(layerId, PortSide.OUTPUT, 0), toPort = Port(paintId, PortSide.INPUT, 0)))
+      edges.add(GraphEdge(fromPort = Port(layerId, PortSide.OUTPUT, 0), toPort = Port(paintId, PortSide.INPUT, layerIndex++)))
       currentY += layerData.height() + VERTICAL_GAP
     }
 
+    var colorIndex = layerIndex + 1 // Skip "Add Texture..." port!
     for (cf in paint.colorFunctionsList) {
       val cfId = UUID.randomUUID().toString()
       val cfData = NodeData.ColorFunc(cf)
@@ -151,7 +153,7 @@ object BrushGraphConverter {
           position = Offset(x - cfData.width() - HORIZONTAL_GAP, currentY),
         )
       )
-      edges.add(GraphEdge(fromPort = Port(cfId, PortSide.OUTPUT, 0), toPort = Port(paintId, PortSide.INPUT, 1)))
+      edges.add(GraphEdge(fromPort = Port(cfId, PortSide.OUTPUT, 0), toPort = Port(paintId, PortSide.INPUT, colorIndex++)))
       currentY += cfData.height() + VERTICAL_GAP
     }
 

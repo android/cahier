@@ -193,12 +193,11 @@ class BrushGraphViewModel @Inject constructor(
       (graphIssues + newIssue).distinctBy { it.message + (it.nodeId ?: "") + it.severity }
   }
 
-  /** Adds a new node of a specific type at the specified position. */
   fun addNode(data: NodeData, position: Offset) {
+    dismissPanes()
     val newNode = GraphNode(id = UUID.randomUUID().toString(), data = data, position = position)
     graph = graph.copy(nodes = graph.nodes + newNode)
     selectedNodeId = newNode.id
-    selectedEdge = null
     validate()
   }
 
@@ -773,7 +772,6 @@ class BrushGraphViewModel @Inject constructor(
     validate()
   }
 
-  /** Adds an operator node between two behavior nodes. */
   fun addNodeBetween(edge: GraphEdge) {
     val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId } ?: return
     val toNode = graph.nodes.find { it.id == edge.toPort.nodeId } ?: return
@@ -781,6 +779,8 @@ class BrushGraphViewModel @Inject constructor(
     if (fromNode.data !is NodeData.Behavior || toNode.data !is NodeData.Behavior) {
       return // Only for behavior nodes!
     }
+    
+    dismissPanes()
     
     val newNodeId = UUID.randomUUID().toString()
     val newNode = GraphNode(
@@ -803,6 +803,7 @@ class BrushGraphViewModel @Inject constructor(
     val newNodes = graph.nodes + newNode
     
     graph = graph.copy(nodes = newNodes, edges = newEdges)
+    selectedNodeId = newNodeId
     validate()
   }
 

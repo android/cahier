@@ -5,6 +5,7 @@
 
 package com.example.cahier.ui.brushgraph.ui
 
+import com.example.cahier.ui.brushgraph.model.NumericLimits
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -296,7 +297,7 @@ fun NodeFields(
             BrushSliderControl(
               label = "Value",
               value = constantNode.value,
-              valueRange = -100f..100f,
+              limits = NumericLimits(-100f, 100f, 0.01f),
               onValueChange = {
                 onUpdate(
                   NodeData.Behavior(behaviorNode.safeCopy(constantNode = constantNode.safeCopy(value = it)))

@@ -193,7 +193,7 @@ sealed interface NodeData {
     override fun subtitles(): List<String> {
       val s = when (node.nodeCase) {
         ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> node.sourceNode.source.displayString()
-        ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> "%.1f".format(node.constantNode.value)
+        ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> "%.2f".format(node.constantNode.value)
         ProtoBrushBehavior.Node.NodeCase.NOISE_NODE ->
           return listOf(node.noiseNode.varyOver.displayString(), "period: ${node.noiseNode.basePeriod}")
         ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {
