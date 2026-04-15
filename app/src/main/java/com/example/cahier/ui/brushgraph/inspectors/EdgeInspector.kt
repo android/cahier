@@ -86,7 +86,7 @@ fun EdgeInspector(
     EdgeNodeInfo(
       label = "To",
       node = toNode,
-      inputIndex = edge.toInputIndex,
+      inputIndex = edge.toPort.index,
       onClick = { onNodeFocus(toNode.id) },
     )
 

@@ -9,6 +9,8 @@ import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
 import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.Port
+import com.example.cahier.ui.brushgraph.model.PortSide
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.UUID
@@ -62,11 +64,11 @@ object BrushGraphConverter {
       val coatY = nextY
       val coatNode = GraphNode(id = coatId, data = coatData, position = Offset(coatX, coatY))
       nodes.add(coatNode)
-      edges.add(GraphEdge(fromNodeId = coatId, toNodeId = familyNodeId, toInputIndex = index))
+      edges.add(GraphEdge(fromPort = Port(coatId, PortSide.OUTPUT, 0), toPort = Port(familyNodeId, PortSide.INPUT, index)))
 
       val tipX = coatX - NodeData.Tip(coat.tip).width() - HORIZONTAL_GAP
       val (tipId, tipSubtreeMaxY) = convertTip(coat.tip, nodes, edges, tipX, coatY)
-      edges.add(GraphEdge(fromNodeId = tipId, toNodeId = coatId, toInputIndex = 0))
+      edges.add(GraphEdge(fromPort = Port(tipId, PortSide.OUTPUT, 0), toPort = Port(coatId, PortSide.INPUT, 0)))
 
       var paintIndex = 1
       var currentPaintY = tipSubtreeMaxY + VERTICAL_GAP
@@ -75,7 +77,7 @@ object BrushGraphConverter {
         val paintData = NodeData.Paint(paint)
         val paintX = coatX - paintData.width() - HORIZONTAL_GAP
         val (paintId, paintSubtreeMaxY) = convertPaint(paint, nodes, edges, paintX, currentPaintY)
-        edges.add(GraphEdge(fromNodeId = paintId, toNodeId = coatId, toInputIndex = paintIndex++))
+        edges.add(GraphEdge(fromPort = Port(paintId, PortSide.OUTPUT, 0), toPort = Port(coatId, PortSide.INPUT, paintIndex++)))
         currentPaintY = paintSubtreeMaxY + VERTICAL_GAP
         maxPaintSubtreeY = maxOf(maxPaintSubtreeY, paintSubtreeMaxY)
       }
@@ -104,7 +106,7 @@ object BrushGraphConverter {
       // Reconstruct the graph from the post-order list of nodes.
       val (terminalNodeIds, behaviorMaxY) = convertBehaviorGraph(behavior, nodes, edges, x, currentY)
       for (terminalId in terminalNodeIds) {
-        edges.add(GraphEdge(fromNodeId = terminalId, toNodeId = tipId, toInputIndex = behaviorIndex))
+        edges.add(GraphEdge(fromPort = Port(terminalId, PortSide.OUTPUT, 0), toPort = Port(tipId, PortSide.INPUT, behaviorIndex)))
       }
       behaviorIndex++
       currentY = behaviorMaxY + VERTICAL_GAP
@@ -135,7 +137,7 @@ object BrushGraphConverter {
           position = Offset(x - layerData.width() - HORIZONTAL_GAP, currentY),
         )
       )
-      edges.add(GraphEdge(fromNodeId = layerId, toNodeId = paintId, toInputIndex = 0))
+      edges.add(GraphEdge(fromPort = Port(layerId, PortSide.OUTPUT, 0), toPort = Port(paintId, PortSide.INPUT, 0)))
       currentY += layerData.height() + VERTICAL_GAP
     }
 
@@ -149,7 +151,7 @@ object BrushGraphConverter {
           position = Offset(x - cfData.width() - HORIZONTAL_GAP, currentY),
         )
       )
-      edges.add(GraphEdge(fromNodeId = cfId, toNodeId = paintId, toInputIndex = 1))
+      edges.add(GraphEdge(fromPort = Port(cfId, PortSide.OUTPUT, 0), toPort = Port(paintId, PortSide.INPUT, 1)))
       currentY += cfData.height() + VERTICAL_GAP
     }
 
@@ -241,7 +243,7 @@ object BrushGraphConverter {
         maxYReached = maxOf(maxYReached, finalY + nodeHeight)
         
         info.children.forEachIndexed { index, child ->
-            edges.add(GraphEdge(fromNodeId = child.id, toNodeId = info.id, toInputIndex = index))
+            edges.add(GraphEdge(fromPort = Port(child.id, PortSide.OUTPUT, 0), toPort = Port(info.id, PortSide.INPUT, index)))
         }
         assignedNodes.add(info.id)
         return finalY + nodeHeight / 2f

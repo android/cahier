@@ -47,7 +47,7 @@ object BrushFamilyConverter {
     val familyNode = graph.nodes.first { it.data is NodeData.Family }
     val familyData = familyNode.data as NodeData.Family
 
-    val coatEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == familyNode.id }.sortedBy { it.toInputIndex }
+    val coatEdges = graph.edges.filter { !it.isDisabled && it.toPort.nodeId == familyNode.id }.sortedBy { it.toPort.index }
     if (coatEdges.isEmpty()) {
       throw GraphValidationException(
         "Brush Family must be connected to at least one coat.",
@@ -58,8 +58,8 @@ object BrushFamilyConverter {
     val behaviorCache = mutableMapOf<String, List<List<ink.proto.BrushBehavior.Node>>>()
     val coats = coatEdges.map { edge ->
       val coatNode =
-        graph.nodes.find { it.id == edge.fromNodeId }
-          ?: throw GraphValidationException("Coat node ${edge.fromNodeId} not found")
+        graph.nodes.find { it.id == edge.fromPort.nodeId }
+          ?: throw GraphValidationException("Coat node ${edge.fromPort.nodeId} not found")
       createCoat(coatNode, graph, behaviorCache)
     }
 
@@ -76,15 +76,15 @@ object BrushFamilyConverter {
     graph: BrushGraph,
     behaviorCache: MutableMap<String, List<List<ink.proto.BrushBehavior.Node>>>,
   ): ProtoBrushCoat {
-    val inputs = graph.edges.filter { !it.isDisabled && it.toNodeId == coatNode.id }
+    val inputs = graph.edges.filter { !it.isDisabled && it.toPort.nodeId == coatNode.id }
     val tipEdge =
-      inputs.find { it.toInputIndex == 0 }
+      inputs.find { it.toPort.index == 0 }
         ?: throw GraphValidationException(
           "Coat node ${coatNode.id} missing Tip input.",
           coatNode.id,
         )
         
-    val paintEdges = inputs.filter { it.toInputIndex >= 1 }.sortedBy { it.toInputIndex }
+    val paintEdges = inputs.filter { it.toPort.index >= 1 }.sortedBy { it.toPort.index }
     if (paintEdges.isEmpty()) {
         throw GraphValidationException(
           "Coat node ${coatNode.id} missing Paint input.",
@@ -92,13 +92,13 @@ object BrushFamilyConverter {
         )
     }
 
-    val tip = createTip(tipEdge.fromNodeId, graph, behaviorCache, mutableSetOf())
+    val tip = createTip(tipEdge.fromPort.nodeId, graph, behaviorCache, mutableSetOf())
     
     val builder = ProtoBrushCoat.newBuilder()
       .setTip(tip)
       
     for (edge in paintEdges) {
-        val paint = createPaint(edge.fromNodeId, graph)
+        val paint = createPaint(edge.fromPort.nodeId, graph)
         builder.addPaintPreferences(paint)
     }
 
@@ -124,9 +124,9 @@ object BrushFamilyConverter {
     val builder = data.tip.toBuilder()
     builder.clearBehaviors()
 
-    val behaviorEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == nodeId }.sortedBy { it.toInputIndex }
+    val behaviorEdges = graph.edges.filter { !it.isDisabled && it.toPort.nodeId == nodeId }.sortedBy { it.toPort.index }
     for (edge in behaviorEdges) {
-      val actualSources = findActualSourceNode(graph, edge.fromNodeId)
+      val actualSources = findActualSourceNode(graph, edge.fromPort.nodeId)
       for (actualSourceNode in actualSources) {
         val behaviorLists = collectBehaviorNodes(actualSourceNode.id, graph, behaviorCache, path)
         for (nodeList in behaviorLists) {
@@ -157,7 +157,7 @@ object BrushFamilyConverter {
 
     val graphNode = graph.nodes.find { it.id == nodeId } ?: return emptyList()
     val data = graphNode.data as? NodeData.Behavior ?: return emptyList()
-    val inputEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == nodeId }
+    val inputEdges = graph.edges.filter { !it.isDisabled && it.toPort.nodeId == nodeId }
 
     path.add(nodeId)
     val resultLists = mutableListOf<List<ProtoBrushBehavior.Node>>()
@@ -171,11 +171,11 @@ object BrushFamilyConverter {
     val labels = data.inputLabels()
     val nodeCase = data.node.nodeCase
     if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE) {
-        val sortedEdges = inputEdges.sortedBy { it.toInputIndex }
+        val sortedEdges = inputEdges.sortedBy { it.toPort.index }
         val setLists = mutableListOf<List<List<ProtoBrushBehavior.Node>>>()
         
         for (edge in sortedEdges) {
-            val sources = findActualSourceNode(graph, edge.fromNodeId)
+            val sources = findActualSourceNode(graph, edge.fromPort.nodeId)
             val lists = mutableListOf<List<ProtoBrushBehavior.Node>>()
             if (sources.isEmpty()) {
                 lists.add(listOf(createDefaultNode()))
@@ -215,14 +215,14 @@ object BrushFamilyConverter {
         }
     } else if (labels.size > 1) {
         // Multi-input behavior node
-        val maxIndex = inputEdges.map { it.toInputIndex }.maxOrNull() ?: -1
+        val maxIndex = inputEdges.map { it.toPort.index }.maxOrNull() ?: -1
         val numSets = maxOf(1, (maxIndex + labels.size) / labels.size)
 
         for (i in 0 until numSets) {
             val setLists = mutableListOf<List<List<ProtoBrushBehavior.Node>>>()
             for (k in labels.indices) {
-                val edge = inputEdges.find { it.toInputIndex == i * labels.size + k }
-                val sources = edge?.let { findActualSourceNode(graph, it.fromNodeId) } ?: emptyList()
+                val edge = inputEdges.find { it.toPort.index == i * labels.size + k }
+                val sources = edge?.let { findActualSourceNode(graph, it.fromPort.nodeId) } ?: emptyList()
                 val lists = mutableListOf<List<ProtoBrushBehavior.Node>>()
                 if (sources.isEmpty()) {
                     lists.add(listOf(createDefaultNode()))
@@ -248,14 +248,14 @@ object BrushFamilyConverter {
         }
     } else {
         // Single input node or Source node
-        val connectedEdges = inputEdges.sortedBy { it.toInputIndex }
+        val connectedEdges = inputEdges.sortedBy { it.toPort.index }
         
         if (connectedEdges.isEmpty()) {
             // Source node
             resultLists.add(listOf(data.node))
         } else {
             for (edge in connectedEdges) {
-                val sources = findActualSourceNode(graph, edge.fromNodeId)
+                val sources = findActualSourceNode(graph, edge.fromPort.nodeId)
                 if (sources.isNotEmpty()) {
                     for (source in sources) {
                         val childLists = collectBehaviorNodes(source.id, graph, cache, path)
@@ -292,27 +292,27 @@ object BrushFamilyConverter {
 
     val textureEdges = graph.edges.filter { edge ->
       if (edge.isDisabled) return@filter false
-      if (edge.toNodeId != nodeId) return@filter false
-      val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+      if (edge.toPort.nodeId != nodeId) return@filter false
+      val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
       fromNode != null && !fromNode.isDisabled && fromNode.data is NodeData.TextureLayer
-    }.sortedBy { it.toInputIndex }
+    }.sortedBy { it.toPort.index }
 
     val colorEdges = graph.edges.filter { edge ->
       if (edge.isDisabled) return@filter false
-      if (edge.toNodeId != nodeId) return@filter false
-      val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+      if (edge.toPort.nodeId != nodeId) return@filter false
+      val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
       fromNode != null && !fromNode.isDisabled && fromNode.data is NodeData.ColorFunc
-    }.sortedBy { it.toInputIndex }
+    }.sortedBy { it.toPort.index }
 
     val builder = data.paint.toBuilder()
     builder.clearTextureLayers()
     builder.clearColorFunctions()
 
     for (edge in textureEdges) {
-      builder.addTextureLayers(createTextureLayer(edge.fromNodeId, graph))
+      builder.addTextureLayers(createTextureLayer(edge.fromPort.nodeId, graph))
     }
     for (edge in colorEdges) {
-      builder.addColorFunctions(createColorFunction(edge.fromNodeId, graph))
+      builder.addColorFunctions(createColorFunction(edge.fromPort.nodeId, graph))
     }
 
     return builder.build()
@@ -356,11 +356,11 @@ object BrushFamilyConverter {
     // impossible to delete -- best work around is to delete the node.
     for (edge in graph.edges) {
       if (edge.isDisabled) continue
-      if (!nodesById.containsKey(edge.fromNodeId)) {
-        issues.add(GraphValidationException("Edge refers to missing source node", edge.toNodeId))
+      if (!nodesById.containsKey(edge.fromPort.nodeId)) {
+        issues.add(GraphValidationException("Edge refers to missing source node", edge.toPort.nodeId))
       }
-      if (!nodesById.containsKey(edge.toNodeId)) {
-        issues.add(GraphValidationException("Edge refers to missing target node", edge.fromNodeId))
+      if (!nodesById.containsKey(edge.toPort.nodeId)) {
+        issues.add(GraphValidationException("Edge refers to missing target node", edge.fromPort.nodeId))
       }
     }
 
@@ -391,9 +391,9 @@ object BrushFamilyConverter {
       val isActive = activeNodeIds.contains(node.id)
       val ports = node.getVisiblePorts(graph)
       val isOptionalInput = node.data is NodeData.Tip || node.data is NodeData.Paint
-      val incomingEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == node.id && activeNodeIds.contains(it.fromNodeId) }
+      val incomingEdges = graph.edges.filter { !it.isDisabled && it.toPort.nodeId == node.id && activeNodeIds.contains(it.fromPort.nodeId) }
 
-      val connectedIndices = incomingEdges.map { it.toInputIndex }.toSet()
+      val connectedIndices = incomingEdges.map { it.toPort.index }.toSet()
       val active = isActive
 
       when (val data = node.data) {
@@ -458,33 +458,45 @@ object BrushFamilyConverter {
       }
 
       for (edge in incomingEdges) {
-        val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+        val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
         if (fromNode == null) {
           issues.add(
             GraphValidationException(
               "Invalid connection: from node not found.",
               node.id,
-              if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+              if (active) {
+                ValidationSeverity.ERROR
+              } else {
+                ValidationSeverity.WARNING
+              },
             )
           )
         } else {
-          val actualSources = findActualSourceNode(graph, edge.fromNodeId)
+          val actualSources = findActualSourceNode(graph, edge.fromPort.nodeId)
           if (actualSources.isEmpty()) {
             issues.add(
               GraphValidationException(
                 "Missing source for pass-through connection",
                 node.id,
-                if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+                if (active) {
+                  ValidationSeverity.ERROR
+                } else {
+                  ValidationSeverity.WARNING
+                },
               )
             )
           } else {
             for (actualSourceNode in actualSources) {
-              BrushGraph.isValidConnection(actualSourceNode.data, node.data, edge.toInputIndex, graph, node.id)?.let { message ->
+              BrushGraph.isValidConnection(actualSourceNode.data, node.data, edge.toPort.index, graph, node.id)?.let { message ->
                 issues.add(
                   GraphValidationException(
-                    "Invalid connection from ${actualSourceNode.data.title()} to ${node.data.title()} at index ${edge.toInputIndex}: $message",
+                    "Invalid connection from ${actualSourceNode.data.title()} to ${node.data.title()} at index ${edge.toPort.index}: $message",
                     node.id,
-                    if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+                    if (active) {
+                      ValidationSeverity.ERROR
+                    } else {
+                      ValidationSeverity.WARNING
+                    },
                   )
                 )
               }
@@ -495,7 +507,7 @@ object BrushFamilyConverter {
 
 
       if (node.data is NodeData.Family) {
-        if (graph.edges.none { !it.isDisabled && it.toNodeId == node.id && activeNodeIds.contains(it.fromNodeId) }) {
+        if (graph.edges.none { !it.isDisabled && it.toPort.nodeId == node.id && activeNodeIds.contains(it.fromPort.nodeId) }) {
           issues.add(
             GraphValidationException(
               "Brush Family must be connected to at least one coat.",
@@ -507,7 +519,7 @@ object BrushFamilyConverter {
       }
 
       if (node.data !is NodeData.Family && node.data.hasOutput()) {
-        if (graph.edges.none { !it.isDisabled && it.fromNodeId == node.id && activeNodeIds.contains(it.toNodeId) }) {
+        if (graph.edges.none { !it.isDisabled && it.fromPort.nodeId == node.id && activeNodeIds.contains(it.toPort.nodeId) }) {
           issues.add(
             GraphValidationException(
               "${node.data.title()} output is not used.",
@@ -519,18 +531,18 @@ object BrushFamilyConverter {
       }
       // Check for self overlap discard vs opacity multiplier.
       if (node.data is NodeData.Coat) {
-        val incomingEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == node.id && activeNodeIds.contains(it.fromNodeId) }
-        val tipEdge = incomingEdges.find { it.toInputIndex == 0 }
-        val paintEdge = incomingEdges.find { it.toInputIndex == 1 }
+        val incomingEdges = graph.edges.filter { !it.isDisabled && it.toPort.nodeId == node.id && activeNodeIds.contains(it.fromPort.nodeId) }
+        val tipEdge = incomingEdges.find { it.toPort.index == 0 }
+        val paintEdge = incomingEdges.find { it.toPort.index == 1 }
 
         if (tipEdge != null && paintEdge != null) {
-          val paintNode = graph.nodes.find { it.id == paintEdge.fromNodeId }
+          val paintNode = graph.nodes.find { it.id == paintEdge.fromPort.nodeId }
           if (
             paintNode?.data is NodeData.Paint &&
               paintNode.data.paint.selfOverlap == ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD
           ) {
             val opacityTargetNodes = mutableListOf<GraphNode>()
-            findOpacityTargetNodes(tipEdge.fromNodeId, graph, mutableSetOf(), opacityTargetNodes)
+            findOpacityTargetNodes(tipEdge.fromPort.nodeId, graph, mutableSetOf(), opacityTargetNodes)
 
             if (opacityTargetNodes.isNotEmpty()) {
               issues.add(
@@ -563,7 +575,11 @@ object BrushFamilyConverter {
               GraphValidationException(
                 "Source node \"${node.data.subtitles().joinToString()}\" cannot have equal range start and end values.",
                 node.id,
-                if (isActive) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+                if (isActive) {
+                  ValidationSeverity.ERROR
+                } else {
+                  ValidationSeverity.WARNING
+                },
               )
             )
           }
@@ -606,16 +622,16 @@ object BrushFamilyConverter {
       val isPassThrough = currentNode != null && currentNode.isDisabled && 
                           currentNode.data is NodeData.Behavior && currentNode.data.isOperator
       
-      for (edge in graph.edges.filter { !it.isDisabled && it.toNodeId == currentId }) {
-        if (isPassThrough && edge.toInputIndex != 0) continue
+      for (edge in graph.edges.filter { !it.isDisabled && it.toPort.nodeId == currentId }) {
+        if (isPassThrough && edge.toPort.index != 0) continue
         
-        val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+        val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
         if (fromNode != null) {
           val isFromPassThrough = fromNode.isDisabled && 
                                   fromNode.data is NodeData.Behavior && fromNode.data.isOperator
           
           if (!fromNode.isDisabled || isFromPassThrough) {
-            if (active.add(edge.fromNodeId)) queue.add(edge.fromNodeId)
+            if (active.add(edge.fromPort.nodeId)) queue.add(edge.fromPort.nodeId)
           }
         }
       }
@@ -627,10 +643,10 @@ object BrushFamilyConverter {
     val node = graph.nodes.find { it.id == nodeId } ?: return emptyList()
     if (!node.isDisabled) return listOf(node)
     if (node.data is NodeData.Behavior && node.data.isOperator) {
-      val incomingEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == nodeId }
+      val incomingEdges = graph.edges.filter { !it.isDisabled && it.toPort.nodeId == nodeId }
       val sources = mutableListOf<GraphNode>()
       for (edge in incomingEdges) {
-        sources.addAll(findActualSourceNode(graph, edge.fromNodeId))
+        sources.addAll(findActualSourceNode(graph, edge.fromPort.nodeId))
       }
       return sources
     }
@@ -653,8 +669,8 @@ object BrushFamilyConverter {
       throw GraphValidationException("Cycle detected involving node $nodeId.", nodeId)
     }
     visited.add(nodeId)
-    for (edge in graph.edges.filter { it.fromNodeId == nodeId }) {
-      checkCycle(edge.toNodeId, graph, visited, path)
+    for (edge in graph.edges.filter { it.fromPort.nodeId == nodeId }) {
+      checkCycle(edge.toPort.nodeId, graph, visited, path)
     }
     path.remove(nodeId)
   }
@@ -679,9 +695,9 @@ object BrushFamilyConverter {
       }
     }
 
-    val incomingEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == nodeId }
+    val incomingEdges = graph.edges.filter { !it.isDisabled && it.toPort.nodeId == nodeId }
     for (edge in incomingEdges) {
-      findOpacityTargetNodes(edge.fromNodeId, graph, visited, results)
+      findOpacityTargetNodes(edge.fromPort.nodeId, graph, visited, results)
     }
   }
 }

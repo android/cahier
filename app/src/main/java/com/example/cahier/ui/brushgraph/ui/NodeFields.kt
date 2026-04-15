@@ -992,8 +992,11 @@ fun NodeFields(
       is NodeData.ColorFunc -> {
         val function = data.function
         var expandedType by remember { mutableStateOf(false) }
-        val currentType =
-          if (function.hasOpacityMultiplier()) "Opacity Multiplier" else "Replace Color"
+        val currentType = if (function.hasOpacityMultiplier()) {
+          "Opacity Multiplier"
+        } else {
+          "Replace Color"
+        }
 
         ExposedDropdownMenuBox(
           expanded = expandedType,

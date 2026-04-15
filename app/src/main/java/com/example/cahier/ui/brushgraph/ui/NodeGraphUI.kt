@@ -2,9 +2,13 @@
 
 package com.example.cahier.ui.brushgraph.ui
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -70,6 +74,7 @@ import com.example.cahier.ui.brushgraph.ui.TipPreviewWidget
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
+import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
 import com.example.cahier.ui.brushgraph.model.NODE_PADDING_BOTTOM
 import com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL
@@ -78,7 +83,6 @@ import com.example.cahier.ui.brushgraph.model.PREVIEW_AREA_HEIGHT
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import com.example.cahier.ui.brushgraph.model.PortInfo
 import com.example.cahier.ui.theme.extendedColorScheme
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushPaint as ProtoBrushPaint
@@ -106,6 +110,8 @@ fun NodeGraphCanvas(
   onEdgeClick: (GraphEdge) -> Unit,
   onEdgeDelete: (GraphEdge) -> Unit,
   onCanvasClick: () -> Unit = {},
+  onPortClick: (String, Port) -> Unit = { _, _ -> },
+  nodeRegistry: NodeRegistry,
   modifier: Modifier = Modifier,
   activeEdgeSourceId: String? = null,
   selectedNodeId: String? = null,
@@ -123,9 +129,8 @@ fun NodeGraphCanvas(
   var pointerPos by remember { mutableStateOf<Offset?>(null) }
   var draggingNodeId by remember { mutableStateOf<String?>(null) }
   var draggingPointerPos by remember { mutableStateOf<Offset?>(null) } // In parent Box space
-  var activeSourcePort by remember { mutableStateOf<String?>(null) }
+  var activeSourcePort by remember { mutableStateOf<Port?>(null) }
   var canvasCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
-  val nodeRegistry = remember(graph) { NodeRegistry() }
 
   val currentZoom by androidx.compose.runtime.rememberUpdatedState(zoom)
   val currentOffset by androidx.compose.runtime.rememberUpdatedState(offset)
@@ -161,22 +166,21 @@ fun NodeGraphCanvas(
                 val graphTap = (tapOffset - currentOffset) / currentZoom
                 currentGraph.edges
                   .find { edge ->
-                    val fromNode = currentGraph.nodes.find { it.id == edge.fromNodeId }
-                    val toNode = currentGraph.nodes.find { it.id == edge.toNodeId }
-                    if (fromNode != null && toNode != null) {
-                      val start =
-                        nodeRegistry.getPort(fromNode.id, PortSide.OUTPUT, 0)
-                          ?: (fromNode.position + fromNode.data.getPortPosition(PortSide.OUTPUT, 0))
-                      val end =
-                        nodeRegistry.getPort(toNode.id, PortSide.INPUT, edge.toInputIndex)
+                    val fromNode = currentGraph.nodes.find { it.id == edge.fromPort.nodeId }
+                    val toNode = currentGraph.nodes.find { it.id == edge.toPort.nodeId }
+                    
+                    val start = if (fromNode != null) {
+                        nodeRegistry.getPort(edge.fromPort.nodeId, edge.fromPort.side, edge.fromPort.index)
+                          ?: (fromNode.position + fromNode.data.getPortPosition(edge.fromPort.side, edge.fromPort.index))
+                    } else Offset.Zero
+                    val end = if (toNode != null) {
+                        nodeRegistry.getPort(edge.toPort.nodeId, edge.toPort.side, edge.toPort.index)
                           ?: (toNode.position +
-                            toNode.data.getPortPosition(PortSide.INPUT, edge.toInputIndex))
-                      val threshold = 24f / currentZoom
-                      val distance = distanceToSpline(graphTap, start, end)
-                      distance < threshold
-                    } else {
-                      false
-                    }
+                            toNode.data.getPortPosition(edge.toPort.side, edge.toPort.index))
+                    } else Offset.Zero
+                    val threshold = 24f / currentZoom
+                    val distance = distanceToSpline(graphTap, start, end)
+                    distance < threshold
                   }
                   .let { edge ->
                     if (edge != null) {
@@ -206,35 +210,36 @@ fun NodeGraphCanvas(
           val selectedEdgeColor = MaterialTheme.colorScheme.primary
           Canvas(modifier = Modifier.fillMaxSize()) {
             for (edge in graph.edges) {
-              val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
-              val toNode = graph.nodes.find { it.id == edge.toNodeId }
-              if (fromNode != null && toNode != null) {
-                val start =
-                  nodeRegistry.getPort(fromNode.id, PortSide.OUTPUT, 0)
-                    ?: (fromNode.position + fromNode.data.getPortPosition(PortSide.OUTPUT, 0))
-                val end =
-                  nodeRegistry.getPort(toNode.id, PortSide.INPUT, edge.toInputIndex)
+              val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
+              val toNode = graph.nodes.find { it.id == edge.toPort.nodeId }
+              
+              val start = if (fromNode != null) {
+                  nodeRegistry.getPort(edge.fromPort.nodeId, edge.fromPort.side, edge.fromPort.index)
+                    ?: (fromNode.position + fromNode.data.getPortPosition(edge.fromPort.side, edge.fromPort.index))
+              } else Offset.Zero
+              val end = if (toNode != null) {
+                  nodeRegistry.getPort(edge.toPort.nodeId, edge.toPort.side, edge.toPort.index)
                     ?: (toNode.position +
-                      toNode.data.getPortPosition(PortSide.INPUT, edge.toInputIndex))
-                val isSelected = edge == selectedEdge
-                drawPath(
-                  path = createSplinePath(start, end),
-                  color = if (isSelected) selectedEdgeColor else outlineColor,
-                  style = DrawStroke(width = if (isSelected) 6f else 3f),
-                  alpha = if (edge.isDisabled) 0.38f else 1f,
-                )
-              }
+                      toNode.data.getPortPosition(edge.toPort.side, edge.toPort.index))
+              } else Offset.Zero
+              val isSelected = edge == selectedEdge
+              drawPath(
+                path = createSplinePath(start, end),
+                color = if (isSelected) selectedEdgeColor else outlineColor,
+                style = DrawStroke(width = if (isSelected) 6f else 3f),
+                alpha = if (edge.isDisabled) 0.38f else 1f,
+              )
             }
 
             // Draw temporary edge
-            if (activeSourcePort != null && pointerPos != null) {
-              val (nodeId, side, index) = parsePortTriple(activeSourcePort!!)
+            val sourcePort = activeSourcePort
+            if (sourcePort != null && pointerPos != null) {
               graph.nodes
-                .find { it.id == nodeId }
+                .find { it.id == sourcePort.nodeId }
                 ?.let { node ->
                   val start =
-                    nodeRegistry.getPort(nodeId, side, index)
-                      ?: (node.position + node.data.getPortPosition(side, index))
+                    nodeRegistry.getPort(sourcePort.nodeId, sourcePort.side, sourcePort.index)
+                      ?: (node.position + node.data.getPortPosition(sourcePort.side, sourcePort.index))
                   drawPath(
                     path = createSplinePath(start, pointerPos!!),
                     color = activeEdgeColor,
@@ -249,12 +254,13 @@ fun NodeGraphCanvas(
               NodeWidget(
                 node = node,
                 graph = graph,
-                isActiveSource = node.id == activeEdgeSourceId,
+                isActiveSource = node.id == activeSourcePort?.nodeId,
                 isSelected = node.id == selectedNodeId,
                 zoom = zoom,
                 onMove = { delta -> onNodeMove(node.id, node.position + delta) },
                 onClick = { onNodeClick(node.id, node.position) },
                 onUpdate = { onNodeDataUpdate(node.id, it) },
+                onPortClick = onPortClick,
                 onDragStart = { draggingNodeId = node.id },
                 onDrag = { change ->
                   // change.position is relative to node top-left.
@@ -274,22 +280,34 @@ fun NodeGraphCanvas(
                   draggingPointerPos = null
                 },
                 onPortDrag = { side, index, isStart ->
-                  if (isStart && side == PortSide.OUTPUT) {
-                    activeSourcePort = formatPortTriple(node.id, side, index)
+
+                  if (isStart) {
+                    if (side == PortSide.OUTPUT) {
+                      activeSourcePort = Port(node.id, side, index)
+
+                    } else if (side == PortSide.INPUT) {
+                      val edge = graph.edges.find { it.toPort.nodeId == node.id && it.toPort.index == index && !it.isDisabled }
+
+                      if (edge != null) {
+                        activeSourcePort = edge.fromPort
+
+                        onEdgeDelete(edge)
+                      }
+                    }
                   }
                 },
                 onPortDragUpdate = { pos ->
                   activeSourcePort?.let { sourcePort ->
-                    val (fromNodeId, _, _) = parsePortTriple(sourcePort)
+                    val fromNodeId = sourcePort.nodeId
                     val fromNode = graph.nodes.find { it.id == fromNodeId }
                     if (fromNode != null) {
-                      val snappedPort = nodeRegistry.findNearestPort(pos, fromNodeId)
+                      val snappedPort = nodeRegistry.findNearestPort(pos, fromNodeId, graph)
                       if (snappedPort != null) {
                         pointerPos =
                           nodeRegistry.getPort(
-                            snappedPort.first,
-                            snappedPort.second,
-                            snappedPort.third,
+                            snappedPort.nodeId,
+                            snappedPort.side,
+                            snappedPort.index,
                           )
                       } else {
                         pointerPos = pos
@@ -300,15 +318,18 @@ fun NodeGraphCanvas(
                   }
                 },
                 onPortDragEnd = {
+
                   val sourcePort = activeSourcePort
                   if (sourcePort != null) {
                     pointerPos?.let { pos ->
-                      val (fromNodeId, _, _) = parsePortTriple(sourcePort)
+                      val fromNodeId = sourcePort.nodeId
                       val fromNode = graph.nodes.find { it.id == fromNodeId }
                       if (fromNode != null) {
-                        val target = nodeRegistry.findNearestPort(pos, fromNodeId)
+                        val target = nodeRegistry.findNearestPort(pos, fromNodeId, graph)
+
                         if (target != null) {
-                          onAddEdge(fromNodeId, target.first, target.third)
+
+                          onAddEdge(fromNodeId, target.nodeId, target.index)
                         }
                       }
                     }
@@ -376,6 +397,7 @@ fun NodeWidget(
   onPortDrag: (PortSide, Int, Boolean) -> Unit = { _, _, _ -> },
   onPortDragUpdate: (Offset) -> Unit = {},
   onPortDragEnd: () -> Unit = {},
+  onPortClick: (String, Port) -> Unit = { _, _ -> },
   nodeRegistry: NodeRegistry,
   canvasCoordinates: LayoutCoordinates? = null,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
@@ -392,7 +414,9 @@ fun NodeWidget(
 
   androidx.compose.runtime.DisposableEffect(visiblePorts, node.data.hasOutput()) {
     nodeRegistry.clearNode(node.id)
-    onDispose {}
+    onDispose {
+      nodeRegistry.clearNode(node.id)
+    }
   }
 
   // Fix jank by using updated callbacks.
@@ -458,7 +482,7 @@ fun NodeWidget(
                 MaterialTheme.colorScheme.surfaceDim
               } else {
                 when (node.data) {
-                  is NodeData.Coat -> MaterialTheme.colorScheme.primaryContainer
+                  is NodeData.Coat -> MaterialTheme.colorScheme.secondaryContainer
                   is NodeData.Tip,
                   is NodeData.Paint -> MaterialTheme.colorScheme.secondaryContainer
                   is NodeData.Family -> MaterialTheme.colorScheme.tertiaryContainer
@@ -555,12 +579,11 @@ fun NodeWidget(
               } else if (data is NodeData.Coat) {
                 // Resolve connected tip and paint.
                 val nodesById = graph.nodes.associateBy { it.id }
-                val inputs = graph.edges.filter { it.toNodeId == node.id }
-                val tipEdge = inputs.find { it.toInputIndex == 0 }
-                val paintEdge = inputs.find { it.toInputIndex == 1 }
-
-                val tipNode = tipEdge?.let { edge -> nodesById[edge.fromNodeId] }
-                val paintNode = paintEdge?.let { edge -> nodesById[edge.fromNodeId] }
+                val inputs = graph.edges.filter { it.toPort.nodeId == node.id }
+                val tipEdge = inputs.find { it.toPort.index == 0 }
+                val paintEdge = inputs.find { it.toPort.index == 1 }
+                val tipNode = tipEdge?.let { edge -> nodesById[edge.fromPort.nodeId] }
+                val paintNode = paintEdge?.let { edge -> nodesById[edge.fromPort.nodeId] }
 
                 val tip = (tipNode?.data as? NodeData.Tip)?.tip ?: ProtoBrushTip.getDefaultInstance()
                 val paint = (paintNode?.data as? NodeData.Paint)?.paint ?: ProtoBrushPaint.getDefaultInstance()
@@ -594,19 +617,43 @@ fun NodeWidget(
             Column {
               for (port in visiblePorts) {
                 with(density) {
+                  val isPortEmpty = graph.edges.none { it.toPort.nodeId == node.id && it.toPort.index == port.index }
                   Box(
                     modifier =
                       Modifier.height(INPUT_ROW_HEIGHT.toDp())
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
+                        .padding(start = 8.dp, end = if (port.index == 0 && node.data.hasOutput()) 48.dp else 8.dp)
+                        .let {
+                          if (isPortEmpty) {
+                            it.clickable { onPortClick(node.id, port) }
+                              .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                          } else {
+                            it
+                          }
+                        },
                     contentAlignment = Alignment.CenterStart,
                   ) {
-                    Text(
-                      text = port.label,
-                      style = MaterialTheme.typography.labelSmall,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      modifier = Modifier.align(Alignment.CenterStart),
-                    )
+                    Row(
+                      verticalAlignment = Alignment.CenterVertically,
+                      modifier = Modifier.padding(horizontal = 4.dp)
+                    ) {
+                      if (isPortEmpty) {
+                        Icon(
+                          imageVector = Icons.Default.Add,
+                          contentDescription = "Add",
+                          tint = MaterialTheme.colorScheme.primary,
+                          modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                      }
+                      Text(
+                        text = port.label ?: "",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isPortEmpty) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                      )
+                    }
                   }
                 }
               }
@@ -635,11 +682,9 @@ fun NodeWidget(
         // Ports (Inputs & Output for this part of the node)
         for (port in visiblePorts) {
           PortDot(
-            side = PortSide.INPUT,
-            index = port.index,
+            port = port,
             count = visiblePorts.size,
             modifier = Modifier.align(Alignment.TopStart),
-            nodeId = node.id,
             zoom = zoom,
             onDrag = onPortDrag,
             onDragUpdate = onPortDragUpdate,
@@ -651,11 +696,9 @@ fun NodeWidget(
         }
         if (node.data.hasOutput()) {
           PortDot(
-            side = PortSide.OUTPUT,
-            index = 0,
+            port = Port(node.id, PortSide.OUTPUT, 0),
             count = 1,
             modifier = Modifier.align(Alignment.TopEnd),
-            nodeId = node.id,
             zoom = zoom,
             onDrag = onPortDrag,
             onDragUpdate = onPortDragUpdate,
@@ -754,11 +797,9 @@ suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectPortDragGe
 
 @Composable
 fun PortDot(
-  side: PortSide,
-  index: Int,
+  port: Port,
   count: Int,
   modifier: Modifier,
-  nodeId: String,
   zoom: Float,
   onDrag: (PortSide, Int, Boolean) -> Unit,
   onDragUpdate: (Offset) -> Unit = {},
@@ -770,12 +811,16 @@ fun PortDot(
   var portCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
   val density = LocalDensity.current
 
+  val currentOnDrag by androidx.compose.runtime.rememberUpdatedState(onDrag)
+  val currentOnDragUpdate by androidx.compose.runtime.rememberUpdatedState(onDragUpdate)
+  val currentOnDragEnd by androidx.compose.runtime.rememberUpdatedState(onDragEnd)
+
   with(density) {
     Box(
       modifier =
         modifier
           .offset(
-            x = if (side == PortSide.INPUT) (-14).dp else 14.dp,
+            x = if (port.side == PortSide.INPUT) (-14).dp else 14.dp,
             y = portPosition.y.toDp() - 6.dp,
           )
           .size(12.dp)
@@ -787,22 +832,22 @@ fun PortDot(
             if (canvasCo != null && coordinates.isAttached) {
               val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
               val graphSpacePos = canvasCo.localPositionOf(coordinates, center)
-              nodeRegistry.updatePort(nodeId, side, index, graphSpacePos)
+              nodeRegistry.updatePort(port.nodeId, port.side, port.index, graphSpacePos)
             }
           }
-          .pointerInput(nodeId, side, index, canvasCoordinates, zoom) {
+          .pointerInput(port.nodeId, port.side, port.index, canvasCoordinates, zoom) {
             detectPortDragGestures(
               zoom = zoom,
-              onDragStart = { onDrag(side, index, true) },
-              onDragEnd = { onDragEnd() },
-              onDragCancel = { onDragEnd() },
+              onDragStart = { currentOnDrag(port.side, port.index, true) },
+              onDragEnd = { currentOnDragEnd() },
+              onDragCancel = { currentOnDragEnd() },
             ) { change, _ ->
               change.consume()
               val canvasCo = canvasCoordinates
               val portCo = portCoordinates
               if (canvasCo != null && portCo != null && canvasCo.isAttached && portCo.isAttached) {
                 val graphSpacePos = canvasCo.localPositionOf(portCo, change.position)
-                onDragUpdate(graphSpacePos)
+                currentOnDragUpdate(graphSpacePos)
               }
             }
           }
@@ -810,11 +855,4 @@ fun PortDot(
   }
 }
 
-private fun parsePortTriple(s: String): Triple<String, PortSide, Int> {
-  val parts = s.split("|")
-  return Triple(parts[0], PortSide.valueOf(parts[1]), parts[2].toInt())
-}
 
-private fun formatPortTriple(nodeId: String, side: PortSide, index: Int): String {
-  return "$nodeId|${side.name}|$index"
-}

@@ -427,8 +427,11 @@ fun BrushGraphStudio(
             targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
             label = "indicatorPaddingEnd",
           )
-        val previewHeight =
-          if (viewModel.isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED
+        val previewHeight = if (viewModel.isPreviewExpanded) {
+          PREVIEW_HEIGHT_EXPANDED
+        } else {
+          PREVIEW_HEIGHT_COLLAPSED
+        }
         val isInspectorOpen = (viewModel.selectedNodeId != null || viewModel.selectedEdge != null)
         val isErrorPaneOpen = viewModel.isErrorPaneOpen
         val isAnySidePaneOpen = isInspectorOpen || isErrorPaneOpen
@@ -458,6 +461,8 @@ fun BrushGraphStudio(
           onEdgeClick = { viewModel.onEdgeClick(it) },
           onEdgeDelete = { viewModel.deleteEdge(it) },
           onCanvasClick = { viewModel.dismissPanes() },
+          onPortClick = { nodeId, port -> viewModel.onPortTapped(nodeId, port) },
+          nodeRegistry = viewModel.nodeRegistry,
           selectedEdge = viewModel.selectedEdge,
           activeEdgeSourceId = viewModel.activeEdgeSourceId,
           onNodeDataUpdate = { id, data -> viewModel.updateNodeData(id, data) },
@@ -575,8 +580,11 @@ fun CreateNodeFAB(
 ) {
   var expanded by remember { mutableStateOf(false) }
 
-  val previewHeight =
-    if (viewModel.isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED
+  val previewHeight = if (viewModel.isPreviewExpanded) {
+    PREVIEW_HEIGHT_EXPANDED
+  } else {
+    PREVIEW_HEIGHT_COLLAPSED
+  }
   val isInspectorOpen = (viewModel.selectedNodeId != null || viewModel.selectedEdge != null)
   val isErrorPaneOpen = viewModel.isErrorPaneOpen
   val isAnySidePaneOpen = isInspectorOpen || isErrorPaneOpen
@@ -801,8 +809,8 @@ fun AdaptiveInspectorPane(
                 onDelete = { viewModel.deleteNode(selectedNode.id) },
               )
             } else if (selectedEdge != null) {
-              val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromNodeId }
-              val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toNodeId }
+              val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromPort.nodeId }
+              val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toPort.nodeId }
               if (fromNode != null && toNode != null) {
                 EdgeInspector(
                   edge = selectedEdge,
@@ -1439,7 +1447,11 @@ fun NotificationGroup(
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
       ) {
         Icon(
-          if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.ChevronRight,
+          if (expanded) {
+            Icons.Default.KeyboardArrowDown
+          } else {
+            Icons.Default.ChevronRight
+          },
           contentDescription = null,
           modifier = Modifier.size(20.dp),
         )
