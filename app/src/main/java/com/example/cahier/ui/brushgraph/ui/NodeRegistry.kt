@@ -43,11 +43,10 @@ class NodeRegistry {
       for (port in visiblePorts) {
         // Only snap to input ports.
         if (port.side == PortSide.INPUT) {
-          // Ignore occupied ports!
-          val isOccupied = graph.edges.any { it.toPort.nodeId == port.nodeId && it.toPort.index == port.index }
-
-          if (isOccupied) {
-            continue
+          // Ignore occupied ports (unless it's the same edge being edited).
+          val existingEdge = graph.edges.find { it.toPort.nodeId == port.nodeId && it.toPort.index == port.index }
+          if (existingEdge != null && existingEdge.fromPort.nodeId != fromNodeId) {
+            continue // Occupied by another node's edge!
           }
           
           val portPos = getPort(port.nodeId, port.side, port.index)
@@ -64,6 +63,22 @@ class NodeRegistry {
       }
     }
 
+    return nearestPort
+  }
+
+  fun findPortAt(pos: Offset, threshold: Float = 20f): Port? {
+    android.util.Log.d("NodeRegistry", "findPortAt: pos=$pos, threshold=$threshold, size=${portPositions.size}")
+    val thresholdSq = threshold * threshold
+    var nearestPort: Port? = null
+    var minDistanceSq = thresholdSq
+    
+    for ((port, portPos) in portPositions) {
+      val distSq = (pos - portPos).getDistanceSquared()
+      if (distSq < minDistanceSq) {
+        minDistanceSq = distSq
+        nearestPort = port
+      }
+    }
     return nearestPort
   }
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -109,13 +110,17 @@ fun NodeGraphCanvas(
   onAddEdge: (String, String, Int) -> Unit,
   onEdgeClick: (GraphEdge) -> Unit,
   onEdgeDelete: (GraphEdge) -> Unit,
+  onEdgeDetach: (GraphEdge) -> Unit = {},
+  onFinalizeEdgeEdit: (GraphEdge, String, String, Int) -> Unit = { _, _, _, _ -> },
   onCanvasClick: () -> Unit = {},
   onPortClick: (String, Port) -> Unit = { _, _ -> },
+  onReorderPorts: (String, Int, Int) -> Unit = { _, _, _ -> },
   nodeRegistry: NodeRegistry,
   modifier: Modifier = Modifier,
   activeEdgeSourceId: String? = null,
   selectedNodeId: String? = null,
   selectedEdge: GraphEdge? = null,
+  detachedEdge: GraphEdge? = null,
   onNodeDataUpdate: (String, NodeData) -> Unit = { _, _ -> },
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   textureStore: TextureBitmapStore,
@@ -210,6 +215,7 @@ fun NodeGraphCanvas(
           val selectedEdgeColor = MaterialTheme.colorScheme.primary
           Canvas(modifier = Modifier.fillMaxSize()) {
             for (edge in graph.edges) {
+              if (edge == detachedEdge) continue
               val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
               val toNode = graph.nodes.find { it.id == edge.toPort.nodeId }
               
@@ -261,6 +267,7 @@ fun NodeGraphCanvas(
                 onClick = { onNodeClick(node.id, node.position) },
                 onUpdate = { onNodeDataUpdate(node.id, it) },
                 onPortClick = onPortClick,
+                onReorderPorts = onReorderPorts,
                 onDragStart = { draggingNodeId = node.id },
                 onDrag = { change ->
                   // change.position is relative to node top-left.
@@ -290,8 +297,7 @@ fun NodeGraphCanvas(
 
                       if (edge != null) {
                         activeSourcePort = edge.fromPort
-
-                        onEdgeDelete(edge)
+                        onEdgeDetach(edge)
                       }
                     }
                   }
@@ -328,8 +334,16 @@ fun NodeGraphCanvas(
                         val target = nodeRegistry.findNearestPort(pos, fromNodeId, graph)
 
                         if (target != null) {
-
-                          onAddEdge(fromNodeId, target.nodeId, target.index)
+                          val currentDetached = detachedEdge
+                          if (currentDetached != null) {
+                            onFinalizeEdgeEdit(currentDetached, fromNodeId, target.nodeId, target.index)
+                          } else {
+                            onAddEdge(fromNodeId, target.nodeId, target.index)
+                          }
+                        } else {
+                          detachedEdge?.let {
+                            onEdgeDelete(it)
+                          }
                         }
                       }
                     }
@@ -397,6 +411,7 @@ fun NodeWidget(
   onPortDrag: (PortSide, Int, Boolean) -> Unit = { _, _, _ -> },
   onPortDragUpdate: (Offset) -> Unit = {},
   onPortDragEnd: () -> Unit = {},
+  onReorderPorts: (String, Int, Int) -> Unit = { _, _, _ -> },
   onPortClick: (String, Port) -> Unit = { _, _ -> },
   nodeRegistry: NodeRegistry,
   canvasCoordinates: LayoutCoordinates? = null,
@@ -409,6 +424,9 @@ fun NodeWidget(
   isSelected: Boolean = false,
 ) {
   var isPressed by remember { mutableStateOf(false) }
+  var activeReorderPortIndex by remember { mutableStateOf<Int?>(null) }
+  var boxCoordinates by remember { mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(null) }
+  var cumulativeDeltaY by remember { mutableStateOf(0f) }
   val density = LocalDensity.current
   val visiblePorts = node.getVisiblePorts(graph)
 
@@ -620,7 +638,7 @@ fun NodeWidget(
                   val isPortEmpty = graph.edges.none { it.toPort.nodeId == node.id && it.toPort.index == port.index }
                   Box(
                     modifier =
-                      Modifier.height(INPUT_ROW_HEIGHT.toDp())
+                      Modifier.height(com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT.toDp())
                         .fillMaxWidth()
                         .padding(start = 8.dp, end = if (port.index == 0 && node.data.hasOutput()) 48.dp else 8.dp)
                         .let {
@@ -680,19 +698,92 @@ fun NodeWidget(
         }
 
         // Ports (Inputs & Output for this part of the node)
+        val hasAddPort = visiblePorts.any { it.isAddPort }
         for (port in visiblePorts) {
-          PortDot(
-            port = port,
-            count = visiblePorts.size,
-            modifier = Modifier.align(Alignment.TopStart),
-            zoom = zoom,
-            onDrag = onPortDrag,
-            onDragUpdate = onPortDragUpdate,
-            onDragEnd = onPortDragEnd,
-            nodeRegistry = nodeRegistry,
-            canvasCoordinates = canvasCoordinates,
-            portPosition = node.data.getPortPosition(PortSide.INPUT, port.index),
-          )
+          val edge = graph.edges.find { it.toPort.nodeId == node.id && it.toPort.index == port.index }
+          val portKey = edge?.let { "${it.fromPort.nodeId}_${it.fromPort.index}" } ?: "port_${port.index}"
+          androidx.compose.runtime.key(portKey) {
+            PortDot(
+              port = port,
+              count = visiblePorts.size,
+              modifier = Modifier.align(Alignment.TopStart),
+              zoom = zoom,
+              onDrag = onPortDrag,
+              onDragUpdate = onPortDragUpdate,
+              onDragEnd = onPortDragEnd,
+              nodeRegistry = nodeRegistry,
+              canvasCoordinates = canvasCoordinates,
+              portPosition = node.data.getPortPosition(PortSide.INPUT, port.index),
+              isReorderable = !port.isAddPort && hasAddPort && 
+                              !(node.data is com.example.cahier.ui.brushgraph.model.NodeData.Coat && port.index == 0) &&
+                              !(node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && port.index % 2 != 0),
+              isLargeHandle = node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && port.index % 2 == 0,
+              onReorderUpdate = { deltaY ->
+                if (activeReorderPortIndex != port.index) {
+                  activeReorderPortIndex = port.index
+                  cumulativeDeltaY = 0f
+                }
+                cumulativeDeltaY += deltaY
+                
+                val originalY = com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL + node.data.titleHeight() + (port.index + 0.5f) * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
+                var maxValidIndex = visiblePorts.size - 2 // Exclude add port
+                var minValidIndex = if (node.data is com.example.cahier.ui.brushgraph.model.NodeData.Coat) 1 else 0
+                
+                if (node.data is com.example.cahier.ui.brushgraph.model.NodeData.Paint) {
+                    val textureEdges = graph.edges.filter { edge ->
+                        val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
+                        fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.TextureLayer && edge.toPort.nodeId == node.id
+                    }
+                    val T = textureEdges.size
+                    
+                    val colorEdges = graph.edges.filter { edge ->
+                        val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
+                        fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.ColorFunc && edge.toPort.nodeId == node.id
+                    }
+                    val C = colorEdges.size
+                    
+                    if (port.index in 0 until T) {
+                        minValidIndex = 0
+                        maxValidIndex = T - 1
+                    } else if (port.index in (T + 1) until (T + 1 + C)) {
+                        minValidIndex = T + 1
+                        maxValidIndex = T + 1 + C - 1
+                    }
+                }
+                
+                val minValidY = com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL + node.data.titleHeight() + (minValidIndex + 0.5f) * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
+                val maxValidY = com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL + node.data.titleHeight() + (maxValidIndex + 0.5f) * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
+                
+                val requestedY = originalY + cumulativeDeltaY
+                val currentY = requestedY.coerceIn(minValidY, maxValidY)
+                cumulativeDeltaY = currentY - originalY
+                
+                val isPolarTarget = node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE
+                
+                val targetIndex = if (isPolarTarget) {
+                    val setSize = 2
+                    val currentSet = ((currentY - com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL - node.data.titleHeight()) / (com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT * setSize) - 0.5f).roundToInt()
+                    currentSet * setSize
+                } else {
+                    ((currentY - com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL - node.data.titleHeight()) / com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT - 0.5f).roundToInt()
+                }
+                
+                if (targetIndex in minValidIndex..maxValidIndex && targetIndex != port.index) {
+                  onReorderPorts(node.id, port.index, targetIndex)
+                  val direction = if (targetIndex > port.index) 1 else -1
+                  val step = if (isPolarTarget) 2 else 1
+                  cumulativeDeltaY -= direction * step * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
+                  activeReorderPortIndex = targetIndex
+                }
+              },
+              onReorderEnd = {
+                activeReorderPortIndex = null
+                cumulativeDeltaY = 0f
+              },
+              isDragging = port.index == activeReorderPortIndex,
+              dragOffset = if (port.index == activeReorderPortIndex) cumulativeDeltaY else 0f
+            )
+          }
         }
         if (node.data.hasOutput()) {
           PortDot(
@@ -807,6 +898,12 @@ fun PortDot(
   nodeRegistry: NodeRegistry,
   canvasCoordinates: LayoutCoordinates? = null,
   portPosition: Offset,
+  isReorderable: Boolean = false,
+  onReorderUpdate: (Float) -> Unit = {},
+  onReorderEnd: () -> Unit = {},
+  isDragging: Boolean = false,
+  dragOffset: Float = 0f,
+  isLargeHandle: Boolean = false,
 ) {
   var portCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
   val density = LocalDensity.current
@@ -814,44 +911,94 @@ fun PortDot(
   val currentOnDrag by androidx.compose.runtime.rememberUpdatedState(onDrag)
   val currentOnDragUpdate by androidx.compose.runtime.rememberUpdatedState(onDragUpdate)
   val currentOnDragEnd by androidx.compose.runtime.rememberUpdatedState(onDragEnd)
+  val currentOnReorderUpdate by androidx.compose.runtime.rememberUpdatedState(onReorderUpdate)
+  val currentOnReorderEnd by androidx.compose.runtime.rememberUpdatedState(onReorderEnd)
+
+  val currentPortIndex by androidx.compose.runtime.rememberUpdatedState(port.index)
+  val currentPortSide by androidx.compose.runtime.rememberUpdatedState(port.side)
 
   with(density) {
+    val outerX = if (port.side == PortSide.INPUT) (-24).dp else 14.dp
+    
+    val animatedY by androidx.compose.animation.core.animateDpAsState(
+        targetValue = portPosition.y.toDp() - 6.dp,
+        label = "portY"
+    )
+    val finalY = if (isDragging) portPosition.y.toDp() - 6.dp else animatedY
+
     Box(
       modifier =
         modifier
           .offset(
-            x = if (port.side == PortSide.INPUT) (-14).dp else 14.dp,
-            y = portPosition.y.toDp() - 6.dp,
+            x = outerX,
+            y = finalY,
           )
-          .size(12.dp)
-          .background(MaterialTheme.colorScheme.outlineVariant, CircleShape)
-          .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-          .onGloballyPositioned { coordinates ->
-            portCoordinates = coordinates
-            val canvasCo = canvasCoordinates
-            if (canvasCo != null && coordinates.isAttached) {
-              val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
-              val graphSpacePos = canvasCo.localPositionOf(coordinates, center)
-              nodeRegistry.updatePort(port.nodeId, port.side, port.index, graphSpacePos)
+          .size(width = if (port.side == PortSide.INPUT) 24.dp else 12.dp, height = 12.dp)
+          .graphicsLayer {
+            if (isDragging) {
+                translationY = dragOffset
             }
           }
-          .pointerInput(port.nodeId, port.side, port.index, canvasCoordinates, zoom) {
-            detectPortDragGestures(
-              zoom = zoom,
-              onDragStart = { currentOnDrag(port.side, port.index, true) },
-              onDragEnd = { currentOnDragEnd() },
-              onDragCancel = { currentOnDragEnd() },
-            ) { change, _ ->
-              change.consume()
+    ) {
+      Box(
+        modifier =
+          Modifier
+            .align(if (port.side == PortSide.INPUT) Alignment.TopStart else Alignment.TopEnd)
+            .size(12.dp)
+            .background(
+                if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                CircleShape
+            )
+            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+            .onGloballyPositioned { coordinates ->
+              portCoordinates = coordinates
               val canvasCo = canvasCoordinates
-              val portCo = portCoordinates
-              if (canvasCo != null && portCo != null && canvasCo.isAttached && portCo.isAttached) {
-                val graphSpacePos = canvasCo.localPositionOf(portCo, change.position)
-                currentOnDragUpdate(graphSpacePos)
+              if (canvasCo != null && coordinates.isAttached) {
+                val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
+                val graphSpacePos = canvasCo.localPositionOf(coordinates, center)
+                nodeRegistry.updatePort(port.nodeId, port.side, port.index, graphSpacePos)
               }
             }
-          }
-    )
+            .pointerInput(port.nodeId, port.side, canvasCoordinates, zoom) {
+                detectPortDragGestures(
+                  zoom = zoom,
+                  onDragStart = { currentOnDrag(currentPortSide, currentPortIndex, true) },
+                  onDragEnd = { currentOnDragEnd() },
+                  onDragCancel = { currentOnDragEnd() },
+                ) { change, _ ->
+                change.consume()
+                val canvasCo = canvasCoordinates
+                val portCo = portCoordinates
+                if (canvasCo != null && portCo != null && canvasCo.isAttached && portCo.isAttached) {
+                  val graphSpacePos = canvasCo.localPositionOf(portCo, change.position)
+                  currentOnDragUpdate(graphSpacePos)
+                }
+              }
+            }
+      )
+
+      if (port.side == PortSide.INPUT && isReorderable) {
+        Icon(
+          imageVector = androidx.compose.material.icons.Icons.Default.DragHandle,
+          contentDescription = "Reorder",
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier =
+            Modifier
+              .align(Alignment.TopEnd)
+              .size(width = 10.dp, height = if (isLargeHandle) with(density) { (com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT * 2).toDp() } else 10.dp)
+              .pointerInput(port.nodeId, port.side) {
+                detectDragGestures(
+                  onDrag = { change, dragAmount ->
+                    change.consume()
+                    currentOnReorderUpdate(dragAmount.y)
+                  },
+                  onDragEnd = { currentOnReorderEnd() },
+                  onDragCancel = { currentOnReorderEnd() }
+                )
+              }
+        )
+      }
+    }
   }
 }
 
