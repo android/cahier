@@ -1,6 +1,8 @@
 package com.example.cahier.ui.brushgraph.model
 
 import androidx.compose.ui.geometry.Offset
+import com.example.cahier.ui.brushgraph.model.Port
+import com.example.cahier.ui.brushgraph.model.PortSide
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -39,7 +41,7 @@ class GraphDataModelTest {
             position = Offset.Zero
         )
         val sourceNode = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()), position = Offset.Zero)
-        val edge = GraphEdge(fromNodeId = "2", toNodeId = "1", toInputIndex = 0)
+        val edge = GraphEdge(fromPort = Port("2", PortSide.OUTPUT, 0), toPort = Port("1", PortSide.INPUT, 0))
         val graph = BrushGraph(nodes = listOf(node, sourceNode), edges = listOf(edge))
         val ports = node.getVisiblePorts(graph)
         
@@ -85,7 +87,7 @@ class GraphDataModelTest {
             position = Offset.Zero
         )
         val sourceNode = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()), position = Offset.Zero)
-        val edge = GraphEdge(fromNodeId = "2", toNodeId = "1", toInputIndex = 0)
+        val edge = GraphEdge(fromPort = Port("2", PortSide.OUTPUT, 0), toPort = Port("1", PortSide.INPUT, 0))
         val graph = BrushGraph(nodes = listOf(node, sourceNode), edges = listOf(edge))
         val ports = node.getVisiblePorts(graph)
         
@@ -118,8 +120,8 @@ class GraphDataModelTest {
         val textureNode = GraphNode(id = "2", data = NodeData.TextureLayer(layer = ink.proto.BrushPaint.TextureLayer.getDefaultInstance()), position = Offset.Zero)
         val colorNode = GraphNode(id = "3", data = NodeData.ColorFunc(function = ink.proto.ColorFunction.getDefaultInstance()), position = Offset.Zero)
         
-        val edge1 = GraphEdge(fromNodeId = "2", toNodeId = "1", toInputIndex = 0)
-        val edge2 = GraphEdge(fromNodeId = "3", toNodeId = "1", toInputIndex = 1)
+        val edge1 = GraphEdge(fromPort = Port("2", PortSide.OUTPUT, 0), toPort = Port("1", PortSide.INPUT, 0))
+        val edge2 = GraphEdge(fromPort = Port("3", PortSide.OUTPUT, 0), toPort = Port("1", PortSide.INPUT, 2))
         
         val graph = BrushGraph(nodes = listOf(node, textureNode, colorNode), edges = listOf(edge1, edge2))
         val ports = node.getVisiblePorts(graph)

@@ -5,6 +5,8 @@ import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
 import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.Port
+import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import ink.proto.BrushBehavior
 import ink.proto.BrushTip
@@ -53,10 +55,10 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "target_node", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("target_node", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -132,12 +134,12 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "source", toNodeId = "damping", toInputIndex = 0),
-            GraphEdge(fromNodeId = "damping", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("source", PortSide.OUTPUT, 0), toPort = Port("damping", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("damping", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -213,12 +215,12 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "source", toNodeId = "binary_op", toInputIndex = 0),
-            GraphEdge(fromNodeId = "binary_op", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("source", PortSide.OUTPUT, 0), toPort = Port("binary_op", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("binary_op", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -293,12 +295,12 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "source", toNodeId = "binary_op", toInputIndex = 1),
-            GraphEdge(fromNodeId = "binary_op", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("source", PortSide.OUTPUT, 0), toPort = Port("binary_op", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("binary_op", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -361,11 +363,11 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "source", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("source", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -462,15 +464,15 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "source", toNodeId = "dampingA", toInputIndex = 0),
-            GraphEdge(fromNodeId = "source", toNodeId = "dampingB", toInputIndex = 0),
-            GraphEdge(fromNodeId = "dampingA", toNodeId = "binary_op", toInputIndex = 0),
-            GraphEdge(fromNodeId = "dampingB", toNodeId = "binary_op", toInputIndex = 1),
-            GraphEdge(fromNodeId = "binary_op", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("source", PortSide.OUTPUT, 0), toPort = Port("dampingA", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("source", PortSide.OUTPUT, 0), toPort = Port("dampingB", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("dampingA", PortSide.OUTPUT, 0), toPort = Port("binary_op", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("dampingB", PortSide.OUTPUT, 0), toPort = Port("binary_op", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("binary_op", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -570,14 +572,14 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "value", toNodeId = "lerp", toInputIndex = 0),
-            GraphEdge(fromNodeId = "start", toNodeId = "lerp", toInputIndex = 1),
-            GraphEdge(fromNodeId = "end", toNodeId = "lerp", toInputIndex = 2),
-            GraphEdge(fromNodeId = "lerp", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("value", PortSide.OUTPUT, 0), toPort = Port("lerp", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("start", PortSide.OUTPUT, 0), toPort = Port("lerp", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("end", PortSide.OUTPUT, 0), toPort = Port("lerp", PortSide.INPUT, 2)),
+            GraphEdge(fromPort = Port("lerp", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -649,12 +651,12 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "value", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint1", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "paint2", toNodeId = "coat", toInputIndex = 2),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("value", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint1", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("paint2", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 2)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -735,13 +737,13 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "value1", toNodeId = "target1", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target1", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "value2", toNodeId = "target2", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target2", toNodeId = "tip", toInputIndex = 1),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("value1", PortSide.OUTPUT, 0), toPort = Port("target1", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target1", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("value2", PortSide.OUTPUT, 0), toPort = Port("target2", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target2", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -832,14 +834,14 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "source1", toNodeId = "binOp", toInputIndex = 0),
-            GraphEdge(fromNodeId = "source2", toNodeId = "binOp", toInputIndex = 1),
-            GraphEdge(fromNodeId = "source3", toNodeId = "binOp", toInputIndex = 2),
-            GraphEdge(fromNodeId = "binOp", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("source1", PortSide.OUTPUT, 0), toPort = Port("binOp", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("source2", PortSide.OUTPUT, 0), toPort = Port("binOp", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("source3", PortSide.OUTPUT, 0), toPort = Port("binOp", PortSide.INPUT, 2)),
+            GraphEdge(fromPort = Port("binOp", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(
@@ -932,13 +934,13 @@ class BrushFamilyConverterTest {
         )
         
         val edges = listOf(
-            GraphEdge(fromNodeId = "source1", toNodeId = "disabled_response", toInputIndex = 0),
-            GraphEdge(fromNodeId = "source2", toNodeId = "disabled_response", toInputIndex = 1),
-            GraphEdge(fromNodeId = "disabled_response", toNodeId = "target", toInputIndex = 0),
-            GraphEdge(fromNodeId = "target", toNodeId = "tip", toInputIndex = 0),
-            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toInputIndex = 0),
-            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toInputIndex = 1),
-            GraphEdge(fromNodeId = "coat", toNodeId = "family", toInputIndex = 0)
+            GraphEdge(fromPort = Port("source1", PortSide.OUTPUT, 0), toPort = Port("disabled_response", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("source2", PortSide.OUTPUT, 0), toPort = Port("disabled_response", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("disabled_response", PortSide.OUTPUT, 0), toPort = Port("target", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("target", PortSide.OUTPUT, 0), toPort = Port("tip", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("tip", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 0)),
+            GraphEdge(fromPort = Port("paint", PortSide.OUTPUT, 0), toPort = Port("coat", PortSide.INPUT, 1)),
+            GraphEdge(fromPort = Port("coat", PortSide.OUTPUT, 0), toPort = Port("family", PortSide.INPUT, 0))
         )
         
         val graph = BrushGraph(

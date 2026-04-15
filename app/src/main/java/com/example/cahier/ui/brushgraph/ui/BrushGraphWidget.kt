@@ -38,6 +38,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
@@ -795,12 +796,29 @@ fun AdaptiveInspectorPane(
                   "Edge"
                 }
               val titleText = "Inspector: ${selectionName}"
-              Text(
-                text = titleText,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-              )
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+              ) {
+                Text(
+                  text = titleText,
+                  style = MaterialTheme.typography.titleMedium,
+                  fontWeight = FontWeight.Bold,
+                )
+                if (selectedNode != null) {
+                  var showNodeTooltip by remember { mutableStateOf(false) }
+                  IconButton(onClick = { showNodeTooltip = true }) {
+                    Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                  }
+                  if (showNodeTooltip) {
+                    TooltipDialog(
+                      title = selectedNode.data.title(),
+                      text = selectedNode.data.getTooltip(),
+                      onDismiss = { showNodeTooltip = false }
+                    )
+                  }
+                }
+              }
               IconButton(
                 onClick = {
                   viewModel.clearSelectedNode()

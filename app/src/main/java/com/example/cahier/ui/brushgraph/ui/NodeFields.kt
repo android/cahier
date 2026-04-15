@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -48,6 +49,8 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextField
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,53 +79,61 @@ fun NodeFields(
     if (node.data is NodeData.Behavior) {
       val nodeDataTypeName = node.data.node.nodeCase.name.removeSuffix("_NODE")
       var expandedNodeTypes by remember { mutableStateOf(false) }
-      ExposedDropdownMenuBox(
-        expanded = expandedNodeTypes,
-        onExpandedChange = { expandedNodeTypes = it }
+      var showNodeTooltip by remember { mutableStateOf(false) }
+      
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
       ) {
-        OutlinedTextField(
-          value = prettyDisplayString(nodeDataTypeName),
-          onValueChange = {},
-          readOnly = true,
-          label = { Text("Node Type") },
-          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNodeTypes) },
-          modifier = Modifier.menuAnchor().fillMaxWidth()
-        )
-        ExposedDropdownMenu(
+        ExposedDropdownMenuBox(
           expanded = expandedNodeTypes,
-          onDismissRequest = { expandedNodeTypes = false }
+          onExpandedChange = { expandedNodeTypes = it },
+          modifier = Modifier.weight(1f)
         ) {
-          @Composable
-          fun DropdownSection(label: String, types: List<String>) {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
-            ) {
-              HorizontalDivider(modifier = Modifier.weight(1f))
-              Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.padding(horizontal = 8.dp)
-              )
-              HorizontalDivider(modifier = Modifier.weight(1f))
-            }
-            types.forEach { type ->
-              DropdownMenuItem(
-                text = { Text(prettyDisplayString(type)) },
-                onClick = {
-                  if (type != nodeDataTypeName) {
-                    onUpdate(createDefaultNode(type))
+          OutlinedTextField(
+            value = prettyDisplayString(nodeDataTypeName),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Node Type") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNodeTypes) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+          )
+          ExposedDropdownMenu(
+            expanded = expandedNodeTypes,
+            onDismissRequest = { expandedNodeTypes = false }
+          ) {
+            @Composable
+            fun DropdownSection(label: String, types: List<String>) {
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+              ) {
+                HorizontalDivider(modifier = Modifier.weight(1f))
+                Text(
+                  text = label,
+                  style = MaterialTheme.typography.labelSmall,
+                  color = MaterialTheme.colorScheme.outline,
+                  modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                HorizontalDivider(modifier = Modifier.weight(1f))
+              }
+              types.forEach { type ->
+                DropdownMenuItem(
+                  text = { Text(prettyDisplayString(type)) },
+                  onClick = {
+                    if (type != nodeDataTypeName) {
+                      onUpdate(createDefaultNode(type))
+                    }
+                    expandedNodeTypes = false
                   }
-                  expandedNodeTypes = false
-                }
-              )
+                )
+              }
             }
-          }
 
-          DropdownSection("Start nodes:", NODE_TYPES_START)
-          DropdownSection("Operator nodes:", NODE_TYPES_OPERATOR)
-          DropdownSection("Terminal nodes:", NODE_TYPES_TERMINAL)
+            DropdownSection("Start nodes:", NODE_TYPES_START)
+            DropdownSection("Operator nodes:", NODE_TYPES_OPERATOR)
+            DropdownSection("Terminal nodes:", NODE_TYPES_TERMINAL)
+          }
         }
       }
     }
@@ -148,79 +159,97 @@ fun NodeFields(
             val sourceNode = behaviorNode.sourceNode
             val limits = sourceNode.source.getNumericLimits()
             var expandedSource by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expandedSource,
-              onExpandedChange = { expandedSource = it }
+            var showSourceTooltip by remember { mutableStateOf(false) }
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
             ) {
-              OutlinedTextField(
-                value = prettyDisplayString(sourceNode.source),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Source") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
+              ExposedDropdownMenuBox(
                 expanded = expandedSource,
-                onDismissRequest = { expandedSource = false }
+                onExpandedChange = { expandedSource = it },
+                modifier = Modifier.weight(1f)
               ) {
-                @Composable
-                fun SourceSection(label: String, sources: List<ProtoBrushBehavior.Source>) {
-                  Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
-                  ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                    Text(
-                      text = label,
-                      style = MaterialTheme.typography.labelSmall,
-                      color = MaterialTheme.colorScheme.outline,
-                      modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                  }
-                  sources.forEach { source ->
-                    DropdownMenuItem(
-                      text = { Text(prettyDisplayString(source)) },
-                      onClick = {
-                        val currentDisplayStart = if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
-                        val currentDisplayEnd = if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
+                OutlinedTextField(
+                  value = prettyDisplayString(sourceNode.source),
+                  onValueChange = {},
+                  readOnly = true,
+                  label = { Text("Source") },
+                  trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
+                  modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                  expanded = expandedSource,
+                  onDismissRequest = { expandedSource = false }
+                ) {
+                  @Composable
+                  fun SourceSection(label: String, sources: List<ProtoBrushBehavior.Source>) {
+                    Row(
+                      verticalAlignment = Alignment.CenterVertically,
+                      modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+                    ) {
+                      HorizontalDivider(modifier = Modifier.weight(1f))
+                      Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                      )
+                      HorizontalDivider(modifier = Modifier.weight(1f))
+                    }
+                    sources.forEach { source ->
+                      DropdownMenuItem(
+                        text = { Text(prettyDisplayString(source)) },
+                        onClick = {
+                          val currentDisplayStart = if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
+                          val currentDisplayEnd = if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
 
-                        val newLimits = source.getNumericLimits()
-                        val clampedDisplayStart = currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
-                        val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
+                          val newLimits = source.getNumericLimits()
+                          val clampedDisplayStart = currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
+                          val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
 
-                        val newProtoStart = if (source.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
-                        val newProtoEnd = if (source.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
+                          val newProtoStart = if (source.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
+                          val newProtoEnd = if (source.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
 
-                        val needsClamp = source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
-                                        source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
-                        val newOor = if (needsClamp) ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP else sourceNode.sourceOutOfRangeBehavior
-                        
-                        onUpdate(
-                          NodeData.Behavior(
-                            behaviorNode.safeCopy(
-                              sourceNode = sourceNode.safeCopy(
-                                source = source, 
-                                sourceOutOfRangeBehavior = newOor,
-                                sourceValueRangeStart = newProtoStart,
-                                sourceValueRangeEnd = newProtoEnd
+                          val needsClamp = source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
+                                          source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
+                          val newOor = if (needsClamp) ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP else sourceNode.sourceOutOfRangeBehavior
+                          
+                          onUpdate(
+                            NodeData.Behavior(
+                              behaviorNode.safeCopy(
+                                sourceNode = sourceNode.safeCopy(
+                                  source = source, 
+                                  sourceOutOfRangeBehavior = newOor,
+                                  sourceValueRangeStart = newProtoStart,
+                                  sourceValueRangeEnd = newProtoEnd
+                                )
                               )
                             )
                           )
-                        )
-                        expandedSource = false
-                      }
-                    )
+                          expandedSource = false
+                        }
+                      )
+                    }
                   }
-                }
 
-                SourceSection("Input:", SOURCES_INPUT)
-                SourceSection("Movement:", SOURCES_MOVEMENT)
-                SourceSection("Distance:", SOURCES_DISTANCE)
-                SourceSection("Time:", SOURCES_TIME)
-                SourceSection("Acceleration:", SOURCES_ACCELERATION)
+                  SourceSection("Input:", SOURCES_INPUT)
+                  SourceSection("Movement:", SOURCES_MOVEMENT)
+                  SourceSection("Distance:", SOURCES_DISTANCE)
+                  SourceSection("Time:", SOURCES_TIME)
+                  SourceSection("Acceleration:", SOURCES_ACCELERATION)
+                }
               }
+              IconButton(onClick = { showSourceTooltip = true }) {
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+              }
+            }
+            
+            if (showSourceTooltip) {
+              TooltipDialog(
+                title = "Source: " + prettyDisplayString(sourceNode.source),
+                text = sourceNode.source.getTooltip(),
+                onDismiss = { showSourceTooltip = false }
+              )
             }
             val isAngleSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS ||
                                 sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS ||
@@ -254,34 +283,52 @@ fun NodeFields(
             val isTimeSinceSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
                                     sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
             var expandedOor by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expandedOor,
-              onExpandedChange = { expandedOor = it }
+            var showOorTooltip by remember { mutableStateOf(false) }
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
             ) {
-              OutlinedTextField(
-                value = prettyDisplayString(sourceNode.sourceOutOfRangeBehavior),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Out of Range Behavior") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOor) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
+              ExposedDropdownMenuBox(
                 expanded = expandedOor,
-                onDismissRequest = { expandedOor = false }
+                onExpandedChange = { expandedOor = it },
+                modifier = Modifier.weight(1f)
               ) {
-                ALL_OUT_OF_RANGE.forEach { oor ->
-                  val isEnabled = !isTimeSinceSource || oor == ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(oor)) },
-                    onClick = {
-                      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
-                      expandedOor = false
-                    },
-                    enabled = isEnabled
-                  )
+                OutlinedTextField(
+                  value = prettyDisplayString(sourceNode.sourceOutOfRangeBehavior),
+                  onValueChange = {},
+                  readOnly = true,
+                  label = { Text("Out of Range Behavior") },
+                  trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOor) },
+                  modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                  expanded = expandedOor,
+                  onDismissRequest = { expandedOor = false }
+                ) {
+                  ALL_OUT_OF_RANGE.forEach { oor ->
+                    val isEnabled = !isTimeSinceSource || oor == ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                    DropdownMenuItem(
+                      text = { Text(prettyDisplayString(oor)) },
+                      onClick = {
+                        onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
+                        expandedOor = false
+                      },
+                      enabled = isEnabled
+                    )
+                  }
                 }
               }
+              IconButton(onClick = { showOorTooltip = true }) {
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+              }
+            }
+            
+            if (showOorTooltip) {
+              TooltipDialog(
+                title = "Out of Range Behavior: ${prettyDisplayString(sourceNode.sourceOutOfRangeBehavior)}",
+                text = sourceNode.sourceOutOfRangeBehavior.getTooltip(),
+                onDismiss = { showOorTooltip = false }
+              )
             }
             if (isTimeSinceSource) {
               Text(
@@ -321,44 +368,62 @@ fun NodeFields(
               }
             )
             var expandedVary by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expandedVary,
-              onExpandedChange = { expandedVary = it }
+            var showVaryTooltip by remember { mutableStateOf(false) }
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
             ) {
-              OutlinedTextField(
-                value = prettyDisplayString(noiseNode.varyOver),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Vary Over") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedVary) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
+              ExposedDropdownMenuBox(
                 expanded = expandedVary,
-                onDismissRequest = { expandedVary = false }
+                onExpandedChange = { expandedVary = it },
+                modifier = Modifier.weight(1f)
               ) {
-                ALL_PROGRESS_DOMAINS.forEach { domain ->
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(domain)) },
-                    onClick = {
-                      val newLimits = domain.getNumericLimits(ProgressDomainContext.NOISE)
-                      val clampedBasePeriod = noiseNode.basePeriod.coerceIn(newLimits.min, newLimits.max)
+                OutlinedTextField(
+                  value = prettyDisplayString(noiseNode.varyOver),
+                  onValueChange = {},
+                  readOnly = true,
+                  label = { Text("Vary Over") },
+                  trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedVary) },
+                  modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                  expanded = expandedVary,
+                  onDismissRequest = { expandedVary = false }
+                ) {
+                  ALL_PROGRESS_DOMAINS.forEach { domain ->
+                    DropdownMenuItem(
+                      text = { Text(prettyDisplayString(domain)) },
+                      onClick = {
+                        val newLimits = domain.getNumericLimits(ProgressDomainContext.NOISE)
+                        val clampedBasePeriod = noiseNode.basePeriod.coerceIn(newLimits.min, newLimits.max)
 
-                      onUpdate(
-                        NodeData.Behavior(
-                          behaviorNode.safeCopy(
-                            noiseNode = noiseNode.safeCopy(
-                              varyOver = domain,
-                              basePeriod = clampedBasePeriod
+                        onUpdate(
+                          NodeData.Behavior(
+                            behaviorNode.safeCopy(
+                              noiseNode = noiseNode.safeCopy(
+                                varyOver = domain,
+                                basePeriod = clampedBasePeriod
+                              )
                             )
                           )
                         )
-                      )
-                      expandedVary = false
-                    }
-                  )
+                        expandedVary = false
+                      }
+                    )
+                  }
                 }
               }
+              IconButton(onClick = { showVaryTooltip = true }) {
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+              }
+            }
+            
+            if (showVaryTooltip) {
+              TooltipDialog(
+                title = "Vary Over: ${prettyDisplayString(noiseNode.varyOver)}",
+                text = noiseNode.varyOver.getTooltip(),
+                onDismiss = { showVaryTooltip = false }
+              )
             }
             BrushSliderControl(
               label = "Base Period",
@@ -405,44 +470,62 @@ fun NodeFields(
             val dampingNode = behaviorNode.dampingNode
             val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
             var expandedSource by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expandedSource,
-              onExpandedChange = { expandedSource = it }
+            var showDampingTooltip by remember { mutableStateOf(false) }
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
             ) {
-              OutlinedTextField(
-                value = prettyDisplayString(dampingNode.dampingSource),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Damping Source") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
+              ExposedDropdownMenuBox(
                 expanded = expandedSource,
-                onDismissRequest = { expandedSource = false }
+                onExpandedChange = { expandedSource = it },
+                modifier = Modifier.weight(1f)
               ) {
-                ALL_PROGRESS_DOMAINS.forEach { domain ->
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(domain)) },
-                    onClick = {
-                      val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
-                      val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
+                OutlinedTextField(
+                  value = prettyDisplayString(dampingNode.dampingSource),
+                  onValueChange = {},
+                  readOnly = true,
+                  label = { Text("Damping Source") },
+                  trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
+                  modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                  expanded = expandedSource,
+                  onDismissRequest = { expandedSource = false }
+                ) {
+                  ALL_PROGRESS_DOMAINS.forEach { domain ->
+                    DropdownMenuItem(
+                      text = { Text(prettyDisplayString(domain)) },
+                      onClick = {
+                        val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
+                        val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
 
-                      onUpdate(
-                        NodeData.Behavior(
-                          behaviorNode.safeCopy(
-                            dampingNode = dampingNode.safeCopy(
-                              dampingSource = domain,
-                              dampingGap = clampedGap
+                        onUpdate(
+                          NodeData.Behavior(
+                            behaviorNode.safeCopy(
+                              dampingNode = dampingNode.safeCopy(
+                                dampingSource = domain,
+                                dampingGap = clampedGap
+                              )
                             )
                           )
                         )
-                      )
-                      expandedSource = false
-                    }
-                  )
+                        expandedSource = false
+                      }
+                    )
+                  }
                 }
               }
+              IconButton(onClick = { showDampingTooltip = true }) {
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+              }
+            }
+            
+            if (showDampingTooltip) {
+              TooltipDialog(
+                title = "Damping Source: ${prettyDisplayString(dampingNode.dampingSource)}",
+                text = dampingNode.dampingSource.getTooltip(),
+                onDismiss = { showDampingTooltip = false }
+              )
             }
             BrushSliderControl(
               label = "Damping Gap",
@@ -583,145 +666,196 @@ fun NodeFields(
           ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
             val binaryNode = behaviorNode.binaryOpNode
             var expandedOp by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expandedOp,
-              onExpandedChange = { expandedOp = it }
+            var showOpTooltip by remember { mutableStateOf(false) }
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
             ) {
-              OutlinedTextField(
-                value = prettyDisplayString(binaryNode.operation),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Operation") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOp) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
+              ExposedDropdownMenuBox(
                 expanded = expandedOp,
-                onDismissRequest = { expandedOp = false }
+                onExpandedChange = { expandedOp = it },
+                modifier = Modifier.weight(1f)
               ) {
-                ALL_BINARY_OPS.forEach { op ->
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(op)) },
-                    onClick = {
-                      onUpdate(
-                        NodeData.Behavior(
-                          behaviorNode.safeCopy(binaryOpNode = binaryNode.safeCopy(operation = op))
+                OutlinedTextField(
+                  value = prettyDisplayString(binaryNode.operation),
+                  onValueChange = {},
+                  readOnly = true,
+                  label = { Text("Operation") },
+                  trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOp) },
+                  modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                  expanded = expandedOp,
+                  onDismissRequest = { expandedOp = false }
+                ) {
+                  ALL_BINARY_OPS.forEach { op ->
+                    DropdownMenuItem(
+                      text = { Text(prettyDisplayString(op)) },
+                      onClick = {
+                        onUpdate(
+                          NodeData.Behavior(
+                            behaviorNode.safeCopy(binaryOpNode = binaryNode.safeCopy(operation = op))
+                          )
                         )
-                      )
-                      expandedOp = false
-                    }
-                  )
+                        expandedOp = false
+                      }
+                    )
+                  }
                 }
               }
+              IconButton(onClick = { showOpTooltip = true }) {
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+              }
+            }
+            if (showOpTooltip) {
+              TooltipDialog(
+                title = "Operation: ${prettyDisplayString(binaryNode.operation)}",
+                text = binaryNode.operation.getTooltip(),
+                onDismiss = { showOpTooltip = false }
+              )
             }
           }
           ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
             val interpNode = behaviorNode.interpolationNode
             var expandedInterp by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expandedInterp,
-              onExpandedChange = { expandedInterp = it }
+            var showInterpTooltip by remember { mutableStateOf(false) }
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
             ) {
-              OutlinedTextField(
-                value = prettyDisplayString(interpNode.interpolation),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Interpolation") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedInterp) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
+              ExposedDropdownMenuBox(
                 expanded = expandedInterp,
-                onDismissRequest = { expandedInterp = false }
+                onExpandedChange = { expandedInterp = it },
+                modifier = Modifier.weight(1f)
               ) {
-                ALL_INTERPOLATIONS.forEach { interp ->
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(interp)) },
-                    onClick = {
-                      onUpdate(
-                        NodeData.Behavior(
-                          behaviorNode.safeCopy(
-                            interpolationNode = interpNode.safeCopy(interpolation = interp)
+                OutlinedTextField(
+                  value = prettyDisplayString(interpNode.interpolation),
+                  onValueChange = {},
+                  readOnly = true,
+                  label = { Text("Interpolation") },
+                  trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedInterp) },
+                  modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                  expanded = expandedInterp,
+                  onDismissRequest = { expandedInterp = false }
+                ) {
+                  ALL_INTERPOLATIONS.forEach { interp ->
+                    DropdownMenuItem(
+                      text = { Text(prettyDisplayString(interp)) },
+                      onClick = {
+                        onUpdate(
+                          NodeData.Behavior(
+                            behaviorNode.safeCopy(
+                              interpolationNode = interpNode.safeCopy(interpolation = interp)
+                            )
                           )
                         )
-                      )
-                      expandedInterp = false
-                    }
-                  )
+                        expandedInterp = false
+                      }
+                    )
+                  }
                 }
               }
+              IconButton(onClick = { showInterpTooltip = true }) {
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+              }
+            }
+            if (showInterpTooltip) {
+              TooltipDialog(
+                title = "Interpolation: ${prettyDisplayString(interpNode.interpolation)}",
+                text = interpNode.interpolation.getTooltip(),
+                onDismiss = { showInterpTooltip = false }
+              )
             }
           }
           ProtoBrushBehavior.Node.NodeCase.TARGET_NODE -> {
             val targetNode = behaviorNode.targetNode
             val limits = targetNode.target.getNumericLimits()
             var expandedTarget by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expandedTarget,
-              onExpandedChange = { expandedTarget = it }
+            var showTargetTooltip by remember { mutableStateOf(false) }
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
             ) {
-              OutlinedTextField(
-                value = prettyDisplayString(targetNode.target),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Target") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTarget) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
+              ExposedDropdownMenuBox(
                 expanded = expandedTarget,
-                onDismissRequest = { expandedTarget = false }
+                onExpandedChange = { expandedTarget = it },
+                modifier = Modifier.weight(1f)
               ) {
-                @Composable
-                fun TargetSection(label: String, targets: List<ProtoBrushBehavior.Target>) {
-                  Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
-                  ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                    Text(
-                      text = label,
-                      style = MaterialTheme.typography.labelSmall,
-                      color = MaterialTheme.colorScheme.outline,
-                      modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                  }
-                  targets.forEach { target ->
-                    DropdownMenuItem(
-                      text = { Text(prettyDisplayString(target)) },
-                      onClick = {
-                        val currentDisplayStart = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeStart.toDouble()).toFloat() else targetNode.targetModifierRangeStart
-                        val currentDisplayEnd = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
+                OutlinedTextField(
+                  value = prettyDisplayString(targetNode.target),
+                  onValueChange = {},
+                  readOnly = true,
+                  label = { Text("Target") },
+                  trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTarget) },
+                  modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                  expanded = expandedTarget,
+                  onDismissRequest = { expandedTarget = false }
+                ) {
+                  @Composable
+                  fun TargetSection(label: String, targets: List<ProtoBrushBehavior.Target>) {
+                    Row(
+                      verticalAlignment = Alignment.CenterVertically,
+                      modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+                    ) {
+                      HorizontalDivider(modifier = Modifier.weight(1f))
+                      Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                      )
+                      HorizontalDivider(modifier = Modifier.weight(1f))
+                    }
+                    targets.forEach { target ->
+                      DropdownMenuItem(
+                        text = { Text(prettyDisplayString(target)) },
+                        onClick = {
+                          val currentDisplayStart = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeStart.toDouble()).toFloat() else targetNode.targetModifierRangeStart
+                          val currentDisplayEnd = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
 
-                        val newLimits = target.getNumericLimits()
-                        val clampedDisplayStart = currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
-                        val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
+                          val newLimits = target.getNumericLimits()
+                          val clampedDisplayStart = currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
+                          val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
 
-                        val newProtoStart = if (target.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
-                        val newProtoEnd = if (target.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
+                          val newProtoStart = if (target.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
+                          val newProtoEnd = if (target.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
 
-                        onUpdate(
-                          NodeData.Behavior(
-                            behaviorNode.safeCopy(
-                              targetNode = targetNode.safeCopy(
-                                target = target,
-                                targetModifierRangeStart = newProtoStart,
-                                targetModifierRangeEnd = newProtoEnd
+                          onUpdate(
+                            NodeData.Behavior(
+                              behaviorNode.safeCopy(
+                                targetNode = targetNode.safeCopy(
+                                  target = target,
+                                  targetModifierRangeStart = newProtoStart,
+                                  targetModifierRangeEnd = newProtoEnd
+                                )
                               )
                             )
                           )
-                        )
-                        expandedTarget = false
-                      }
-                    )
+                          expandedTarget = false
+                        }
+                      )
+                    }
                   }
-                }
 
-                TargetSection("Size & Shape:", TARGETS_SIZE_SHAPE)
-                TargetSection("Position:", TARGETS_POSITION)
-                TargetSection("Color & Opacity:", TARGETS_COLOR_OPACITY)
+                  TargetSection("Size & Shape:", TARGETS_SIZE_SHAPE)
+                  TargetSection("Position:", TARGETS_POSITION)
+                  TargetSection("Color & Opacity:", TARGETS_COLOR_OPACITY)
+                }
               }
+              IconButton(onClick = { showTargetTooltip = true }) {
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+              }
+            }
+            if (showTargetTooltip) {
+              TooltipDialog(
+                title = "Target: ${prettyDisplayString(targetNode.target)}",
+                text = targetNode.target.getTooltip(),
+                onDismiss = { showTargetTooltip = false }
+              )
             }
             val isAngleTarget = targetNode.target == ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS ||
                                 targetNode.target == ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS ||
@@ -767,51 +901,68 @@ fun NodeFields(
           ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
             val polarNode = behaviorNode.polarTargetNode
             var expandedPolar by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = expandedPolar,
-              onExpandedChange = { expandedPolar = it }
+            var showPolarTooltip by remember { mutableStateOf(false) }
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
             ) {
-              OutlinedTextField(
-                value = prettyDisplayString(polarNode.target),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Polar Target") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPolar) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-              )
-              ExposedDropdownMenu(
+              ExposedDropdownMenuBox(
                 expanded = expandedPolar,
-                onDismissRequest = { expandedPolar = false }
+                onExpandedChange = { expandedPolar = it },
+                modifier = Modifier.weight(1f)
               ) {
-                ALL_POLAR_TARGETS.forEach { target ->
-                  DropdownMenuItem(
-                    text = { Text(prettyDisplayString(target)) },
-                    onClick = {
-                      val newMagLimits = if (target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE ||
-                                          target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE) {
-                          NumericLimits(-10.0f, 10.0f, 0.01f)
-                      } else {
-                          NumericLimits(0.0f, 1.0f, 0.1f)
-                      }
-                      val clampedMagStart = polarNode.magnitudeRangeStart.coerceIn(newMagLimits.min, newMagLimits.max)
-                      val clampedMagEnd = polarNode.magnitudeRangeEnd.coerceIn(newMagLimits.min, newMagLimits.max)
+                OutlinedTextField(
+                  value = prettyDisplayString(polarNode.target),
+                  onValueChange = {},
+                  readOnly = true,
+                  label = { Text("Polar Target") },
+                  trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPolar) },
+                  modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                  expanded = expandedPolar,
+                  onDismissRequest = { expandedPolar = false }
+                ) {
+                  ALL_POLAR_TARGETS.forEach { target ->
+                    DropdownMenuItem(
+                      text = { Text(prettyDisplayString(target)) },
+                      onClick = {
+                        val newMagLimits = if (target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE ||
+                                            target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE) {
+                            NumericLimits(-10.0f, 10.0f, 0.01f)
+                        } else {
+                            NumericLimits(0.0f, 1.0f, 0.1f)
+                        }
+                        val clampedMagStart = polarNode.magnitudeRangeStart.coerceIn(newMagLimits.min, newMagLimits.max)
+                        val clampedMagEnd = polarNode.magnitudeRangeEnd.coerceIn(newMagLimits.min, newMagLimits.max)
 
-                      onUpdate(
-                        NodeData.Behavior(
-                          behaviorNode.safeCopy(
-                            polarTargetNode = polarNode.safeCopy(
-                              target = target,
-                              magnitudeRangeStart = clampedMagStart,
-                              magnitudeRangeEnd = clampedMagEnd
+                        onUpdate(
+                          NodeData.Behavior(
+                            behaviorNode.safeCopy(
+                              polarTargetNode = polarNode.safeCopy(
+                                target = target,
+                                magnitudeRangeStart = clampedMagStart,
+                                magnitudeRangeEnd = clampedMagEnd
+                              )
                             )
                           )
                         )
-                      )
-                      expandedPolar = false
-                    }
-                  )
+                        expandedPolar = false
+                      }
+                    )
+                  }
                 }
               }
+              IconButton(onClick = { showPolarTooltip = true }) {
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+              }
+            }
+            if (showPolarTooltip) {
+              TooltipDialog(
+                title = "Polar Target: ${prettyDisplayString(polarNode.target)}",
+                text = polarNode.target.getTooltip(),
+                onDismiss = { showPolarTooltip = false }
+              )
             }
             // Angle (All targets): -360° to 360° (mapped to radians 0 to 2pi for now, 
             // but the user specified -360 to 360 degrees)
@@ -949,36 +1100,53 @@ fun NodeFields(
       is NodeData.Paint -> {
         val paint = data.paint
         var expanded by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-          expanded = expanded,
-          onExpandedChange = { expanded = it }
+        var showTooltip by remember { mutableStateOf(false) }
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
         ) {
-          OutlinedTextField(
-            value = prettyDisplayString(paint.selfOverlap),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Self Overlap") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
+          ExposedDropdownMenuBox(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onExpandedChange = { expanded = it },
+            modifier = Modifier.weight(1f)
           ) {
-            arrayOf(
-              ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ANY,
-              ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ACCUMULATE,
-              ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD,
-            ).forEach { so ->
-              DropdownMenuItem(
-                text = { Text(prettyDisplayString(so)) },
-                onClick = {
-                  onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so)))
-                  expanded = false
-                }
-              )
+            OutlinedTextField(
+              value = prettyDisplayString(paint.selfOverlap),
+              onValueChange = {},
+              readOnly = true,
+              label = { Text("Self Overlap") },
+              trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+              modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+              expanded = expanded,
+              onDismissRequest = { expanded = false }
+            ) {
+              arrayOf(
+                ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ANY,
+                ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ACCUMULATE,
+                ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD,
+              ).forEach { so ->
+                DropdownMenuItem(
+                  text = { Text(prettyDisplayString(so)) },
+                  onClick = {
+                    onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so)))
+                    expanded = false
+                  }
+                )
+              }
             }
           }
+          IconButton(onClick = { showTooltip = true }) {
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+          }
+        }
+        if (showTooltip) {
+          TooltipDialog(
+            title = "Self Overlap: ${prettyDisplayString(paint.selfOverlap)}",
+            text = paint.selfOverlap.getTooltip(),
+            onDismiss = { showTooltip = false }
+          )
         }
       }
       is NodeData.TextureLayer -> {
@@ -999,53 +1167,70 @@ fun NodeFields(
           "Replace Color"
         }
 
-        ExposedDropdownMenuBox(
-          expanded = expandedType,
-          onExpandedChange = { expandedType = it }
+        var showTypeTooltip by remember { mutableStateOf(false) }
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier.fillMaxWidth()
         ) {
-          OutlinedTextField(
-            value = currentType,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Function Type") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
+          ExposedDropdownMenuBox(
             expanded = expandedType,
-            onDismissRequest = { expandedType = false }
+            onExpandedChange = { expandedType = it },
+            modifier = Modifier.weight(1f)
           ) {
-            listOf("Opacity Multiplier", "Replace Color").forEach { type ->
-              DropdownMenuItem(
-                text = { Text(type) },
-                onClick = {
-                  if (type != currentType) {
-                    onUpdate(
-                      if (type == "Opacity Multiplier") {
-                        NodeData.ColorFunc(
-                          ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
-                        )
-                      } else {
-                        NodeData.ColorFunc(
-                          ProtoColorFunction.newBuilder()
-                            .setReplaceColor(
-                              ink.proto.Color.newBuilder()
-                                .setRed(0f)
-                                .setGreen(0f)
-                                .setBlue(0f)
-                                .setAlpha(1f)
-                                .build()
-                            )
-                            .build()
-                        )
-                      }
-                    )
+            OutlinedTextField(
+              value = currentType,
+              onValueChange = {},
+              readOnly = true,
+              label = { Text("Function Type") },
+              trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
+              modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+              expanded = expandedType,
+              onDismissRequest = { expandedType = false }
+            ) {
+              listOf("Opacity Multiplier", "Replace Color").forEach { type ->
+                DropdownMenuItem(
+                  text = { Text(type) },
+                  onClick = {
+                    if (type != currentType) {
+                      onUpdate(
+                        if (type == "Opacity Multiplier") {
+                          NodeData.ColorFunc(
+                            ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
+                          )
+                        } else {
+                          NodeData.ColorFunc(
+                            ProtoColorFunction.newBuilder()
+                              .setReplaceColor(
+                                ink.proto.Color.newBuilder()
+                                  .setRed(0f)
+                                  .setGreen(0f)
+                                  .setBlue(0f)
+                                  .setAlpha(1f)
+                                  .build()
+                              )
+                              .build()
+                          )
+                        }
+                      )
+                    }
+                    expandedType = false
                   }
-                  expandedType = false
-                }
-              )
+                )
+              }
             }
           }
+          IconButton(onClick = { showTypeTooltip = true }) {
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+          }
+        }
+        if (showTypeTooltip) {
+          TooltipDialog(
+            title = "Function Type: $currentType",
+            text = getColorFunctionTooltip(currentType),
+            onDismiss = { showTypeTooltip = false }
+          )
         }
         if (function.hasOpacityMultiplier()) {
           BrushSliderControl(
@@ -1112,57 +1297,74 @@ fun NodeFields(
           enabled = !textFieldsLocked,
         )
         var expandedModel by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-          expanded = expandedModel,
-          onExpandedChange = { expandedModel = it }
+        var showModelTooltip by remember { mutableStateOf(false) }
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier.fillMaxWidth()
         ) {
-          OutlinedTextField(
-            value = data.inputModel.displayString(),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Input Model") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedModel) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-          )
-          ExposedDropdownMenu(
+          ExposedDropdownMenuBox(
             expanded = expandedModel,
-            onDismissRequest = { expandedModel = false }
+            onExpandedChange = { expandedModel = it },
+            modifier = Modifier.weight(1f)
           ) {
-            arrayOf("Sliding Window Model", "Spring Model", "Naive Experimental Model").forEach { model ->
-              DropdownMenuItem(
-                text = { Text(model) },
-                onClick = {
-                  val newModel =
-                    when (model) {
-                      "Naive Experimental Model" ->
-                        ProtoBrushFamily.InputModel.newBuilder()
-                          .setExperimentalNaiveModel(
-                            ProtoBrushFamily.ExperimentalNaiveModel.getDefaultInstance()
-                          )
-                          .build()
-                      "Sliding Window Model" ->
-                        ProtoBrushFamily.InputModel.newBuilder()
-                          .setSlidingWindowModel(
-                            ProtoBrushFamily.SlidingWindowModel.newBuilder()
-                              .setWindowSizeSeconds(0.02f)
-                              .setExperimentalUpsamplingPeriodSeconds(0.005f)
-                          )
-                          .build()
-                      "Spring Model" ->
-                        ProtoBrushFamily.InputModel.newBuilder()
-                          .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
-                          .build()
-                      else ->
-                        ProtoBrushFamily.InputModel.newBuilder()
-                          .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
-                          .build()
-                    }
-                  onUpdate(data.copy(inputModel = newModel))
-                  expandedModel = false
-                }
-              )
+            OutlinedTextField(
+              value = data.inputModel.displayString(),
+              onValueChange = {},
+              readOnly = true,
+              label = { Text("Input Model") },
+              trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedModel) },
+              modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+              expanded = expandedModel,
+              onDismissRequest = { expandedModel = false }
+            ) {
+              arrayOf("Sliding Window Model", "Spring Model", "Naive Experimental Model").forEach { model ->
+                DropdownMenuItem(
+                  text = { Text(model) },
+                  onClick = {
+                    val newModel =
+                      when (model) {
+                        "Naive Experimental Model" ->
+                          ProtoBrushFamily.InputModel.newBuilder()
+                            .setExperimentalNaiveModel(
+                              ProtoBrushFamily.ExperimentalNaiveModel.getDefaultInstance()
+                            )
+                            .build()
+                        "Sliding Window Model" ->
+                          ProtoBrushFamily.InputModel.newBuilder()
+                            .setSlidingWindowModel(
+                              ProtoBrushFamily.SlidingWindowModel.newBuilder()
+                                .setWindowSizeSeconds(0.02f)
+                                .setExperimentalUpsamplingPeriodSeconds(0.005f)
+                            )
+                            .build()
+                        "Spring Model" ->
+                          ProtoBrushFamily.InputModel.newBuilder()
+                            .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
+                            .build()
+                        else ->
+                          ProtoBrushFamily.InputModel.newBuilder()
+                            .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
+                            .build()
+                      }
+                    onUpdate(data.copy(inputModel = newModel))
+                    expandedModel = false
+                  }
+                )
+              }
             }
           }
+          IconButton(onClick = { showModelTooltip = true }) {
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+          }
+        }
+        if (showModelTooltip) {
+          TooltipDialog(
+            title = "Input Model: ${data.inputModel.displayString()}",
+            text = getInputModelTooltip(data.inputModel.displayString()),
+            onDismiss = { showModelTooltip = false }
+          )
         }
 
         if (data.inputModel.hasSlidingWindowModel()) {
@@ -1508,4 +1710,22 @@ internal fun ProtoBrushBehavior.Target.isAngle(): Boolean {
   return this == ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS ||
          this == ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS ||
          this == ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS
+}
+
+@Composable
+internal fun TooltipDialog(
+  title: String,
+  text: String,
+  onDismiss: () -> Unit
+) {
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = { Text(title) },
+    text = { Text(text) },
+    confirmButton = {
+      TextButton(onClick = onDismiss) {
+        Text("OK")
+      }
+    }
+  )
 }
