@@ -79,6 +79,14 @@ class BrushGraphViewModel @Inject constructor(
   var graph by mutableStateOf(BrushGraph())
     private set
 
+  /** Whether we are in multi-selection mode. */
+  var isSelectionMode by mutableStateOf(false)
+    private set
+
+  /** The set of selected node IDs. */
+  var selectedNodeIds by mutableStateOf(setOf<String>())
+    private set
+
   /** Registry to track the actual position of ports and sizes of nodes on the screen. */
   val nodeRegistry = NodeRegistry()
 
@@ -250,19 +258,111 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Updates the position of a node. */
   fun moveNode(nodeId: String, newPosition: Offset) {
-    graph =
-      graph.copy(
+    val node = graph.nodes.find { it.id == nodeId } ?: return
+    
+    if (isSelectionMode && selectedNodeIds.contains(nodeId)) {
+      val delta = newPosition - node.position
+      graph = graph.copy(
+        nodes = graph.nodes.map {
+          if (selectedNodeIds.contains(it.id)) it.copy(position = it.position + delta) else it
+        }
+      )
+    } else {
+      graph = graph.copy(
         nodes = graph.nodes.map { if (it.id == nodeId) it.copy(position = newPosition) else it }
       )
+    }
   }
 
-  /** Moves a node by a delta. */
-  fun moveNodeBy(nodeId: String, delta: Offset) {
-    graph =
-      graph.copy(
-        nodes =
-          graph.nodes.map { if (it.id == nodeId) it.copy(position = it.position + delta) else it }
+
+  /** Enters selection mode and selects the initial node. */
+  fun enterSelectionMode(initialNodeId: String? = null) {
+    isSelectionMode = true
+    selectedNodeIds = if (initialNodeId != null) setOf(initialNodeId) else emptySet()
+    dismissPanes()
+  }
+
+  /** Toggles selection of a node. */
+  fun toggleNodeSelection(nodeId: String) {
+    selectedNodeIds = if (selectedNodeIds.contains(nodeId)) {
+      selectedNodeIds - nodeId
+    } else {
+      selectedNodeIds + nodeId
+    }
+    if (selectedNodeIds.isEmpty()) {
+      exitSelectionMode()
+    }
+  }
+
+  /** Exits selection mode. */
+  fun exitSelectionMode() {
+    isSelectionMode = false
+    selectedNodeIds = emptySet()
+  }
+
+  /** Deletes all selected nodes and connected edges. */
+  fun deleteSelectedNodes() {
+    // Identify edges leaving the selected set (pointing to non-selected nodes).
+    // These need to be deleted via deleteEdge to trigger proper port shifting.
+    val edgesLeavingSelectedSet = graph.edges.filter { edge ->
+      selectedNodeIds.contains(edge.fromPort.nodeId) && !selectedNodeIds.contains(edge.toPort.nodeId)
+    }
+    
+    // Sort by index descending to avoid shifting issues
+    val sortedEdgesLeaving = edgesLeavingSelectedSet.sortedByDescending { it.toPort.index }
+    
+    for (edge in sortedEdgesLeaving) {
+      deleteEdge(edge)
+    }
+    
+    // Clean up ports in registry for removed nodes
+    selectedNodeIds.forEach { nodeRegistry.clearNode(it) }
+
+    // Remove edges targeting selected nodes and the nodes themselves.
+    // We filter by ID instead of subtracting objects to avoid issues with stale state
+    // caused by intermediate validations.
+    graph = graph.copy(
+      edges = graph.edges.filterNot { edge -> selectedNodeIds.contains(edge.toPort.nodeId) },
+      nodes = graph.nodes.filterNot { node -> selectedNodeIds.contains(node.id) }
+    )
+    
+    exitSelectionMode()
+    validate()
+  }
+
+  /** Duplicates all selected nodes and edges between them. */
+  fun duplicateSelectedNodes() {
+    val nodesToDuplicate = graph.nodes.filter { selectedNodeIds.contains(it.id) }
+    val idMap = nodesToDuplicate.associate { it.id to UUID.randomUUID().toString() }
+    
+    val offset = Offset(50f, 50f) // Fixed offset
+    
+    val newNodes = nodesToDuplicate.map { node ->
+      node.copy(
+        id = idMap[node.id]!!,
+        position = node.position + offset
       )
+    }
+    
+    val edgesToDuplicate = graph.edges.filter { edge ->
+      selectedNodeIds.contains(edge.fromPort.nodeId) && selectedNodeIds.contains(edge.toPort.nodeId)
+    }
+    
+    val newEdges = edgesToDuplicate.map { edge ->
+      edge.copy(
+        fromPort = edge.fromPort.copy(nodeId = idMap[edge.fromPort.nodeId]!!),
+        toPort = edge.toPort.copy(nodeId = idMap[edge.toPort.nodeId]!!)
+      )
+    }
+    
+    graph = graph.copy(
+      nodes = graph.nodes + newNodes,
+      edges = graph.edges + newEdges
+    )
+    
+    // Select the duplicated nodes!
+    selectedNodeIds = idMap.values.toSet()
+    validate()
   }
 
   /** Updates the data/properties of a node. */

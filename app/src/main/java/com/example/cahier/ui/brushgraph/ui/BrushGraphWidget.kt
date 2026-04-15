@@ -455,8 +455,20 @@ fun BrushGraphStudio(
           onZoomChange = { viewModel.updateZoom(it) },
           onOffsetChange = { viewModel.updateOffset(it) },
           onNodeMove = { id, pos -> viewModel.moveNode(id, pos) },
-          onNodeClick = { id, _ -> viewModel.onNodeClick(id) },
+          onNodeClick = { id, _ ->
+            if (viewModel.isSelectionMode) {
+              viewModel.toggleNodeSelection(id)
+            } else {
+              viewModel.onNodeClick(id)
+            }
+          },
+          onNodeLongPress = { id -> viewModel.enterSelectionMode(id) },
           onNodeDelete = { id -> viewModel.deleteNode(id) },
+          isSelectionMode = viewModel.isSelectionMode,
+          selectedNodeIds = viewModel.selectedNodeIds,
+          onDuplicateSelected = { viewModel.duplicateSelectedNodes() },
+          onDeleteSelected = { viewModel.deleteSelectedNodes() },
+          onDoneSelection = { viewModel.exitSelectionMode() },
           onAddEdge = { from, to, index -> viewModel.addEdge(from, to, index) },
           onEdgeClick = { viewModel.onEdgeClick(it) },
           onEdgeDelete = { viewModel.deleteEdge(it) },
@@ -1143,7 +1155,15 @@ fun FloatingActionMenu(
           Icon(Icons.Default.MoreVert, contentDescription = "More options")
         }
 
-        DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
+        DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {          
+          DropdownMenuItem(
+            text = { Text("Select") },
+            onClick = {
+              viewModel.enterSelectionMode(null)
+              showTemplatesMenu = false
+              showMoreMenu = false
+            }
+          )
           DropdownMenuItem(
             text = { Text("Export") },
             onClick = {
@@ -1152,7 +1172,7 @@ fun FloatingActionMenu(
             },
           )
           DropdownMenuItem(
-            text = { Text("Load") },
+            text = { Text("Import") },
             onClick = {
               showMoreMenu = false
               onLoadBrushFile()
@@ -1208,7 +1228,6 @@ fun FloatingActionMenu(
                   showMoreMenu = false
                 }
               )
-              
               val builtInBrushes = CustomBrushes.getBrushes(context)
               if (builtInBrushes.isNotEmpty()) {
                 HorizontalDivider()

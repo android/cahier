@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -106,6 +107,7 @@ fun NodeGraphCanvas(
   onOffsetChange: (Offset) -> Unit,
   onNodeMove: (String, Offset) -> Unit,
   onNodeClick: (String, Offset) -> Unit,
+  onNodeLongPress: (String) -> Unit = {},
   onNodeDelete: (String) -> Unit,
   onAddEdge: (String, String, Int) -> Unit,
   onEdgeClick: (GraphEdge) -> Unit,
@@ -130,6 +132,11 @@ fun NodeGraphCanvas(
   textFieldsLocked: Boolean,
   brush: Brush,
   bottomPadding: Dp = 16.dp,
+  isSelectionMode: Boolean = false,
+  selectedNodeIds: Set<String> = emptySet(),
+  onDuplicateSelected: () -> Unit = {},
+  onDeleteSelected: () -> Unit = {},
+  onDoneSelection: () -> Unit = {},
 ) {
   var pointerPos by remember { mutableStateOf<Offset?>(null) }
   var draggingNodeId by remember { mutableStateOf<String?>(null) }
@@ -269,6 +276,9 @@ fun NodeGraphCanvas(
                 onPortClick = onPortClick,
                 onReorderPorts = onReorderPorts,
                 onDragStart = { draggingNodeId = node.id },
+                isSelectionMode = isSelectionMode,
+                isInSelectedSet = selectedNodeIds.contains(node.id),
+                onLongPress = { onNodeLongPress(node.id) },
                 onDrag = { change ->
                   // change.position is relative to node top-left.
                   // Convert to parent Box space.
@@ -392,6 +402,35 @@ fun NodeGraphCanvas(
           }
         }
       }
+      
+      // Floating Action Menu for Selection
+      if (isSelectionMode) {
+        Surface(
+          modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(start = 16.dp, top = 80.dp)
+            .wrapContentSize(),
+          shape = RoundedCornerShape(8.dp),
+          color = MaterialTheme.colorScheme.surfaceVariant,
+          tonalElevation = 4.dp
+        ) {
+          Row(
+            modifier = Modifier.padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            androidx.compose.material3.Button(onClick = onDuplicateSelected) {
+              Text("Duplicate")
+            }
+            androidx.compose.material3.Button(onClick = onDeleteSelected) {
+              Text("Delete")
+            }
+            androidx.compose.material3.Button(onClick = onDoneSelection) {
+              Text("Done")
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -422,6 +461,9 @@ fun NodeWidget(
   textFieldsLocked: Boolean,
   brush: Brush,
   isSelected: Boolean = false,
+  isSelectionMode: Boolean = false,
+  isInSelectedSet: Boolean = false,
+  onLongPress: () -> Unit = {},
 ) {
   var isPressed by remember { mutableStateOf(false) }
   var activeReorderPortIndex by remember { mutableStateOf<Int?>(null) }
@@ -468,7 +510,7 @@ fun NodeWidget(
             )
           }
         }
-        .pointerInput(node.id, isSelected) {
+        .pointerInput(node.id, isSelected, isSelectionMode) {
           detectTapGestures(
             onPress = {
               isPressed = true
@@ -479,6 +521,7 @@ fun NodeWidget(
               }
             },
             onTap = { onClick() },
+            onLongPress = { onLongPress() }
           )
         }
         .pointerInput(node.id, isSelected) {
@@ -514,7 +557,7 @@ fun NodeWidget(
               .background(
                 if (node.isDisabled) {
                   MaterialTheme.colorScheme.surfaceDim
-                } else if (isActiveSource || isPressed || isSelected) {
+                } else if (isActiveSource || isPressed || isSelected || isInSelectedSet) {
                   MaterialTheme.colorScheme.primaryContainer
                 } else if (node.hasError) {
                   MaterialTheme.colorScheme.errorContainer
@@ -526,7 +569,7 @@ fun NodeWidget(
                 RoundedCornerShape(8.dp),
               )
               .border(
-                if (isActiveSource || isPressed || isSelected) {
+                if (isActiveSource || isPressed || isSelected || isInSelectedSet) {
                   2.dp
                 } else if (node.isDisabled) {
                   1.dp
@@ -535,7 +578,7 @@ fun NodeWidget(
                 } else {
                   1.dp
                 },
-                if (isActiveSource || isPressed || isSelected) {
+                if (isActiveSource || isPressed || isSelected || isInSelectedSet) {
                   MaterialTheme.colorScheme.primary
                 } else if (node.isDisabled) {
                   MaterialTheme.colorScheme.outline.copy(alpha = 0.38f)
@@ -824,6 +867,20 @@ fun NodeWidget(
               .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)),
         )
       }
+    }
+    
+    if (isSelectionMode) {
+      Box(
+        modifier = Modifier
+          .align(Alignment.TopEnd)
+          .offset(x = 6.dp, y = (-6).dp)
+          .size(16.dp)
+          .background(
+            if (isInSelectedSet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            CircleShape
+          )
+          .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
+      )
     }
   }
 }
