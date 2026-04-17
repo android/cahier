@@ -10,7 +10,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
@@ -33,6 +36,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -456,6 +460,7 @@ fun BrushGraphStudio(
           onZoomChange = { viewModel.updateZoom(it) },
           onOffsetChange = { viewModel.updateOffset(it) },
           onNodeMove = { id, pos -> viewModel.moveNode(id, pos) },
+          onNodeMoveFinished = { viewModel.onNodeMoveFinished() },
           onNodeClick = { id, _ ->
             if (viewModel.isSelectionMode) {
               viewModel.toggleNodeSelection(id)
@@ -467,6 +472,7 @@ fun BrushGraphStudio(
           onNodeDelete = { id -> viewModel.deleteNode(id) },
           isSelectionMode = viewModel.isSelectionMode,
           selectedNodeIds = viewModel.selectedNodeIds,
+          onSelectAll = { viewModel.selectAllNodes() },
           onDuplicateSelected = { viewModel.duplicateSelectedNodes() },
           onDeleteSelected = { viewModel.deleteSelectedNodes() },
           onDoneSelection = { viewModel.exitSelectionMode() },
@@ -584,6 +590,131 @@ fun BrushGraphStudio(
           isLandscape = isLandscape,
           modifier = Modifier.align(Alignment.BottomEnd),
         )
+
+        val currentMaxWidth = this@BoxWithConstraints.maxWidth
+
+        val animatableOffset = remember { Animatable(viewModel.offset, androidx.compose.ui.geometry.Offset.VectorConverter) }
+
+        // Auto-pan to node in tutorial
+        LaunchedEffect(viewModel.tutorialStep) {
+          val step = viewModel.tutorialStep
+          if (step != null && step.anchor == com.example.cahier.ui.brushgraph.model.TutorialAnchor.NODE_CANVAS) {
+            val node = step.getTargetNode(viewModel.graph)
+            if (node != null) {
+              val density = context.resources.displayMetrics.density
+              val nodeCenterX = node.position.x + node.data.width() / 2f
+              val nodeCenterY = node.position.y + node.data.height() / 2f
+              
+              // Target node center to be at Y = 280dp, so message at ~100dp is visible
+              val targetY = 280f * density
+              val targetX = currentMaxWidth.value * density / 2f
+              
+              val newOffset = androidx.compose.ui.geometry.Offset(
+                targetX - nodeCenterX * viewModel.zoom,
+                targetY - nodeCenterY * viewModel.zoom
+              )
+              
+              animatableOffset.snapTo(viewModel.offset)
+              animatableOffset.animateTo(newOffset, animationSpec = tween(500)) {
+                viewModel.updateOffset(value)
+              }
+            }
+          }
+        }
+
+        // Listen for ViewModel events (e.g. center on node)
+        LaunchedEffect(Unit) {
+          viewModel.events.collect { event ->
+            when (event) {
+              is com.example.cahier.ui.brushgraph.BrushGraphViewModel.BrushGraphEvent.CenterOnNode -> {
+                animatableOffset.snapTo(viewModel.offset)
+                animatableOffset.animateTo(event.offset, animationSpec = tween(500)) {
+                  viewModel.updateOffset(value)
+                }
+              }
+            }
+          }
+        }
+
+        // Tutorial Overlay
+        viewModel.tutorialStep?.let { step ->
+          val density = androidx.compose.ui.platform.LocalDensity.current
+          val isInspectorOpen = (viewModel.selectedNodeId != null || viewModel.selectedEdge != null)
+          var overlaySize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+          
+          val tutorialModifier = when (step.anchor) {
+            com.example.cahier.ui.brushgraph.model.TutorialAnchor.SCREEN_CENTER -> Modifier.align(Alignment.Center)
+            
+            com.example.cahier.ui.brushgraph.model.TutorialAnchor.FAB -> {
+              if (isInspectorOpen) {
+                if (isLandscape) {
+                  Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp, end = (INSPECTOR_WIDTH_LANDSCAPE + 80).dp)
+                } else {
+                  Modifier.align(Alignment.BottomEnd).padding(bottom = (INSPECTOR_HEIGHT_PORTRAIT + 16).dp, end = 80.dp)
+                }
+              } else {
+                Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp, end = 80.dp)
+              }
+            }
+            
+            com.example.cahier.ui.brushgraph.model.TutorialAnchor.NODE_CANVAS -> {
+              val node = step.getTargetNode(viewModel.graph)
+              if (node != null) {
+                val nodeCenterX = node.position.x + node.data.width() / 2f
+                val nodeTopY = node.position.y
+                
+                val screenX = nodeCenterX * viewModel.zoom + viewModel.offset.x
+                val screenY = nodeTopY * viewModel.zoom + viewModel.offset.y
+                
+                val paddingPx = with(density) { 16.dp.toPx() }
+                Modifier.offset { 
+                  androidx.compose.ui.unit.IntOffset(
+                    (screenX - overlaySize.width / 2).toInt(),
+                    (screenY - overlaySize.height - paddingPx).toInt()
+                  )
+                }
+              } else {
+                Modifier.align(Alignment.Center)
+              }
+            }
+            
+            com.example.cahier.ui.brushgraph.model.TutorialAnchor.INSPECTOR -> {
+              if (isLandscape) {
+                Modifier.align(Alignment.CenterEnd).padding(end = (INSPECTOR_WIDTH_LANDSCAPE + 16).dp)
+              } else {
+                Modifier.align(Alignment.BottomCenter).padding(bottom = (INSPECTOR_HEIGHT_PORTRAIT + 16).dp)
+              }
+            }
+            
+            com.example.cahier.ui.brushgraph.model.TutorialAnchor.TEST_CANVAS -> {
+              val basePadding = if (viewModel.isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED
+              if (isInspectorOpen && !isLandscape) {
+                Modifier.align(Alignment.BottomCenter).padding(bottom = (maxOf(INSPECTOR_HEIGHT_PORTRAIT, basePadding) + 16).dp)
+              } else {
+                Modifier.align(Alignment.BottomCenter).padding(bottom = (basePadding + 16).dp)
+              }
+            }
+            
+            com.example.cahier.ui.brushgraph.model.TutorialAnchor.ACTION_BAR -> Modifier.align(Alignment.TopStart).padding(top = 80.dp, start = 16.dp)
+            
+            com.example.cahier.ui.brushgraph.model.TutorialAnchor.NOTIFICATION_ICON -> {
+              if (isInspectorOpen && isLandscape) {
+                Modifier.align(Alignment.TopEnd).padding(top = 80.dp, end = (INSPECTOR_WIDTH_LANDSCAPE + 16).dp)
+              } else {
+                Modifier.align(Alignment.TopEnd).padding(top = 80.dp, end = 16.dp)
+              }
+            }
+          }.zIndex(20f)
+
+          TutorialOverlay(
+            step = step,
+            onNext = { viewModel.advanceTutorial(step.actionRequired) },
+            onBack = if (viewModel.currentStepIndex > 0) { { viewModel.regressTutorial() } } else null,
+            modifier = tutorialModifier.onGloballyPositioned { coordinates ->
+              overlaySize = coordinates.size
+            }
+          )
+        }
       }
     }
   }
@@ -841,6 +972,8 @@ fun AdaptiveInspectorPane(
                 strokeRenderer = strokeRenderer,
                 textFieldsLocked = viewModel.textFieldsLocked,
                 onDelete = { viewModel.deleteNode(selectedNode.id) },
+                onFieldEditComplete = { viewModel.onFieldEditComplete() },
+                onDropdownEditComplete = { viewModel.onDropdownEditComplete() },
               )
             } else if (selectedEdge != null) {
               val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromPort.nodeId }
@@ -1006,7 +1139,10 @@ fun CollapsiblePreviewPane(
           strokeRenderer = strokeRenderer,
           textureStore = textureStore,
           brush = viewModel.brush,
-          onStrokesAdded = { viewModel.strokeList.addAll(it) },
+          onStrokesAdded = { 
+            viewModel.strokeList.addAll(it)
+            viewModel.onDrawOnCanvas()
+          },
           isDark = viewModel.isDarkCanvas,
         )
       }
@@ -1072,6 +1208,8 @@ fun FloatingActionMenu(
   var showReorganizeConfirmation by remember { mutableStateOf(false) }
   var showTemplatesMenu by remember { mutableStateOf(false) }
   var showOptionsDialog by remember { mutableStateOf(false) }
+  var showTutorialWarningDialog by remember { mutableStateOf(false) }
+  var showTutorialFinishDialog by remember { mutableStateOf(false) }
 
   val savedBrushes by viewModel.savedPaletteBrushes.collectAsState()
 
@@ -1093,6 +1231,63 @@ fun FloatingActionMenu(
         }
       },
       dismissButton = { Button(onClick = { showClearConfirmation = false }) { Text("Cancel") } },
+    )
+  }
+
+  LaunchedEffect(viewModel.tutorialStep) {
+    if (viewModel.isTutorialSandboxMode && viewModel.tutorialStep == null) {
+      showTutorialFinishDialog = true
+    }
+  }
+
+  if (showTutorialWarningDialog) {
+    AlertDialog(
+      onDismissRequest = { showTutorialWarningDialog = false },
+      title = { Text("Start Tutorial") },
+      text = {
+        Text("Starting the tutorial will clear your current brush graph to start from scratch. Your current brush will be saved and restored when you exit the tutorial.")
+      },
+      confirmButton = {
+        Button(
+          onClick = {
+            viewModel.startTutorialSandbox()
+            showTutorialWarningDialog = false
+          }
+        ) {
+          Text("Start")
+        }
+      },
+      dismissButton = { Button(onClick = { showTutorialWarningDialog = false }) { Text("Cancel") } },
+    )
+  }
+
+  if (showTutorialFinishDialog) {
+    AlertDialog(
+      onDismissRequest = { showTutorialFinishDialog = false },
+      title = { Text("Exit Tutorial") },
+      text = {
+        Text("Do you want to keep the brush you built in the tutorial, or restore your original brush?")
+      },
+      confirmButton = {
+        Button(
+          onClick = {
+            viewModel.endTutorialSandbox(keepChanges = true)
+            showTutorialFinishDialog = false
+          }
+        ) {
+          Text("Keep Tutorial Brush")
+        }
+      },
+      dismissButton = {
+        Button(
+          onClick = {
+            viewModel.endTutorialSandbox(keepChanges = false)
+            showTutorialFinishDialog = false
+          }
+        ) {
+          Text("Restore Original Brush")
+        }
+      },
     )
   }
 
@@ -1180,6 +1375,17 @@ fun FloatingActionMenu(
               viewModel.enterSelectionMode(null)
               showTemplatesMenu = false
               showMoreMenu = false
+            }
+          )
+          DropdownMenuItem(
+            text = { Text(if (viewModel.isTutorialSandboxMode) "Exit Tutorial" else "Tutorial") },
+            onClick = {
+              showMoreMenu = false
+              if (viewModel.isTutorialSandboxMode) {
+                showTutorialFinishDialog = true
+              } else {
+                showTutorialWarningDialog = true
+              }
             }
           )
           DropdownMenuItem(

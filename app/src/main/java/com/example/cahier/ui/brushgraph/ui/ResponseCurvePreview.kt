@@ -318,19 +318,29 @@ fun LinearWidget(
     for (i in 0 until curve.xCount) {
       Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-          BrushSliderControl("X", curve.getX(i), 0f..1f) { newValue ->
-            val builder = curve.toBuilder()
-            builder.setX(i, newValue)
-            onCurveChanged(builder.build())
-          }
+          BrushSliderControl(
+            label = "X",
+            value = curve.getX(i),
+            valueRange = 0f..1f,
+            onValueChange = { newValue ->
+              val builder = curve.toBuilder()
+              builder.setX(i, newValue)
+              onCurveChanged(builder.build())
+            }
+          )
         }
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-          BrushSliderControl("Y", curve.getY(i), -2f..2f) { newValue ->
-            val builder = curve.toBuilder()
-            builder.setY(i, newValue)
-            onCurveChanged(builder.build())
-          }
+          BrushSliderControl(
+            label = "Y",
+            value = curve.getY(i),
+            valueRange = -2f..2f,
+            onValueChange = { newValue ->
+              val builder = curve.toBuilder()
+              builder.setY(i, newValue)
+              onCurveChanged(builder.build())
+            }
+          )
         }
         IconButton(
           onClick = {
@@ -358,19 +368,24 @@ fun LinearWidget(
 @Composable
 fun CubicBezierWidget(curve: ProtoCubicBezier, onCurveChanged: (ProtoCubicBezier) -> Unit) {
   Column(modifier = Modifier.padding(8.dp)) {
-    BrushSliderControl("x1", curve.x1, 0f..1f) { onCurveChanged(curve.safeCopy(x1 = it)) }
-    BrushSliderControl("y1", curve.y1, -2f..2f) { onCurveChanged(curve.safeCopy(y1 = it)) }
-    BrushSliderControl("x2", curve.x2, 0f..1f) { onCurveChanged(curve.safeCopy(x2 = it)) }
-    BrushSliderControl("y2", curve.y2, -2f..2f) { onCurveChanged(curve.safeCopy(y2 = it)) }
+    BrushSliderControl(label = "x1", value = curve.x1, valueRange = 0f..1f, onValueChange = { onCurveChanged(curve.safeCopy(x1 = it)) })
+    BrushSliderControl(label = "y1", value = curve.y1, valueRange = -2f..2f, onValueChange = { onCurveChanged(curve.safeCopy(y1 = it)) })
+    BrushSliderControl(label = "x2", value = curve.x2, valueRange = 0f..1f, onValueChange = { onCurveChanged(curve.safeCopy(x2 = it)) })
+    BrushSliderControl(label = "y2", value = curve.y2, valueRange = -2f..2f, onValueChange = { onCurveChanged(curve.safeCopy(y2 = it)) })
   }
 }
 
 @Composable
 fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
   Column(modifier = Modifier.padding(8.dp)) {
-    BrushSliderControl("Step Count", curve.stepCount.toFloat(), 1f..20f) {
-      onCurveChanged(curve.safeCopy(stepCount = it.toInt()))
-    }
+    BrushSliderControl(
+      label = "Step Count",
+      value = curve.stepCount.toFloat(),
+      valueRange = 1f..20f,
+      onValueChange = {
+        onCurveChanged(curve.safeCopy(stepCount = it.toInt()))
+      }
+    )
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
       OutlinedTextField(

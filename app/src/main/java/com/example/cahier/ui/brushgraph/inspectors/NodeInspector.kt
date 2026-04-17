@@ -43,6 +43,8 @@ fun NodeInspector(
   strokeRenderer: androidx.ink.rendering.android.canvas.CanvasStrokeRenderer,
   textFieldsLocked: Boolean,
   onDelete: () -> Unit,
+  onFieldEditComplete: () -> Unit = {},
+  onDropdownEditComplete: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -78,6 +80,8 @@ fun NodeInspector(
         onLoadTexture = onLoadTexture,
         strokeRenderer = strokeRenderer,
         textFieldsLocked = textFieldsLocked,
+        onFieldEditComplete = onFieldEditComplete,
+        onDropdownEditComplete = onDropdownEditComplete,
       )
     }
 

@@ -71,6 +71,8 @@ fun NodeFields(
   allTextureIds: Set<String>,
   onLoadTexture: () -> Unit,
   strokeRenderer: androidx.ink.rendering.android.canvas.CanvasStrokeRenderer,
+  onFieldEditComplete: () -> Unit = {},
+  onDropdownEditComplete: () -> Unit = {},
 ) {
   Column(
     modifier =
@@ -123,6 +125,7 @@ fun NodeFields(
                   onClick = {
                     if (type != nodeDataTypeName) {
                       onUpdate(createDefaultNode(type))
+                      onDropdownEditComplete()
                     }
                     expandedNodeTypes = false
                   }
@@ -226,6 +229,7 @@ fun NodeFields(
                               )
                             )
                           )
+                          onDropdownEditComplete()
                           expandedSource = false
                         }
                       )
@@ -269,7 +273,8 @@ fun NodeFields(
               onValueChange = {
                 val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
                 onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeStart = newValue))))
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
               label = "Range End",
@@ -278,7 +283,8 @@ fun NodeFields(
               onValueChange = {
                 val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
                 onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeEnd = newValue))))
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             val isTimeSinceSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
                                     sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
@@ -311,6 +317,7 @@ fun NodeFields(
                       text = { Text(prettyDisplayString(oor)) },
                       onClick = {
                         onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
+                        onDropdownEditComplete()
                         expandedOor = false
                       },
                       enabled = isEnabled
@@ -349,7 +356,8 @@ fun NodeFields(
                 onUpdate(
                   NodeData.Behavior(behaviorNode.safeCopy(constantNode = constantNode.safeCopy(value = it)))
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
           }
           ProtoBrushBehavior.Node.NodeCase.NOISE_NODE -> {
@@ -365,7 +373,8 @@ fun NodeFields(
                     behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(seed = it.toInt()))
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             var expandedVary by remember { mutableStateOf(false) }
             var showVaryTooltip by remember { mutableStateOf(false) }
@@ -435,7 +444,8 @@ fun NodeFields(
                     behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(basePeriod = it))
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
           }
           ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {
@@ -509,6 +519,7 @@ fun NodeFields(
                             )
                           )
                         )
+                        onDropdownEditComplete()
                         expandedSource = false
                       }
                     )
@@ -537,7 +548,8 @@ fun NodeFields(
                     behaviorNode.safeCopy(dampingNode = dampingNode.safeCopy(dampingGap = it))
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
           }
           ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> {
@@ -592,6 +604,7 @@ fun NodeFields(
                           )
                         )
                       )
+                      onDropdownEditComplete()
                       expandedOver = false
                     }
                   )
@@ -610,7 +623,8 @@ fun NodeFields(
                     )
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
               label = "Range End",
@@ -624,7 +638,8 @@ fun NodeFields(
                     )
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             var expandedIntegralOor by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
@@ -697,6 +712,7 @@ fun NodeFields(
                             behaviorNode.safeCopy(binaryOpNode = binaryNode.safeCopy(operation = op))
                           )
                         )
+                        onDropdownEditComplete()
                         expandedOp = false
                       }
                     )
@@ -835,6 +851,7 @@ fun NodeFields(
                               )
                             )
                           )
+                          onDropdownEditComplete()
                           expandedTarget = false
                         }
                       )
@@ -878,7 +895,8 @@ fun NodeFields(
                     )
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
               label = "Range End",
@@ -894,7 +912,8 @@ fun NodeFields(
                     )
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
           }
 
@@ -947,6 +966,7 @@ fun NodeFields(
                             )
                           )
                         )
+                        onDropdownEditComplete()
                         expandedPolar = false
                       }
                     )
@@ -980,7 +1000,8 @@ fun NodeFields(
                     behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeStart = Math.toRadians(it.toDouble()).toFloat()))
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
               label = "Angle End",
@@ -993,7 +1014,8 @@ fun NodeFields(
                     behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeEnd = Math.toRadians(it.toDouble()).toFloat()))
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             val magLimits = if (polarNode.target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE ||
                                 polarNode.target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE) {
@@ -1013,7 +1035,8 @@ fun NodeFields(
                     )
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
               label = "Mag End",
@@ -1027,7 +1050,8 @@ fun NodeFields(
                     )
                   )
                 )
-              }
+              },
+              onValueChangeFinished = onFieldEditComplete
             )
           }
           ProtoBrushBehavior.Node.NodeCase.FALLBACK_FILTER_NODE -> {
@@ -1049,49 +1073,57 @@ fun NodeFields(
           label = "Scale X",
           value = tip.scaleX,
           valueRange = 0f..2f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleX = it))) }
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleX = it))) },
+          onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Scale Y",
           value = tip.scaleY,
           valueRange = 0f..2f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleY = it))) }
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleY = it))) },
+          onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Corner Rounding",
           value = tip.cornerRounding,
           valueRange = 0f..1f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(cornerRounding = it))) }
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(cornerRounding = it))) },
+          onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Slant Degrees",
           value = Math.toDegrees(tip.slantRadians.toDouble()).toFloat(),
           valueRange = -90f..90f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(slantRadians = Math.toRadians(it.toDouble()).toFloat()))) }
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(slantRadians = Math.toRadians(it.toDouble()).toFloat()))) },
+          onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Pinch",
           value = tip.pinch,
           valueRange = 0f..1f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(pinch = it))) }
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(pinch = it))) },
+          onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Rotation Degrees",
           value = Math.toDegrees(tip.rotationRadians.toDouble()).toFloat(),
           valueRange = 0f..360f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(rotationRadians = Math.toRadians(it.toDouble()).toFloat()))) }
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(rotationRadians = Math.toRadians(it.toDouble()).toFloat()))) },
+          onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Particle Gap Distance Scale",
           value = tip.particleGapDistanceScale,
           valueRange = 0f..5f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDistanceScale = it))) }
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDistanceScale = it))) },
+          onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Particle Gap Duration (ms)",
           value = tip.particleGapDurationSeconds * 1000f,
           valueRange = 0f..1000f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDurationSeconds = it / 1000f))) }
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDurationSeconds = it / 1000f))) },
+          onValueChangeFinished = onFieldEditComplete
         )
       }
       is NodeData.Coat -> {
@@ -1131,6 +1163,7 @@ fun NodeFields(
                   text = { Text(prettyDisplayString(so)) },
                   onClick = {
                     onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so)))
+                    onDropdownEditComplete()
                     expanded = false
                   }
                 )
@@ -1215,6 +1248,7 @@ fun NodeFields(
                         }
                       )
                     }
+                    onDropdownEditComplete()
                     expandedType = false
                   }
                 )
@@ -1237,7 +1271,8 @@ fun NodeFields(
             label = "Opacity Multiplier",
             value = function.opacityMultiplier,
             valueRange = 0f..2f,
-            onValueChange = { onUpdate(NodeData.ColorFunc(function.safeCopy(opacityMultiplier = it))) }
+            onValueChange = { onUpdate(NodeData.ColorFunc(function.safeCopy(opacityMultiplier = it))) },
+            onValueChangeFinished = onFieldEditComplete
           )
         } else if (function.hasReplaceColor()) {
           val color = function.replaceColor
@@ -1349,6 +1384,7 @@ fun NodeFields(
                             .build()
                       }
                     onUpdate(data.copy(inputModel = newModel))
+                    onDropdownEditComplete()
                     expandedModel = false
                   }
                 )
@@ -1384,7 +1420,8 @@ fun NodeFields(
                 )
                 .build()
               onUpdate(data.copy(inputModel = newModel))
-            }
+            },
+            onValueChangeFinished = onFieldEditComplete
           )
 
           BrushSliderControl(
@@ -1399,7 +1436,8 @@ fun NodeFields(
                 )
                 .build()
               onUpdate(data.copy(inputModel = newModel))
-            }
+            },
+            onValueChangeFinished = onFieldEditComplete
           )
         }
       }

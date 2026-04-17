@@ -106,6 +106,7 @@ fun NodeGraphCanvas(
   onZoomChange: (Float) -> Unit,
   onOffsetChange: (Offset) -> Unit,
   onNodeMove: (String, Offset) -> Unit,
+  onNodeMoveFinished: () -> Unit = {},
   onNodeClick: (String, Offset) -> Unit,
   onNodeLongPress: (String) -> Unit = {},
   onNodeDelete: (String) -> Unit,
@@ -134,6 +135,7 @@ fun NodeGraphCanvas(
   bottomPadding: Dp = 16.dp,
   isSelectionMode: Boolean = false,
   selectedNodeIds: Set<String> = emptySet(),
+  onSelectAll: () -> Unit = {},
   onDuplicateSelected: () -> Unit = {},
   onDeleteSelected: () -> Unit = {},
   onDoneSelection: () -> Unit = {},
@@ -143,6 +145,7 @@ fun NodeGraphCanvas(
   var draggingPointerPos by remember { mutableStateOf<Offset?>(null) } // In parent Box space
   var activeSourcePort by remember { mutableStateOf<Port?>(null) }
   var canvasCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+  var showDeleteConfirmation by remember { mutableStateOf(false) }
 
   val currentZoom by androidx.compose.runtime.rememberUpdatedState(zoom)
   val currentOffset by androidx.compose.runtime.rememberUpdatedState(offset)
@@ -295,19 +298,21 @@ fun NodeGraphCanvas(
                   }
                   draggingNodeId = null
                   draggingPointerPos = null
+                  onNodeMoveFinished()
                 },
                 onPortDrag = { side, index, isStart ->
+                  if (!isSelectionMode) {
+                    if (isStart) {
+                      if (side == PortSide.OUTPUT) {
+                        activeSourcePort = Port(node.id, side, index)
 
-                  if (isStart) {
-                    if (side == PortSide.OUTPUT) {
-                      activeSourcePort = Port(node.id, side, index)
+                      } else if (side == PortSide.INPUT) {
+                        val edge = graph.edges.find { it.toPort.nodeId == node.id && it.toPort.index == index && !it.isDisabled }
 
-                    } else if (side == PortSide.INPUT) {
-                      val edge = graph.edges.find { it.toPort.nodeId == node.id && it.toPort.index == index && !it.isDisabled }
-
-                      if (edge != null) {
-                        activeSourcePort = edge.fromPort
-                        onEdgeDetach(edge)
+                        if (edge != null) {
+                          activeSourcePort = edge.fromPort
+                          onEdgeDetach(edge)
+                        }
                       }
                     }
                   }
@@ -405,6 +410,27 @@ fun NodeGraphCanvas(
       
       // Floating Action Menu for Selection
       if (isSelectionMode) {
+        if (showDeleteConfirmation) {
+          androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete Nodes") },
+            text = { Text("Are you sure you want to delete the selected nodes and all their connections?") },
+            confirmButton = {
+              androidx.compose.material3.TextButton(
+                onClick = {
+                  onDeleteSelected()
+                  showDeleteConfirmation = false
+                }
+              ) {
+                Text("Delete", color = MaterialTheme.colorScheme.error)
+              }
+            },
+            dismissButton = {
+              androidx.compose.material3.TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
+            },
+          )
+        }
+
         Surface(
           modifier = Modifier
             .align(Alignment.TopStart)
@@ -419,10 +445,13 @@ fun NodeGraphCanvas(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
           ) {
+            androidx.compose.material3.Button(onClick = onSelectAll) {
+              Text("Select All")
+            }
             androidx.compose.material3.Button(onClick = onDuplicateSelected) {
               Text("Duplicate")
             }
-            androidx.compose.material3.Button(onClick = onDeleteSelected) {
+            androidx.compose.material3.Button(onClick = { showDeleteConfirmation = true }) {
               Text("Delete")
             }
             androidx.compose.material3.Button(onClick = onDoneSelection) {
@@ -686,7 +715,7 @@ fun NodeWidget(
                         .padding(start = 8.dp, end = if (port.index == 0 && node.data.hasOutput()) 48.dp else 8.dp)
                         .let {
                           if (isPortEmpty) {
-                            it.clickable { onPortClick(node.id, port) }
+                            it.clickable(enabled = !isSelectionMode) { onPortClick(node.id, port) }
                               .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                           } else {
                             it
@@ -869,7 +898,7 @@ fun NodeWidget(
       }
     }
     
-    if (isSelectionMode) {
+    if (isSelectionMode && node.data !is NodeData.Family) {
       Box(
         modifier = Modifier
           .align(Alignment.TopEnd)
@@ -1043,8 +1072,9 @@ fun PortDot(
             Modifier
               .align(Alignment.TopEnd)
               .size(width = 10.dp, height = if (isLargeHandle) with(density) { (com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT * 2).toDp() } else 10.dp)
-              .pointerInput(port.nodeId, port.side) {
-                detectDragGestures(
+              .pointerInput(port.nodeId, port.side, zoom) {
+                detectPortDragGestures(
+                  zoom = zoom,
                   onDrag = { change, dragAmount ->
                     change.consume()
                     currentOnReorderUpdate(dragAmount.y)

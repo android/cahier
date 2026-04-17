@@ -18,6 +18,9 @@ import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
 import androidx.ink.strokes.Stroke
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cahier.ui.CahierTextureBitmapStore
@@ -58,6 +61,10 @@ import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.ColorFunction as ProtoColorFunction
+import com.example.cahier.ui.brushgraph.model.TUTORIAL_STEPS
+import com.example.cahier.ui.brushgraph.model.TutorialStep
+import com.example.cahier.ui.brushgraph.model.TutorialAnchor
+import com.example.cahier.ui.brushgraph.model.TutorialAction
 
 /** ViewModel to manage the state of the brush graph. */
 @HiltViewModel
@@ -129,6 +136,13 @@ class BrushGraphViewModel @Inject constructor(
   var offset by mutableStateOf(Offset.Zero)
     private set
 
+  private val _events = MutableSharedFlow<BrushGraphEvent>()
+  val events = _events.asSharedFlow()
+
+  sealed class BrushGraphEvent {
+    data class CenterOnNode(val offset: Offset) : BrushGraphEvent()
+  }
+
   /** Whether text fields in the UI are locked for editing. */
   var textFieldsLocked by mutableStateOf(false)
     private set
@@ -171,6 +185,72 @@ class BrushGraphViewModel @Inject constructor(
     updateBrushFromFamily(brush.family)
   }
 
+  /** The current step in the tutorial, or null if not in tutorial mode. */
+  var tutorialStep by mutableStateOf<TutorialStep?>(null)
+    private set
+
+  var currentStepIndex by mutableStateOf(0)
+    private set
+
+  private val tutorialSteps = mutableStateListOf<TutorialStep>()
+
+  var savedBrushFamily by mutableStateOf<BrushFamily?>(null)
+    private set
+
+  var isTutorialSandboxMode by mutableStateOf(false)
+    private set
+
+  fun startTutorial() {
+    tutorialSteps.clear()
+    tutorialSteps.addAll(TUTORIAL_STEPS)
+    currentStepIndex = 0
+    tutorialStep = tutorialSteps.getOrNull(currentStepIndex)
+  }
+
+  fun startTutorialSandbox() {
+    savedBrushFamily = brush.family
+    graph = createDefaultGraph()
+    isTutorialSandboxMode = true
+    
+    startTutorial()
+    
+
+    // Refresh current step just in case
+    tutorialStep = tutorialSteps.getOrNull(currentStepIndex)
+    
+    validate()
+  }
+
+  fun advanceTutorial(action: TutorialAction = TutorialAction.CLICK_NEXT): Boolean {
+    val step = tutorialStep
+    if (step != null && step.actionRequired == action) {
+      currentStepIndex++
+      if (currentStepIndex < tutorialSteps.size) {
+        tutorialStep = tutorialSteps[currentStepIndex]
+      } else {
+        tutorialStep = null // Tutorial finished!
+      }
+      return true
+    }
+    return false
+  }
+
+  fun regressTutorial() {
+    if (currentStepIndex > 0) {
+      currentStepIndex--
+      tutorialStep = tutorialSteps[currentStepIndex]
+    }
+  }
+
+  fun endTutorialSandbox(keepChanges: Boolean) {
+    isTutorialSandboxMode = false
+    if (!keepChanges && savedBrushFamily != null) {
+      loadBrushFamily(savedBrushFamily!!)
+    }
+    savedBrushFamily = null
+    tutorialStep = null
+  }
+
   companion object {
     private const val TAG = "BrushGraphViewModel"
   }
@@ -183,6 +263,14 @@ class BrushGraphViewModel @Inject constructor(
       .addPaintPreferences(defaultPaint)
       .build()
     val defaultProto = ProtoBrushFamily.newBuilder()
+      .setInputModel(
+        ink.proto.BrushFamily.InputModel.newBuilder()
+          .setSlidingWindowModel(
+            ink.proto.BrushFamily.SlidingWindowModel.newBuilder()
+              .setWindowSizeSeconds(0.02f)
+              .setExperimentalUpsamplingPeriodSeconds(0.005f)
+          )
+      )
       .addCoats(defaultCoat)
       .build()
     return BrushGraphConverter.fromProtoBrushFamily(defaultProto)
@@ -207,6 +295,12 @@ class BrushGraphViewModel @Inject constructor(
     graph = graph.copy(nodes = graph.nodes + newNode)
     selectedNodeId = newNode.id
     validate()
+    
+    if (data is NodeData.Behavior) {
+      advanceTutorial(TutorialAction.ADD_INPUT_FAB) || advanceTutorial(TutorialAction.ADD_BEHAVIOR)
+    } else if (data is NodeData.ColorFunc) {
+      advanceTutorial(TutorialAction.ADD_COLOR)
+    }
   }
 
   /** Adds a new Family node at the specified position. */
@@ -272,18 +366,36 @@ class BrushGraphViewModel @Inject constructor(
         nodes = graph.nodes.map { if (it.id == nodeId) it.copy(position = newPosition) else it }
       )
     }
+    
+  }
+
+  /** Called when a node move gesture is completed. */
+  fun onNodeMoveFinished() {
+    advanceTutorial(TutorialAction.MOVE_NODE)
+  }
+
+  /** Advances tutorial when user draws on canvas. */
+  fun onDrawOnCanvas() {
+    advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
   }
 
 
   /** Enters selection mode and selects the initial node. */
   fun enterSelectionMode(initialNodeId: String? = null) {
+    val node = initialNodeId?.let { id -> graph.nodes.find { it.id == id } }
+    if (node?.data is NodeData.Family) return
     isSelectionMode = true
     selectedNodeIds = if (initialNodeId != null) setOf(initialNodeId) else emptySet()
     dismissPanes()
+    
+    // Tutorial progression
+    advanceTutorial(TutorialAction.LONG_PRESS_NODE)
   }
 
   /** Toggles selection of a node. */
   fun toggleNodeSelection(nodeId: String) {
+    val node = graph.nodes.find { it.id == nodeId }
+    if (node?.data is NodeData.Family) return
     selectedNodeIds = if (selectedNodeIds.contains(nodeId)) {
       selectedNodeIds - nodeId
     } else {
@@ -294,10 +406,18 @@ class BrushGraphViewModel @Inject constructor(
     }
   }
 
+  /** Selects all nodes in the graph. */
+  fun selectAllNodes() {
+    selectedNodeIds = graph.nodes.filter { it.data !is NodeData.Family }.map { it.id }.toSet()
+  }
+
   /** Exits selection mode. */
   fun exitSelectionMode() {
     isSelectionMode = false
     selectedNodeIds = emptySet()
+    
+    // Tutorial progression
+    advanceTutorial(TutorialAction.CLICK_DONE)
   }
 
   /** Deletes all selected nodes and connected edges. */
@@ -325,6 +445,9 @@ class BrushGraphViewModel @Inject constructor(
       edges = graph.edges.filterNot { edge -> selectedNodeIds.contains(edge.toPort.nodeId) },
       nodes = graph.nodes.filterNot { node -> selectedNodeIds.contains(node.id) }
     )
+    
+    // Tutorial progression
+    advanceTutorial(TutorialAction.DELETE_NODE)
     
     exitSelectionMode()
     validate()
@@ -363,6 +486,9 @@ class BrushGraphViewModel @Inject constructor(
     // Select the duplicated nodes!
     selectedNodeIds = idMap.values.toSet()
     validate()
+    
+    // Tutorial progression
+    advanceTutorial(TutorialAction.DUPLICATE_NODES)
   }
 
   /** Updates the data/properties of a node. */
@@ -390,6 +516,16 @@ class BrushGraphViewModel @Inject constructor(
     validate()
   }
 
+  /** Called when a field edit is completed (slider released or manual entry submitted). */
+  fun onFieldEditComplete() {
+    advanceTutorial(TutorialAction.EDIT_FIELD)
+  }
+
+  /** Called when a dropdown edit is completed. */
+  fun onDropdownEditComplete() {
+    advanceTutorial(TutorialAction.EDIT_DROPDOWN)
+  }
+
   /** Sets the disabled state of a node. */
   fun setNodeDisabled(nodeId: String, isDisabled: Boolean) {
     graph = graph.copy(
@@ -414,6 +550,22 @@ class BrushGraphViewModel @Inject constructor(
     selectedNodeId = if (selectedNodeId == nodeId) null else nodeId
     selectedEdge = null
     isErrorPaneOpen = false
+    
+    advanceTutorial(TutorialAction.SELECT_NODE)
+  }
+
+  private fun checkSelectNodeTrigger(nodeId: String) {
+    val node = graph.nodes.find { it.id == nodeId }
+    if (node != null) {
+      val shouldAdvance = (node.data is NodeData.Tip) ||
+                          (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE) ||
+                          (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE) ||
+                          (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE) ||
+                          tutorialStep?.getTargetNode(graph)?.id == nodeId
+      if (shouldAdvance) {
+        advanceTutorial(TutorialAction.SELECT_NODE)
+      }
+    }
   }
 
   /** Handles a click on an edge. */
@@ -422,11 +574,16 @@ class BrushGraphViewModel @Inject constructor(
     selectedEdge = if (selectedEdge?.fromPort == edge.fromPort && selectedEdge?.toPort == edge.toPort) null else edge
     selectedNodeId = null
     isErrorPaneOpen = false
+    
+    // Tutorial progression
+    advanceTutorial(TutorialAction.SELECT_EDGE)
   }
 
   /** Clears the current node selection (closes the inspector). */
   fun clearSelectedNode() {
     selectedNodeId = null
+    
+    advanceTutorial(TutorialAction.EXIT_INSPECTOR)
   }
 
   /** Clears the current edge selection. */
@@ -439,12 +596,13 @@ class BrushGraphViewModel @Inject constructor(
     isErrorPaneOpen = !isErrorPaneOpen
     if (isErrorPaneOpen) {
       selectedNodeId = null
+      advanceTutorial(TutorialAction.CLICK_NOTIFICATION)
     }
   }
 
   /** Dismisses any open inspector or notification panes and clears selection. */
   fun dismissPanes() {
-    selectedNodeId = null
+    clearSelectedNode()
     selectedEdge = null
     isErrorPaneOpen = false
     activeEdgeSourceId = null
@@ -455,6 +613,9 @@ class BrushGraphViewModel @Inject constructor(
     if (issue.nodeId != null) {
       centerNode(issue.nodeId, isLandscape, density)
     }
+    
+    // Tutorial progression
+    advanceTutorial(TutorialAction.CLICK_ERROR_LINK)
   }
 
   /** Centers the specified node in the safe area of the viewport. */
@@ -462,6 +623,7 @@ class BrushGraphViewModel @Inject constructor(
     selectedNodeId = nodeId
     selectedEdge = null
     isErrorPaneOpen = false
+    checkSelectNodeTrigger(nodeId)
 
     // Center the node in the remaining on-screen safe area, accounting for sidebar and preview
     // panes.
@@ -486,7 +648,10 @@ class BrushGraphViewModel @Inject constructor(
       val nodeCenterX = node.position.x + node.data.width() / 2f
       val nodeCenterY = node.position.y + node.data.height() / 2f
 
-      offset = Offset(targetCenterX - nodeCenterX * zoom, targetCenterY - nodeCenterY * zoom)
+      val newOffset = Offset(targetCenterX - nodeCenterX * zoom, targetCenterY - nodeCenterY * zoom)
+      viewModelScope.launch {
+        _events.emit(BrushGraphEvent.CenterOnNode(newOffset))
+      }
     }
   }
 
@@ -585,6 +750,13 @@ class BrushGraphViewModel @Inject constructor(
     graph = graph.copy(nodes = graph.nodes + newNode)
     
     addEdge(newNodeId, nodeId, port.index)
+
+    // Tutorial progression
+    if (inferredNodeData is NodeData.Behavior) {
+      advanceTutorial(TutorialAction.ADD_BEHAVIOR)
+    } else if (inferredNodeData is NodeData.ColorFunc) {
+      advanceTutorial(TutorialAction.ADD_COLOR)
+    }
   }
 
   /** Adds a new edge between two nodes. */
@@ -649,6 +821,18 @@ class BrushGraphViewModel @Inject constructor(
     val newEdge = GraphEdge(fromPort = Port(fromId, PortSide.OUTPUT, 0), toPort = Port(toId, PortSide.INPUT, toInputIndex))
     graph = newGraph.copy(edges = newGraph.edges + newEdge)
     validate()
+    
+    // Tutorial progression
+    val fromNode = nodesById[fromId]
+    if (fromNode != null) {
+      val shouldAdvance = (fromNode.data is NodeData.Behavior && fromNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE &&
+                            toNode.data is NodeData.Behavior && toNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE) ||
+                           (fromNode.data is NodeData.Coat && toNode.data is NodeData.Family) ||
+                           (fromNode.data is NodeData.Behavior && toNode.data is NodeData.Tip)
+      if (shouldAdvance) {
+        advanceTutorial(TutorialAction.CONNECT_NODES)
+      }
+    }
   }
 
   /** Finalizes an edge edit by deleting the old edge and adding the new one. */
@@ -751,6 +935,8 @@ class BrushGraphViewModel @Inject constructor(
     }
     graph = graph.copy(edges = newEdges)
     validate()
+    
+    advanceTutorial(TutorialAction.SWAP_PORTS)
   }
 
   /** Deletes an edge. */
@@ -905,6 +1091,9 @@ class BrushGraphViewModel @Inject constructor(
     graph = graph.copy(nodes = newNodes, edges = newEdges)
     selectedNodeId = newNodeId
     validate()
+    
+    // Tutorial progression
+    advanceTutorial(TutorialAction.ADD_NODE_BETWEEN)
   }
 
   /** Clears the graph. */
@@ -927,6 +1116,9 @@ class BrushGraphViewModel @Inject constructor(
     if (selectedNodeId == nodeId) {
       selectedNodeId = null
     }
+    
+    // Tutorial progression
+    advanceTutorial(TutorialAction.DELETE_NODE)
     // Identify edges that will be removed.
     val edgesToRemove = graph.edges.filter { it.fromPort.nodeId == nodeId || it.toPort.nodeId == nodeId }
     // Remove edges going into the node being deleted.
