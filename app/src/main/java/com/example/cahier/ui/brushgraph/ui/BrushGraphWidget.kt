@@ -121,6 +121,7 @@ import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.toBrushFamily
+import com.example.cahier.ui.brushgraph.model.TutorialAction
 import com.example.cahier.ui.theme.CahierAppTheme
 import com.example.cahier.ui.theme.extendedColorScheme
 import kotlinx.coroutines.launch
@@ -460,7 +461,7 @@ fun BrushGraphStudio(
           onZoomChange = { viewModel.updateZoom(it) },
           onOffsetChange = { viewModel.updateOffset(it) },
           onNodeMove = { id, pos -> viewModel.moveNode(id, pos) },
-          onNodeMoveFinished = { viewModel.onNodeMoveFinished() },
+          onNodeMoveFinished = { viewModel.advanceTutorial(TutorialAction.MOVE_NODE) },
           onNodeClick = { id, _ ->
             if (viewModel.isSelectionMode) {
               viewModel.toggleNodeSelection(id)
@@ -972,8 +973,8 @@ fun AdaptiveInspectorPane(
                 strokeRenderer = strokeRenderer,
                 textFieldsLocked = viewModel.textFieldsLocked,
                 onDelete = { viewModel.deleteNode(selectedNode.id) },
-                onFieldEditComplete = { viewModel.onFieldEditComplete() },
-                onDropdownEditComplete = { viewModel.onDropdownEditComplete() },
+                onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) },
+                onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
               )
             } else if (selectedEdge != null) {
               val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromPort.nodeId }
@@ -1141,7 +1142,7 @@ fun CollapsiblePreviewPane(
           brush = viewModel.brush,
           onStrokesAdded = { 
             viewModel.strokeList.addAll(it)
-            viewModel.onDrawOnCanvas()
+            viewModel.advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
           },
           isDark = viewModel.isDarkCanvas,
         )

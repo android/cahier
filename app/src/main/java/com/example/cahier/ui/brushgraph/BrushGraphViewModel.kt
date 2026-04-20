@@ -369,15 +369,7 @@ class BrushGraphViewModel @Inject constructor(
     
   }
 
-  /** Called when a node move gesture is completed. */
-  fun onNodeMoveFinished() {
-    advanceTutorial(TutorialAction.MOVE_NODE)
-  }
 
-  /** Advances tutorial when user draws on canvas. */
-  fun onDrawOnCanvas() {
-    advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
-  }
 
 
   /** Enters selection mode and selects the initial node. */
@@ -514,16 +506,6 @@ class BrushGraphViewModel @Inject constructor(
     }
 
     validate()
-  }
-
-  /** Called when a field edit is completed (slider released or manual entry submitted). */
-  fun onFieldEditComplete() {
-    advanceTutorial(TutorialAction.EDIT_FIELD)
-  }
-
-  /** Called when a dropdown edit is completed. */
-  fun onDropdownEditComplete() {
-    advanceTutorial(TutorialAction.EDIT_DROPDOWN)
   }
 
   /** Sets the disabled state of a node. */
