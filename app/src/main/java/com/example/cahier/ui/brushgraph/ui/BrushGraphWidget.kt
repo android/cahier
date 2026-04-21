@@ -112,6 +112,7 @@ import com.example.cahier.ui.brushgraph.inspectors.NodeInspector
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
+import com.example.cahier.ui.brushgraph.model.GraphPoint
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
@@ -461,7 +462,7 @@ fun BrushGraphStudio(
           offset = viewModel.offset,
           onZoomChange = { viewModel.updateZoom(it) },
           onOffsetChange = { viewModel.updateOffset(it) },
-          onNodeMove = { id, pos -> viewModel.moveNode(id, pos) },
+          onNodeMove = { id, pos -> viewModel.moveNode(id, GraphPoint(pos.x, pos.y)) },
           onNodeMoveFinished = { viewModel.advanceTutorial(TutorialAction.MOVE_NODE) },
           onNodeClick = { id, _ ->
             if (viewModel.isSelectionMode) {

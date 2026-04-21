@@ -10,7 +10,8 @@ import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import com.example.cahier.ui.brushgraph.model.getPortPosition
+import com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL
+import com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
 
 /** Registry to track the actual position of ports and sizes of nodes on the screen. */
 data class PortKey(val nodeId: String, val portId: String)
@@ -23,8 +24,36 @@ class NodeRegistry {
     portPositions[PortKey(nodeId, portId)] = position
   }
 
-  fun getPort(nodeId: String, portId: String): Offset? {
-    return portPositions[PortKey(nodeId, portId)]
+  fun getPortPosition(nodeId: String, portId: String, graph: BrushGraph, useFallbackOnly: Boolean = false): Offset {
+    val stored = portPositions[PortKey(nodeId, portId)]
+    if (stored != null && !useFallbackOnly) return stored
+    
+    val node = graph.nodes.find { it.id == nodeId } ?: return Offset.Zero
+    
+    // Special handling for output port which is not in visiblePorts
+    if (portId == "output") {
+      val w = node.data.width()
+      val yOffset = NODE_PADDING_VERTICAL + node.data.titleHeight() + 0.5f * INPUT_ROW_HEIGHT
+      return Offset(node.position.x + w, node.position.y + yOffset)
+    }
+    
+    val visiblePorts = node.getVisiblePorts(graph)
+    val port = visiblePorts.find { it.id == portId } ?: return Offset.Zero
+    val sameSidePorts = visiblePorts.filter { it.side == port.side }
+    val index = sameSidePorts.indexOf(port)
+    
+    val w = node.data.width()
+    val yOffset = NODE_PADDING_VERTICAL + 
+                  node.data.titleHeight() + 
+                  (index + 0.5f) * INPUT_ROW_HEIGHT
+
+    val relativeOffset = when (port.side) {
+        PortSide.INPUT -> Offset(0f, yOffset)
+        PortSide.OUTPUT -> Offset(w, yOffset)
+    }
+    
+    val nodeOffset = Offset(node.position.x, node.position.y)
+    return nodeOffset + relativeOffset
   }
 
   fun updateNodeSize(nodeId: String, size: Size) {
@@ -51,8 +80,7 @@ class NodeRegistry {
             return@forEachIndexed // Occupied by another node's edge!
           }
           
-          val portPos = getPort(port.nodeId, port.id)
-            ?: (node.position + node.getPortPosition(port.id, graph))
+          val portPos = getPortPosition(port.nodeId, port.id, graph)
             
           val distSq = (pos - portPos).getDistanceSquared()
 

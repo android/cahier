@@ -43,10 +43,10 @@ import com.example.cahier.ui.brushgraph.converters.BrushGraphConverter
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
+import com.example.cahier.ui.brushgraph.model.GraphPoint
 import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import com.example.cahier.ui.brushgraph.model.getPortPosition
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
@@ -290,7 +290,7 @@ class BrushGraphViewModel @Inject constructor(
       (graphIssues + newIssue).distinctBy { it.message + (it.nodeId ?: "") + it.severity }
   }
 
-  fun addNode(data: NodeData, position: Offset) {
+  fun addNode(data: NodeData, position: GraphPoint) {
     dismissPanes()
     val newNode = GraphNode(id = UUID.randomUUID().toString(), data = data, position = position)
     graph = graph.copy(nodes = graph.nodes + newNode)
@@ -306,32 +306,32 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Adds a new Family node at the specified position. */
   fun addFamilyNode(position: Offset) {
-    addNode(NodeData.Family(), position)
+    addNode(NodeData.Family(), GraphPoint(position.x, position.y))
   }
 
   /** Adds a new Coat node at the specified position. */
   fun addCoatNode(position: Offset) {
-    addNode(NodeData.Coat(), position)
+    addNode(NodeData.Coat(), GraphPoint(position.x, position.y))
   }
 
   /** Adds a new Paint node at the specified position. */
   fun addPaintNode(position: Offset) {
-    addNode(NodeData.Paint(ProtoBrushPaint.getDefaultInstance()), position)
+    addNode(NodeData.Paint(ProtoBrushPaint.getDefaultInstance()), GraphPoint(position.x, position.y))
   }
 
   /** Adds a new Tip node at the specified position. */
   fun addTipNode(position: Offset) {
-    addNode(NodeData.Tip(ProtoBrushTip.getDefaultInstance()), position)
+    addNode(NodeData.Tip(ProtoBrushTip.getDefaultInstance()), GraphPoint(position.x, position.y))
   }
 
   /** Adds a new Color Function node at the specified position. */
   fun addColorFunctionNode(position: Offset) {
-    addNode(NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), position)
+    addNode(NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), GraphPoint(position.x, position.y))
   }
 
   /** Adds a new Texture Layer node at the specified position. */
   fun addTextureLayerNode(position: Offset) {
-    addNode(NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()), position)
+    addNode(NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()), GraphPoint(position.x, position.y))
   }
 
   /** Adds a new Behavior node (TargetNode by default) at the specified position. */
@@ -347,19 +347,20 @@ class BrushGraphViewModel @Inject constructor(
           )
           .build()
       ),
-      position,
+      GraphPoint(position.x, position.y),
     )
   }
 
   /** Updates the position of a node. */
-  fun moveNode(nodeId: String, newPosition: Offset) {
+  fun moveNode(nodeId: String, newPosition: GraphPoint) {
     val node = graph.nodes.find { it.id == nodeId } ?: return
     
     if (isSelectionMode && selectedNodeIds.contains(nodeId)) {
-      val delta = newPosition - node.position
+      val deltaX = newPosition.x - node.position.x
+      val deltaY = newPosition.y - node.position.y
       graph = graph.copy(
         nodes = graph.nodes.map {
-          if (selectedNodeIds.contains(it.id)) it.copy(position = it.position + delta) else it
+          if (selectedNodeIds.contains(it.id)) it.copy(position = GraphPoint(it.position.x + deltaX, it.position.y + deltaY)) else it
         }
       )
     } else {
@@ -451,7 +452,7 @@ class BrushGraphViewModel @Inject constructor(
     val newNodes = nodesToDuplicate.map { node ->
       node.copy(
         id = idMap[node.id]!!,
-        position = node.position + offset
+        position = GraphPoint(node.position.x + offset.x, node.position.y + offset.y)
       )
     }
     
@@ -733,11 +734,11 @@ class BrushGraphViewModel @Inject constructor(
 
     val newNodeId = UUID.randomUUID().toString()
     // Position reasonably: to the left of the tapped node.
-    val portOffset = node.getPortPosition(port.id, graph)
+    val portAbsolute = nodeRegistry.getPortPosition(node.id, port.id, graph)
     val newX = node.position.x - inferredNodeData.width() - 100f
-    val newY = node.position.y + portOffset.y - inferredNodeData.height() / 2f
+    val newY = portAbsolute.y - inferredNodeData.height() / 2f
 
-    val newNode = GraphNode(id = newNodeId, data = inferredNodeData, position = Offset(newX, newY))
+    val newNode = GraphNode(id = newNodeId, data = inferredNodeData, position = GraphPoint(newX, newY))
     graph = graph.copy(nodes = graph.nodes + newNode)
     
     addEdge(newNodeId, nodeId, port.id)
@@ -991,7 +992,7 @@ class BrushGraphViewModel @Inject constructor(
             newGraph = newGraph.copy(
               nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
             )
-            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+            nodeRegistry.clearNode(edge.toNodeId)
           }
         }
         is NodeData.Behavior -> {
@@ -1007,8 +1008,7 @@ class BrushGraphViewModel @Inject constructor(
                 newGraph = newGraph.copy(
                   nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
                 )
-                nodeRegistry.deletePort(edge.toNodeId, pair[0])
-                nodeRegistry.deletePort(edge.toNodeId, pair[1])
+                nodeRegistry.clearNode(edge.toNodeId)
               }
             }
           } else {
@@ -1017,7 +1017,7 @@ class BrushGraphViewModel @Inject constructor(
               newGraph = newGraph.copy(
                 nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
               )
-              nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+              nodeRegistry.clearNode(edge.toNodeId)
             }
           }
         }
@@ -1027,7 +1027,7 @@ class BrushGraphViewModel @Inject constructor(
             newGraph = newGraph.copy(
               nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
             )
-            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+            nodeRegistry.clearNode(edge.toNodeId)
           }
         }
         is NodeData.Family -> {
@@ -1036,7 +1036,7 @@ class BrushGraphViewModel @Inject constructor(
             newGraph = newGraph.copy(
               nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
             )
-            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+            nodeRegistry.clearNode(edge.toNodeId)
           }
         }
         is NodeData.Paint -> {
@@ -1045,13 +1045,13 @@ class BrushGraphViewModel @Inject constructor(
             newGraph = newGraph.copy(
               nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
             )
-            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+            nodeRegistry.clearNode(edge.toNodeId)
           } else if (toData.colorPortIds.contains(edge.toPortId)) {
             val newData = toData.copy(colorPortIds = toData.colorPortIds - edge.toPortId)
             newGraph = newGraph.copy(
               nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
             )
-            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+            nodeRegistry.clearNode(edge.toNodeId)
           }
         }
         else -> {}
@@ -1085,7 +1085,10 @@ class BrushGraphViewModel @Inject constructor(
           .build(),
         inputPortIds = listOf(newPortId)
       ),
-      position = (fromNode.position + toNode.position) / 2f
+      position = GraphPoint(
+        (fromNode.position.x + toNode.position.x) / 2f,
+        (fromNode.position.y + toNode.position.y) / 2f
+      )
     )
     
     val behaviorData = newNode.data as NodeData.Behavior

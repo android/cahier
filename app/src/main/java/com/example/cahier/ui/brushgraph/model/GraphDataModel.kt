@@ -46,11 +46,13 @@ const val INSPECTOR_HEIGHT_PORTRAIT = 400f
 const val PREVIEW_HEIGHT_EXPANDED = 200f
 const val PREVIEW_HEIGHT_COLLAPSED = 40f
 
+data class GraphPoint(val x: Float, val y: Float)
+
 /** Representation of a single node in the brush behavior graph. */
 data class GraphNode(
   val id: String = UUID.randomUUID().toString(),
   val data: NodeData,
-  val position: Offset,
+  val position: GraphPoint,
   val isExpanded: Boolean = false,
   val hasError: Boolean = false,
   val hasWarning: Boolean = false,
@@ -618,17 +620,4 @@ fun preserveEdgesOnTypeChange(
     return Pair(finalNewData, finalEdges)
 }
 
-fun GraphNode.getPortPosition(portId: String, graph: BrushGraph): Offset {
-    val visiblePorts = getVisiblePorts(graph)
-    val port = visiblePorts.find { it.id == portId } ?: return Offset.Zero
-    val sameSidePorts = visiblePorts.filter { it.side == port.side }
-    val index = sameSidePorts.indexOf(port)
-    
-    val w = data.width()
-    val yOffset = NODE_PADDING_VERTICAL + data.titleHeight() + (index + 0.5f) * INPUT_ROW_HEIGHT
 
-    return when (port.side) {
-        PortSide.INPUT -> Offset(0f, yOffset)
-        PortSide.OUTPUT -> Offset(w, yOffset)
-    }
-}

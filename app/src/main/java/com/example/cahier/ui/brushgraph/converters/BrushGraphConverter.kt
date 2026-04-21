@@ -2,12 +2,12 @@
 
 package com.example.cahier.ui.brushgraph.converters
 
-import androidx.compose.ui.geometry.Offset
 import androidx.ink.brush.BrushFamily
 import androidx.ink.storage.encode
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
+import com.example.cahier.ui.brushgraph.model.GraphPoint
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.PortSide
@@ -55,7 +55,7 @@ object BrushGraphConverter {
         coatPortIds = coatPortIds,
       )
     val familyNodeX = 1600f
-    nodes.add(GraphNode(id = familyNodeId, data = familyData, position = Offset(familyNodeX, 0f)))
+    nodes.add(GraphNode(id = familyNodeId, data = familyData, position = GraphPoint(familyNodeX, 0f)))
 
     for (index in 0 until family.coatsCount) {
       val coat = family.getCoats(index)
@@ -64,7 +64,7 @@ object BrushGraphConverter {
       val coatData = NodeData.Coat(paintPortIds = paintPortIds)
       val coatX = familyNodeX - coatData.width() - HORIZONTAL_GAP
       val coatY = nextY
-      val coatNode = GraphNode(id = coatId, data = coatData, position = Offset(coatX, coatY))
+      val coatNode = GraphNode(id = coatId, data = coatData, position = GraphPoint(coatX, coatY))
       nodes.add(coatNode)
       edges.add(
         GraphEdge(
@@ -119,7 +119,7 @@ object BrushGraphConverter {
     val tipId = UUID.randomUUID().toString()
     val behaviorPortIds = (0 until tip.behaviorsCount).map { UUID.randomUUID().toString() }
     val tipData = NodeData.Tip(tip, behaviorPortIds = behaviorPortIds)
-    nodes.add(GraphNode(id = tipId, data = tipData, position = Offset(x, y)))
+    nodes.add(GraphNode(id = tipId, data = tipData, position = GraphPoint(x, y)))
 
     var currentY = y
     var behaviorIndex = 0
@@ -153,7 +153,7 @@ object BrushGraphConverter {
     val texturePortIds = (0 until paint.textureLayersCount).map { UUID.randomUUID().toString() }
     val colorPortIds = (0 until paint.colorFunctionsCount).map { UUID.randomUUID().toString() }
     val paintData = NodeData.Paint(paint, texturePortIds = texturePortIds, colorPortIds = colorPortIds)
-    nodes.add(GraphNode(id = paintId, data = paintData, position = Offset(x, y)))
+    nodes.add(GraphNode(id = paintId, data = paintData, position = GraphPoint(x, y)))
 
     var currentY = y
     var layerIndex = 0
@@ -164,7 +164,7 @@ object BrushGraphConverter {
         GraphNode(
           id = layerId,
           data = layerData,
-          position = Offset(x - layerData.width() - HORIZONTAL_GAP, currentY),
+          position = GraphPoint(x - layerData.width() - HORIZONTAL_GAP, currentY),
         )
       )
       edges.add(
@@ -185,7 +185,7 @@ object BrushGraphConverter {
         GraphNode(
           id = cfId,
           data = cfData,
-          position = Offset(x - cfData.width() - HORIZONTAL_GAP, currentY),
+          position = GraphPoint(x - cfData.width() - HORIZONTAL_GAP, currentY),
         )
       )
       edges.add(
@@ -291,7 +291,7 @@ object BrushGraphConverter {
         val finalY = maxOf(centerY - nodeHeight / 2f, minY)
         maxYPerDepth[depth] = finalY + nodeHeight + VERTICAL_GAP
         
-        nodes.add(GraphNode(id = info.id, data = info.data, position = Offset(x, finalY)))
+        nodes.add(GraphNode(id = info.id, data = info.data, position = GraphPoint(x, finalY)))
         maxYReached = maxOf(maxYReached, finalY + nodeHeight)
         
         info.children.forEachIndexed { index, child ->
