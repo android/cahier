@@ -143,8 +143,8 @@ fun BrushGraphWidget(
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
   
-  // Use existing CahierTextureBitmapStore
-  val textureStore = remember { CahierTextureBitmapStore(context) }
+  // Use hoisted CahierTextureBitmapStore from ViewModel
+  val textureStore = viewModel.textureStore
   var allTextureIds by remember { mutableStateOf(textureStore.getAllIds()) }
   
   val renderer = remember { CanvasStrokeRenderer.create(textureStore) }

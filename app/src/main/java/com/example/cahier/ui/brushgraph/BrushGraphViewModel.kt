@@ -71,7 +71,8 @@ import com.example.cahier.ui.brushgraph.model.TutorialAction
 @HiltViewModel
 class BrushGraphViewModel @Inject constructor(
   @ApplicationContext private val context: Context,
-  private val customBrushDao: CustomBrushDao
+  private val customBrushDao: CustomBrushDao,
+  val textureStore: CahierTextureBitmapStore
 ) : ViewModel() {
 
   /** Saved brushes in the palette. */
