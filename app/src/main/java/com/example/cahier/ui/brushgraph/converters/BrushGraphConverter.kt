@@ -46,12 +46,13 @@ object BrushGraphConverter {
     var nextY = 0f
     val familyNodeId = UUID.randomUUID().toString()
 
+    val coatPortIds = (0 until family.coatsCount).map { UUID.randomUUID().toString() }
     val familyData =
       NodeData.Family(
         clientBrushFamilyId = family.clientBrushFamilyId,
         developerComment = family.developerComment,
         inputModel = family.inputModel,
-        numCoats = family.coatsCount,
+        coatPortIds = coatPortIds,
       )
     val familyNodeX = 1600f
     nodes.add(GraphNode(id = familyNodeId, data = familyData, position = Offset(familyNodeX, 0f)))
@@ -59,25 +60,44 @@ object BrushGraphConverter {
     for (index in 0 until family.coatsCount) {
       val coat = family.getCoats(index)
       val coatId = UUID.randomUUID().toString()
-      val coatData = NodeData.Coat
+      val paintPortIds = (0 until coat.paintPreferencesCount).map { UUID.randomUUID().toString() }
+      val coatData = NodeData.Coat(paintPortIds = paintPortIds)
       val coatX = familyNodeX - coatData.width() - HORIZONTAL_GAP
       val coatY = nextY
       val coatNode = GraphNode(id = coatId, data = coatData, position = Offset(coatX, coatY))
       nodes.add(coatNode)
-      edges.add(GraphEdge(fromPort = Port(coatId, PortSide.OUTPUT, 0), toPort = Port(familyNodeId, PortSide.INPUT, index)))
+      edges.add(
+        GraphEdge(
+          fromNodeId = coatId,
+          toNodeId = familyNodeId,
+          toPortId = coatPortIds[index]
+        )
+      )
 
       val tipX = coatX - NodeData.Tip(coat.tip).width() - HORIZONTAL_GAP
-      val (tipId, tipSubtreeMaxY) = convertTip(coat.tip, nodes, edges, tipX, coatY)
-      edges.add(GraphEdge(fromPort = Port(tipId, PortSide.OUTPUT, 0), toPort = Port(coatId, PortSide.INPUT, 0)))
+      val (tipId, tipOutputPortId, tipSubtreeMaxY) = convertTip(coat.tip, nodes, edges, tipX, coatY)
+      edges.add(
+        GraphEdge(
+          fromNodeId = tipId,
+          toNodeId = coatId,
+          toPortId = coatData.tipPortId
+        )
+      )
 
-      var paintIndex = 1
+      var paintIndex = 0
       var currentPaintY = tipSubtreeMaxY + VERTICAL_GAP
       var maxPaintSubtreeY = currentPaintY
       for (paint in coat.paintPreferencesList) {
         val paintData = NodeData.Paint(paint)
         val paintX = coatX - paintData.width() - HORIZONTAL_GAP
-        val (paintId, paintSubtreeMaxY) = convertPaint(paint, nodes, edges, paintX, currentPaintY)
-        edges.add(GraphEdge(fromPort = Port(paintId, PortSide.OUTPUT, 0), toPort = Port(coatId, PortSide.INPUT, paintIndex++)))
+        val (paintId, paintOutputPortId, paintSubtreeMaxY) = convertPaint(paint, nodes, edges, paintX, currentPaintY)
+        edges.add(
+          GraphEdge(
+            fromNodeId = paintId,
+            toNodeId = coatId,
+            toPortId = paintPortIds[paintIndex++]
+          )
+        )
         currentPaintY = paintSubtreeMaxY + VERTICAL_GAP
         maxPaintSubtreeY = maxOf(maxPaintSubtreeY, paintSubtreeMaxY)
       }
@@ -95,24 +115,31 @@ object BrushGraphConverter {
     edges: MutableList<GraphEdge>,
     x: Float,
     y: Float,
-  ): Pair<String, Float> {
+  ): Triple<String, String, Float> {
     val tipId = UUID.randomUUID().toString()
-    val tipData = NodeData.Tip(tip)
+    val behaviorPortIds = (0 until tip.behaviorsCount).map { UUID.randomUUID().toString() }
+    val tipData = NodeData.Tip(tip, behaviorPortIds = behaviorPortIds)
     nodes.add(GraphNode(id = tipId, data = tipData, position = Offset(x, y)))
 
     var currentY = y
     var behaviorIndex = 0
     for (behavior in tip.behaviorsList) {
       // Reconstruct the graph from the post-order list of nodes.
-      val (terminalNodeIds, behaviorMaxY) = convertBehaviorGraph(behavior, nodes, edges, x, currentY)
-      for (terminalId in terminalNodeIds) {
-        edges.add(GraphEdge(fromPort = Port(terminalId, PortSide.OUTPUT, 0), toPort = Port(tipId, PortSide.INPUT, behaviorIndex)))
+      val (terminalNodes, behaviorMaxY) = convertBehaviorGraph(behavior, nodes, edges, x, currentY)
+      for ((terminalId, _) in terminalNodes) {
+        edges.add(
+          GraphEdge(
+            fromNodeId = terminalId,
+            toNodeId = tipId,
+            toPortId = behaviorPortIds[behaviorIndex]
+          )
+        )
       }
       behaviorIndex++
       currentY = behaviorMaxY + VERTICAL_GAP
     }
 
-    return tipId to maxOf(y + tipData.height(tip.behaviorsCount + 1), currentY - VERTICAL_GAP)
+    return Triple(tipId, "output", maxOf(y + tipData.height(tip.behaviorsCount + 1), currentY - VERTICAL_GAP))
   }
 
   private fun convertPaint(
@@ -121,9 +148,11 @@ object BrushGraphConverter {
     edges: MutableList<GraphEdge>,
     x: Float,
     y: Float,
-  ): Pair<String, Float> {
+  ): Triple<String, String, Float> {
     val paintId = UUID.randomUUID().toString()
-    val paintData = NodeData.Paint(paint)
+    val texturePortIds = (0 until paint.textureLayersCount).map { UUID.randomUUID().toString() }
+    val colorPortIds = (0 until paint.colorFunctionsCount).map { UUID.randomUUID().toString() }
+    val paintData = NodeData.Paint(paint, texturePortIds = texturePortIds, colorPortIds = colorPortIds)
     nodes.add(GraphNode(id = paintId, data = paintData, position = Offset(x, y)))
 
     var currentY = y
@@ -138,11 +167,17 @@ object BrushGraphConverter {
           position = Offset(x - layerData.width() - HORIZONTAL_GAP, currentY),
         )
       )
-      edges.add(GraphEdge(fromPort = Port(layerId, PortSide.OUTPUT, 0), toPort = Port(paintId, PortSide.INPUT, layerIndex++)))
+      edges.add(
+        GraphEdge(
+          fromNodeId = layerId,
+          toNodeId = paintId,
+          toPortId = texturePortIds[layerIndex++]
+        )
+      )
       currentY += layerData.height() + VERTICAL_GAP
     }
 
-    var colorIndex = layerIndex + 1 // Skip "Add Texture..." port!
+    var colorIndex = 0
     for (cf in paint.colorFunctionsList) {
       val cfId = UUID.randomUUID().toString()
       val cfData = NodeData.ColorFunc(cf)
@@ -153,12 +188,18 @@ object BrushGraphConverter {
           position = Offset(x - cfData.width() - HORIZONTAL_GAP, currentY),
         )
       )
-      edges.add(GraphEdge(fromPort = Port(cfId, PortSide.OUTPUT, 0), toPort = Port(paintId, PortSide.INPUT, colorIndex++)))
+      edges.add(
+        GraphEdge(
+          fromNodeId = cfId,
+          toNodeId = paintId,
+          toPortId = colorPortIds[colorIndex++]
+        )
+      )
       currentY += cfData.height() + VERTICAL_GAP
     }
 
     val paintHeight = paintData.height(paint.textureLayersCount + 1 + paint.colorFunctionsCount + 1)
-    return paintId to maxOf(y + paintHeight, currentY - VERTICAL_GAP)
+    return Triple(paintId, "output", maxOf(y + paintHeight, currentY - VERTICAL_GAP))
   }
 
   private fun convertBehaviorGraph(
@@ -167,19 +208,20 @@ object BrushGraphConverter {
     edges: MutableList<GraphEdge>,
     tipX: Float,
     startY: Float,
-  ): Pair<List<String>, Float> {
+  ): Pair<List<Pair<String, String>>, Float> {
     val behaviorId = UUID.randomUUID().toString()
     val nodeStack = mutableListOf<InternalNodeInfo>()
     val behaviorNodes = mutableListOf<InternalNodeInfo>()
 
     for (protoNode in behavior.nodesList) {
       val nodeId = UUID.randomUUID().toString()
-      val nodeData = NodeData.Behavior(
+      // Temporary NodeData to get inputCount
+      val tempNodeData = NodeData.Behavior(
         node = protoNode,
         developerComment = behavior.developerComment,
         behaviorId = behaviorId
       )
-      val inputCount = nodeData.inputLabels().size
+      val inputCount = tempNodeData.inputLabels().size
       
       val children = mutableListOf<InternalNodeInfo>()
       for (i in 0 until inputCount) {
@@ -187,6 +229,14 @@ object BrushGraphConverter {
           children.add(0, nodeStack.removeAt(nodeStack.size - 1))
         }
       }
+      
+      val inputPortIds = (0 until children.size).map { UUID.randomUUID().toString() }
+      val nodeData = NodeData.Behavior(
+        node = protoNode,
+        developerComment = behavior.developerComment,
+        behaviorId = behaviorId,
+        inputPortIds = inputPortIds
+      )
       
       val info = InternalNodeInfo(nodeId, nodeData, children)
       behaviorNodes.add(info)
@@ -245,7 +295,13 @@ object BrushGraphConverter {
         maxYReached = maxOf(maxYReached, finalY + nodeHeight)
         
         info.children.forEachIndexed { index, child ->
-            edges.add(GraphEdge(fromPort = Port(child.id, PortSide.OUTPUT, 0), toPort = Port(info.id, PortSide.INPUT, index)))
+            edges.add(
+              GraphEdge(
+                fromNodeId = child.id,
+                toNodeId = info.id,
+                toPortId = info.data.inputPortIds[index]
+              )
+            )
         }
         assignedNodes.add(info.id)
         return finalY + nodeHeight / 2f
@@ -255,7 +311,7 @@ object BrushGraphConverter {
         layoutNode(root, 0)
     }
     
-    return terminalNodeInfos.map { it.id } to maxYReached
+    return terminalNodeInfos.map { it.id to "output" } to maxYReached
   }
 
   private data class InternalNodeInfo(

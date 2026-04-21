@@ -85,6 +85,7 @@ import com.example.cahier.ui.brushgraph.model.PREVIEW_AREA_HEIGHT
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import com.example.cahier.ui.brushgraph.model.getPortPosition
 import com.example.cahier.ui.theme.extendedColorScheme
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushPaint as ProtoBrushPaint
@@ -110,11 +111,11 @@ fun NodeGraphCanvas(
   onNodeClick: (String, Offset) -> Unit,
   onNodeLongPress: (String) -> Unit = {},
   onNodeDelete: (String) -> Unit,
-  onAddEdge: (String, String, Int) -> Unit,
+  onAddEdge: (String, String, String) -> Unit,
   onEdgeClick: (GraphEdge) -> Unit,
   onEdgeDelete: (GraphEdge) -> Unit,
   onEdgeDetach: (GraphEdge) -> Unit = {},
-  onFinalizeEdgeEdit: (GraphEdge, String, String, Int) -> Unit = { _, _, _, _ -> },
+  onFinalizeEdgeEdit: (GraphEdge, String, String, String) -> Unit = { _, _, _, _ -> },
   onCanvasClick: () -> Unit = {},
   onPortClick: (String, Port) -> Unit = { _, _ -> },
   onReorderPorts: (String, Int, Int) -> Unit = { _, _, _ -> },
@@ -181,17 +182,16 @@ fun NodeGraphCanvas(
                 val graphTap = (tapOffset - currentOffset) / currentZoom
                 currentGraph.edges
                   .find { edge ->
-                    val fromNode = currentGraph.nodes.find { it.id == edge.fromPort.nodeId }
-                    val toNode = currentGraph.nodes.find { it.id == edge.toPort.nodeId }
+                    val fromNode = currentGraph.nodes.find { it.id == edge.fromNodeId }
+                    val toNode = currentGraph.nodes.find { it.id == edge.toNodeId }
                     
                     val start = if (fromNode != null) {
-                        nodeRegistry.getPort(edge.fromPort.nodeId, edge.fromPort.side, edge.fromPort.index)
-                          ?: (fromNode.position + fromNode.data.getPortPosition(edge.fromPort.side, edge.fromPort.index))
+                        nodeRegistry.getPort(edge.fromNodeId, "output")
+                          ?: (fromNode.position + fromNode.getPortPosition("output", currentGraph))
                     } else Offset.Zero
                     val end = if (toNode != null) {
-                        nodeRegistry.getPort(edge.toPort.nodeId, edge.toPort.side, edge.toPort.index)
-                          ?: (toNode.position +
-                            toNode.data.getPortPosition(edge.toPort.side, edge.toPort.index))
+                        nodeRegistry.getPort(edge.toNodeId, edge.toPortId)
+                          ?: (toNode.position + toNode.getPortPosition(edge.toPortId, currentGraph))
                     } else Offset.Zero
                     val threshold = 24f / currentZoom
                     val distance = distanceToSpline(graphTap, start, end)
@@ -226,17 +226,16 @@ fun NodeGraphCanvas(
           Canvas(modifier = Modifier.fillMaxSize()) {
             for (edge in graph.edges) {
               if (edge == detachedEdge) continue
-              val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
-              val toNode = graph.nodes.find { it.id == edge.toPort.nodeId }
+              val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+              val toNode = graph.nodes.find { it.id == edge.toNodeId }
               
               val start = if (fromNode != null) {
-                  nodeRegistry.getPort(edge.fromPort.nodeId, edge.fromPort.side, edge.fromPort.index)
-                    ?: (fromNode.position + fromNode.data.getPortPosition(edge.fromPort.side, edge.fromPort.index))
+                  nodeRegistry.getPort(edge.fromNodeId, "output")
+                    ?: (fromNode.position + fromNode.getPortPosition("output", graph))
               } else Offset.Zero
               val end = if (toNode != null) {
-                  nodeRegistry.getPort(edge.toPort.nodeId, edge.toPort.side, edge.toPort.index)
-                    ?: (toNode.position +
-                      toNode.data.getPortPosition(edge.toPort.side, edge.toPort.index))
+                  nodeRegistry.getPort(edge.toNodeId, edge.toPortId)
+                    ?: (toNode.position + toNode.getPortPosition(edge.toPortId, graph))
               } else Offset.Zero
               val isSelected = edge == selectedEdge
               drawPath(
@@ -254,8 +253,8 @@ fun NodeGraphCanvas(
                 .find { it.id == sourcePort.nodeId }
                 ?.let { node ->
                   val start =
-                    nodeRegistry.getPort(sourcePort.nodeId, sourcePort.side, sourcePort.index)
-                      ?: (node.position + node.data.getPortPosition(sourcePort.side, sourcePort.index))
+                    nodeRegistry.getPort(sourcePort.nodeId, sourcePort.id)
+                      ?: (node.position + node.getPortPosition(sourcePort.id, graph))
                   drawPath(
                     path = createSplinePath(start, pointerPos!!),
                     color = activeEdgeColor,
@@ -300,17 +299,16 @@ fun NodeGraphCanvas(
                   draggingPointerPos = null
                   onNodeMoveFinished()
                 },
-                onPortDrag = { side, index, isStart ->
+                onPortDrag = { side, portId, isStart ->
                   if (!isSelectionMode) {
                     if (isStart) {
                       if (side == PortSide.OUTPUT) {
-                        activeSourcePort = Port(node.id, side, index)
-
+                        activeSourcePort = Port.Output(node.id, portId)
                       } else if (side == PortSide.INPUT) {
-                        val edge = graph.edges.find { it.toPort.nodeId == node.id && it.toPort.index == index && !it.isDisabled }
+                        val edge = graph.edges.find { it.toNodeId == node.id && it.toPortId == portId && !it.isDisabled }
 
                         if (edge != null) {
-                          activeSourcePort = edge.fromPort
+                          activeSourcePort = Port.Output(edge.fromNodeId, "output")
                           onEdgeDetach(edge)
                         }
                       }
@@ -327,8 +325,7 @@ fun NodeGraphCanvas(
                         pointerPos =
                           nodeRegistry.getPort(
                             snappedPort.nodeId,
-                            snappedPort.side,
-                            snappedPort.index,
+                            snappedPort.id,
                           )
                       } else {
                         pointerPos = pos
@@ -351,9 +348,9 @@ fun NodeGraphCanvas(
                         if (target != null) {
                           val currentDetached = detachedEdge
                           if (currentDetached != null) {
-                            onFinalizeEdgeEdit(currentDetached, fromNodeId, target.nodeId, target.index)
+                            onFinalizeEdgeEdit(currentDetached, fromNodeId, target.nodeId, target.id)
                           } else {
-                            onAddEdge(fromNodeId, target.nodeId, target.index)
+                            onAddEdge(fromNodeId, target.nodeId, target.id)
                           }
                         } else {
                           detachedEdge?.let {
@@ -476,7 +473,7 @@ fun NodeWidget(
   onDragStart: () -> Unit = {},
   onDrag: (PointerInputChange) -> Unit = {},
   onDragEnd: () -> Unit = {},
-  onPortDrag: (PortSide, Int, Boolean) -> Unit = { _, _, _ -> },
+  onPortDrag: (PortSide, String, Boolean) -> Unit = { _, _, _ -> },
   onPortDragUpdate: (Offset) -> Unit = {},
   onPortDragEnd: () -> Unit = {},
   onReorderPorts: (String, Int, Int) -> Unit = { _, _, _ -> },
@@ -667,13 +664,11 @@ fun NodeWidget(
                   TipPreviewWidget(data.tip, strokeRenderer)
                 }
               } else if (data is NodeData.Coat) {
-                // Resolve connected tip and paint.
                 val nodesById = graph.nodes.associateBy { it.id }
-                val inputs = graph.edges.filter { it.toPort.nodeId == node.id }
-                val tipEdge = inputs.find { it.toPort.index == 0 }
-                val paintEdge = inputs.find { it.toPort.index == 1 }
-                val tipNode = tipEdge?.let { edge -> nodesById[edge.fromPort.nodeId] }
-                val paintNode = paintEdge?.let { edge -> nodesById[edge.fromPort.nodeId] }
+                val inputs = graph.edges.filter { it.toNodeId == node.id }
+                val connectedNodes = inputs.mapNotNull { edge -> nodesById[edge.fromNodeId] }
+                val tipNode = connectedNodes.find { it.data is NodeData.Tip }
+                val paintNode = connectedNodes.find { it.data is NodeData.Paint }
 
                 val tip = (tipNode?.data as? NodeData.Tip)?.tip ?: ProtoBrushTip.getDefaultInstance()
                 val paint = (paintNode?.data as? NodeData.Paint)?.paint ?: ProtoBrushPaint.getDefaultInstance()
@@ -705,14 +700,14 @@ fun NodeWidget(
           // Always show input labels row by row below the title.
           Box(modifier = Modifier.fillMaxWidth()) {
             Column {
-              for (port in visiblePorts) {
+              for ((index, port) in visiblePorts.withIndex()) {
                 with(density) {
-                  val isPortEmpty = graph.edges.none { it.toPort.nodeId == node.id && it.toPort.index == port.index }
+                  val isPortEmpty = graph.edges.none { it.toNodeId == node.id && it.toPortId == port.id }
                   Box(
                     modifier =
                       Modifier.height(com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT.toDp())
                         .fillMaxWidth()
-                        .padding(start = 8.dp, end = if (port.index == 0 && node.data.hasOutput()) 48.dp else 8.dp)
+                        .padding(start = 8.dp, end = if (index == 0 && node.data.hasOutput()) 48.dp else 8.dp)
                         .let {
                           if (isPortEmpty) {
                             it.clickable(enabled = !isSelectionMode) { onPortClick(node.id, port) }
@@ -771,9 +766,9 @@ fun NodeWidget(
 
         // Ports (Inputs & Output for this part of the node)
         val hasAddPort = visiblePorts.any { it.isAddPort }
-        for (port in visiblePorts) {
-          val edge = graph.edges.find { it.toPort.nodeId == node.id && it.toPort.index == port.index }
-          val portKey = edge?.let { "${it.fromPort.nodeId}_${it.fromPort.index}" } ?: "port_${port.index}"
+        for ((index, port) in visiblePorts.withIndex()) {
+          val edge = graph.edges.find { it.toNodeId == node.id && it.toPortId == port.id }
+          val portKey = edge?.let { "${it.fromNodeId}_${port.id}" } ?: "port_${port.id}"
           androidx.compose.runtime.key(portKey) {
             PortDot(
               port = port,
@@ -785,39 +780,39 @@ fun NodeWidget(
               onDragEnd = onPortDragEnd,
               nodeRegistry = nodeRegistry,
               canvasCoordinates = canvasCoordinates,
-              portPosition = node.data.getPortPosition(PortSide.INPUT, port.index),
+              portPosition = node.getPortPosition(port.id, graph),
               isReorderable = !port.isAddPort && hasAddPort && 
-                              !(node.data is com.example.cahier.ui.brushgraph.model.NodeData.Coat && port.index == 0) &&
-                              !(node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && port.index % 2 != 0),
-              isLargeHandle = node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && port.index % 2 == 0,
+                              !(node.data is com.example.cahier.ui.brushgraph.model.NodeData.Coat && index == 0) &&
+                              !(node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && index % 2 != 0),
+              isLargeHandle = node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && index % 2 == 0,
               onReorderUpdate = { deltaY ->
-                if (activeReorderPortIndex != port.index) {
-                  activeReorderPortIndex = port.index
+                if (activeReorderPortIndex != index) {
+                  activeReorderPortIndex = index
                   cumulativeDeltaY = 0f
                 }
                 cumulativeDeltaY += deltaY
                 
-                val originalY = com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL + node.data.titleHeight() + (port.index + 0.5f) * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
+                val originalY = node.getPortPosition(port.id, graph).y
                 var maxValidIndex = visiblePorts.size - 2 // Exclude add port
                 var minValidIndex = if (node.data is com.example.cahier.ui.brushgraph.model.NodeData.Coat) 1 else 0
                 
                 if (node.data is com.example.cahier.ui.brushgraph.model.NodeData.Paint) {
                     val textureEdges = graph.edges.filter { edge ->
-                        val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
-                        fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.TextureLayer && edge.toPort.nodeId == node.id
+                        val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+                        fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.TextureLayer && edge.toNodeId == node.id
                     }
                     val T = textureEdges.size
                     
                     val colorEdges = graph.edges.filter { edge ->
-                        val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
-                        fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.ColorFunc && edge.toPort.nodeId == node.id
+                        val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+                        fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.ColorFunc && edge.toNodeId == node.id
                     }
                     val C = colorEdges.size
                     
-                    if (port.index in 0 until T) {
+                    if (index in 0 until T) {
                         minValidIndex = 0
                         maxValidIndex = T - 1
-                    } else if (port.index in (T + 1) until (T + 1 + C)) {
+                    } else if (index in (T + 1) until (T + 1 + C)) {
                         minValidIndex = T + 1
                         maxValidIndex = T + 1 + C - 1
                     }
@@ -840,9 +835,9 @@ fun NodeWidget(
                     ((currentY - com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL - node.data.titleHeight()) / com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT - 0.5f).roundToInt()
                 }
                 
-                if (targetIndex in minValidIndex..maxValidIndex && targetIndex != port.index) {
-                  onReorderPorts(node.id, port.index, targetIndex)
-                  val direction = if (targetIndex > port.index) 1 else -1
+                if (targetIndex in minValidIndex..maxValidIndex && targetIndex != index) {
+                  onReorderPorts(node.id, index, targetIndex)
+                  val direction = if (targetIndex > index) 1 else -1
                   val step = if (isPolarTarget) 2 else 1
                   cumulativeDeltaY -= direction * step * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
                   activeReorderPortIndex = targetIndex
@@ -852,14 +847,14 @@ fun NodeWidget(
                 activeReorderPortIndex = null
                 cumulativeDeltaY = 0f
               },
-              isDragging = port.index == activeReorderPortIndex,
-              dragOffset = if (port.index == activeReorderPortIndex) cumulativeDeltaY else 0f
+              isDragging = index == activeReorderPortIndex,
+              dragOffset = if (index == activeReorderPortIndex) cumulativeDeltaY else 0f
             )
           }
         }
         if (node.data.hasOutput()) {
           PortDot(
-            port = Port(node.id, PortSide.OUTPUT, 0),
+            port = Port.Output(node.id, "output"),
             count = 1,
             modifier = Modifier.align(Alignment.TopEnd),
             zoom = zoom,
@@ -868,7 +863,7 @@ fun NodeWidget(
             onDragEnd = onPortDragEnd,
             nodeRegistry = nodeRegistry,
             canvasCoordinates = canvasCoordinates,
-            portPosition = node.data.getPortPosition(PortSide.OUTPUT, 0),
+            portPosition = node.getPortPosition("output", graph),
           )
         }
       }
@@ -978,7 +973,7 @@ fun PortDot(
   count: Int,
   modifier: Modifier,
   zoom: Float,
-  onDrag: (PortSide, Int, Boolean) -> Unit,
+  onDrag: (PortSide, String, Boolean) -> Unit,
   onDragUpdate: (Offset) -> Unit = {},
   onDragEnd: () -> Unit = {},
   nodeRegistry: NodeRegistry,
@@ -999,8 +994,7 @@ fun PortDot(
   val currentOnDragEnd by androidx.compose.runtime.rememberUpdatedState(onDragEnd)
   val currentOnReorderUpdate by androidx.compose.runtime.rememberUpdatedState(onReorderUpdate)
   val currentOnReorderEnd by androidx.compose.runtime.rememberUpdatedState(onReorderEnd)
-
-  val currentPortIndex by androidx.compose.runtime.rememberUpdatedState(port.index)
+  val currentPortId by androidx.compose.runtime.rememberUpdatedState(port.id)
   val currentPortSide by androidx.compose.runtime.rememberUpdatedState(port.side)
 
   with(density) {
@@ -1015,10 +1009,7 @@ fun PortDot(
     Box(
       modifier =
         modifier
-          .offset(
-            x = outerX,
-            y = finalY,
-          )
+          .offset(x = outerX, y = finalY)
           .size(width = if (port.side == PortSide.INPUT) 24.dp else 12.dp, height = 12.dp)
           .graphicsLayer {
             if (isDragging) {
@@ -1042,13 +1033,13 @@ fun PortDot(
               if (canvasCo != null && coordinates.isAttached) {
                 val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
                 val graphSpacePos = canvasCo.localPositionOf(coordinates, center)
-                nodeRegistry.updatePort(port.nodeId, port.side, port.index, graphSpacePos)
+                nodeRegistry.updatePort(port.nodeId, port.id, graphSpacePos)
               }
             }
             .pointerInput(port.nodeId, port.side, canvasCoordinates, zoom) {
                 detectPortDragGestures(
                   zoom = zoom,
-                  onDragStart = { currentOnDrag(currentPortSide, currentPortIndex, true) },
+                  onDragStart = { currentOnDrag(currentPortSide, currentPortId, true) },
                   onDragEnd = { currentOnDragEnd() },
                   onDragCancel = { currentOnDragEnd() },
                 ) { change, _ ->

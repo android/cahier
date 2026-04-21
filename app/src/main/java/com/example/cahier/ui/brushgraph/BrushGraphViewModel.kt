@@ -46,6 +46,7 @@ import com.example.cahier.ui.brushgraph.model.GraphNode
 import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import com.example.cahier.ui.brushgraph.model.getPortPosition
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
@@ -310,7 +311,7 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Adds a new Coat node at the specified position. */
   fun addCoatNode(position: Offset) {
-    addNode(NodeData.Coat, position)
+    addNode(NodeData.Coat(), position)
   }
 
   /** Adds a new Paint node at the specified position. */
@@ -415,15 +416,12 @@ class BrushGraphViewModel @Inject constructor(
   /** Deletes all selected nodes and connected edges. */
   fun deleteSelectedNodes() {
     // Identify edges leaving the selected set (pointing to non-selected nodes).
-    // These need to be deleted via deleteEdge to trigger proper port shifting.
+    // These need to be deleted via deleteEdge to trigger proper port removal in NodeData.
     val edgesLeavingSelectedSet = graph.edges.filter { edge ->
-      selectedNodeIds.contains(edge.fromPort.nodeId) && !selectedNodeIds.contains(edge.toPort.nodeId)
+      selectedNodeIds.contains(edge.fromNodeId) && !selectedNodeIds.contains(edge.toNodeId)
     }
     
-    // Sort by index descending to avoid shifting issues
-    val sortedEdgesLeaving = edgesLeavingSelectedSet.sortedByDescending { it.toPort.index }
-    
-    for (edge in sortedEdgesLeaving) {
+    for (edge in edgesLeavingSelectedSet) {
       deleteEdge(edge)
     }
     
@@ -431,10 +429,8 @@ class BrushGraphViewModel @Inject constructor(
     selectedNodeIds.forEach { nodeRegistry.clearNode(it) }
 
     // Remove edges targeting selected nodes and the nodes themselves.
-    // We filter by ID instead of subtracting objects to avoid issues with stale state
-    // caused by intermediate validations.
     graph = graph.copy(
-      edges = graph.edges.filterNot { edge -> selectedNodeIds.contains(edge.toPort.nodeId) },
+      edges = graph.edges.filterNot { edge -> selectedNodeIds.contains(edge.toNodeId) },
       nodes = graph.nodes.filterNot { node -> selectedNodeIds.contains(node.id) }
     )
     
@@ -460,13 +456,13 @@ class BrushGraphViewModel @Inject constructor(
     }
     
     val edgesToDuplicate = graph.edges.filter { edge ->
-      selectedNodeIds.contains(edge.fromPort.nodeId) && selectedNodeIds.contains(edge.toPort.nodeId)
+      selectedNodeIds.contains(edge.fromNodeId) && selectedNodeIds.contains(edge.toNodeId)
     }
     
     val newEdges = edgesToDuplicate.map { edge ->
       edge.copy(
-        fromPort = edge.fromPort.copy(nodeId = idMap[edge.fromPort.nodeId]!!),
-        toPort = edge.toPort.copy(nodeId = idMap[edge.toPort.nodeId]!!)
+        fromNodeId = idMap[edge.fromNodeId]!!,
+        toNodeId = idMap[edge.toNodeId]!!
       )
     }
     
@@ -488,21 +484,30 @@ class BrushGraphViewModel @Inject constructor(
     val oldNode = graph.nodes.find { it.id == nodeId }
     val oldData = oldNode?.data
 
+    val (finalNewData, finalEdges) = com.example.cahier.ui.brushgraph.model.preserveEdgesOnTypeChange(nodeId, oldData, newData, graph.edges)
+
     graph =
-      graph.copy(nodes = graph.nodes.map { if (it.id == nodeId) it.copy(data = newData) else it })
+      graph.copy(
+        nodes = graph.nodes.map { if (it.id == nodeId) it.copy(data = finalNewData) else it },
+        edges = finalEdges
+      )
+
+    nodeRegistry.clearNode(nodeId)
 
     if (oldData != null) {
-      val oldPortCount = oldData.inputLabels().size
-      val newPortCount = newData.inputLabels().size
-
-      if (newPortCount < oldPortCount) {
-        // Delete edges that connect to ports that no longer exist.
-        graph = graph.copy(
-          edges = graph.edges.filter { edge ->
-            !(edge.toPort.nodeId == nodeId && edge.toPort.index >= newPortCount)
+      // Delete edges that connect to ports that no longer exist.
+      val updatedNode = graph.nodes.find { it.id == nodeId }
+      val visiblePortIds = updatedNode?.getVisiblePorts(graph)?.map { it.id } ?: emptyList()
+      
+      graph = graph.copy(
+        edges = graph.edges.filter { edge ->
+          if (edge.toNodeId == nodeId) {
+            edge.toPortId in visiblePortIds
+          } else {
+            true
           }
-        )
-      }
+        }
+      )
     }
 
     validate()
@@ -520,7 +525,10 @@ class BrushGraphViewModel @Inject constructor(
   fun setEdgeDisabled(edge: GraphEdge, isDisabled: Boolean) {
     val updatedEdge = edge.copy(isDisabled = isDisabled)
     graph = graph.copy(
-      edges = graph.edges.map { if (it.fromPort == edge.fromPort && it.toPort == edge.toPort) updatedEdge else it }
+      edges = graph.edges.map { 
+        if (it.fromNodeId == edge.fromNodeId && 
+            it.toNodeId == edge.toNodeId && it.toPortId == edge.toPortId) updatedEdge else it 
+      }
     )
     selectedEdge = updatedEdge
     validate()
@@ -553,7 +561,8 @@ class BrushGraphViewModel @Inject constructor(
   /** Handles a click on an edge. */
   fun onEdgeClick(edge: GraphEdge) {
     android.util.Log.d(TAG, "onEdgeClick: $edge")
-    selectedEdge = if (selectedEdge?.fromPort == edge.fromPort && selectedEdge?.toPort == edge.toPort) null else edge
+    selectedEdge = if (selectedEdge?.fromNodeId == edge.fromNodeId && 
+                       selectedEdge?.toNodeId == edge.toNodeId && selectedEdge?.toPortId == edge.toPortId) null else edge
     selectedNodeId = null
     isErrorPaneOpen = false
     
@@ -652,13 +661,13 @@ class BrushGraphViewModel @Inject constructor(
     isDarkCanvas = !isDarkCanvas
   }
 
-  /** Handles tapping on an empty port to add a default node. */
   fun onPortTapped(nodeId: String, port: Port) {
     val node = graph.nodes.find { it.id == nodeId } ?: return
+    
     val inferredNodeData = when (node.data) {
       is NodeData.Family -> {
         if (port.label?.contains("Coat", ignoreCase = true) == true) {
-          NodeData.Coat
+          NodeData.Coat()
         } else {
           null
         }
@@ -724,14 +733,14 @@ class BrushGraphViewModel @Inject constructor(
 
     val newNodeId = UUID.randomUUID().toString()
     // Position reasonably: to the left of the tapped node.
-    val portOffset = node.data.getPortPosition(PortSide.INPUT, port.index)
+    val portOffset = node.getPortPosition(port.id, graph)
     val newX = node.position.x - inferredNodeData.width() - 100f
     val newY = node.position.y + portOffset.y - inferredNodeData.height() / 2f
 
     val newNode = GraphNode(id = newNodeId, data = inferredNodeData, position = Offset(newX, newY))
     graph = graph.copy(nodes = graph.nodes + newNode)
     
-    addEdge(newNodeId, nodeId, port.index)
+    addEdge(newNodeId, nodeId, port.id)
 
     // Tutorial progression
     if (inferredNodeData is NodeData.Behavior) {
@@ -742,19 +751,20 @@ class BrushGraphViewModel @Inject constructor(
   }
 
   /** Adds a new edge between two nodes. */
-  fun addEdge(fromId: String, toId: String, toInputIndex: Int = 0) {
+  fun addEdge(fromNodeId: String, toNodeId: String, initialToPortId: String) {
+    var toPortId = initialToPortId
     // Don't allow self-loops.
-    if (fromId == toId) return
+    if (fromNodeId == toNodeId) return
 
     // Don't allow edges to non-existent nodes.
     val nodesById = graph.nodes.associateBy { it.id }
-    if (nodesById[fromId] == null) return
-    val toNode = nodesById[toId] ?: return
+    if (nodesById[fromNodeId] == null) return
+    val toNode = nodesById[toNodeId] ?: return
 
     // Enforce single-connection constraint (allow reconnecting same edge if disabled).
-    val existingEdge = graph.edges.find { it.toPort.nodeId == toId && it.toPort.index == toInputIndex }
+    val existingEdge = graph.edges.find { it.toNodeId == toNodeId && it.toPortId == toPortId }
     if (existingEdge != null) {
-      if (existingEdge.fromPort.nodeId != fromId) {
+      if (existingEdge.fromNodeId != fromNodeId) {
         return // Occupied by another node!
       }
       if (!existingEdge.isDisabled) {
@@ -763,63 +773,96 @@ class BrushGraphViewModel @Inject constructor(
     }
 
     var newGraph = graph
-
-    // Special handling for Brush Family ports.
     val toData = toNode.data
-    if (toData is NodeData.Family) {
-      if (toInputIndex == toData.numCoats) {
-        // Connecting to "Add Coat..." -> increment numCoats.
-        val newData = toData.copy(numCoats = toData.numCoats + 1)
-        newGraph =
-          newGraph.copy(
-            nodes = newGraph.nodes.map { if (it.id == toId) it.copy(data = newData) else it }
-          )
-      }
-    } else if (toData is NodeData.Paint) {
-      val textureEdges = graph.edges.filter { edge ->
-        if (edge.isDisabled) return@filter false
-        if (edge.toPort.nodeId != toId) return@filter false
-        val fromNode = nodesById[edge.fromPort.nodeId]
-        fromNode != null && !fromNode.isDisabled && fromNode.data is NodeData.TextureLayer
-      }
-      val T = textureEdges.size
-      if (toInputIndex == T) {
-        // Connecting to "Add Texture..."
-        // Shift all color edges up by 1!
+
+    // Special handling for dynamic ports.
+    val toPort = toNode.getVisiblePorts(graph).find { it.id == toPortId }
+    when (toPort) {
+      is Port.AddTexture -> {
+        val newPortId = UUID.randomUUID().toString()
+        val newData = (toData as NodeData.Paint).copy(texturePortIds = toData.texturePortIds + newPortId)
         newGraph = newGraph.copy(
-          edges = newGraph.edges.map { edge ->
-            if (edge.toPort.nodeId == toId) {
-              val fromNode = nodesById[edge.fromPort.nodeId]
-              if (fromNode != null && fromNode.data is NodeData.ColorFunc) {
-                return@map edge.copy(toPort = edge.toPort.copy(index = edge.toPort.index + 1))
-              }
-            }
-            edge
-          }
+          nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it }
         )
+        toPortId = newPortId
       }
+      is Port.AddColor -> {
+        val newPortId = UUID.randomUUID().toString()
+        val newData = (toData as NodeData.Paint).copy(colorPortIds = toData.colorPortIds + newPortId)
+        newGraph = newGraph.copy(
+          nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it }
+        )
+        toPortId = newPortId
+      }
+      is Port.Add -> {
+        when (toData) {
+          is NodeData.Family -> {
+            val newPortId = UUID.randomUUID().toString()
+            val newData = toData.copy(coatPortIds = toData.coatPortIds + newPortId)
+            newGraph = newGraph.copy(
+              nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it }
+            )
+            toPortId = newPortId
+          }
+          is NodeData.Coat -> {
+            val newPortId = UUID.randomUUID().toString()
+            val newData = toData.copy(paintPortIds = toData.paintPortIds + newPortId)
+            newGraph = newGraph.copy(
+              nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it }
+            )
+            toPortId = newPortId
+          }
+          is NodeData.Behavior -> {
+            if (toData.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+              val newPortId1 = UUID.randomUUID().toString()
+              val newPortId2 = UUID.randomUUID().toString()
+              val newData = toData.copy(inputPortIds = toData.inputPortIds + listOf(newPortId1, newPortId2))
+              newGraph = newGraph.copy(
+                nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it }
+              )
+              toPortId = newPortId1
+            } else {
+              val newPortId = UUID.randomUUID().toString()
+              val newData = toData.copy(inputPortIds = toData.inputPortIds + newPortId)
+              newGraph = newGraph.copy(
+                nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it }
+              )
+              toPortId = newPortId
+            }
+          }
+          is NodeData.Tip -> {
+            val newPortId = UUID.randomUUID().toString()
+            val newData = toData.copy(behaviorPortIds = toData.behaviorPortIds + newPortId)
+            newGraph = newGraph.copy(
+              nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it }
+            )
+            toPortId = newPortId
+          }
+          else -> {}
+        }
+      }
+      else -> {}
     }
 
-    val newEdge = GraphEdge(fromPort = Port(fromId, PortSide.OUTPUT, 0), toPort = Port(toId, PortSide.INPUT, toInputIndex))
+    val fromNode = nodesById[fromNodeId]!!
+    val fromPortId = if (fromNode.data.hasOutput()) "output" else return
+    val newEdge = GraphEdge(fromNodeId = fromNodeId, toNodeId = toNodeId, toPortId = toPortId)
     graph = newGraph.copy(edges = newGraph.edges + newEdge)
     validate()
     
     // Tutorial progression
-    val fromNode = nodesById[fromId]
-    if (fromNode != null) {
-      val shouldAdvance = (fromNode.data is NodeData.Behavior && fromNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE &&
-                            toNode.data is NodeData.Behavior && toNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE) ||
-                           (fromNode.data is NodeData.Coat && toNode.data is NodeData.Family) ||
-                           (fromNode.data is NodeData.Behavior && toNode.data is NodeData.Tip)
-      if (shouldAdvance) {
-        advanceTutorial(TutorialAction.CONNECT_NODES)
-      }
+    val shouldAdvance = (fromNode.data is NodeData.Behavior && fromNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE &&
+                          toNode.data is NodeData.Behavior && toNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE) ||
+                         (fromNode.data is NodeData.Coat && toNode.data is NodeData.Family) ||
+                         (fromNode.data is NodeData.Behavior && toNode.data is NodeData.Tip)
+    if (shouldAdvance) {
+      advanceTutorial(TutorialAction.CONNECT_NODES)
     }
   }
 
   /** Finalizes an edge edit by deleting the old edge and adding the new one. */
-  fun finalizeEdgeEdit(oldEdge: GraphEdge, newFromNodeId: String, newToNodeId: String, newToIndex: Int) {
-    if (oldEdge.toPort.nodeId == newToNodeId && oldEdge.toPort.index == newToIndex) {
+  fun finalizeEdgeEdit(oldEdge: GraphEdge, newFromNodeId: String, newToNodeId: String, newToPortId: String) {
+    if (oldEdge.toNodeId == newToNodeId && oldEdge.toPortId == newToPortId) {
       // Reconnecting to the same port, just re-enable it.
       setEdgeDisabled(oldEdge, false)
       detachedEdge = null
@@ -828,19 +871,15 @@ class BrushGraphViewModel @Inject constructor(
 
     deleteEdge(oldEdge)
     
-    var adjustedIndex = newToIndex
-    if (oldEdge.toPort.nodeId == newToNodeId && oldEdge.toPort.index < newToIndex) {
-      adjustedIndex = newToIndex - 1
-    }
-    
-    addEdge(newFromNodeId, newToNodeId, adjustedIndex)
+    addEdge(newFromNodeId, newToNodeId, newToPortId)
   }
 
   /** Detaches an edge for editing by marking it as disabled. */
   fun detachEdge(edge: GraphEdge) {
     detachedEdge = edge
     val newEdges = graph.edges.map {
-      if (it.fromPort == edge.fromPort && it.toPort == edge.toPort) it.copy(isDisabled = true) else it
+      if (it.fromNodeId == edge.fromNodeId && 
+          it.toNodeId == edge.toNodeId && it.toPortId == edge.toPortId) it.copy(isDisabled = true) else it
     }
     graph = graph.copy(edges = newEdges)
     validate()
@@ -851,72 +890,74 @@ class BrushGraphViewModel @Inject constructor(
     val node = graph.nodes.find { it.id == nodeId } ?: return
     val data = node.data
     
-    if (data is NodeData.Behavior && data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
-        val setSize = data.inputLabels().size
-        val fromSet = fromIndex / setSize
-        val toSet = toIndex / setSize
-        if (fromSet == toSet) return
-        
-        val newEdges = graph.edges.map { edge ->
-            if (edge.toPort.nodeId == nodeId) {
-                val edgeSet = edge.toPort.index / setSize
-                val edgeOffset = edge.toPort.index % setSize
-                if (edgeSet == fromSet) {
-                    edge.copy(toPort = edge.toPort.copy(index = toSet * setSize + edgeOffset))
-                } else if (edgeSet == toSet) {
-                    edge.copy(toPort = edge.toPort.copy(index = fromSet * setSize + edgeOffset))
-                } else {
-                    edge
-                }
-            } else {
-                edge
-            }
+    when (data) {
+      is NodeData.Family -> {
+        val newList = data.coatPortIds.toMutableList()
+        val item = newList.removeAt(fromIndex)
+        newList.add(toIndex, item)
+        updateNodeData(nodeId, data.copy(coatPortIds = newList))
+      }
+      is NodeData.Behavior -> {
+        if (data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+          val setSize = 2
+          val fromSet = fromIndex / setSize
+          val toSet = toIndex / setSize
+          if (fromSet == toSet) return
+          
+          val newList = data.inputPortIds.toMutableList()
+          val temp0 = newList[fromSet * 2]
+          val temp1 = newList[fromSet * 2 + 1]
+          newList[fromSet * 2] = newList[toSet * 2]
+          newList[fromSet * 2 + 1] = newList[toSet * 2 + 1]
+          newList[toSet * 2] = temp0
+          newList[toSet * 2 + 1] = temp1
+          
+          updateNodeData(nodeId, data.copy(inputPortIds = newList))
+        } else {
+          val newList = data.inputPortIds.toMutableList()
+          if (fromIndex in newList.indices && toIndex in newList.indices) {
+            val item = newList.removeAt(fromIndex)
+            newList.add(toIndex, item)
+            updateNodeData(nodeId, data.copy(inputPortIds = newList))
+          }
         }
-        graph = graph.copy(edges = newEdges)
-        validate()
-        return
-    }
-    
-    if (data is com.example.cahier.ui.brushgraph.model.NodeData.Paint) {
-        val textureEdges = graph.edges.filter { edge ->
-            val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
-            fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.TextureLayer && edge.toPort.nodeId == nodeId
-        }
-        val T = textureEdges.size
-        
-        val colorEdges = graph.edges.filter { edge ->
-            val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId }
-            fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.ColorFunc && edge.toPort.nodeId == nodeId
-        }
-        val C = colorEdges.size
+      }
+      is NodeData.Paint -> {
+        val T = data.texturePortIds.size
         
         val isFromTexture = fromIndex in 0 until T
         val isToTexture = toIndex in 0 until T
-        val isFromColor = fromIndex in (T + 1) until (T + 1 + C)
-        val isToColor = toIndex in (T + 1) until (T + 1 + C)
+        val isFromColor = fromIndex in (T + 1) until (T + 1 + data.colorPortIds.size)
+        val isToColor = toIndex in (T + 1) until (T + 1 + data.colorPortIds.size)
         
-        if ((isFromTexture && isToTexture) || (isFromColor && isToColor)) {
-            // Valid swap within same list!
-        } else {
-            return // Invalid swap!
+        if (isFromTexture && isToTexture) {
+          val newList = data.texturePortIds.toMutableList()
+          val item = newList.removeAt(fromIndex)
+          newList.add(toIndex, item)
+          updateNodeData(nodeId, data.copy(texturePortIds = newList))
+        } else if (isFromColor && isToColor) {
+          val fromColorIndex = fromIndex - (T + 1)
+          val toColorIndex = toIndex - (T + 1)
+          val newList = data.colorPortIds.toMutableList()
+          val item = newList.removeAt(fromColorIndex)
+          newList.add(toColorIndex, item)
+          updateNodeData(nodeId, data.copy(colorPortIds = newList))
         }
+      }
+      is NodeData.Tip -> {
+        val newList = data.behaviorPortIds.toMutableList()
+        val item = newList.removeAt(fromIndex)
+        newList.add(toIndex, item)
+        updateNodeData(nodeId, data.copy(behaviorPortIds = newList))
+      }
+      is NodeData.Coat -> {
+        val newList = data.paintPortIds.toMutableList()
+        val item = newList.removeAt(fromIndex - 1) // Tip is at index 0
+        newList.add(toIndex - 1, item)
+        updateNodeData(nodeId, data.copy(paintPortIds = newList))
+      }
+      else -> {}
     }
-    
-    val newEdges = graph.edges.map { edge ->
-        if (edge.toPort.nodeId == nodeId) {
-            if (edge.toPort.index == fromIndex) {
-                edge.copy(toPort = edge.toPort.copy(index = toIndex))
-            } else if (edge.toPort.index == toIndex) {
-                edge.copy(toPort = edge.toPort.copy(index = fromIndex))
-            } else {
-                edge
-            }
-        } else {
-            edge
-        }
-    }
-    graph = graph.copy(edges = newEdges)
-    validate()
     
     advanceTutorial(TutorialAction.SWAP_PORTS)
   }
@@ -931,108 +972,89 @@ class BrushGraphViewModel @Inject constructor(
     }
 
     var newGraph = graph
-    val toNode = newGraph.nodes.find { it.id == edge.toPort.nodeId }
+    val toNode = newGraph.nodes.find { it.id == edge.toNodeId }
     val toData = toNode?.data
 
     if (toData != null) {
-      val filteredEdges = newGraph.edges.filter { it.fromPort != edge.fromPort || it.toPort != edge.toPort }
-      val remainingEdges = filteredEdges.filter { it.toPort.nodeId == edge.toPort.nodeId }
-      val maxInputIndex = graph.edges.filter { it.toPort.nodeId == edge.toPort.nodeId }.maxOfOrNull { it.toPort.index } ?: 0
+      val filteredEdges = newGraph.edges.filter { 
+        !(it.fromNodeId == edge.fromNodeId && 
+          it.toNodeId == edge.toNodeId && it.toPortId == edge.toPortId)
+      }
+      val remainingEdges = filteredEdges.filter { it.toNodeId == edge.toNodeId }
       
-      val updatedEdges = when (toData) {
+      newGraph = newGraph.copy(edges = filteredEdges)
+
+      when (toData) {
         is NodeData.Coat -> {
-          if (edge.toPort.index == 0) {
-            // Deleting Tip edge. No shifting!
-            filteredEdges
-          } else {
-            // Deleting Paint edge. Shift subsequent paint edges!
-            val visiblePorts = toNode.getVisiblePorts(graph)
-            val portToDelete = visiblePorts.find { it.index == edge.toPort.index }
-            if (portToDelete != null) {
-              nodeRegistry.deletePortAndShift(portToDelete)
-            }
-            filteredEdges.map {
-              if (it.toPort.nodeId == edge.toPort.nodeId && it.toPort.index > edge.toPort.index) {
-                it.copy(toPort = it.toPort.copy(index = it.toPort.index - 1))
-              } else {
-                it
-              }
-            }
+          if (toData.paintPortIds.contains(edge.toPortId)) {
+            val newData = toData.copy(paintPortIds = toData.paintPortIds - edge.toPortId)
+            newGraph = newGraph.copy(
+              nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
+            )
+            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
           }
         }
         is NodeData.Behavior -> {
           val nodeCase = toData.node.nodeCase
           if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
-            // Polar Target: Shift only if a full set is empty!
-            val setIndex = edge.toPort.index / 2
-            val hasAngle = remainingEdges.any { it.toPort.index == setIndex * 2 }
-            val hasMag = remainingEdges.any { it.toPort.index == setIndex * 2 + 1 }
-            
-            if (!hasAngle && !hasMag) {
-              // Set is empty! Delete it and shift subsequent sets up by 2!
-              val firstPortIndex = setIndex * 2
-              val visiblePorts = toNode.getVisiblePorts(graph)
-              val portToDelete = visiblePorts.find { it.index == firstPortIndex }
-              if (portToDelete != null) {
-                nodeRegistry.deletePortAndShift(portToDelete)
-                nodeRegistry.deletePortAndShift(portToDelete)
+            val chunkedIds = toData.inputPortIds.chunked(2)
+            val pair = chunkedIds.find { it.contains(edge.toPortId) }
+            if (pair != null && pair.size == 2) {
+              val hasAngle = remainingEdges.any { it.toPortId == pair[0] }
+              val hasMag = remainingEdges.any { it.toPortId == pair[1] }
+              if (!hasAngle && !hasMag) {
+                val newData = toData.copy(inputPortIds = toData.inputPortIds - pair.toSet())
+                newGraph = newGraph.copy(
+                  nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
+                )
+                nodeRegistry.deletePort(edge.toNodeId, pair[0])
+                nodeRegistry.deletePort(edge.toNodeId, pair[1])
               }
-              filteredEdges.map {
-                if (it.toPort.nodeId == edge.toPort.nodeId && it.toPort.index > edge.toPort.index) {
-                  it.copy(toPort = it.toPort.copy(index = it.toPort.index - 2))
-                } else {
-                  it
-                }
-              }
-            } else {
-              // Set not empty. No shifting!
-              filteredEdges
             }
-          } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
-            // Interpolation: Fixed ports. No shifting!
-            filteredEdges
           } else {
-            // Other behaviors (BinaryOp, Tip, etc.): Shift all subsequent edges!
-            val visiblePorts = toNode.getVisiblePorts(graph)
-            val portToDelete = visiblePorts.find { it.index == edge.toPort.index }
-            if (portToDelete != null) {
-              nodeRegistry.deletePortAndShift(portToDelete)
-            }
-            filteredEdges.map {
-              if (it.toPort.nodeId == edge.toPort.nodeId && it.toPort.index > edge.toPort.index) {
-                it.copy(toPort = it.toPort.copy(index = it.toPort.index - 1))
-              } else {
-                it
-              }
+            if (toData.inputPortIds.contains(edge.toPortId)) {
+              val newData = toData.copy(inputPortIds = toData.inputPortIds - edge.toPortId)
+              newGraph = newGraph.copy(
+                nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
+              )
+              nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
             }
           }
         }
-        is NodeData.Family, is NodeData.Paint -> {
-          val visiblePorts = toNode.getVisiblePorts(graph)
-          val portToDelete = visiblePorts.find { it.index == edge.toPort.index }
-          if (portToDelete != null) {
-            nodeRegistry.deletePortAndShift(portToDelete)
-          }
-          filteredEdges.map {
-            if (it.toPort.nodeId == edge.toPort.nodeId && it.toPort.index > edge.toPort.index) {
-              it.copy(toPort = it.toPort.copy(index = it.toPort.index - 1))
-            } else {
-              it
-            }
+        is NodeData.Tip -> {
+          if (toData.behaviorPortIds.contains(edge.toPortId)) {
+            val newData = toData.copy(behaviorPortIds = toData.behaviorPortIds - edge.toPortId)
+            newGraph = newGraph.copy(
+              nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
+            )
+            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
           }
         }
-        else -> filteredEdges
-      }
-      
-      newGraph = newGraph.copy(edges = updatedEdges)
-      
-      if (toData is NodeData.Family) {
-        val newData = toData.copy(numCoats = maxOf(0, toData.numCoats - 1))
-        newGraph =
-          newGraph.copy(
-            nodes =
-              newGraph.nodes.map { if (it.id == edge.toPort.nodeId) it.copy(data = newData) else it }
-          )
+        is NodeData.Family -> {
+          if (toData.coatPortIds.contains(edge.toPortId)) {
+            val newData = toData.copy(coatPortIds = toData.coatPortIds - edge.toPortId)
+            newGraph = newGraph.copy(
+              nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
+            )
+            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+          }
+        }
+        is NodeData.Paint -> {
+          if (toData.texturePortIds.contains(edge.toPortId)) {
+            val newData = toData.copy(texturePortIds = toData.texturePortIds - edge.toPortId)
+            newGraph = newGraph.copy(
+              nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
+            )
+            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+          } else if (toData.colorPortIds.contains(edge.toPortId)) {
+            val newData = toData.copy(colorPortIds = toData.colorPortIds - edge.toPortId)
+            newGraph = newGraph.copy(
+              nodes = newGraph.nodes.map { if (it.id == edge.toNodeId) it.copy(data = newData) else it }
+            )
+            nodeRegistry.deletePort(edge.toNodeId, edge.toPortId)
+          }
+        }
+        else -> {}
       }
     }
 
@@ -1041,8 +1063,8 @@ class BrushGraphViewModel @Inject constructor(
   }
 
   fun addNodeBetween(edge: GraphEdge) {
-    val fromNode = graph.nodes.find { it.id == edge.fromPort.nodeId } ?: return
-    val toNode = graph.nodes.find { it.id == edge.toPort.nodeId } ?: return
+    val fromNode = graph.nodes.find { it.id == edge.fromNodeId } ?: return
+    val toNode = graph.nodes.find { it.id == edge.toNodeId } ?: return
     
     if (fromNode.data !is NodeData.Behavior || toNode.data !is NodeData.Behavior) {
       return // Only for behavior nodes!
@@ -1050,22 +1072,25 @@ class BrushGraphViewModel @Inject constructor(
     
     dismissPanes()
     
-    val newNodeId = UUID.randomUUID().toString()
+    val newNodeId = java.util.UUID.randomUUID().toString()
+    val newPortId = java.util.UUID.randomUUID().toString()
     val newNode = GraphNode(
       id = newNodeId,
       data = NodeData.Behavior(
-        ProtoBrushBehavior.Node.newBuilder()
+        node = ProtoBrushBehavior.Node.newBuilder()
           .setResponseNode(
             ProtoBrushBehavior.ResponseNode.newBuilder()
               .setPredefinedResponseCurve(ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR)
           )
-          .build()
+          .build(),
+        inputPortIds = listOf(newPortId)
       ),
       position = (fromNode.position + toNode.position) / 2f
     )
     
-    val edge1 = GraphEdge(fromPort = edge.fromPort, toPort = Port(newNodeId, PortSide.INPUT, 0))
-    val edge2 = GraphEdge(fromPort = Port(newNodeId, PortSide.OUTPUT, 0), toPort = edge.toPort)
+    val behaviorData = newNode.data as NodeData.Behavior
+    val edge1 = GraphEdge(fromNodeId = edge.fromNodeId, toNodeId = newNodeId, toPortId = newPortId)
+    val edge2 = GraphEdge(fromNodeId = newNodeId, toNodeId = edge.toNodeId, toPortId = edge.toPortId)
     
     val newEdges = graph.edges.filter { it != edge } + edge1 + edge2
     val newNodes = graph.nodes + newNode
@@ -1102,18 +1127,15 @@ class BrushGraphViewModel @Inject constructor(
     // Tutorial progression
     advanceTutorial(TutorialAction.DELETE_NODE)
     // Identify edges that will be removed.
-    val edgesToRemove = graph.edges.filter { it.fromPort.nodeId == nodeId || it.toPort.nodeId == nodeId }
+    // Identify edges that will be removed.
+    val edgesToRemove = graph.edges.filter { it.fromNodeId == nodeId || it.toNodeId == nodeId }
     // Remove edges going into the node being deleted.
-    graph = graph.copy(edges = graph.edges.filter { it.toPort.nodeId != nodeId })
+    graph = graph.copy(edges = graph.edges.filter { it.toNodeId != nodeId })
 
-    // Special handling for Brush Family ports. Delete edges one at a time by calling deleteEdge()
-    // to ensure proper shifting logic is used.
-    val edgesFromNode = edgesToRemove.filter { it.fromPort.nodeId == nodeId }
-    // Sort edges by index descending to avoid shifting issues if one node is connected multiple
-    // times.
-    val sortedEdgesFrom = edgesFromNode.sortedByDescending { it.toPort.index }
+    // Delete edges leaving the node being deleted via deleteEdge to trigger proper port removal in target nodes.
+    val edgesFromNode = edgesToRemove.filter { it.fromNodeId == nodeId }
 
-    for (edge in sortedEdgesFrom) {
+    for (edge in edgesFromNode) {
       deleteEdge(edge)
     }
 

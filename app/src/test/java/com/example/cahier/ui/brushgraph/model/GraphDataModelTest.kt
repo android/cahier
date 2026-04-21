@@ -24,9 +24,8 @@ class GraphDataModelTest {
         val ports = node.getVisiblePorts(graph)
         
         assertEquals(1, ports.size)
+        assertEquals("add_input", ports[0].id)
         assertEquals("Add input...", ports[0].label)
-        assertEquals(0, ports[0].index)
-        assertEquals(true, ports[0].isAddPort)
     }
 
     @Test
@@ -36,22 +35,21 @@ class GraphDataModelTest {
             data = NodeData.Behavior(
                 node = ProtoBrushBehavior.Node.newBuilder()
                     .setResponseNode(ProtoBrushBehavior.ResponseNode.getDefaultInstance())
-                    .build()
+                    .build(),
+                inputPortIds = listOf("Input")
             ),
             position = Offset.Zero
         )
         val sourceNode = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()), position = Offset.Zero)
-        val edge = GraphEdge(fromPort = Port("2", PortSide.OUTPUT, 0), toPort = Port("1", PortSide.INPUT, 0))
+        val edge = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "Input")
         val graph = BrushGraph(nodes = listOf(node, sourceNode), edges = listOf(edge))
         val ports = node.getVisiblePorts(graph)
         
         assertEquals(2, ports.size)
         assertEquals("Input", ports[0].label)
-        assertEquals(0, ports[0].index)
         assertEquals(false, ports[0].isAddPort)
         
         assertEquals("Add input...", ports[1].label)
-        assertEquals(1, ports[1].index)
         assertEquals(true, ports[1].isAddPort)
     }
 
@@ -70,9 +68,8 @@ class GraphDataModelTest {
         val ports = node.getVisiblePorts(graph)
         
         assertEquals(1, ports.size)
+        assertEquals("add_input", ports[0].id)
         assertEquals("Add input...", ports[0].label)
-        assertEquals(0, ports[0].index)
-        assertEquals(true, ports[0].isAddPort)
     }
 
     @Test
@@ -82,22 +79,23 @@ class GraphDataModelTest {
             data = NodeData.Behavior(
                 node = ProtoBrushBehavior.Node.newBuilder()
                     .setBinaryOpNode(ProtoBrushBehavior.BinaryOpNode.newBuilder().setOperation(ProtoBrushBehavior.BinaryOp.BINARY_OP_SUM))
-                    .build()
+                    .build(),
+                inputPortIds = listOf("input_0", "input_1")
             ),
             position = Offset.Zero
         )
         val sourceNode = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()), position = Offset.Zero)
-        val edge = GraphEdge(fromPort = Port("2", PortSide.OUTPUT, 0), toPort = Port("1", PortSide.INPUT, 0))
+        val edge = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "input_0")
         val graph = BrushGraph(nodes = listOf(node, sourceNode), edges = listOf(edge))
         val ports = node.getVisiblePorts(graph)
         
-        assertEquals(2, ports.size)
+        assertEquals(3, ports.size)
+        assertEquals("input_0", ports[0].id)
         assertEquals("A", ports[0].label)
-        assertEquals(0, ports[0].index)
-        
-        assertEquals("Add input...", ports[1].label)
-        assertEquals(1, ports[1].index)
-        assertEquals(true, ports[1].isAddPort)
+        assertEquals("input_1", ports[1].id)
+        assertEquals("B", ports[1].label)
+        assertEquals("add_input", ports[2].id)
+        assertEquals("Add input...", ports[2].label)
     }
 
     @Test
@@ -107,36 +105,36 @@ class GraphDataModelTest {
         val ports = node.getVisiblePorts(graph)
         
         assertEquals(2, ports.size)
+        assertEquals("add_texture", ports[0].id)
         assertEquals("Add Texture...", ports[0].label)
-        assertEquals(0, ports[0].index)
-        
+        assertEquals("add_color", ports[1].id)
         assertEquals("Add Color...", ports[1].label)
-        assertEquals(1, ports[1].index)
     }
 
     @Test
     fun testGetVisiblePorts_Paint_WithConnections() {
-        val node = GraphNode(id = "1", data = NodeData.Paint(paint = ink.proto.BrushPaint.getDefaultInstance()), position = Offset.Zero)
+        val node = GraphNode(
+            id = "1",
+            data = NodeData.Paint(
+                paint = ink.proto.BrushPaint.getDefaultInstance(),
+                texturePortIds = listOf("texture_0"),
+                colorPortIds = listOf("color_0")
+            ),
+            position = Offset.Zero
+        )
         val textureNode = GraphNode(id = "2", data = NodeData.TextureLayer(layer = ink.proto.BrushPaint.TextureLayer.getDefaultInstance()), position = Offset.Zero)
         val colorNode = GraphNode(id = "3", data = NodeData.ColorFunc(function = ink.proto.ColorFunction.getDefaultInstance()), position = Offset.Zero)
         
-        val edge1 = GraphEdge(fromPort = Port("2", PortSide.OUTPUT, 0), toPort = Port("1", PortSide.INPUT, 0))
-        val edge2 = GraphEdge(fromPort = Port("3", PortSide.OUTPUT, 0), toPort = Port("1", PortSide.INPUT, 2))
+        val edge1 = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "texture_0")
+        val edge2 = GraphEdge(fromNodeId = "3", toNodeId = "1", toPortId = "color_0")
         
         val graph = BrushGraph(nodes = listOf(node, textureNode, colorNode), edges = listOf(edge1, edge2))
         val ports = node.getVisiblePorts(graph)
         
         assertEquals(4, ports.size)
         assertEquals("Texture", ports[0].label)
-        assertEquals(0, ports[0].index)
-        
         assertEquals("Add Texture...", ports[1].label)
-        assertEquals(1, ports[1].index)
-        
         assertEquals("Color", ports[2].label)
-        assertEquals(2, ports[2].index)
-        
         assertEquals("Add Color...", ports[3].label)
-        assertEquals(3, ports[3].index)
     }
 }

@@ -37,6 +37,7 @@ fun EdgeInspector(
   edge: GraphEdge,
   fromNode: GraphNode,
   toNode: GraphNode,
+  inputLabel: String? = null,
   onNodeFocus: (String) -> Unit,
   onDisableChange: (Boolean) -> Unit,
   onDelete: () -> Unit,
@@ -86,7 +87,7 @@ fun EdgeInspector(
     EdgeNodeInfo(
       label = "To",
       node = toNode,
-      inputIndex = edge.toPort.index,
+      inputLabel = inputLabel,
       onClick = { onNodeFocus(toNode.id) },
     )
 
@@ -125,12 +126,11 @@ fun EdgeInspector(
 private fun EdgeNodeInfo(
   label: String,
   node: GraphNode,
-  inputIndex: Int? = null,
+  inputLabel: String? = null,
   onClick: () -> Unit,
 ) {
   val title = node.data.title()
   val subtitles = node.data.subtitles()
-  val inputLabel = if (inputIndex != null) node.data.inputLabels().getOrNull(inputIndex) else null
 
   Column(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(8.dp)) {
     Text(

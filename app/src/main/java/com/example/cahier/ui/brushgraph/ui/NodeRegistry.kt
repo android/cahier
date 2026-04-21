@@ -10,18 +10,21 @@ import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import com.example.cahier.ui.brushgraph.model.getPortPosition
 
 /** Registry to track the actual position of ports and sizes of nodes on the screen. */
+data class PortKey(val nodeId: String, val portId: String)
+
 class NodeRegistry {
-  private val portPositions = mutableStateMapOf<Port, Offset>()
+  private val portPositions = mutableStateMapOf<PortKey, Offset>()
   private val nodeSizes = mutableStateMapOf<String, Size>()
 
-  fun updatePort(nodeId: String, side: PortSide, index: Int, position: Offset) {
-    portPositions[Port(nodeId, side, index)] = position
+  fun updatePort(nodeId: String, portId: String, position: Offset) {
+    portPositions[PortKey(nodeId, portId)] = position
   }
 
-  fun getPort(nodeId: String, side: PortSide, index: Int): Offset? {
-    return portPositions[Port(nodeId, side, index)]
+  fun getPort(nodeId: String, portId: String): Offset? {
+    return portPositions[PortKey(nodeId, portId)]
   }
 
   fun updateNodeSize(nodeId: String, size: Size) {
@@ -33,31 +36,29 @@ class NodeRegistry {
   }
 
   fun findNearestPort(pos: Offset, fromNodeId: String, graph: BrushGraph): Port? {
-
     val thresholdSq = 3000f
     var nearestPort: Port? = null
     var minDistanceSq = thresholdSq
 
     for (node in graph.nodes) {
       val visiblePorts = node.getVisiblePorts(graph)
-      for (port in visiblePorts) {
+      visiblePorts.forEachIndexed { index, port ->
         // Only snap to input ports.
         if (port.side == PortSide.INPUT) {
           // Ignore occupied ports (unless it's the same edge being edited).
-          val existingEdge = graph.edges.find { it.toPort.nodeId == port.nodeId && it.toPort.index == port.index }
-          if (existingEdge != null && existingEdge.fromPort.nodeId != fromNodeId) {
-            continue // Occupied by another node's edge!
+          val existingEdge = graph.edges.find { it.toNodeId == port.nodeId && it.toPortId == port.id }
+          if (existingEdge != null && existingEdge.fromNodeId != fromNodeId) {
+            return@forEachIndexed // Occupied by another node's edge!
           }
           
-          val portPos = getPort(port.nodeId, port.side, port.index)
-            ?: (node.position + node.data.getPortPosition(port.side, port.index))
+          val portPos = getPort(port.nodeId, port.id)
+            ?: (node.position + node.getPortPosition(port.id, graph))
             
           val distSq = (pos - portPos).getDistanceSquared()
 
           if (distSq < minDistanceSq) {
             minDistanceSq = distSq
             nearestPort = port
-
           }
         }
       }
@@ -66,50 +67,8 @@ class NodeRegistry {
     return nearestPort
   }
 
-  fun findPortAt(pos: Offset, threshold: Float = 20f): Port? {
-    android.util.Log.d("NodeRegistry", "findPortAt: pos=$pos, threshold=$threshold, size=${portPositions.size}")
-    val thresholdSq = threshold * threshold
-    var nearestPort: Port? = null
-    var minDistanceSq = thresholdSq
-    
-    for ((port, portPos) in portPositions) {
-      val distSq = (pos - portPos).getDistanceSquared()
-      if (distSq < minDistanceSq) {
-        minDistanceSq = distSq
-        nearestPort = port
-      }
-    }
-    return nearestPort
-  }
-
-  fun deletePort(port: Port) {
-    portPositions.remove(port)
-  }
-
-  fun deletePortAndShift(port: Port) {
-    portPositions.remove(port)
-    
-    val keysToMove = portPositions.keys.filter { it.nodeId == port.nodeId && it.side == port.side && it.index > port.index }
-    val sortedKeys = keysToMove.sortedBy { it.index }
-    
-    for (key in sortedKeys) {
-      val pos = portPositions.remove(key)
-      if (pos != null) {
-        portPositions[key.copy(index = key.index - 1)] = pos
-      }
-    }
-  }
-
-  fun shiftPorts(nodeId: String, side: PortSide, fromIndex: Int, delta: Int) {
-    val keysToMove = portPositions.keys.filter { it.nodeId == nodeId && it.side == side && it.index >= fromIndex }
-    val sortedKeys = if (delta < 0) keysToMove.sortedBy { it.index } else keysToMove.sortedByDescending { it.index }
-    
-    for (key in sortedKeys) {
-      val pos = portPositions.remove(key)
-      if (pos != null) {
-        portPositions[key.copy(index = key.index + delta)] = pos
-      }
-    }
+  fun deletePort(nodeId: String, portId: String) {
+    portPositions.remove(PortKey(nodeId, portId))
   }
 
   fun clearNode(nodeId: String) {

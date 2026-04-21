@@ -1680,7 +1680,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           .build()
       )
     "Tip" -> NodeData.Tip(ProtoBrushTip.getDefaultInstance())
-    "Coat" -> NodeData.Coat
+    "Coat" -> NodeData.Coat()
     "Paint" -> NodeData.Paint(ProtoBrushPaint.getDefaultInstance())
     "TextureLayer" -> NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance())
     "ColorFunction" ->

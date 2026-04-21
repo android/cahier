@@ -18,7 +18,7 @@ class TooltipsTest {
             NodeData.Paint(ink.proto.BrushPaint.getDefaultInstance()),
             NodeData.TextureLayer(ink.proto.BrushPaint.TextureLayer.getDefaultInstance()),
             NodeData.ColorFunc(ink.proto.ColorFunction.getDefaultInstance()),
-            NodeData.Coat,
+            NodeData.Coat(),
             NodeData.Family(),
             
             // Behavior nodes

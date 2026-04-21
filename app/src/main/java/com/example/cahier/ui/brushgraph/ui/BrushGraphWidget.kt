@@ -116,6 +116,7 @@ import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.ui.brushgraph.model.PortSide
@@ -477,11 +478,11 @@ fun BrushGraphStudio(
           onDuplicateSelected = { viewModel.duplicateSelectedNodes() },
           onDeleteSelected = { viewModel.deleteSelectedNodes() },
           onDoneSelection = { viewModel.exitSelectionMode() },
-          onAddEdge = { from, to, index -> viewModel.addEdge(from, to, index) },
+          onAddEdge = { from, to, portId -> viewModel.addEdge(from, to, portId) },
           onEdgeClick = { viewModel.onEdgeClick(it) },
           onEdgeDelete = { viewModel.deleteEdge(it) },
           onEdgeDetach = { viewModel.detachEdge(it) },
-          onFinalizeEdgeEdit = { oldEdge, fromId, toId, index -> viewModel.finalizeEdgeEdit(oldEdge, fromId, toId, index) },
+          onFinalizeEdgeEdit = { oldEdge, fromId, toId, portId -> viewModel.finalizeEdgeEdit(oldEdge, fromId, toId, portId) },
           onCanvasClick = { viewModel.dismissPanes() },
           onPortClick = { nodeId, port -> viewModel.onPortTapped(nodeId, port) },
           onReorderPorts = { nodeId, fromIndex, toIndex -> viewModel.reorderPorts(nodeId, fromIndex, toIndex) },
@@ -977,13 +978,17 @@ fun AdaptiveInspectorPane(
                 onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
               )
             } else if (selectedEdge != null) {
-              val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromPort.nodeId }
-              val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toPort.nodeId }
+              val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromNodeId }
+              val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toNodeId }
               if (fromNode != null && toNode != null) {
+                val visiblePorts = toNode.getVisiblePorts(viewModel.graph)
+                val port = visiblePorts.find { it.id == selectedEdge.toPortId }
+                val inputLabel = port?.label
                 EdgeInspector(
                   edge = selectedEdge,
                   fromNode = fromNode,
                   toNode = toNode,
+                  inputLabel = inputLabel,
                   onNodeFocus = { nodeId: String ->
                     viewModel.centerNode(nodeId, isLandscape, density)
                   },
