@@ -664,23 +664,14 @@ fun NodeWidget(
                   TipPreviewWidget(data.tip, strokeRenderer)
                 }
               } else if (data is NodeData.Coat) {
-                val nodesById = graph.nodes.associateBy { it.id }
-                val inputs = graph.edges.filter { it.toNodeId == node.id }
-                val connectedNodes = inputs.mapNotNull { edge -> nodesById[edge.fromNodeId] }
-                val tipNode = connectedNodes.find { it.data is NodeData.Tip }
-                val paintNode = connectedNodes.find { it.data is NodeData.Paint }
-
-                val tip = (tipNode?.data as? NodeData.Tip)?.tip ?: ProtoBrushTip.getDefaultInstance()
-                val paint = (paintNode?.data as? NodeData.Paint)?.paint ?: ProtoBrushPaint.getDefaultInstance()
+                val coat = try {
+                    com.example.cahier.ui.brushgraph.converters.BrushFamilyConverter.createCoat(node, graph, mutableMapOf())
+                } catch (e: Exception) {
+                    ProtoBrushCoat.getDefaultInstance()
+                }
 
                 Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
-                  CoatPreviewWidget(
-                    ProtoBrushCoat.newBuilder()
-                      .setTip(tip)
-                      .addPaintPreferences(paint)
-                      .build(),
-                    strokeRenderer
-                  )
+                  CoatPreviewWidget(coat, strokeRenderer)
                 }
               }
             }

@@ -74,7 +74,7 @@ object BrushFamilyConverter {
       .build()
   }
 
-  private fun createCoat(
+  fun createCoat(
     coatNode: GraphNode,
     graph: BrushGraph,
     behaviorCache: MutableMap<String, List<List<ink.proto.BrushBehavior.Node>>>,

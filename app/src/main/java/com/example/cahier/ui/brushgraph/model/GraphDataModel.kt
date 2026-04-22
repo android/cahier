@@ -615,9 +615,81 @@ fun preserveEdgesOnTypeChange(
         finalNewData = newData.copy(inputPortIds = newIds)
         val edgesWithoutIncoming = edges.filter { it.toNodeId != nodeId }
         finalEdges = edgesWithoutIncoming + updatedEdges
+      } else if (newData.inputPortIds.isEmpty() && oldData.inputPortIds.isNotEmpty()) {
+        finalNewData = newData.copy(inputPortIds = oldData.inputPortIds)
       }
     }
     return Pair(finalNewData, finalEdges)
+}
+
+fun GraphNode.inferNodeDataForPort(port: Port): NodeData? {
+    val data = this.data
+    return when (data) {
+      is NodeData.Family -> {
+        if (port.label?.contains("Coat", ignoreCase = true) == true) {
+          NodeData.Coat()
+        } else {
+          null
+        }
+      }
+      is NodeData.Coat -> {
+        if (port.label?.contains("Tip", ignoreCase = true) == true) {
+          NodeData.Tip(ProtoBrushTip.getDefaultInstance())
+        } else if (port.label?.contains("Paint", ignoreCase = true) == true) {
+          NodeData.Paint(ProtoBrushPaint.getDefaultInstance())
+        } else {
+          null
+        }
+      }
+      is NodeData.Tip -> {
+        NodeData.Behavior(
+          ProtoBrushBehavior.Node.newBuilder()
+            .setTargetNode(
+              ProtoBrushBehavior.TargetNode.newBuilder()
+                .setTarget(ink.proto.BrushBehavior.Target.TARGET_OPACITY_MULTIPLIER)
+                .setTargetModifierRangeStart(0.0f)
+                .setTargetModifierRangeEnd(1.0f)
+            )
+            .build(),
+          "",
+          UUID.randomUUID().toString()
+        )
+      }
+      is NodeData.Behavior -> {
+        // Default behavior is source node
+        NodeData.Behavior(
+          ProtoBrushBehavior.Node.newBuilder()
+            .setSourceNode(
+              ProtoBrushBehavior.SourceNode.newBuilder()
+                .setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE)
+                .setSourceOutOfRangeBehavior(ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
+                .setSourceValueRangeStart(0.0f)
+                .setSourceValueRangeEnd(1.0f)
+            )
+            .build(),
+          "",
+          data.behaviorId
+        )
+      }
+      is NodeData.Paint -> {
+        if (port.label?.contains("Texture") == true) {
+          NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance())
+        } else if (port.label?.contains("Color") == true) {
+          NodeData.ColorFunc(ProtoColorFunction.newBuilder()
+            .setReplaceColor(
+                    ink.proto.Color.newBuilder()
+                      .setRed(0f)
+                      .setGreen(0f)
+                      .setBlue(0f)
+                      .setAlpha(1f)
+                      .build()
+                  ).build())
+        } else {
+          null
+        }
+      }
+      else -> null
+    }
 }
 
 

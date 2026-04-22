@@ -118,6 +118,7 @@ import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import com.example.cahier.ui.brushgraph.model.inferNodeDataForPort
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.ui.brushgraph.model.PortSide
@@ -145,7 +146,6 @@ fun BrushGraphWidget(
   
   // Use hoisted CahierTextureBitmapStore from ViewModel
   val textureStore = viewModel.textureStore
-  var allTextureIds by remember { mutableStateOf(textureStore.getAllIds()) }
   
   val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
 
@@ -154,31 +154,7 @@ fun BrushGraphWidget(
     viewModel.updateTestBrushColor(primaryColor)
   }
 
-  LaunchedEffect(Unit) {
-    val prefs = context.getSharedPreferences("brush_graph_prefs", Context.MODE_PRIVATE)
-    val savedBrushBase64 = prefs.getString("auto_save_brush", null)
-    android.util.Log.e("BrushGraphWidget", "onCreate: savedBrushBase64 from prefs is null? ${savedBrushBase64 == null}")
-    if (savedBrushBase64 != null) {
-      try {
-        val decodedBytes = android.util.Base64.decode(savedBrushBase64, android.util.Base64.DEFAULT)
-        val bais = java.io.ByteArrayInputStream(decodedBytes)
-        val family = androidx.ink.storage.AndroidBrushFamilySerialization.decode(
-          bais,
-          androidx.ink.storage.BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
-            if (bitmap != null) {
-              textureStore.loadTexture(id, bitmap)
-              allTextureIds = textureStore.getAllIds()
-            }
-            id
-          }
-        )
-        android.util.Log.e("BrushGraphWidget", "onCreate: loading brush from prefs")
-        viewModel.loadBrushFamily(family)
-      } catch (e: Exception) {
-        android.util.Log.e("BrushGraphWidget", "Failed to decode brush family from prefs", e)
-      }
-    }
-  }
+
 
   LaunchedEffect(viewModel.graph) {
     // Debounce to avoid saving on every single slider movement frame.
@@ -188,7 +164,7 @@ fun BrushGraphWidget(
       try {
         val stream = java.io.ByteArrayOutputStream()
         androidx.ink.storage.AndroidBrushFamilySerialization.encode(
-          viewModel.brush.family,
+          viewModel.brush.value.family,
           stream,
           textureStore
         )
@@ -255,7 +231,7 @@ fun BrushGraphWidget(
                 }
                 if (bitmap != null) {
                   textureStore.loadTexture(name, bitmap)
-                  allTextureIds = textureStore.getAllIds()
+                  viewModel.updateAllTextureIds()
                 }
               }
               showTextureNameDialog = false
@@ -287,7 +263,7 @@ fun BrushGraphWidget(
                 androidx.ink.storage.BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
                   if (bitmap != null) {
                     textureStore.loadTexture(id, bitmap)
-                    allTextureIds = textureStore.getAllIds()
+                    viewModel.updateAllTextureIds()
                   }
                   id
                 }
@@ -323,7 +299,7 @@ fun BrushGraphWidget(
         try {
           context.contentResolver.openOutputStream(it)?.use { outputStream -> 
             AndroidBrushFamilySerialization.encode(
-              viewModel.brush.family,
+              viewModel.brush.value.family,
               outputStream,
               textureStore
             )
@@ -388,7 +364,7 @@ fun BrushGraphWidget(
         },
         strokeRenderer = renderer,
         textureStore = textureStore,
-        allTextureIds = allTextureIds,
+        allTextureIds = viewModel.allTextureIds,
         onExport = {
           brushExportLauncher.launch("brush_${System.currentTimeMillis()}.brushfamily")
         },
@@ -455,6 +431,8 @@ fun BrushGraphStudio(
             label = "trashPaddingBottom",
           )
 
+        val nodeRegistry = remember { NodeRegistry() }
+
         // Main node graph canvas as the background.
         NodeGraphCanvas(
           graph = viewModel.graph,
@@ -485,21 +463,30 @@ fun BrushGraphStudio(
           onEdgeDetach = { viewModel.detachEdge(it) },
           onFinalizeEdgeEdit = { oldEdge, fromId, toId, portId -> viewModel.finalizeEdgeEdit(oldEdge, fromId, toId, portId) },
           onCanvasClick = { viewModel.dismissPanes() },
-          onPortClick = { nodeId, port -> viewModel.onPortTapped(nodeId, port) },
+          onPortClick = { nodeId, port ->
+            val node = viewModel.graph.nodes.find { it.id == nodeId }
+            val nodeData = node?.inferNodeDataForPort(port)
+            if (nodeData != null) {
+              val portPos = nodeRegistry.getPortPosition(nodeId, port.id, viewModel.graph)
+              val newX = node.position.x - nodeData.width() - 100f
+              val newY = portPos.y - nodeData.height() / 2f
+              viewModel.addNodeAndConnect(nodeData, GraphPoint(newX, newY), nodeId, port.id)
+            }
+          },
           onReorderPorts = { nodeId, fromIndex, toIndex -> viewModel.reorderPorts(nodeId, fromIndex, toIndex) },
-          nodeRegistry = viewModel.nodeRegistry,
+          nodeRegistry = nodeRegistry,
           selectedEdge = viewModel.selectedEdge,
           detachedEdge = viewModel.detachedEdge,
           activeEdgeSourceId = viewModel.activeEdgeSourceId,
           onNodeDataUpdate = { id, data -> viewModel.updateNodeData(id, data) },
           onChooseColor = onChooseColor,
           textureStore = textureStore,
-          allTextureIds = allTextureIds,
+          allTextureIds = viewModel.allTextureIds,
           onLoadTexture = onLoadTexture,
           strokeRenderer = strokeRenderer,
           textFieldsLocked = viewModel.textFieldsLocked,
           selectedNodeId = viewModel.selectedNodeId,
-          brush = viewModel.brush,
+          brush = viewModel.brush.collectAsState().value,
           bottomPadding = trashPaddingBottom,
         )
 
@@ -509,7 +496,7 @@ fun BrushGraphStudio(
           viewModel = viewModel,
           onChooseColor = onChooseColor,
           textureStore = textureStore,
-          allTextureIds = allTextureIds,
+          allTextureIds = viewModel.allTextureIds,
           onLoadTexture = onLoadTexture,
           strokeRenderer = strokeRenderer,
           modifier =
@@ -525,7 +512,7 @@ fun BrushGraphStudio(
         )
 
         // Floating Error/Warning/Debug Icon in the corner
-        val issues = viewModel.graphIssues
+        val issues = viewModel.graphIssues.collectAsState().value
         if (issues.isNotEmpty()) {
           val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
           val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
@@ -970,7 +957,7 @@ fun AdaptiveInspectorPane(
                 onUpdate = { viewModel.updateNodeData(selectedNode.id, it) },
                 onDisableChange = { viewModel.setNodeDisabled(selectedNode.id, it) },
                 onChooseColor = onChooseColor,
-                allTextureIds = allTextureIds,
+                allTextureIds = viewModel.allTextureIds,
                 onLoadTexture = onLoadTexture,
                 strokeRenderer = strokeRenderer,
                 textFieldsLocked = viewModel.textFieldsLocked,
@@ -1145,7 +1132,7 @@ fun CollapsiblePreviewPane(
           strokeList = viewModel.strokeList,
           strokeRenderer = strokeRenderer,
           textureStore = textureStore,
-          brush = viewModel.brush,
+          brush = viewModel.brush.collectAsState().value,
           onStrokesAdded = { 
             viewModel.strokeList.addAll(it)
             viewModel.advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
@@ -1188,7 +1175,7 @@ fun CanvasSection(
       onEraseStart = {},
       onEraseEnd = {},
       currentBrush = brush,
-      onGetNextBrush = { viewModel.brush },
+      onGetNextBrush = { viewModel.brush.value },
       isEraserMode = false,
       backgroundImageUri = null,
       onStartDrag = {},
@@ -1562,7 +1549,7 @@ fun NotificationPane(
   viewModel: BrushGraphViewModel,
   modifier: Modifier = Modifier,
 ) {
-  val issues = viewModel.graphIssues
+  val issues = viewModel.graphIssues.collectAsState().value
   val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
   val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
 

@@ -1073,56 +1073,56 @@ fun NodeFields(
           label = "Scale X",
           value = tip.scaleX,
           valueRange = 0f..2f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleX = it))) },
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleX = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Scale Y",
           value = tip.scaleY,
           valueRange = 0f..2f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleY = it))) },
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleY = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Corner Rounding",
           value = tip.cornerRounding,
           valueRange = 0f..1f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(cornerRounding = it))) },
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(cornerRounding = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Slant Degrees",
           value = Math.toDegrees(tip.slantRadians.toDouble()).toFloat(),
           valueRange = -90f..90f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(slantRadians = Math.toRadians(it.toDouble()).toFloat()))) },
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(slantRadians = Math.toRadians(it.toDouble()).toFloat()), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Pinch",
           value = tip.pinch,
           valueRange = 0f..1f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(pinch = it))) },
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(pinch = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Rotation Degrees",
           value = Math.toDegrees(tip.rotationRadians.toDouble()).toFloat(),
           valueRange = 0f..360f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(rotationRadians = Math.toRadians(it.toDouble()).toFloat()))) },
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(rotationRadians = Math.toRadians(it.toDouble()).toFloat()), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Particle Gap Distance Scale",
           value = tip.particleGapDistanceScale,
           valueRange = 0f..5f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDistanceScale = it))) },
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDistanceScale = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
           label = "Particle Gap Duration (ms)",
           value = tip.particleGapDurationSeconds * 1000f,
           valueRange = 0f..1000f,
-          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDurationSeconds = it / 1000f))) },
+          onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDurationSeconds = it / 1000f), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
       }
@@ -1162,7 +1162,7 @@ fun NodeFields(
                 DropdownMenuItem(
                   text = { Text(prettyDisplayString(so)) },
                   onClick = {
-                    onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so)))
+                    onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so), texturePortIds = data.texturePortIds, colorPortIds = data.colorPortIds))
                     onDropdownEditComplete()
                     expanded = false
                   }
