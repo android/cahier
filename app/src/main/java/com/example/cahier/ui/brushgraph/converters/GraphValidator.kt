@@ -1,9 +1,11 @@
 package com.example.cahier.ui.brushgraph.converters
 
+import com.example.cahier.R
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphNode
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.DisplayText
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -23,10 +25,10 @@ object GraphValidator {
     for (edge in graph.edges) {
       if (edge.isDisabled) continue
       if (!nodesById.containsKey(edge.fromNodeId)) {
-        issues.add(GraphValidationException("Edge refers to missing source node", edge.toNodeId))
+        issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_edge_missing_source), nodeId = edge.toNodeId))
       }
       if (!nodesById.containsKey(edge.toNodeId)) {
-        issues.add(GraphValidationException("Edge refers to missing target node", edge.fromNodeId))
+        issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_edge_missing_target), nodeId = edge.fromNodeId))
       }
     }
 
@@ -36,16 +38,16 @@ object GraphValidator {
       for (node in familyNodes) {
         issues.add(
           GraphValidationException(
-            "Graph must have exactly one Brush Family node. Found ${familyNodes.size}.",
-            node.id,
-            ValidationSeverity.ERROR,
+            displayMessage = DisplayText.Resource(R.string.bg_err_family_count, listOf(familyNodes.size)),
+            nodeId = node.id,
+            severity = ValidationSeverity.ERROR,
           )
         )
       }
       if (familyNodes.isEmpty()) {
         issues.add(
           GraphValidationException(
-            "Graph must have exactly one Brush Family node. Found 0.",
+            displayMessage = DisplayText.Resource(R.string.bg_err_family_count, listOf(0)),
             severity = ValidationSeverity.ERROR,
           )
         )
@@ -67,10 +69,10 @@ object GraphValidator {
           val hasTip = connectedPortIds.contains(data.tipPortId)
           val hasPaint = data.paintPortIds.any { connectedPortIds.contains(it) }
           if (!hasTip) {
-            issues.add(GraphValidationException("Coat missing Tip input.", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+            issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_coat_missing_tip), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
           }
           if (!hasPaint) {
-            issues.add(GraphValidationException("Coat missing at least one Paint input.", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+            issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_coat_missing_paint), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
           }
         }
         is NodeData.Behavior -> {
@@ -89,37 +91,37 @@ object GraphValidator {
             val labels = listOf("Value", "Start", "End")
             for (label in labels) {
               if (!connectedPortIds.contains(label)) {
-                issues.add(GraphValidationException("Interpolation missing input for \"$label\".", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+                issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_interp_missing_input, listOf(label)), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
               }
             }
           } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
             val chunkedIds = ids.chunked(2)
             val hasValidSet = chunkedIds.any { set -> set.size == 2 && set.all { connectedPortIds.contains(it) } }
             if (!hasValidSet) {
-              issues.add(GraphValidationException("Polar Target needs at least one complete set of inputs (Angle and Magnitude).", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+              issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_polar_missing_inputs), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
             }
           } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE) {
             val numInputs = ids.count { connectedPortIds.contains(it) }
             if (numInputs < 2) {
-              issues.add(GraphValidationException("Binary Op requires at least 2 inputs.", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+              issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_binary_min_inputs), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
             } else if (numInputs > 26) {
-              issues.add(GraphValidationException("Binary Op cannot have more than 26 inputs.", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+              issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_binary_max_inputs), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
             }
           } else {
             if (connectedPortIds.isEmpty() && data.inputLabels().isNotEmpty()) {
-              issues.add(GraphValidationException("${data.title()} missing input.", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+              issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_missing_input, listOf(DisplayText.Resource(data.title()))), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
             }
           }
         }
 
         is NodeData.Family -> {
           if (connectedPortIds.isEmpty()) {
-            issues.add(GraphValidationException("Family missing coat input.", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+            issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_family_missing_coat), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
           }
         }
         else -> {
           if (!isOptionalInput && data.inputLabels().isNotEmpty() && connectedPortIds.isEmpty()) {
-             issues.add(GraphValidationException("${data.title()} missing input.", node.id, if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+             issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_missing_input, listOf(DisplayText.Resource(data.title()))), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
           }
         }
       }
@@ -129,9 +131,9 @@ object GraphValidator {
         if (fromNode == null) {
           issues.add(
             GraphValidationException(
-              "Invalid connection: from node not found.",
-              node.id,
-              if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+              displayMessage = DisplayText.Resource(R.string.bg_err_invalid_conn_no_source),
+              nodeId = node.id,
+              severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
             )
           )
         } else {
@@ -139,19 +141,19 @@ object GraphValidator {
           if (actualSources.isEmpty()) {
             issues.add(
               GraphValidationException(
-                "Missing source for pass-through connection",
-                node.id,
-                if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+                displayMessage = DisplayText.Resource(R.string.bg_err_missing_source_passthrough),
+                nodeId = node.id,
+                severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
               )
             )
           } else {
             for (actualSourceNode in actualSources) {
-              BrushGraph.isValidConnection(actualSourceNode, node, edge.toPortId, graph)?.let { message ->
+              BrushGraph.isValidConnection(actualSourceNode, node, edge.toPortId, graph)?.let { displayText ->
                 issues.add(
                   GraphValidationException(
-                    "Invalid connection from ${actualSourceNode.data.title()} to ${node.data.title()} at port ${edge.toPortId}: $message",
-                    node.id,
-                    if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+                    displayMessage = DisplayText.Resource(R.string.bg_err_invalid_connection_detail, listOf(DisplayText.Resource(actualSourceNode.data.title()), DisplayText.Resource(node.data.title()), edge.toPortId, displayText)),
+                    nodeId = node.id,
+                    severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
                   )
                 )
               }
@@ -164,8 +166,8 @@ object GraphValidator {
         if (graph.edges.none { !it.isDisabled && it.toNodeId == node.id && activeNodeIds.contains(it.fromNodeId) }) {
           issues.add(
             GraphValidationException(
-              "Brush Family must be connected to at least one coat.",
-              node.id,
+              displayMessage = DisplayText.Resource(R.string.bg_err_family_no_coat),
+              nodeId = node.id,
               ValidationSeverity.ERROR,
             )
           )
@@ -176,9 +178,9 @@ object GraphValidator {
         if (graph.edges.none { !it.isDisabled && it.fromNodeId == node.id && activeNodeIds.contains(it.toNodeId) }) {
           issues.add(
             GraphValidationException(
-              "${node.data.title()} output is not used.",
-              node.id,
-              ValidationSeverity.WARNING,
+              displayMessage = DisplayText.Resource(R.string.bg_err_unused_output, listOf(DisplayText.Resource(node.data.title()))),
+              nodeId = node.id,
+              severity = ValidationSeverity.WARNING,
             )
           )
         }
@@ -208,18 +210,18 @@ object GraphValidator {
               for (paintNode in discardPaints) {
                   issues.add(
                     GraphValidationException(
-                      "Self overlap discard is incompatible with an opacity multiplier target on the coat tip.",
-                      paintNode.id,
-                      ValidationSeverity.WARNING,
+                      displayMessage = DisplayText.Resource(R.string.bg_err_self_overlap_incompatible_op),
+                      nodeId = paintNode.id,
+                      severity = ValidationSeverity.WARNING,
                     )
                   )
               }
               opacityTargetNodes.forEach { targetNode ->
                 issues.add(
                   GraphValidationException(
-                    "Targeting opacity multiplier is incompatible with self overlap discard on the coat paint.",
-                    targetNode.id,
-                    ValidationSeverity.WARNING,
+                    displayMessage = DisplayText.Resource(R.string.bg_err_op_incompatible_self_overlap),
+                    nodeId = targetNode.id,
+                    severity = ValidationSeverity.WARNING,
                   )
                 )
               }
@@ -235,9 +237,9 @@ object GraphValidator {
           if (sourceNode.sourceValueRangeStart == sourceNode.sourceValueRangeEnd) {
             issues.add(
               GraphValidationException(
-                "Source node \"${node.data.subtitles().joinToString()}\" cannot have equal range start and end values.",
-                node.id,
-                if (isActive) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
+                displayMessage = DisplayText.Resource(R.string.bg_err_source_range_equal, listOf(node.data.subtitles().joinToString())),
+                nodeId = node.id,
+                severity = if (isActive) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
               )
             )
           }
@@ -306,12 +308,6 @@ object GraphValidator {
     return emptyList()
   }
 
-  private fun GraphValidationException.copy(
-    message: String = this.message ?: "",
-    nodeId: String? = this.nodeId,
-    severity: ValidationSeverity = this.severity,
-  ) = GraphValidationException(message, nodeId, severity)
-
   private fun checkCycle(
     nodeId: String,
     graph: BrushGraph,
@@ -319,7 +315,7 @@ object GraphValidator {
     path: MutableSet<String>,
   ) {
     if (!path.add(nodeId)) {
-      throw GraphValidationException("Cycle detected involving node $nodeId.", nodeId)
+      throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_cycle_detected, listOf(nodeId)), nodeId = nodeId)
     }
     visited.add(nodeId)
     for (edge in graph.edges.filter { it.fromNodeId == nodeId }) {

@@ -33,8 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.cahier.R
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushFamily as ProtoBrushFamily
@@ -79,7 +81,7 @@ fun NodeFields(
       Modifier.padding(top = 8.dp).heightIn(max = 600.dp).verticalScroll(rememberScrollState())
   ) {
     if (node.data is NodeData.Behavior) {
-      val nodeDataTypeName = node.data.node.nodeCase.name.removeSuffix("_NODE")
+      val nodeCase = node.data.node.nodeCase
       var expandedNodeTypes by remember { mutableStateOf(false) }
       var showNodeTooltip by remember { mutableStateOf(false) }
       
@@ -93,10 +95,10 @@ fun NodeFields(
           modifier = Modifier.weight(1f)
         ) {
           OutlinedTextField(
-            value = prettyDisplayString(nodeDataTypeName),
+            value = stringResource(nodeCase.displayStringRId()),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Node Type") },
+            label = { Text(stringResource(R.string.bg_node_type)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNodeTypes) },
             modifier = Modifier.menuAnchor().fillMaxWidth()
           )
@@ -105,7 +107,7 @@ fun NodeFields(
             onDismissRequest = { expandedNodeTypes = false }
           ) {
             @Composable
-            fun DropdownSection(label: String, types: List<String>) {
+            fun DropdownSection(label: String, types: List<ProtoBrushBehavior.Node.NodeCase>) {
               Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
@@ -121,9 +123,9 @@ fun NodeFields(
               }
               types.forEach { type ->
                 DropdownMenuItem(
-                  text = { Text(prettyDisplayString(type)) },
+                  text = { Text(stringResource(type.displayStringRId())) },
                   onClick = {
-                    if (type != nodeDataTypeName) {
+                    if (type != nodeCase) {
                       onUpdate(createDefaultNode(type))
                       onDropdownEditComplete()
                     }
@@ -133,9 +135,9 @@ fun NodeFields(
               }
             }
 
-            DropdownSection("Start nodes:", NODE_TYPES_START)
-            DropdownSection("Operator nodes:", NODE_TYPES_OPERATOR)
-            DropdownSection("Terminal nodes:", NODE_TYPES_TERMINAL)
+            DropdownSection(stringResource(R.string.bg_section_start_nodes), NODE_TYPES_START)
+            DropdownSection(stringResource(R.string.bg_section_operator_nodes), NODE_TYPES_OPERATOR)
+            DropdownSection(stringResource(R.string.bg_section_terminal_nodes), NODE_TYPES_TERMINAL)
           }
         }
       }
@@ -151,7 +153,7 @@ fun NodeFields(
             onValueChange = {
               onUpdate(data.copy(developerComment = it))
             },
-            label = { Text("Developer comment") },
+            label = { Text(stringResource(R.string.bg_developer_comment)) },
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             minLines = 2,
             enabled = !textFieldsLocked,
@@ -173,10 +175,10 @@ fun NodeFields(
                 modifier = Modifier.weight(1f)
               ) {
                 OutlinedTextField(
-                  value = prettyDisplayString(sourceNode.source),
+                  value = stringResource(sourceNode.source.displayStringRId()),
                   onValueChange = {},
                   readOnly = true,
-                  label = { Text("Source") },
+                  label = { Text(stringResource(R.string.bg_source)) },
                   trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
                   modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -201,7 +203,7 @@ fun NodeFields(
                     }
                     sources.forEach { source ->
                       DropdownMenuItem(
-                        text = { Text(prettyDisplayString(source)) },
+                        text = { Text(stringResource(source.displayStringRId())) },
                         onClick = {
                           val currentDisplayStart = if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
                           val currentDisplayEnd = if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
@@ -236,22 +238,22 @@ fun NodeFields(
                     }
                   }
 
-                  SourceSection("Input:", SOURCES_INPUT)
-                  SourceSection("Movement:", SOURCES_MOVEMENT)
-                  SourceSection("Distance:", SOURCES_DISTANCE)
-                  SourceSection("Time:", SOURCES_TIME)
-                  SourceSection("Acceleration:", SOURCES_ACCELERATION)
+                  SourceSection(stringResource(R.string.bg_section_input), SOURCES_INPUT)
+                  SourceSection(stringResource(R.string.bg_section_movement), SOURCES_MOVEMENT)
+                  SourceSection(stringResource(R.string.bg_section_distance), SOURCES_DISTANCE)
+                  SourceSection(stringResource(R.string.bg_section_time), SOURCES_TIME)
+                  SourceSection(stringResource(R.string.bg_section_acceleration), SOURCES_ACCELERATION)
                 }
               }
               IconButton(onClick = { showSourceTooltip = true }) {
-                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
               }
             }
             
             if (showSourceTooltip) {
               TooltipDialog(
-                title = "Source: " + prettyDisplayString(sourceNode.source),
-                text = sourceNode.source.getTooltip(),
+                title = stringResource(R.string.bg_title_source_format, stringResource(sourceNode.source.displayStringRId())),
+                text = stringResource(sourceNode.source.getTooltip()),
                 onDismiss = { showSourceTooltip = false }
               )
             }
@@ -267,7 +269,7 @@ fun NodeFields(
             val displayValueEnd = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
 
             BrushSliderControl(
-              label = "Range Start",
+              label = stringResource(R.string.bg_label_range_start),
               value = displayValueStart,
               limits = limits,
               onValueChange = {
@@ -277,7 +279,7 @@ fun NodeFields(
               onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
-              label = "Range End",
+              label = stringResource(R.string.bg_label_range_end),
               value = displayValueEnd,
               limits = limits,
               onValueChange = {
@@ -300,10 +302,10 @@ fun NodeFields(
                 modifier = Modifier.weight(1f)
               ) {
                 OutlinedTextField(
-                  value = prettyDisplayString(sourceNode.sourceOutOfRangeBehavior),
+                  value = stringResource(sourceNode.sourceOutOfRangeBehavior.displayStringRId()),
                   onValueChange = {},
                   readOnly = true,
-                  label = { Text("Out of Range Behavior") },
+                  label = { Text(stringResource(R.string.bg_out_of_range_behavior)) },
                   trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOor) },
                   modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -314,7 +316,7 @@ fun NodeFields(
                   ALL_OUT_OF_RANGE.forEach { oor ->
                     val isEnabled = !isTimeSinceSource || oor == ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
                     DropdownMenuItem(
-                      text = { Text(prettyDisplayString(oor)) },
+                      text = { Text(stringResource(oor.displayStringRId())) },
                       onClick = {
                         onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
                         onDropdownEditComplete()
@@ -326,20 +328,20 @@ fun NodeFields(
                 }
               }
               IconButton(onClick = { showOorTooltip = true }) {
-                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
               }
             }
             
             if (showOorTooltip) {
               TooltipDialog(
-                title = "Out of Range Behavior: ${prettyDisplayString(sourceNode.sourceOutOfRangeBehavior)}",
-                text = sourceNode.sourceOutOfRangeBehavior.getTooltip(),
+                title = stringResource(R.string.bg_title_out_of_range_behavior_format, stringResource(sourceNode.sourceOutOfRangeBehavior.displayStringRId())),
+                text = stringResource(sourceNode.sourceOutOfRangeBehavior.getTooltip()),
                 onDismiss = { showOorTooltip = false }
               )
             }
             if (isTimeSinceSource) {
               Text(
-                text = "This source is only compatible with 'clamp' behavior.",
+                text = stringResource(R.string.bg_msg_source_clamp_only),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.padding(top = 4.dp)
@@ -349,7 +351,7 @@ fun NodeFields(
           ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> {
             val constantNode = behaviorNode.constantNode
             BrushSliderControl(
-              label = "Value",
+              label = stringResource(R.string.bg_port_value),
               value = constantNode.value,
               limits = NumericLimits(-100f, 100f, 0.01f),
               onValueChange = {
@@ -364,7 +366,7 @@ fun NodeFields(
             val noiseNode = behaviorNode.noiseNode
             val limits = noiseNode.varyOver.getNumericLimits(ProgressDomainContext.NOISE)
             BrushSliderControl(
-              label = "Seed",
+              label = stringResource(R.string.bg_label_seed),
               value = noiseNode.seed.toFloat(),
               valueRange = 0f..100f,
               onValueChange = {
@@ -388,10 +390,10 @@ fun NodeFields(
                 modifier = Modifier.weight(1f)
               ) {
                 OutlinedTextField(
-                  value = prettyDisplayString(noiseNode.varyOver),
+                  value = stringResource(noiseNode.varyOver.displayStringRId()),
                   onValueChange = {},
                   readOnly = true,
-                  label = { Text("Vary Over") },
+                  label = { Text(stringResource(R.string.bg_vary_over)) },
                   trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedVary) },
                   modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -401,7 +403,7 @@ fun NodeFields(
                 ) {
                   ALL_PROGRESS_DOMAINS.forEach { domain ->
                     DropdownMenuItem(
-                      text = { Text(prettyDisplayString(domain)) },
+                      text = { Text(stringResource(domain.displayStringRId())) },
                       onClick = {
                         val newLimits = domain.getNumericLimits(ProgressDomainContext.NOISE)
                         val clampedBasePeriod = noiseNode.basePeriod.coerceIn(newLimits.min, newLimits.max)
@@ -423,19 +425,19 @@ fun NodeFields(
                 }
               }
               IconButton(onClick = { showVaryTooltip = true }) {
-                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
               }
             }
             
             if (showVaryTooltip) {
               TooltipDialog(
-                title = "Vary Over: ${prettyDisplayString(noiseNode.varyOver)}",
-                text = noiseNode.varyOver.getTooltip(),
+                title = stringResource(R.string.bg_title_vary_over_format, stringResource(noiseNode.varyOver.displayStringRId())),
+                text = stringResource(noiseNode.varyOver.getTooltip()),
                 onDismiss = { showVaryTooltip = false }
               )
             }
             BrushSliderControl(
-              label = "Base Period",
+              label = stringResource(R.string.bg_label_base_period),
               value = noiseNode.basePeriod,
               valueRange = limits.min..limits.max,
               onValueChange = {
@@ -450,7 +452,7 @@ fun NodeFields(
           }
           ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {
             val filterNode = behaviorNode.toolTypeFilterNode
-            Text("Enabled Tool Types:", fontSize = 12.sp)
+            Text(stringResource(R.string.bg_enabled_tool_types), fontSize = 12.sp)
             ALL_TOOL_TYPES.forEach { toolType ->
               Row(verticalAlignment = Alignment.CenterVertically) {
                 val bitIndex = toolTypeBitIndex(toolType)
@@ -472,7 +474,7 @@ fun NodeFields(
                     )
                   }
                 )
-                Text(prettyDisplayString(toolType))
+                Text(stringResource(toolType.displayStringRId()))
               }
             }
           }
@@ -491,10 +493,10 @@ fun NodeFields(
                 modifier = Modifier.weight(1f)
               ) {
                 OutlinedTextField(
-                  value = prettyDisplayString(dampingNode.dampingSource),
+                  value = stringResource(dampingNode.dampingSource.displayStringRId()),
                   onValueChange = {},
                   readOnly = true,
-                  label = { Text("Damping Source") },
+                  label = { Text(stringResource(R.string.bg_damping_source)) },
                   trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
                   modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -504,7 +506,7 @@ fun NodeFields(
                 ) {
                   ALL_PROGRESS_DOMAINS.forEach { domain ->
                     DropdownMenuItem(
-                      text = { Text(prettyDisplayString(domain)) },
+                      text = { Text(stringResource(domain.displayStringRId())) },
                       onClick = {
                         val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
                         val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
@@ -527,19 +529,19 @@ fun NodeFields(
                 }
               }
               IconButton(onClick = { showDampingTooltip = true }) {
-                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
               }
             }
             
             if (showDampingTooltip) {
               TooltipDialog(
-                title = "Damping Source: ${prettyDisplayString(dampingNode.dampingSource)}",
-                text = dampingNode.dampingSource.getTooltip(),
+                title = stringResource(R.string.bg_title_damping_source_format, stringResource(dampingNode.dampingSource.displayStringRId())),
+                text = stringResource(dampingNode.dampingSource.getTooltip()),
                 onDismiss = { showDampingTooltip = false }
               )
             }
             BrushSliderControl(
-              label = "Damping Gap",
+              label = stringResource(R.string.bg_label_damping_gap),
               value = dampingNode.dampingGap,
               valueRange = limits.min..limits.max,
               onValueChange = {
@@ -574,10 +576,10 @@ fun NodeFields(
               onExpandedChange = { expandedOver = it }
             ) {
               OutlinedTextField(
-                value = prettyDisplayString(integralNode.integrateOver),
+                value = stringResource(integralNode.integrateOver.displayStringRId()),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Integrate Over") },
+                label = { Text(stringResource(R.string.bg_integrate_over)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOver) },
                 modifier = Modifier.menuAnchor().fillMaxWidth()
               )
@@ -587,7 +589,7 @@ fun NodeFields(
               ) {
                 ALL_PROGRESS_DOMAINS.forEach { domain ->
                   DropdownMenuItem(
-                    text = { Text(prettyDisplayString(domain)) },
+                    text = { Text(stringResource(domain.displayStringRId())) },
                     onClick = {
                       val newLimits = domain.getNumericLimits(ProgressDomainContext.INTEGRAL)
                       val clampedStart = integralNode.integralValueRangeStart.coerceIn(newLimits.min, newLimits.max)
@@ -612,7 +614,7 @@ fun NodeFields(
               }
             }
             BrushSliderControl(
-              label = "Range Start",
+              label = stringResource(R.string.bg_label_range_start),
               value = integralNode.integralValueRangeStart,
               valueRange = limits.min..limits.max,
               onValueChange = {
@@ -627,7 +629,7 @@ fun NodeFields(
               onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
-              label = "Range End",
+              label = stringResource(R.string.bg_label_range_end),
               value = integralNode.integralValueRangeEnd,
               valueRange = limits.min..limits.max,
               onValueChange = {
@@ -647,10 +649,10 @@ fun NodeFields(
               onExpandedChange = { expandedIntegralOor = it }
             ) {
               OutlinedTextField(
-                value = prettyDisplayString(integralNode.integralOutOfRangeBehavior),
+                value = stringResource(integralNode.integralOutOfRangeBehavior.displayStringRId()),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Out of Range Behavior") },
+                label = { Text(stringResource(R.string.bg_out_of_range_behavior)) },
                 trailingIcon = {
                   ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedIntegralOor)
                 },
@@ -662,7 +664,7 @@ fun NodeFields(
               ) {
                 ALL_OUT_OF_RANGE.forEach { oor ->
                   DropdownMenuItem(
-                    text = { Text(prettyDisplayString(oor)) },
+                    text = { Text(stringResource(oor.displayStringRId())) },
                     onClick = {
                       onUpdate(
                         NodeData.Behavior(
@@ -692,10 +694,10 @@ fun NodeFields(
                 modifier = Modifier.weight(1f)
               ) {
                 OutlinedTextField(
-                  value = prettyDisplayString(binaryNode.operation),
+                  value = stringResource(binaryNode.operation.displayStringRId()),
                   onValueChange = {},
                   readOnly = true,
-                  label = { Text("Operation") },
+                  label = { Text(stringResource(R.string.bg_operation)) },
                   trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOp) },
                   modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -705,7 +707,7 @@ fun NodeFields(
                 ) {
                   ALL_BINARY_OPS.forEach { op ->
                     DropdownMenuItem(
-                      text = { Text(prettyDisplayString(op)) },
+                      text = { Text(stringResource(op.displayStringRId())) },
                       onClick = {
                         onUpdate(
                           NodeData.Behavior(
@@ -720,13 +722,13 @@ fun NodeFields(
                 }
               }
               IconButton(onClick = { showOpTooltip = true }) {
-                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
               }
             }
             if (showOpTooltip) {
               TooltipDialog(
-                title = "Operation: ${prettyDisplayString(binaryNode.operation)}",
-                text = binaryNode.operation.getTooltip(),
+                title = stringResource(R.string.bg_title_operation_format, stringResource(binaryNode.operation.displayStringRId())),
+                text = stringResource(binaryNode.operation.getTooltip()),
                 onDismiss = { showOpTooltip = false }
               )
             }
@@ -745,10 +747,10 @@ fun NodeFields(
                 modifier = Modifier.weight(1f)
               ) {
                 OutlinedTextField(
-                  value = prettyDisplayString(interpNode.interpolation),
+                  value = stringResource(interpNode.interpolation.displayStringRId()),
                   onValueChange = {},
                   readOnly = true,
-                  label = { Text("Interpolation") },
+                  label = { Text(stringResource(R.string.bg_interpolation)) },
                   trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedInterp) },
                   modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -758,7 +760,7 @@ fun NodeFields(
                 ) {
                   ALL_INTERPOLATIONS.forEach { interp ->
                     DropdownMenuItem(
-                      text = { Text(prettyDisplayString(interp)) },
+                      text = { Text(stringResource(interp.displayStringRId())) },
                       onClick = {
                         onUpdate(
                           NodeData.Behavior(
@@ -774,13 +776,13 @@ fun NodeFields(
                 }
               }
               IconButton(onClick = { showInterpTooltip = true }) {
-                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
               }
             }
             if (showInterpTooltip) {
               TooltipDialog(
-                title = "Interpolation: ${prettyDisplayString(interpNode.interpolation)}",
-                text = interpNode.interpolation.getTooltip(),
+                title = stringResource(R.string.bg_title_interpolation_format, stringResource(interpNode.interpolation.displayStringRId())),
+                text = stringResource(interpNode.interpolation.getTooltip()),
                 onDismiss = { showInterpTooltip = false }
               )
             }
@@ -800,10 +802,10 @@ fun NodeFields(
                 modifier = Modifier.weight(1f)
               ) {
                 OutlinedTextField(
-                  value = prettyDisplayString(targetNode.target),
+                  value = stringResource(targetNode.target.displayStringRId()),
                   onValueChange = {},
                   readOnly = true,
-                  label = { Text("Target") },
+                  label = { Text(stringResource(R.string.bg_target)) },
                   trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTarget) },
                   modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -828,7 +830,7 @@ fun NodeFields(
                     }
                     targets.forEach { target ->
                       DropdownMenuItem(
-                        text = { Text(prettyDisplayString(target)) },
+                        text = { Text(stringResource(target.displayStringRId())) },
                         onClick = {
                           val currentDisplayStart = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeStart.toDouble()).toFloat() else targetNode.targetModifierRangeStart
                           val currentDisplayEnd = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
@@ -858,19 +860,19 @@ fun NodeFields(
                     }
                   }
 
-                  TargetSection("Size & Shape:", TARGETS_SIZE_SHAPE)
-                  TargetSection("Position:", TARGETS_POSITION)
-                  TargetSection("Color & Opacity:", TARGETS_COLOR_OPACITY)
+                  TargetSection(stringResource(R.string.bg_section_size_shape), TARGETS_SIZE_SHAPE)
+                  TargetSection(stringResource(R.string.bg_section_position), TARGETS_POSITION)
+                  TargetSection(stringResource(R.string.bg_section_color_opacity), TARGETS_COLOR_OPACITY)
                 }
               }
               IconButton(onClick = { showTargetTooltip = true }) {
-                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
               }
             }
             if (showTargetTooltip) {
               TooltipDialog(
-                title = "Target: ${prettyDisplayString(targetNode.target)}",
-                text = targetNode.target.getTooltip(),
+                title = stringResource(R.string.bg_title_target_format, stringResource(targetNode.target.displayStringRId())),
+                text = stringResource(targetNode.target.getTooltip()),
                 onDismiss = { showTargetTooltip = false }
               )
             }
@@ -882,7 +884,7 @@ fun NodeFields(
             val displayValueEnd = if (isAngleTarget) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
 
             BrushSliderControl(
-              label = "Range Start",
+              label = stringResource(R.string.bg_label_range_start),
               value = displayValueStart,
               valueRange = limits.min..limits.max,
               unit = limits.displayUnit,
@@ -899,7 +901,7 @@ fun NodeFields(
               onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
-              label = "Range End",
+              label = stringResource(R.string.bg_label_range_end),
               value = displayValueEnd,
               valueRange = limits.min..limits.max,
               unit = limits.displayUnit,
@@ -931,10 +933,10 @@ fun NodeFields(
                 modifier = Modifier.weight(1f)
               ) {
                 OutlinedTextField(
-                  value = prettyDisplayString(polarNode.target),
+                  value = stringResource(polarNode.target.displayStringRId()),
                   onValueChange = {},
                   readOnly = true,
-                  label = { Text("Polar Target") },
+                  label = { Text(stringResource(R.string.bg_polar_target)) },
                   trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPolar) },
                   modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -944,7 +946,7 @@ fun NodeFields(
                 ) {
                   ALL_POLAR_TARGETS.forEach { target ->
                     DropdownMenuItem(
-                      text = { Text(prettyDisplayString(target)) },
+                      text = { Text(stringResource(target.displayStringRId())) },
                       onClick = {
                         val newMagLimits = if (target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE ||
                                             target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE) {
@@ -974,13 +976,13 @@ fun NodeFields(
                 }
               }
               IconButton(onClick = { showPolarTooltip = true }) {
-                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
               }
             }
             if (showPolarTooltip) {
               TooltipDialog(
-                title = "Polar Target: ${prettyDisplayString(polarNode.target)}",
-                text = polarNode.target.getTooltip(),
+                title = stringResource(R.string.bg_title_polar_target_format, stringResource(polarNode.target.displayStringRId())),
+                text = stringResource(polarNode.target.getTooltip()),
                 onDismiss = { showPolarTooltip = false }
               )
             }
@@ -990,7 +992,7 @@ fun NodeFields(
             val displayAngleEnd = Math.toDegrees(polarNode.angleRangeEnd.toDouble()).toFloat()
 
             BrushSliderControl(
-              label = "Angle Start",
+              label = stringResource(R.string.bg_label_angle_start),
               value = displayAngleStart,
               valueRange = -360f..360f,
               unit = "°",
@@ -1004,7 +1006,7 @@ fun NodeFields(
               onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
-              label = "Angle End",
+              label = stringResource(R.string.bg_label_angle_end),
               value = displayAngleEnd,
               valueRange = -360f..360f,
               unit = "°",
@@ -1024,7 +1026,7 @@ fun NodeFields(
                 NumericLimits(0.0f, 1.0f, 0.1f)
             }
             BrushSliderControl(
-              label = "Mag Start",
+              label = stringResource(R.string.bg_label_mag_start),
               value = polarNode.magnitudeRangeStart,
               valueRange = magLimits.min..magLimits.max,
               onValueChange = {
@@ -1039,7 +1041,7 @@ fun NodeFields(
               onValueChangeFinished = onFieldEditComplete
             )
             BrushSliderControl(
-              label = "Mag End",
+              label = stringResource(R.string.bg_label_mag_end),
               value = polarNode.magnitudeRangeEnd,
               valueRange = magLimits.min..magLimits.max,
               onValueChange = {
@@ -1055,13 +1057,13 @@ fun NodeFields(
             )
           }
           ProtoBrushBehavior.Node.NodeCase.FALLBACK_FILTER_NODE -> {
-            Text("Fallback Filter Node")
+            Text(stringResource(R.string.bg_fallback_filter_node))
           }
           ProtoBrushBehavior.Node.NodeCase.NODE_NOT_SET -> {
-            Text("No node data set")
+            Text(stringResource(R.string.bg_no_node_data_set))
           }
           else -> {
-            Text("Unknown Behavior Node Type")
+            Text(stringResource(R.string.bg_unknown_behavior_node_type))
           }
         }
       }
@@ -1070,56 +1072,56 @@ fun NodeFields(
         TipPreviewWidget(tip, strokeRenderer)
 
         BrushSliderControl(
-          label = "Scale X",
+          label = stringResource(R.string.bg_label_scale_x),
           value = tip.scaleX,
           valueRange = 0f..2f,
           onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleX = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
-          label = "Scale Y",
+          label = stringResource(R.string.bg_label_scale_y),
           value = tip.scaleY,
           valueRange = 0f..2f,
           onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(scaleY = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
-          label = "Corner Rounding",
+          label = stringResource(R.string.bg_label_corner_rounding),
           value = tip.cornerRounding,
           valueRange = 0f..1f,
           onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(cornerRounding = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
-          label = "Slant Degrees",
+          label = stringResource(R.string.bg_label_slant_degrees),
           value = Math.toDegrees(tip.slantRadians.toDouble()).toFloat(),
           valueRange = -90f..90f,
           onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(slantRadians = Math.toRadians(it.toDouble()).toFloat()), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
-          label = "Pinch",
+          label = stringResource(R.string.bg_label_pinch),
           value = tip.pinch,
           valueRange = 0f..1f,
           onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(pinch = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
-          label = "Rotation Degrees",
+          label = stringResource(R.string.bg_label_rotation_degrees),
           value = Math.toDegrees(tip.rotationRadians.toDouble()).toFloat(),
           valueRange = 0f..360f,
           onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(rotationRadians = Math.toRadians(it.toDouble()).toFloat()), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
-          label = "Particle Gap Distance Scale",
+          label = stringResource(R.string.bg_label_particle_gap_distance_scale),
           value = tip.particleGapDistanceScale,
           valueRange = 0f..5f,
           onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDistanceScale = it), behaviorPortIds = data.behaviorPortIds)) },
           onValueChangeFinished = onFieldEditComplete
         )
         BrushSliderControl(
-          label = "Particle Gap Duration (ms)",
+          label = stringResource(R.string.bg_label_particle_gap_duration_ms),
           value = tip.particleGapDurationSeconds * 1000f,
           valueRange = 0f..1000f,
           onValueChange = { onUpdate(NodeData.Tip(tip.safeCopy(particleGapDurationSeconds = it / 1000f), behaviorPortIds = data.behaviorPortIds)) },
@@ -1127,7 +1129,7 @@ fun NodeFields(
         )
       }
       is NodeData.Coat -> {
-        Text("Coat Node: Connect Tip and Paint to this node.", fontSize = 12.sp)
+        Text(stringResource(R.string.bg_coat_node_description), fontSize = 12.sp)
       }
       is NodeData.Paint -> {
         val paint = data.paint
@@ -1143,10 +1145,10 @@ fun NodeFields(
             modifier = Modifier.weight(1f)
           ) {
             OutlinedTextField(
-              value = prettyDisplayString(paint.selfOverlap),
+              value = stringResource(paint.selfOverlap.displayStringRId()),
               onValueChange = {},
               readOnly = true,
-              label = { Text("Self Overlap") },
+              label = { Text(stringResource(R.string.bg_self_overlap)) },
               trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
               modifier = Modifier.menuAnchor().fillMaxWidth()
             )
@@ -1160,7 +1162,7 @@ fun NodeFields(
                 ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD,
               ).forEach { so ->
                 DropdownMenuItem(
-                  text = { Text(prettyDisplayString(so)) },
+                  text = { Text(stringResource(so.displayStringRId())) },
                   onClick = {
                     onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so), texturePortIds = data.texturePortIds, colorPortIds = data.colorPortIds))
                     onDropdownEditComplete()
@@ -1171,13 +1173,13 @@ fun NodeFields(
             }
           }
           IconButton(onClick = { showTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
           }
         }
         if (showTooltip) {
           TooltipDialog(
-            title = "Self Overlap: ${prettyDisplayString(paint.selfOverlap)}",
-            text = paint.selfOverlap.getTooltip(),
+            title = stringResource(R.string.bg_title_self_overlap_format, stringResource(paint.selfOverlap.displayStringRId())),
+            text = stringResource(paint.selfOverlap.getTooltip()),
             onDismiss = { showTooltip = false }
           )
         }
@@ -1194,10 +1196,10 @@ fun NodeFields(
       is NodeData.ColorFunc -> {
         val function = data.function
         var expandedType by remember { mutableStateOf(false) }
-        val currentType = if (function.hasOpacityMultiplier()) {
-          "Opacity Multiplier"
+        val currentTypeResId = if (function.hasOpacityMultiplier()) {
+          R.string.bg_opacity_multiplier
         } else {
-          "Replace Color"
+          R.string.bg_replace_color
         }
 
         var showTypeTooltip by remember { mutableStateOf(false) }
@@ -1211,10 +1213,10 @@ fun NodeFields(
             modifier = Modifier.weight(1f)
           ) {
             OutlinedTextField(
-              value = currentType,
+              value = stringResource(currentTypeResId),
               onValueChange = {},
               readOnly = true,
-              label = { Text("Function Type") },
+              label = { Text(stringResource(R.string.bg_function_type)) },
               trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
               modifier = Modifier.menuAnchor().fillMaxWidth()
             )
@@ -1222,13 +1224,13 @@ fun NodeFields(
               expanded = expandedType,
               onDismissRequest = { expandedType = false }
             ) {
-              listOf("Opacity Multiplier", "Replace Color").forEach { type ->
+              listOf(R.string.bg_opacity_multiplier, R.string.bg_replace_color).forEach { resId ->
                 DropdownMenuItem(
-                  text = { Text(type) },
+                  text = { Text(stringResource(resId)) },
                   onClick = {
-                    if (type != currentType) {
+                    if (resId != currentTypeResId) {
                       onUpdate(
-                        if (type == "Opacity Multiplier") {
+                        if (resId == R.string.bg_opacity_multiplier) {
                           NodeData.ColorFunc(
                             ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
                           )
@@ -1256,19 +1258,19 @@ fun NodeFields(
             }
           }
           IconButton(onClick = { showTypeTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
           }
         }
         if (showTypeTooltip) {
           TooltipDialog(
-            title = "Function Type: $currentType",
-            text = getColorFunctionTooltip(currentType),
+            title = stringResource(R.string.bg_title_function_type_format, stringResource(currentTypeResId)),
+            text = stringResource(getColorFunctionTooltip(currentTypeResId)),
             onDismiss = { showTypeTooltip = false }
           )
         }
         if (function.hasOpacityMultiplier()) {
           BrushSliderControl(
-            label = "Opacity Multiplier",
+            label = stringResource(R.string.bg_label_opacity_multiplier),
             value = function.opacityMultiplier,
             valueRange = 0f..2f,
             onValueChange = { onUpdate(NodeData.ColorFunc(function.safeCopy(opacityMultiplier = it))) },
@@ -1282,7 +1284,7 @@ fun NodeFields(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 8.dp)
           ) {
-            Text("Color: ", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.bg_color_label), style = MaterialTheme.typography.bodyMedium)
             Surface(
               onClick = {
                 onChooseColor(composeColor) { newColor ->
@@ -1318,7 +1320,7 @@ fun NodeFields(
         OutlinedTextField(
           value = data.clientBrushFamilyId,
           onValueChange = { onUpdate(data.copy(clientBrushFamilyId = it)) },
-          label = { Text("Client Brush Family ID") },
+          label = { Text(stringResource(R.string.bg_client_brush_family_id)) },
           modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
           singleLine = true,
           enabled = !textFieldsLocked,
@@ -1326,7 +1328,7 @@ fun NodeFields(
         OutlinedTextField(
           value = data.developerComment,
           onValueChange = { onUpdate(data.copy(developerComment = it)) },
-          label = { Text("Brush developer comment") },
+          label = { Text(stringResource(R.string.bg_brush_developer_comment)) },
           modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
           minLines = 3,
           enabled = !textFieldsLocked,
@@ -1343,10 +1345,10 @@ fun NodeFields(
             modifier = Modifier.weight(1f)
           ) {
             OutlinedTextField(
-              value = data.inputModel.displayString(),
+              value = stringResource(data.inputModel.displayStringRId()),
               onValueChange = {},
               readOnly = true,
-              label = { Text("Input Model") },
+              label = { Text(stringResource(R.string.bg_input_model)) },
               trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedModel) },
               modifier = Modifier.menuAnchor().fillMaxWidth()
             )
@@ -1354,19 +1356,19 @@ fun NodeFields(
               expanded = expandedModel,
               onDismissRequest = { expandedModel = false }
             ) {
-              arrayOf("Sliding Window Model", "Spring Model", "Naive Experimental Model").forEach { model ->
+              listOf(R.string.bg_model_sliding_window, R.string.bg_model_spring, R.string.bg_model_naive_experimental).forEach { modelResId ->
                 DropdownMenuItem(
-                  text = { Text(model) },
+                  text = { Text(stringResource(modelResId)) },
                   onClick = {
                     val newModel =
-                      when (model) {
-                        "Naive Experimental Model" ->
+                      when (modelResId) {
+                        R.string.bg_model_naive_experimental ->
                           ProtoBrushFamily.InputModel.newBuilder()
                             .setExperimentalNaiveModel(
                               ProtoBrushFamily.ExperimentalNaiveModel.getDefaultInstance()
                             )
                             .build()
-                        "Sliding Window Model" ->
+                        R.string.bg_model_sliding_window ->
                           ProtoBrushFamily.InputModel.newBuilder()
                             .setSlidingWindowModel(
                               ProtoBrushFamily.SlidingWindowModel.newBuilder()
@@ -1374,7 +1376,7 @@ fun NodeFields(
                                 .setExperimentalUpsamplingPeriodSeconds(0.005f)
                             )
                             .build()
-                        "Spring Model" ->
+                        R.string.bg_model_spring ->
                           ProtoBrushFamily.InputModel.newBuilder()
                             .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
                             .build()
@@ -1392,13 +1394,13 @@ fun NodeFields(
             }
           }
           IconButton(onClick = { showModelTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
           }
         }
         if (showModelTooltip) {
           TooltipDialog(
-            title = "Input Model: ${data.inputModel.displayString()}",
-            text = getInputModelTooltip(data.inputModel.displayString()),
+            title = stringResource(R.string.bg_title_input_model_format, stringResource(data.inputModel.displayStringRId())),
+            text = stringResource(getInputModelTooltip(data.inputModel.displayStringRId())),
             onDismiss = { showModelTooltip = false }
           )
         }
@@ -1409,7 +1411,7 @@ fun NodeFields(
           val upsamplingHz = if (slidingModel.experimentalUpsamplingPeriodSeconds > 0) 1f / slidingModel.experimentalUpsamplingPeriodSeconds else 0f
 
           BrushSliderControl(
-            label = "Window Size (ms)",
+            label = stringResource(R.string.bg_label_window_size),
             value = windowSizeMs,
             valueRange = 1f..100f,
             onValueChange = { newMs ->
@@ -1425,7 +1427,7 @@ fun NodeFields(
           )
 
           BrushSliderControl(
-            label = "Upsampling Frequency (Hz)",
+            label = stringResource(R.string.bg_label_upsampling_frequency),
             value = upsamplingHz,
             valueRange = 0f..500f,
             onValueChange = { newHz ->
@@ -1445,14 +1447,7 @@ fun NodeFields(
   }
 }
 
-private fun ProtoBrushFamily.InputModel.displayString(): String {
-  return when {
-    hasSlidingWindowModel() -> "Sliding Window Model"
-    hasSpringModel() -> "Spring Model"
-    hasExperimentalNaiveModel() -> "Naive Experimental Model"
-    else -> "Unknown Model"
-  }
-}
+
 
 internal val SOURCES_INPUT = listOf(
   ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE,
@@ -1562,13 +1557,27 @@ private val ALL_INTERPOLATIONS =
 private val ALL_TOOL_TYPES =
   arrayOf(InputToolType.STYLUS, InputToolType.TOUCH, InputToolType.MOUSE, InputToolType.UNKNOWN)
 
-internal val NODE_TYPES_START = listOf("Source", "Constant", "Noise")
-internal val NODE_TYPES_OPERATOR = listOf("ToolTypeFilter", "Damping", "Response", "Integral", "BinaryOp", "Interpolation")
-internal val NODE_TYPES_TERMINAL = listOf("Target", "PolarTarget")
+internal val NODE_TYPES_START = listOf(
+  ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE,
+  ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE,
+  ProtoBrushBehavior.Node.NodeCase.NOISE_NODE
+)
+internal val NODE_TYPES_OPERATOR = listOf(
+  ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE,
+  ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE,
+  ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE,
+  ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE,
+  ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE,
+  ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE
+)
+internal val NODE_TYPES_TERMINAL = listOf(
+  ProtoBrushBehavior.Node.NodeCase.TARGET_NODE,
+  ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE
+)
 
-internal fun createDefaultNode(typeName: String): NodeData {
-  return when (typeName) {
-    "Source" ->
+internal fun createDefaultNode(nodeCase: ProtoBrushBehavior.Node.NodeCase): NodeData {
+  return when (nodeCase) {
+    ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setSourceNode(
@@ -1580,13 +1589,13 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "Constant" ->
+    ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setConstantNode(ProtoBrushBehavior.ConstantNode.newBuilder().setValue(0f))
           .build()
       )
-    "Noise" ->
+    ProtoBrushBehavior.Node.NodeCase.NOISE_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setNoiseNode(
@@ -1597,7 +1606,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "ToolTypeFilter" ->
+    ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setToolTypeFilterNode(
@@ -1606,7 +1615,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "Damping" ->
+    ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setDampingNode(
@@ -1616,7 +1625,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "Response" ->
+    ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setResponseNode(
@@ -1625,7 +1634,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "Integral" ->
+    ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setIntegralNode(
@@ -1637,7 +1646,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "BinaryOp" ->
+    ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setBinaryOpNode(
@@ -1646,7 +1655,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "Interpolation" ->
+    ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setInterpolationNode(
@@ -1655,7 +1664,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "Target" ->
+    ProtoBrushBehavior.Node.NodeCase.TARGET_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setTargetNode(
@@ -1666,7 +1675,7 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "PolarTarget" ->
+    ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE ->
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setPolarTargetNode(
@@ -1679,51 +1688,11 @@ internal fun createDefaultNode(typeName: String): NodeData {
           )
           .build()
       )
-    "Tip" -> NodeData.Tip(ProtoBrushTip.getDefaultInstance())
-    "Coat" -> NodeData.Coat()
-    "Paint" -> NodeData.Paint(ProtoBrushPaint.getDefaultInstance())
-    "TextureLayer" -> NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance())
-    "ColorFunction" ->
-      NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build())
-    "BrushFamily" -> NodeData.Family()
-    else ->
-      NodeData.Behavior(
-        ProtoBrushBehavior.Node.newBuilder()
-          .setTargetNode(
-            ProtoBrushBehavior.TargetNode.newBuilder()
-              .setTarget(ProtoBrushBehavior.Target.TARGET_WIDTH_MULTIPLIER)
-              .setTargetModifierRangeStart(0f)
-              .setTargetModifierRangeEnd(1f)
-          )
-          .build()
-      )
+    else -> throw IllegalArgumentException("Unsupported node case: $nodeCase")
   }
 }
 
-internal fun prettyDisplayString(any: Any?): String =
-  when (any) {
-    is ProtoBrushBehavior.Source -> any.displayString()
-    is ProtoBrushBehavior.Target -> any.displayString()
-    is ProtoBrushBehavior.PolarTarget -> any.displayString()
-    is ProtoBrushBehavior.BinaryOp -> any.displayString()
-    is ProtoBrushBehavior.OutOfRange -> any.displayString()
-    is ProtoBrushBehavior.ProgressDomain -> any.displayString()
-    is ProtoBrushBehavior.Interpolation -> any.displayString()
-    is ProtoBrushPaint.SelfOverlap -> any.displayString()
-    is ProtoBrushPaint.TextureLayer.SizeUnit -> any.displayString()
-    is ProtoBrushPaint.TextureLayer.Origin -> any.displayString()
-    is ProtoBrushPaint.TextureLayer.Mapping -> any.displayString()
-    is ProtoBrushPaint.TextureLayer.Wrap -> any.displayString()
-    is ProtoBrushPaint.TextureLayer.BlendMode -> any.displayString()
-    is InputToolType -> any.displayString()
-    is ink.proto.StepPosition -> any.displayString()
-    is NodeData.ColorFunc -> "color function"
-    is String ->
-      any.replace("([a-z])([A-Z])".toRegex(), "$1 $2").lowercase().replaceFirstChar {
-        it.uppercase()
-      }
-    else -> any.toString()
-  }
+
 
 private fun toolTypeBitIndex(toolType: InputToolType): Int =
   when (toolType) {
@@ -1762,7 +1731,7 @@ internal fun TooltipDialog(
     text = { Text(text) },
     confirmButton = {
       TextButton(onClick = onDismiss) {
-        Text("OK")
+        Text(stringResource(R.string.bg_ok))
       }
     }
   )

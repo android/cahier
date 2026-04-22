@@ -54,6 +54,8 @@ import com.example.cahier.ui.brushgraph.BrushGraphViewModel
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.ui.brushgraph.model.TutorialAction
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
 
 @Composable
 fun TestCanvas(
@@ -67,7 +69,7 @@ fun TestCanvas(
 ) {
   Box(modifier = Modifier.fillMaxSize()) {
     Text(
-      "Draw here to test",
+      stringResource(R.string.bg_test_canvas_draw_prompt),
       modifier = Modifier.align(Alignment.Center),
       style = MaterialTheme.typography.labelMedium,
       color =
@@ -125,18 +127,18 @@ fun CollapsiblePreviewPane(
             } else {
               Icons.Default.KeyboardArrowUp
             },
-            contentDescription = if (viewModel.isPreviewExpanded) "Collapse" else "Expand",
+            contentDescription = if (viewModel.isPreviewExpanded) stringResource(R.string.bg_test_canvas_collapse) else stringResource(R.string.bg_test_canvas_expand),
           )
           Spacer(Modifier.width(8.dp))
           Text(
-            "Test canvas",
+            stringResource(R.string.bg_test_canvas_title),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
           )
           if (viewModel.isPreviewExpanded) {
             Spacer(Modifier.width(16.dp))
             Text(
-              "Reset",
+              stringResource(R.string.bg_test_canvas_reset),
               modifier = Modifier.clickable { viewModel.clearStrokes() },
               style = MaterialTheme.typography.labelLarge,
               color = MaterialTheme.colorScheme.primary,
@@ -144,7 +146,7 @@ fun CollapsiblePreviewPane(
             )
             Spacer(Modifier.width(16.dp))
             Text(
-              "Invert canvas",
+              stringResource(R.string.bg_test_canvas_invert),
               modifier = Modifier.clickable { viewModel.toggleCanvasTheme() },
               style = MaterialTheme.typography.labelLarge,
               color = MaterialTheme.colorScheme.primary,
@@ -159,7 +161,7 @@ fun CollapsiblePreviewPane(
                 onCheckedChange = { viewModel.testAutoUpdateStrokes = it }
               )
               Spacer(Modifier.width(4.dp))
-              Text("Auto-update", style = MaterialTheme.typography.labelLarge)
+              Text(stringResource(R.string.bg_auto_update), style = MaterialTheme.typography.labelLarge)
             }
             Spacer(Modifier.width(16.dp))
             
@@ -197,7 +199,7 @@ fun CollapsiblePreviewPane(
               ) {
                 for (size in 10..50 step 10) {
                   DropdownMenuItem(
-                    text = { Text("${size}px") },
+                    text = { Text(stringResource(R.string.bg_size_px, size)) },
                     onClick = {
                       viewModel.updateTestBrushSize(size.toFloat())
                       sizeExpanded = false

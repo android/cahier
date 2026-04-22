@@ -51,7 +51,7 @@ class NodeFieldsTest {
       NODE_TYPES_START +
       NODE_TYPES_OPERATOR +
       NODE_TYPES_TERMINAL
-    ).toSet()
+    ).map { it.name.removeSuffix("_NODE").split("_").joinToString("") { part -> part.lowercase().replaceFirstChar { it.uppercase() } } }.toSet()
 
     assertEquals("Not all behavior node types are accounted for!", allBehaviorNodes, categorizedNodeTypes)
   }

@@ -13,7 +13,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.cahier.R
 
 @Composable
 fun NameTextureDialog(
@@ -26,24 +28,24 @@ fun NameTextureDialog(
     if (show) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Name Texture") },
+            title = { Text(stringResource(R.string.bg_name_texture)) },
             text = {
                 OutlinedTextField(
                     value = textureNameInput,
                     onValueChange = onTextureNameInputChange,
-                    label = { Text("Texture ID") },
+                    label = { Text(stringResource(R.string.bg_texture_id)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             confirmButton = {
                 TextButton(onClick = onConfirm) {
-                    Text("OK")
+                    Text(stringResource(R.string.bg_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.bg_cancel))
                 }
             }
         )
@@ -61,24 +63,24 @@ fun SaveToPaletteDialog(
     if (show) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Save to Cahier Palette") },
+            title = { Text(stringResource(R.string.bg_save_to_palette)) },
             text = {
                 OutlinedTextField(
                     value = paletteBrushNameInput,
                     onValueChange = onPaletteBrushNameInputChange,
-                    label = { Text("Brush Name") },
+                    label = { Text(stringResource(R.string.bg_brush_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             confirmButton = {
                 TextButton(onClick = onConfirm) {
-                    Text("Save")
+                    Text(stringResource(R.string.save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.bg_cancel))
                 }
             }
         )
@@ -94,18 +96,18 @@ fun ClearGraphConfirmationDialog(
     if (show) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Clear Graph") },
+            title = { Text(stringResource(R.string.bg_clear_graph)) },
             text = {
-                Text("Are you sure you want to clear the entire brush graph? This action cannot be undone.")
+                Text(stringResource(R.string.bg_clear_graph_confirmation))
             },
             confirmButton = {
                 Button(onClick = onConfirm) {
-                    Text("Clear")
+                    Text(stringResource(R.string.clear))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.bg_cancel))
                 }
             }
         )
@@ -121,18 +123,18 @@ fun TutorialWarningDialog(
     if (show) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Start Tutorial") },
+            title = { Text(stringResource(R.string.bg_start_tutorial)) },
             text = {
-                Text("Starting the tutorial will clear your current brush graph to start from scratch. Your current brush will be saved and restored when you exit the tutorial.")
+                Text(stringResource(R.string.bg_start_tutorial_message))
             },
             confirmButton = {
                 Button(onClick = onConfirm) {
-                    Text("Start")
+                    Text(stringResource(R.string.bg_start))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.bg_cancel))
                 }
             }
         )
@@ -149,18 +151,18 @@ fun TutorialFinishDialog(
     if (show) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Exit Tutorial") },
+            title = { Text(stringResource(R.string.bg_exit_tutorial)) },
             text = {
-                Text("Do you want to keep the brush you built in the tutorial, or restore your original brush?")
+                Text(stringResource(R.string.bg_exit_tutorial_message))
             },
             confirmButton = {
                 Button(onClick = onKeepChanges) {
-                    Text("Keep Tutorial Brush")
+                    Text(stringResource(R.string.bg_keep_tutorial_brush))
                 }
             },
             dismissButton = {
                 Button(onClick = onRestoreOriginal) {
-                    Text("Restore Original Brush")
+                    Text(stringResource(R.string.bg_restore_original_brush))
                 }
             }
         )
@@ -177,14 +179,14 @@ fun OptionsDialog(
     if (show) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Options") },
+            title = { Text(stringResource(R.string.bg_options)) },
             text = {
                 Column {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                     ) {
-                        Text("Lock text fields", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.bg_lock_text_fields), modifier = Modifier.weight(1f))
                         Switch(
                             checked = textFieldsLocked,
                             onCheckedChange = { onToggleTextFieldsLocked() }
@@ -194,7 +196,7 @@ fun OptionsDialog(
             },
             confirmButton = {
                 Button(onClick = onDismiss) {
-                    Text("OK")
+                    Text(stringResource(R.string.bg_ok))
                 }
             }
         )
@@ -210,18 +212,18 @@ fun ReorganizeConfirmationDialog(
     if (show) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Reorganize Graph") },
+            title = { Text(stringResource(R.string.bg_reorganize_graph)) },
             text = {
-                Text("Are you sure you want to reorganize the graph? This will reset all node positions and expansion states. This action cannot be undone.")
+                Text(stringResource(R.string.bg_reorganize_graph_confirmation))
             },
             confirmButton = {
                 Button(onClick = onConfirm) {
-                    Text("Reorganize")
+                    Text(stringResource(R.string.bg_reorganize))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.bg_cancel))
                 }
             }
         )

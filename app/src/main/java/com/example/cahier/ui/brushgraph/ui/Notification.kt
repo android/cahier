@@ -20,6 +20,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,6 +32,7 @@ import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.theme.extendedColorScheme
+import android.util.Log
 
 @Composable
 fun NotificationPane(
@@ -97,14 +100,14 @@ fun NotificationPane(
             Icon(headerIcon, contentDescription = null, tint = iconColor)
             Spacer(Modifier.width(8.dp))
             Text(
-              text = "Notifications (${issues.size})",
+              text = stringResource(R.string.bg_notifications_count, issues.size),
               style = MaterialTheme.typography.titleMedium,
               fontWeight = FontWeight.Bold,
               modifier = Modifier.weight(1f),
               color = iconColor,
             )
             IconButton(onClick = { viewModel.toggleErrorPane() }) {
-              Icon(Icons.Default.Close, contentDescription = "Close Pane", tint = iconColor)
+              Icon(Icons.Default.Close, contentDescription = stringResource(R.string.bg_cd_close_pane), tint = iconColor)
             }
           }
         }
@@ -116,7 +119,7 @@ fun NotificationPane(
           if (errors.isNotEmpty()) {
             item {
               NotificationGroup(
-                title = "Errors",
+                title = stringResource(R.string.bg_errors),
                 issues = errors,
                 icon = Icons.Default.Error,
                 color = MaterialTheme.colorScheme.error,
@@ -128,7 +131,7 @@ fun NotificationPane(
           if (warnings.isNotEmpty()) {
             item {
               NotificationGroup(
-                title = "Warnings",
+                title = stringResource(R.string.bg_warnings),
                 issues = warnings,
                 icon = Icons.Default.Warning,
                 color = MaterialTheme.extendedColorScheme.warning,
@@ -140,7 +143,7 @@ fun NotificationPane(
           if (debugs.isNotEmpty()) {
             item {
               NotificationGroup(
-                title = "Debug",
+                title = stringResource(R.string.bg_debug),
                 issues = debugs,
                 icon = Icons.Default.Info,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -199,6 +202,10 @@ fun NotificationGroup(
       Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp)) {
         for (issue in issues) {
           val density = androidx.compose.ui.platform.LocalDensity.current.density
+          val message = issue.displayMessage.asString()
+          LaunchedEffect(issue) {
+            Log.d("NotificationPane", message)
+          }
           Surface(
             modifier =
               Modifier.fillMaxWidth().padding(vertical = 4.dp).let {
@@ -212,7 +219,7 @@ fun NotificationGroup(
             shape = RoundedCornerShape(4.dp),
           ) {
             Text(
-              text = issue.message,
+              text = message,
               modifier = Modifier.padding(8.dp),
               style = MaterialTheme.typography.bodySmall,
               color = color,

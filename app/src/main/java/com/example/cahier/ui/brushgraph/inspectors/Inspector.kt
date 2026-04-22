@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.*
+import com.example.cahier.ui.brushgraph.ui.asString
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +39,9 @@ import com.example.cahier.ui.brushgraph.ui.NodeFields
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
+import com.example.cahier.ui.brushgraph.model.DisplayText
 
 /** Shows connection details between two nodes and allows deletion. */
 @Composable
@@ -45,7 +49,7 @@ fun EdgeInspector(
   edge: GraphEdge,
   fromNode: GraphNode,
   toNode: GraphNode,
-  inputLabel: String? = null,
+  inputLabel: DisplayText? = null,
   onNodeFocus: (String) -> Unit,
   onDisableChange: (Boolean) -> Unit,
   onDelete: () -> Unit,
@@ -57,8 +61,8 @@ fun EdgeInspector(
   if (showDeleteConfirmation) {
     AlertDialog(
       onDismissRequest = { showDeleteConfirmation = false },
-      title = { Text("Delete Edge") },
-      text = { Text("Are you sure you want to delete this edge?") },
+      title = { Text(stringResource(R.string.bg_delete_edge)) },
+      text = { Text(stringResource(R.string.bg_delete_edge_confirmation)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -66,25 +70,25 @@ fun EdgeInspector(
             showDeleteConfirmation = false
           }
         ) {
-          Text("Delete", color = MaterialTheme.colorScheme.error)
+          Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
         }
       },
       dismissButton = {
-        TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
+        TextButton(onClick = { showDeleteConfirmation = false }) { Text(stringResource(R.string.bg_cancel)) }
       },
     )
   }
 
   Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
     // From Node Section
-    EdgeNodeInfo(label = "From", node = fromNode, onClick = { onNodeFocus(fromNode.id) })
+    EdgeNodeInfo(label = DisplayText.Resource(R.string.bg_label_from), node = fromNode, onClick = { onNodeFocus(fromNode.id) })
     if (fromNode.data is NodeData.Behavior && toNode.data is NodeData.Behavior) {
       Spacer(Modifier.height(8.dp))
       Button(
         onClick = { onAddNodeBetween() },
         modifier = Modifier.align(Alignment.CenterHorizontally)
       ) {
-        Text("Add Node Between")
+        Text(stringResource(R.string.bg_add_node_between))
       }
       Spacer(Modifier.height(8.dp))
     } else {
@@ -93,7 +97,7 @@ fun EdgeInspector(
 
     // To Node Section
     EdgeNodeInfo(
-      label = "To",
+      label = DisplayText.Resource(R.string.bg_label_to),
       node = toNode,
       inputLabel = inputLabel,
       onClick = { onNodeFocus(toNode.id) },
@@ -112,7 +116,7 @@ fun EdgeInspector(
         }
       )
       Spacer(Modifier.width(8.dp))
-      Text("Disable edge")
+      Text(stringResource(R.string.bg_disable_edge))
     }
     Spacer(Modifier.height(8.dp))
 
@@ -125,16 +129,16 @@ fun EdgeInspector(
           contentColor = MaterialTheme.colorScheme.onError,
         ),
     ) {
-      Text("Delete")
+      Text(stringResource(R.string.delete))
     }
   }
 }
 
 @Composable
 private fun EdgeNodeInfo(
-  label: String,
+  label: DisplayText,
   node: GraphNode,
-  inputLabel: String? = null,
+  inputLabel: DisplayText? = null,
   onClick: () -> Unit,
 ) {
   val title = node.data.title()
@@ -142,21 +146,23 @@ private fun EdgeNodeInfo(
 
   Column(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(8.dp)) {
     Text(
-      text = label,
+      text = label.asString(),
       style = MaterialTheme.typography.labelMedium,
       color = MaterialTheme.colorScheme.primary,
     )
-    Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text(text = stringResource(title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     for (subtitle in subtitles) {
+      val text = subtitle.asString()
       Text(
-        text = subtitle,
+        text = text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
     if (inputLabel != null) {
+      val labelText = inputLabel.asString()
       Text(
-        text = "Input: $inputLabel",
+        text = stringResource(R.string.bg_label_input_with_value, labelText),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -185,8 +191,8 @@ fun NodeInspector(
   if (showDeleteConfirmation) {
     AlertDialog(
       onDismissRequest = { showDeleteConfirmation = false },
-      title = { Text("Delete Node") },
-      text = { Text("Are you sure you want to delete this node and all its connections?") },
+      title = { Text(stringResource(R.string.bg_delete_node)) },
+      text = { Text(stringResource(R.string.bg_delete_node_confirmation)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -194,11 +200,11 @@ fun NodeInspector(
             showDeleteConfirmation = false
           }
         ) {
-          Text("Delete", color = MaterialTheme.colorScheme.error)
+          Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
         }
       },
       dismissButton = {
-        TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
+        TextButton(onClick = { showDeleteConfirmation = false }) { Text(stringResource(R.string.bg_cancel)) }
       },
     )
   }
@@ -232,7 +238,7 @@ fun NodeInspector(
           }
         )
         Spacer(Modifier.width(8.dp))
-        Text("Disable node")
+        Text(stringResource(R.string.bg_disable_node))
       }
       Spacer(Modifier.height(8.dp))
 
@@ -245,7 +251,7 @@ fun NodeInspector(
             contentColor = MaterialTheme.colorScheme.onError,
           ),
       ) {
-        Text("Delete")
+        Text(stringResource(R.string.delete))
       }
     }
   }
@@ -303,11 +309,11 @@ fun AdaptiveInspectorPane(
             ) {
               val selectionName =
                 if (selectedNode != null) {
-                  selectedNode.data.title()
+                  stringResource(selectedNode.data.title())
                 } else {
-                  "Edge"
+                  stringResource(R.string.bg_label_edge)
                 }
-              val titleText = "Inspector: ${selectionName}"
+              val titleText = stringResource(R.string.bg_title_inspector_with_name, selectionName)
               Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
@@ -320,12 +326,12 @@ fun AdaptiveInspectorPane(
                 if (selectedNode != null) {
                   var showNodeTooltip by remember { mutableStateOf(false) }
                   IconButton(onClick = { showNodeTooltip = true }) {
-                    Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                    Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_content_description_help))
                   }
                   if (showNodeTooltip) {
                     TooltipDialog(
-                      title = selectedNode.data.title(),
-                      text = selectedNode.data.getTooltip(),
+                      title = stringResource(selectedNode.data.title()),
+                      text = stringResource(selectedNode.data.getTooltip()),
                       onDismiss = { showNodeTooltip = false }
                     )
                   }
@@ -337,7 +343,7 @@ fun AdaptiveInspectorPane(
                   viewModel.clearSelectedEdge()
                 }
               ) {
-                Icon(Icons.Default.Close, contentDescription = "Close Inspector")
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.bg_content_description_close_inspector))
               }
             }
           }

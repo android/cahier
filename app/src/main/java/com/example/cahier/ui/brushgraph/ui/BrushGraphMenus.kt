@@ -38,6 +38,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
@@ -89,28 +91,28 @@ fun MoreOptionsMenu(
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         DropdownMenuItem(
-            text = { Text("Select") },
+            text = { Text(stringResource(R.string.bg_select)) },
             onClick = onSelectMode
         )
         DropdownMenuItem(
-            text = { Text(if (isTutorialSandboxMode) "Exit Tutorial" else "Tutorial") },
+            text = { Text(if (isTutorialSandboxMode) stringResource(R.string.bg_menu_exit_tutorial) else stringResource(R.string.bg_menu_tutorial)) },
             onClick = onTutorialAction
         )
         DropdownMenuItem(
-            text = { Text("Export") },
+            text = { Text(stringResource(R.string.bg_export)) },
             onClick = onExport
         )
         DropdownMenuItem(
-            text = { Text("Import") },
+            text = { Text(stringResource(R.string.bg_import)) },
             onClick = onImport
         )
         DropdownMenuItem(
-            text = { Text("Organize") },
+            text = { Text(stringResource(R.string.bg_organize)) },
             onClick = onOrganize
         )
         Box {
             DropdownMenuItem(
-                text = { Text("Templates") },
+                text = { Text(stringResource(R.string.bg_templates)) },
                 onClick = { onShowTemplatesMenuChange(true) },
                 trailingIcon = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
             )
@@ -120,28 +122,28 @@ fun MoreOptionsMenu(
                 offset = DpOffset(x = 127.dp, y = (-56).dp)
             ) {
                 DropdownMenuItem(
-                    text = { Text("Pressure Pen") },
+                    text = { Text(stringResource(R.string.bg_pressure_pen)) },
                     onClick = {
                         onTemplateSelect(StockBrushes.pressurePen())
                         onShowTemplatesMenuChange(false)
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Marker") },
+                    text = { Text(stringResource(R.string.marker)) },
                     onClick = {
                         onTemplateSelect(StockBrushes.marker())
                         onShowTemplatesMenuChange(false)
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Highlighter") },
+                    text = { Text(stringResource(R.string.highlighter)) },
                     onClick = {
                         onTemplateSelect(StockBrushes.highlighter())
                         onShowTemplatesMenuChange(false)
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Dashed Line") },
+                    text = { Text(stringResource(R.string.dashed_line)) },
                     onClick = {
                         onTemplateSelect(StockBrushes.dashedLine())
                         onShowTemplatesMenuChange(false)
@@ -151,7 +153,7 @@ fun MoreOptionsMenu(
                 if (customBrushes.isNotEmpty()) {
                     HorizontalDivider()
                     Text(
-                        text = "Custom Brushes",
+                        text = stringResource(R.string.bg_menu_custom_brushes),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary
@@ -170,11 +172,11 @@ fun MoreOptionsMenu(
         }
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
         DropdownMenuItem(
-            text = { Text("Delete Brush", color = MaterialTheme.colorScheme.error) },
+            text = { Text(stringResource(R.string.bg_delete_brush), color = MaterialTheme.colorScheme.error) },
             onClick = onDeleteBrush
         )
         DropdownMenuItem(
-            text = { Text("Options") },
+            text = { Text(stringResource(R.string.bg_options)) },
             onClick = onOptions
         )
     }
@@ -191,7 +193,7 @@ fun PaletteMenu(
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         if (savedBrushes.isEmpty()) {
             DropdownMenuItem(
-                text = { Text("No saved brushes yet") },
+                text = { Text(stringResource(R.string.bg_no_saved_brushes)) },
                 onClick = onDismiss,
             )
         } else {
@@ -205,7 +207,7 @@ fun PaletteMenu(
                         ) {
                             Text(entity.name, modifier = Modifier.weight(1f))
                             IconButton(onClick = { onBrushDelete(entity) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.bg_cd_delete))
                             }
                         }
                     },
@@ -301,7 +303,7 @@ fun CreateNodeFAB(
         ) {
           Column(modifier = Modifier.padding(vertical = 8.dp)) {
             DropdownMenuItem(
-              text = { Text("Coat") },
+              text = { Text(stringResource(R.string.bg_coat)) },
               leadingIcon = { Icon(Icons.Default.Layers, contentDescription = null) },
               onClick = {
                 viewModel.addCoatNode(centerInCanvas)
@@ -309,7 +311,7 @@ fun CreateNodeFAB(
               },
             )
             DropdownMenuItem(
-              text = { Text("Paint") },
+              text = { Text(stringResource(R.string.bg_paint)) },
               leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null) },
               onClick = {
                 viewModel.addPaintNode(centerInCanvas)
@@ -317,7 +319,7 @@ fun CreateNodeFAB(
               },
             )
             DropdownMenuItem(
-              text = { Text("Tip") },
+              text = { Text(stringResource(R.string.bg_tip)) },
               leadingIcon = { Icon(Icons.Default.ShapeLine, contentDescription = null) },
               onClick = {
                 viewModel.addTipNode(centerInCanvas)
@@ -325,7 +327,7 @@ fun CreateNodeFAB(
               },
             )
             DropdownMenuItem(
-              text = { Text("Behavior") },
+              text = { Text(stringResource(R.string.bg_behavior)) },
               leadingIcon = { Icon(Icons.Default.Psychology, contentDescription = null) },
               onClick = {
                 viewModel.addBehaviorNode(centerInCanvas)
@@ -333,7 +335,7 @@ fun CreateNodeFAB(
               },
             )
             DropdownMenuItem(
-              text = { Text("Color Function") },
+              text = { Text(stringResource(R.string.bg_color_function)) },
               leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null) },
               onClick = {
                 viewModel.addColorFunctionNode(centerInCanvas)
@@ -341,7 +343,7 @@ fun CreateNodeFAB(
               },
             )
             DropdownMenuItem(
-              text = { Text("Texture Layer") },
+              text = { Text(stringResource(R.string.bg_texture_layer)) },
               leadingIcon = { Icon(Icons.Default.Layers, contentDescription = null) },
               onClick = {
                 viewModel.addTextureLayerNode(centerInCanvas)
@@ -360,7 +362,7 @@ fun CreateNodeFAB(
       ) {
         Icon(
           if (expanded) Icons.Default.Close else Icons.Default.Add,
-          contentDescription = "Create Node",
+          contentDescription = stringResource(R.string.bg_cd_create_node),
         )
       }
     }
@@ -456,7 +458,7 @@ fun FloatingActionMenu(
         onClick = onClose,
         colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent),
       ) {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Exit")
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.bg_cd_exit))
       }
 
       VerticalDivider(
@@ -467,7 +469,7 @@ fun FloatingActionMenu(
 
       Box {
         IconButton(onClick = { showMoreMenu = true }) {
-          Icon(Icons.Default.MoreVert, contentDescription = "More options")
+          Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.bg_cd_more_options))
         }
 
         MoreOptionsMenu(
@@ -525,7 +527,7 @@ fun FloatingActionMenu(
 
       Box {
         TextButton(onClick = { showPaletteMenu = true }) {
-          Text("My Palette")
+          Text(stringResource(R.string.bg_my_palette))
         }
 
         PaletteMenu(
@@ -549,7 +551,7 @@ fun FloatingActionMenu(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.height(40.dp),
       ) {
-        Text("Save to Palette")
+        Text(stringResource(R.string.bg_save_to_palette))
       }
     }
   }

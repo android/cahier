@@ -5,6 +5,7 @@ package com.example.cahier.ui.brushgraph.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import com.example.cahier.ui.brushgraph.model.displayStringRId
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +32,8 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -262,7 +265,7 @@ fun ResponseCurveWidget(
               onResponseNodeChanged(builder.build())
             }
           },
-          text = { Text(caseToDisplayString(case)) }
+          text = { Text(stringResource(case.displayStringRId())) }
         )
       }
     }
@@ -288,7 +291,7 @@ fun ResponseCurveWidget(
           LinearWidget(responseNode.linearResponseCurve) {
             onResponseNodeChanged(responseNode.toBuilder().setLinearResponseCurve(it).build())
           }
-        else -> Text("Unknown curve type", modifier = Modifier.padding(16.dp))
+        else -> Text(stringResource(R.string.bg_unknown_curve_type), modifier = Modifier.padding(16.dp))
       }
     }
   }
@@ -301,7 +304,7 @@ fun LinearWidget(
 ) {
   Column(modifier = Modifier.padding(8.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-      Text(text = "Points", style = MaterialTheme.typography.titleSmall)
+      Text(text = stringResource(R.string.bg_points), style = MaterialTheme.typography.titleSmall)
       IconButton(
         onClick = {
           val builder = curve.toBuilder()
@@ -311,7 +314,7 @@ fun LinearWidget(
           onCurveChanged(builder.build())
         }
       ) {
-        Icon(Icons.Default.Add, contentDescription = "Add Point")
+        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.bg_cd_add_point))
       }
     }
 
@@ -358,7 +361,7 @@ fun LinearWidget(
             )
           }
         ) {
-          Icon(Icons.Default.Remove, contentDescription = "Remove Point")
+          Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.bg_cd_remove_point))
         }
       }
     }
@@ -379,7 +382,7 @@ fun CubicBezierWidget(curve: ProtoCubicBezier, onCurveChanged: (ProtoCubicBezier
 fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
   Column(modifier = Modifier.padding(8.dp)) {
     BrushSliderControl(
-      label = "Step Count",
+      label = stringResource(R.string.bg_label_step_count),
       value = curve.stepCount.toFloat(),
       valueRange = 1f..20f,
       onValueChange = {
@@ -389,10 +392,10 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
       OutlinedTextField(
-        value = curve.stepPosition.displayString(),
+        value = stringResource(curve.stepPosition.displayStringRId()),
         onValueChange = {},
         readOnly = true,
-        label = { Text("Step Position") },
+        label = { Text(stringResource(R.string.bg_step_position)) },
         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
         modifier = Modifier.menuAnchor().fillMaxWidth()
       )
@@ -403,7 +406,7 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
               position.ordinal >= 0
           ) {
             DropdownMenuItem(
-              text = { Text(position.displayString()) },
+              text = { Text(stringResource(position.displayStringRId())) },
               onClick = {
                 onCurveChanged(curve.safeCopy(stepPosition = position))
                 expanded = false
@@ -428,10 +431,10 @@ fun PredefinedFunctionWidget(
     modifier = Modifier.padding(8.dp)
   ) {
     OutlinedTextField(
-      value = current.name.lowercase().replace("predefined_easing_", "").replace("_", " "),
+      value = stringResource(current.displayStringRId()),
       onValueChange = {},
       readOnly = true,
-      label = { Text("Predefined Function") },
+      label = { Text(stringResource(R.string.bg_predefined_function)) },
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
       modifier = Modifier.menuAnchor().fillMaxWidth()
     )
@@ -443,7 +446,7 @@ fun PredefinedFunctionWidget(
         ) {
           DropdownMenuItem(
             text = {
-              Text(func.name.lowercase().replace("predefined_easing_", "").replace("_", " "))
+              Text(stringResource(func.displayStringRId()))
             },
             onClick = {
               onChanged(func)
@@ -455,12 +458,3 @@ fun PredefinedFunctionWidget(
     }
   }
 }
-
-private fun caseToDisplayString(case: ProtoBrushBehavior.ResponseNode.ResponseCurveCase): String =
-  when (case) {
-    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE -> "Predefined"
-    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE -> "Cubic Bezier"
-    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.STEPS_RESPONSE_CURVE -> "Steps"
-    ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE -> "Linear"
-    else -> "None"
-  }

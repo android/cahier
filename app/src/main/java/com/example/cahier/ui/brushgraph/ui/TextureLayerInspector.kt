@@ -22,6 +22,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.example.cahier.ui.brushdesigner.BrushSliderControl
 import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.displayStringRId
 import com.example.cahier.ui.brushgraph.model.safeCopy
 import ink.proto.BrushPaint as ProtoBrushPaint
 
@@ -53,10 +56,10 @@ fun TextureLayerInspector(
           onExpandedChange = { expanded = it }
         ) {
           OutlinedTextField(
-            value = prettyDisplayString(layer.clientTextureId),
+            value = layer.clientTextureId,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Texture ID") },
+            label = { Text(stringResource(R.string.bg_texture_id)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier.menuAnchor().fillMaxWidth()
           )
@@ -66,7 +69,7 @@ fun TextureLayerInspector(
           ) {
             allTextureIds.forEach { id ->
               DropdownMenuItem(
-                text = { Text(prettyDisplayString(id)) },
+                text = { Text(id) },
                 onClick = {
                   onUpdate(NodeData.TextureLayer(layer.safeCopy(clientTextureId = id)))
                   expanded = false
@@ -77,13 +80,13 @@ fun TextureLayerInspector(
         }
       }
       IconButton(onClick = onLoadTexture, enabled = true) {
-        Icon(Icons.Default.Upload, contentDescription = "Upload Texture")
+        Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.bg_cd_upload_texture))
       }
     }
 
     TextureLayerPreviewWidget(textureLayer = layer, renderer = strokeRenderer)
 
-    InspectorSectionHeader("Mapping", "How is my texture imported?")
+    InspectorSectionHeader(stringResource(R.string.bg_section_mapping), stringResource(R.string.bg_section_mapping_sub))
 
     var expandedMapping by remember { mutableStateOf(false) }
     var showMappingTooltip by remember { mutableStateOf(false) }
@@ -97,10 +100,10 @@ fun TextureLayerInspector(
         modifier = Modifier.weight(1f)
       ) {
         OutlinedTextField(
-          value = prettyDisplayString(layer.mapping),
+          value = stringResource(layer.mapping.displayStringRId()),
           onValueChange = {},
           readOnly = true,
-          label = { Text("Mapping Mode") },
+          label = { Text(stringResource(R.string.bg_mapping_mode)) },
           trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMapping) },
           modifier = Modifier.menuAnchor().fillMaxWidth()
         )
@@ -113,7 +116,7 @@ fun TextureLayerInspector(
             ProtoBrushPaint.TextureLayer.Mapping.MAPPING_STAMPING,
           ).forEach { mapping ->
             DropdownMenuItem(
-              text = { Text(prettyDisplayString(mapping)) },
+              text = { Text(stringResource(mapping.displayStringRId())) },
               onClick = {
                 onUpdate(NodeData.TextureLayer(layer.safeCopy(mapping = mapping)))
                 expandedMapping = false
@@ -123,26 +126,26 @@ fun TextureLayerInspector(
         }
       }
       IconButton(onClick = { showMappingTooltip = true }) {
-        Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+        Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
       }
     }
     if (showMappingTooltip) {
       TooltipDialog(
-        title = "Mapping Mode: ${prettyDisplayString(layer.mapping)}",
-        text = layer.mapping.getTooltip(),
+        title = stringResource(R.string.bg_label_mapping_mode_with_value, stringResource(layer.mapping.displayStringRId())),
+        text = stringResource(layer.mapping.getTooltip()),
         onDismiss = { showMappingTooltip = false }
       )
     }
 
     if (layer.mapping == ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING) {
       BrushSliderControl(
-        label = "Size X",
+        label = stringResource(R.string.bg_label_size_x),
         value = layer.sizeX,
         valueRange = 0.1f..1000f,
         onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeX = it))) }
       )
       BrushSliderControl(
-        label = "Size Y",
+        label = stringResource(R.string.bg_label_size_y),
         value = layer.sizeY,
         valueRange = 0.1f..1000f,
         onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeY = it))) }
@@ -159,10 +162,10 @@ fun TextureLayerInspector(
           modifier = Modifier.weight(1f)
         ) {
           OutlinedTextField(
-            value = prettyDisplayString(layer.sizeUnit),
+            value = stringResource(layer.sizeUnit.displayStringRId()),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Size Unit") },
+            label = { Text(stringResource(R.string.bg_size_unit)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedUnit) },
             modifier = Modifier.menuAnchor().fillMaxWidth()
           )
@@ -175,7 +178,7 @@ fun TextureLayerInspector(
               ProtoBrushPaint.TextureLayer.SizeUnit.SIZE_UNIT_STROKE_COORDINATES,
             ).forEach { unit ->
               DropdownMenuItem(
-                text = { Text(prettyDisplayString(unit)) },
+                text = { Text(stringResource(unit.displayStringRId())) },
                 onClick = {
                   onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeUnit = unit)))
                   expandedUnit = false
@@ -185,45 +188,45 @@ fun TextureLayerInspector(
           }
         }
         IconButton(onClick = { showUnitTooltip = true }) {
-          Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+          Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
         }
       }
       if (showUnitTooltip) {
         TooltipDialog(
-          title = "Size Unit: ${prettyDisplayString(layer.sizeUnit)}",
-          text = layer.sizeUnit.getTooltip(),
+          title = stringResource(R.string.bg_label_size_unit_with_value, stringResource(layer.sizeUnit.displayStringRId())),
+          text = stringResource(layer.sizeUnit.getTooltip()),
           onDismiss = { showUnitTooltip = false }
         )
       }
     } else {
       // Stamping mapping
       BrushSliderControl(
-        label = "Animation Rows",
+        label = stringResource(R.string.bg_label_animation_rows),
         value = layer.animationRows.toFloat(),
         valueRange = 1f..100f,
         onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationRows = it.toInt()))) }
       )
       BrushSliderControl(
-        label = "Animation Columns",
+        label = stringResource(R.string.bg_label_animation_columns),
         value = layer.animationColumns.toFloat(),
         valueRange = 1f..100f,
         onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationColumns = it.toInt()))) }
       )
       BrushSliderControl(
-        label = "Animation Frames",
+        label = stringResource(R.string.bg_label_animation_frames),
         value = layer.animationFrames.toFloat(),
         valueRange = 1f..100f,
         onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationFrames = it.toInt()))) }
       )
       BrushSliderControl(
-        label = "Animation Duration (ms)",
+        label = stringResource(R.string.bg_label_animation_duration_ms),
         value = layer.animationDurationSeconds * 1000f,
         valueRange = 1f..10000f,
         onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationDurationSeconds = it / 1000f))) }
       )
     }
 
-    InspectorSectionHeader("Positioning", "How is my texture drawn relative to the stroke?")
+    InspectorSectionHeader(stringResource(R.string.bg_section_positioning), stringResource(R.string.bg_section_positioning_sub))
 
     var expandedOrigin by remember { mutableStateOf(false) }
     var showOriginTooltip by remember { mutableStateOf(false) }
@@ -237,10 +240,10 @@ fun TextureLayerInspector(
         modifier = Modifier.weight(1f)
       ) {
         OutlinedTextField(
-          value = prettyDisplayString(layer.origin),
+          value = stringResource(layer.origin.displayStringRId()),
           onValueChange = {},
           readOnly = true,
-          label = { Text("Origin") },
+          label = { Text(stringResource(R.string.bg_origin)) },
           trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOrigin) },
           modifier = Modifier.menuAnchor().fillMaxWidth()
         )
@@ -254,7 +257,7 @@ fun TextureLayerInspector(
             ProtoBrushPaint.TextureLayer.Origin.ORIGIN_LAST_STROKE_INPUT,
           ).forEach { origin ->
             DropdownMenuItem(
-              text = { Text(prettyDisplayString(origin)) },
+              text = { Text(stringResource(origin.displayStringRId())) },
               onClick = {
                 onUpdate(NodeData.TextureLayer(layer.safeCopy(origin = origin)))
                 expandedOrigin = false
@@ -264,36 +267,36 @@ fun TextureLayerInspector(
         }
       }
       IconButton(onClick = { showOriginTooltip = true }) {
-        Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+        Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
       }
     }
     if (showOriginTooltip) {
       TooltipDialog(
-        title = "Origin: ${prettyDisplayString(layer.origin)}",
-        text = layer.origin.getTooltip(),
+        title = stringResource(R.string.bg_label_origin_with_value, stringResource(layer.origin.displayStringRId())),
+        text = stringResource(layer.origin.getTooltip()),
         onDismiss = { showOriginTooltip = false }
       )
     }
     BrushSliderControl(
-      label = "Offset X",
+      label = stringResource(R.string.bg_label_offset_x),
       value = layer.offsetX,
       valueRange = -1f..1f,
       onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetX = it))) }
     )
     BrushSliderControl(
-      label = "Offset Y",
+      label = stringResource(R.string.bg_label_offset_y),
       value = layer.offsetY,
       valueRange = -1f..1f,
       onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetY = it))) }
     )
     BrushSliderControl(
-      label = "Rotation Degrees",
+      label = stringResource(R.string.bg_label_rotation_degrees),
       value = Math.toDegrees(layer.rotationInRadians.toDouble()).toFloat(),
       valueRange = 0f..360f,
       onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(rotationInRadians = Math.toRadians(it.toDouble()).toFloat()))) }
     )
 
-    InspectorSectionHeader("Wrapping", "What happens when the stroke draws further than the bounds of my texture?")
+    InspectorSectionHeader(stringResource(R.string.bg_section_wrapping), stringResource(R.string.bg_section_wrapping_sub))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
       Column(modifier = Modifier.weight(1f)) {
@@ -309,10 +312,10 @@ fun TextureLayerInspector(
             modifier = Modifier.weight(1f)
           ) {
             OutlinedTextField(
-              value = prettyDisplayString(layer.wrapX),
+              value = stringResource(layer.wrapX.displayStringRId()),
               onValueChange = {},
               readOnly = true,
-              label = { Text("Wrap X") },
+              label = { Text(stringResource(R.string.bg_wrap_x)) },
               trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedWrapX) },
               modifier = Modifier.menuAnchor().fillMaxWidth()
             )
@@ -326,7 +329,7 @@ fun TextureLayerInspector(
                 ProtoBrushPaint.TextureLayer.Wrap.WRAP_CLAMP,
               ).forEach { wrap ->
                 DropdownMenuItem(
-                  text = { Text(prettyDisplayString(wrap)) },
+                  text = { Text(stringResource(wrap.displayStringRId())) },
                   onClick = {
                     onUpdate(NodeData.TextureLayer(layer.safeCopy(wrapX = wrap)))
                     expandedWrapX = false
@@ -336,13 +339,13 @@ fun TextureLayerInspector(
             }
           }
           IconButton(onClick = { showWrapXTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
           }
         }
         if (showWrapXTooltip) {
           TooltipDialog(
-            title = "Wrap X: ${prettyDisplayString(layer.wrapX)}",
-            text = layer.wrapX.getTooltip(),
+            title = stringResource(R.string.bg_label_wrap_x_with_value, stringResource(layer.wrapX.displayStringRId())),
+            text = stringResource(layer.wrapX.getTooltip()),
             onDismiss = { showWrapXTooltip = false }
           )
         }
@@ -358,10 +361,10 @@ fun TextureLayerInspector(
             modifier = Modifier.weight(1f)
           ) {
             OutlinedTextField(
-              value = prettyDisplayString(layer.wrapY),
+              value = stringResource(layer.wrapY.displayStringRId()),
               onValueChange = {},
               readOnly = true,
-              label = { Text("Wrap Y") },
+              label = { Text(stringResource(R.string.bg_wrap_y)) },
               trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedWrapY) },
               modifier = Modifier.menuAnchor().fillMaxWidth()
             )
@@ -375,7 +378,7 @@ fun TextureLayerInspector(
                 ProtoBrushPaint.TextureLayer.Wrap.WRAP_CLAMP,
               ).forEach { wrap ->
                 DropdownMenuItem(
-                  text = { Text(prettyDisplayString(wrap)) },
+                  text = { Text(stringResource(wrap.displayStringRId())) },
                   onClick = {
                     onUpdate(NodeData.TextureLayer(layer.safeCopy(wrapY = wrap)))
                     expandedWrapY = false
@@ -385,13 +388,13 @@ fun TextureLayerInspector(
             }
           }
           IconButton(onClick = { showWrapYTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
           }
         }
         if (showWrapYTooltip) {
           TooltipDialog(
-            title = "Wrap Y: ${prettyDisplayString(layer.wrapY)}",
-            text = layer.wrapY.getTooltip(),
+            title = stringResource(R.string.bg_label_wrap_y_with_value, stringResource(layer.wrapY.displayStringRId())),
+            text = stringResource(layer.wrapY.getTooltip()),
             onDismiss = { showWrapYTooltip = false }
           )
         }
@@ -406,7 +409,7 @@ fun TextureLayerInspector(
       }
     }
 
-    InspectorSectionHeader("Blending", "How does my texture combine with the regular ink of the stroke?")
+    InspectorSectionHeader(stringResource(R.string.bg_section_blending), stringResource(R.string.bg_section_blending_sub))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
       Box(modifier = Modifier.weight(1f)) {
@@ -422,10 +425,10 @@ fun TextureLayerInspector(
             modifier = Modifier.weight(1f)
           ) {
             OutlinedTextField(
-              value = prettyDisplayString(layer.blendMode),
+              value = stringResource(layer.blendMode.displayStringRId()),
               onValueChange = {},
               readOnly = true,
-              label = { Text("Blend Mode") },
+              label = { Text(stringResource(R.string.bg_blend_mode)) },
               trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBlend) },
               modifier = Modifier.menuAnchor().fillMaxWidth()
             )
@@ -448,7 +451,7 @@ fun TextureLayerInspector(
                 ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_XOR,
               ).forEach { mode ->
                 DropdownMenuItem(
-                  text = { Text(prettyDisplayString(mode)) },
+                  text = { Text(stringResource(mode.displayStringRId())) },
                   onClick = {
                     onUpdate(NodeData.TextureLayer(layer.safeCopy(blendMode = mode)))
                     expandedBlend = false
@@ -458,13 +461,13 @@ fun TextureLayerInspector(
             }
           }
           IconButton(onClick = { showBlendTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
           }
         }
         if (showBlendTooltip) {
           TooltipDialog(
-            title = "Blend Mode: ${prettyDisplayString(layer.blendMode)}",
-            text = layer.blendMode.getTooltip(),
+            title = stringResource(R.string.bg_label_blend_mode_with_value, stringResource(layer.blendMode.displayStringRId())),
+            text = stringResource(layer.blendMode.getTooltip()),
             onDismiss = { showBlendTooltip = false }
           )
         }

@@ -13,6 +13,7 @@ import ink.proto.BrushBehavior
 import ink.proto.BrushTip
 import ink.proto.BrushPaint
 import ink.proto.BrushFamily
+import com.example.cahier.R
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -313,7 +314,7 @@ class BrushFamilyConverterTest {
         println("Test 4 issues: $issues")
         
         // Should NOT fail because BinaryOp now passes through ALL inputs!
-        org.junit.Assert.assertFalse(issues.any { it.message.contains("Missing source for pass-through connection") })
+        org.junit.Assert.assertFalse(issues.any { it.message?.contains("Missing source for pass-through connection") == true })
     }
 
     @Test
@@ -379,9 +380,9 @@ class BrushFamilyConverterTest {
         val issues = GraphValidator.validateAll(graph)
         
         // Tip output should be reported as not used because Coat is disabled.
-        assertTrue(issues.any { it.nodeId == "tip" && it.message.contains("output is not used") })
+        assertTrue(issues.any { it.nodeId == "tip" && it.displayMessage is com.example.cahier.ui.brushgraph.model.DisplayText.Resource && (it.displayMessage as com.example.cahier.ui.brushgraph.model.DisplayText.Resource).resId == R.string.bg_err_unused_output })
         // Paint output should be reported as not used because Coat is disabled.
-        assertTrue(issues.any { it.nodeId == "paint" && it.message.contains("output is not used") })
+        assertTrue(issues.any { it.nodeId == "paint" && it.displayMessage is com.example.cahier.ui.brushgraph.model.DisplayText.Resource && (it.displayMessage as com.example.cahier.ui.brushgraph.model.DisplayText.Resource).resId == R.string.bg_err_unused_output })
     }
 
     @Test

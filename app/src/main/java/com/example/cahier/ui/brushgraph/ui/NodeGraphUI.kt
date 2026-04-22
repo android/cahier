@@ -40,6 +40,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +78,7 @@ import com.example.cahier.ui.brushgraph.ui.TipPreviewWidget
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
+import com.example.cahier.ui.brushgraph.model.DisplayText
 import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
 import com.example.cahier.ui.brushgraph.model.NODE_PADDING_BOTTOM
@@ -83,6 +86,8 @@ import com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL
 import com.example.cahier.ui.brushgraph.model.NODE_WIDTH
 import com.example.cahier.ui.brushgraph.model.PREVIEW_AREA_HEIGHT
 import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.NodeData.Coat
+import com.example.cahier.ui.brushgraph.model.NodeData.Family
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 
@@ -397,7 +402,7 @@ fun NodeGraphCanvas(
           Box(modifier = Modifier.size(64.dp), contentAlignment = Alignment.Center) {
             Icon(
               Icons.Default.Delete,
-              contentDescription = "Delete",
+              contentDescription = stringResource(R.string.bg_cd_delete),
               tint = MaterialTheme.colorScheme.onErrorContainer,
             )
           }
@@ -409,8 +414,8 @@ fun NodeGraphCanvas(
         if (showDeleteConfirmation) {
           androidx.compose.material3.AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Nodes") },
-            text = { Text("Are you sure you want to delete the selected nodes and all their connections?") },
+            title = { Text(stringResource(R.string.bg_delete_nodes)) },
+            text = { Text(stringResource(R.string.bg_delete_nodes_confirmation)) },
             confirmButton = {
               androidx.compose.material3.TextButton(
                 onClick = {
@@ -418,11 +423,11 @@ fun NodeGraphCanvas(
                   showDeleteConfirmation = false
                 }
               ) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
               }
             },
             dismissButton = {
-              androidx.compose.material3.TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
+              androidx.compose.material3.TextButton(onClick = { showDeleteConfirmation = false }) { Text(stringResource(R.string.bg_cancel)) }
             },
           )
         }
@@ -442,16 +447,16 @@ fun NodeGraphCanvas(
             verticalAlignment = Alignment.CenterVertically
           ) {
             androidx.compose.material3.Button(onClick = onSelectAll) {
-              Text("Select All")
+              Text(stringResource(R.string.bg_select_all))
             }
             androidx.compose.material3.Button(onClick = onDuplicateSelected) {
-              Text("Duplicate")
+              Text(stringResource(R.string.bg_duplicate))
             }
             androidx.compose.material3.Button(onClick = { showDeleteConfirmation = true }) {
-              Text("Delete")
+              Text(stringResource(R.string.delete))
             }
             androidx.compose.material3.Button(onClick = onDoneSelection) {
-              Text("Done")
+              Text(stringResource(R.string.done))
             }
           }
         }
@@ -640,15 +645,16 @@ fun NodeWidget(
             ) {
               Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
                 Text(
-                  text = node.data.title(),
+                  text = stringResource(node.data.title()),
                   style = MaterialTheme.typography.titleSmall,
                   fontWeight = FontWeight.Bold,
                   maxLines = 1,
                   overflow = TextOverflow.Ellipsis,
                 )
                 for (subtitle in node.data.subtitles()) {
+                  val subtitleText = subtitle.asString()
                   Text(
-                    text = subtitle,
+                    text = subtitleText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -716,14 +722,14 @@ fun NodeWidget(
                       if (isPortEmpty) {
                         Icon(
                           imageVector = Icons.Default.Add,
-                          contentDescription = "Add",
+                          contentDescription = stringResource(R.string.bg_cd_add),
                           tint = MaterialTheme.colorScheme.primary,
                           modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                       }
                       Text(
-                        text = port.label ?: "",
+                        text = port.label?.asString() ?: "",
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isPortEmpty) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -744,7 +750,7 @@ fun NodeWidget(
                       .padding(horizontal = 4.dp)
                 ) {
                   Text(
-                    text = "Out",
+                    text = stringResource(R.string.bg_label_out),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.CenterEnd),
@@ -773,7 +779,7 @@ fun NodeWidget(
               canvasCoordinates = canvasCoordinates,
               portPosition = getPortPosition(port.id, true) - Offset(node.position.x, node.position.y),
               isReorderable = !port.isAddPort && hasAddPort && 
-                              !(node.data is com.example.cahier.ui.brushgraph.model.NodeData.Coat && index == 0) &&
+                              !(node.data is NodeData.Coat && index == 0) &&
                               !(node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && index % 2 != 0),
               isLargeHandle = node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && index % 2 == 0,
               onReorderUpdate = { deltaY ->
@@ -785,7 +791,7 @@ fun NodeWidget(
                 
                 val originalY = getPortPosition(port.id, true).y - node.position.y
                 var maxValidIndex = visiblePorts.size - 2 // Exclude add port
-                var minValidIndex = if (node.data is com.example.cahier.ui.brushgraph.model.NodeData.Coat) 1 else 0
+                var minValidIndex = if (node.data is NodeData.Coat) 1 else 0
                 
                 if (node.data is com.example.cahier.ui.brushgraph.model.NodeData.Paint) {
                     val textureEdges = graph.edges.filter { edge ->
@@ -1050,7 +1056,7 @@ fun PortDot(
       if (port.side == PortSide.INPUT && isReorderable) {
         Icon(
           imageVector = androidx.compose.material.icons.Icons.Default.DragHandle,
-          contentDescription = "Reorder",
+          contentDescription = stringResource(R.string.bg_cd_reorder),
           tint = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier =
             Modifier

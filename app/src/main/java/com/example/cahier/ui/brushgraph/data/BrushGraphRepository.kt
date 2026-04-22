@@ -18,6 +18,8 @@ import androidx.ink.storage.AndroidBrushFamilySerialization
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.DisplayText
+import com.example.cahier.R
 import com.example.cahier.ui.brushgraph.model.GraphPoint
 import com.example.cahier.ui.brushgraph.model.GraphNode
 import com.example.cahier.ui.brushgraph.model.Port
@@ -73,8 +75,8 @@ class BrushGraphRepository @Inject constructor(
   }
 
   fun postDebug(text: String) {
-    val newIssue = GraphValidationException(text, severity = ValidationSeverity.DEBUG)
-    _graphIssues.update { (it + newIssue).distinctBy { issue -> issue.message + (issue.nodeId ?: "") + issue.severity } }
+    val newIssue = GraphValidationException(displayMessage = DisplayText.Literal(text), severity = ValidationSeverity.DEBUG)
+    _graphIssues.update { (it + newIssue).distinctBy { issue -> Triple(issue.displayMessage, issue.nodeId, issue.severity) } }
   }
 
   fun validate(): Boolean {
@@ -109,9 +111,9 @@ class BrushGraphRepository @Inject constructor(
     return try {
       BrushFamilyConverter.convert(_graph.value)
     } catch (e: Exception) {
-      val internalError = GraphValidationException("Internal error during conversion: ${e.message ?: e.javaClass.simpleName}")
+      val internalError = GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_internal_conversion, listOf(e.message ?: e.javaClass.simpleName)))
       _graphIssues.update { currentIssues ->
-        (currentIssues + internalError).distinctBy { it.message + (it.nodeId ?: "") + it.severity }
+        (currentIssues + internalError).distinctBy { issue -> Triple(issue.displayMessage, issue.nodeId, issue.severity) }
       }
       null
     }
@@ -171,41 +173,37 @@ class BrushGraphRepository @Inject constructor(
           newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
           toPortId = newPortId
         }
-        is Port.Add -> {
-          when (toData) {
-            is NodeData.Family -> {
-              val newPortId = java.util.UUID.randomUUID().toString()
-              val newData = toData.copy(coatPortIds = toData.coatPortIds + newPortId)
-              newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
-              toPortId = newPortId
-            }
-            is NodeData.Coat -> {
-              val newPortId = java.util.UUID.randomUUID().toString()
-              val newData = toData.copy(paintPortIds = toData.paintPortIds + newPortId)
-              newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
-              toPortId = newPortId
-            }
-            is NodeData.Behavior -> {
-              if (toData.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
-                val newPortId1 = java.util.UUID.randomUUID().toString()
-                val newPortId2 = java.util.UUID.randomUUID().toString()
-                val newData = toData.copy(inputPortIds = toData.inputPortIds + listOf(newPortId1, newPortId2))
-                newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
-                toPortId = newPortId1
-              } else {
-                val newPortId = java.util.UUID.randomUUID().toString()
-                val newData = toData.copy(inputPortIds = toData.inputPortIds + newPortId)
-                newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
-                toPortId = newPortId
-              }
-            }
-            is NodeData.Tip -> {
-              val newPortId = java.util.UUID.randomUUID().toString()
-              val newData = toData.copy(behaviorPortIds = toData.behaviorPortIds + newPortId)
-              newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
-              toPortId = newPortId
-            }
-            else -> {}
+        is Port.AddPaint -> {
+          val newPortId = java.util.UUID.randomUUID().toString()
+          val newData = (toData as NodeData.Coat).copy(paintPortIds = toData.paintPortIds + newPortId)
+          newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
+          toPortId = newPortId
+        }
+        is Port.AddCoat -> {
+          val newPortId = java.util.UUID.randomUUID().toString()
+          val newData = (toData as NodeData.Family).copy(coatPortIds = toData.coatPortIds + newPortId)
+          newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
+          toPortId = newPortId
+        }
+        is Port.AddBehavior -> {
+          val newPortId = java.util.UUID.randomUUID().toString()
+          val newData = (toData as NodeData.Tip).copy(behaviorPortIds = toData.behaviorPortIds + newPortId)
+          newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
+          toPortId = newPortId
+        }
+        is Port.AddInput -> {
+          val data = toData as NodeData.Behavior
+          if (data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+            val newPortId1 = java.util.UUID.randomUUID().toString()
+            val newPortId2 = java.util.UUID.randomUUID().toString()
+            val newData = data.copy(inputPortIds = data.inputPortIds + listOf(newPortId1, newPortId2))
+            newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
+            toPortId = newPortId1
+          } else {
+            val newPortId = java.util.UUID.randomUUID().toString()
+            val newData = data.copy(inputPortIds = data.inputPortIds + newPortId)
+            newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
+            toPortId = newPortId
           }
         }
         else -> {}

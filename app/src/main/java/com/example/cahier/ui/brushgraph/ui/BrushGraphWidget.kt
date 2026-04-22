@@ -97,6 +97,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
 import androidx.ink.brush.StockTextureBitmapStore
 import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
@@ -121,7 +123,7 @@ import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import com.example.cahier.ui.brushgraph.model.inferNodeDataForPort
+import com.example.cahier.ui.brushgraph.model.inferNodeData
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.ui.brushgraph.model.PortSide
@@ -403,7 +405,7 @@ fun BrushGraphStudio(
           onCanvasClick = { viewModel.dismissPanes() },
           onPortClick = { nodeId, port ->
             val node = viewModel.graph.nodes.find { it.id == nodeId }
-            val nodeData = node?.inferNodeDataForPort(port)
+            val nodeData = node?.let { port.inferNodeData(it) }
             if (nodeData != null) {
               val portPos = nodeRegistry.getPortPosition(nodeId, port.id, viewModel.graph)
               val newX = node.position.x - nodeData.width() - 100f
@@ -485,7 +487,7 @@ fun BrushGraphStudio(
                 contentColor = contentColor,
               ),
           ) {
-            Icon(icon, contentDescription = "Show Notifications")
+            Icon(icon, contentDescription = stringResource(R.string.bg_cd_show_notifications))
           }
         }
 

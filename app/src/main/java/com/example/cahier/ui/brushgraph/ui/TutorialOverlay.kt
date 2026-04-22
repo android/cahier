@@ -17,6 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.example.cahier.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -40,13 +42,13 @@ fun TutorialOverlay(
     ) {
         Column {
             Text(
-                text = step.title,
+                text = stringResource(step.title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.padding(vertical = 4.dp)
             )
             Text(
-                text = step.message,
+                text = stringResource(step.message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -57,13 +59,13 @@ fun TutorialOverlay(
             ) {
                 if (onBack != null) {
                     Button(onClick = onBack) {
-                        Text("Back")
+                        Text(stringResource(R.string.bg_back))
                     }
                 } else {
                     Spacer(modifier = Modifier.width(1.dp))
                 }
                 Button(onClick = onNext) {
-                    Text(if (step.actionRequired == TutorialAction.CLICK_NEXT) "Next" else "Got it")
+                    Text(if (step.actionRequired == TutorialAction.CLICK_NEXT) stringResource(R.string.bg_next) else stringResource(R.string.bg_got_it))
                 }
             }
         }

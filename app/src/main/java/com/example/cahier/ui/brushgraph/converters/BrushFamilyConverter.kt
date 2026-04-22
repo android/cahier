@@ -12,6 +12,8 @@ import com.example.cahier.ui.brushgraph.model.GraphNode
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
+import com.example.cahier.ui.brushgraph.model.DisplayText
+import com.example.cahier.R
 import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 import java.io.ByteArrayInputStream
@@ -53,8 +55,8 @@ object BrushFamilyConverter {
     }
     if (sortedCoatEdges.isEmpty()) {
       throw GraphValidationException(
-        "Brush Family must be connected to at least one coat.",
-        familyNode.id,
+        displayMessage = DisplayText.Resource(R.string.bg_err_family_no_coat),
+        nodeId = familyNode.id,
       )
     }
 
@@ -62,7 +64,7 @@ object BrushFamilyConverter {
     val coats = sortedCoatEdges.map { edge ->
       val coatNode =
         graph.nodes.find { it.id == edge.fromNodeId }
-          ?: throw GraphValidationException("Coat node ${edge.fromNodeId} not found")
+          ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_coat_node_not_found, listOf(edge.fromNodeId)))
       createCoat(coatNode, graph, behaviorCache)
     }
 
@@ -85,8 +87,8 @@ object BrushFamilyConverter {
     val tipEdge =
       inputs.find { it.toPortId == coatData.tipPortId }
         ?: throw GraphValidationException(
-          "Coat node ${coatNode.id} missing Tip input.",
-          coatNode.id,
+          displayMessage = DisplayText.Resource(R.string.bg_err_coat_missing_tip_input, listOf(coatNode.id)),
+          nodeId = coatNode.id,
         )
         
     val paintEdges = coatData.paintPortIds.mapNotNull { portId ->
@@ -94,8 +96,8 @@ object BrushFamilyConverter {
     }
     if (paintEdges.isEmpty()) {
         throw GraphValidationException(
-          "Coat node ${coatNode.id} missing Paint input.",
-          coatNode.id,
+          displayMessage = DisplayText.Resource(R.string.bg_err_coat_missing_paint_input, listOf(coatNode.id)),
+          nodeId = coatNode.id,
         )
     }
 
@@ -120,12 +122,12 @@ object BrushFamilyConverter {
   ): ProtoBrushTip {
     val graphNode =
       graph.nodes.find { it.id == nodeId }
-        ?: throw GraphValidationException("Node $nodeId not found")
+        ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
       graphNode.data as? NodeData.Tip
         ?: throw GraphValidationException(
-          "Expected Tip node, found ${graphNode.data::class.simpleName}",
-          nodeId,
+          displayMessage = DisplayText.Resource(R.string.bg_err_expected_node_type, listOf("Tip", graphNode.data::class.simpleName ?: "Unknown")),
+          nodeId = nodeId,
         )
 
     val builder = data.tip.toBuilder()
@@ -160,7 +162,7 @@ object BrushFamilyConverter {
     path: MutableSet<String>,
   ): List<List<ProtoBrushBehavior.Node>> {
     if (path.contains(nodeId)) {
-      throw GraphValidationException("Cycle detected involving node $nodeId", nodeId)
+      throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_cycle_detected, listOf(nodeId)), nodeId = nodeId)
     }
     cache[nodeId]?.let { return it }
 
@@ -300,12 +302,12 @@ object BrushFamilyConverter {
   private fun createPaint(nodeId: String, graph: BrushGraph): ProtoBrushPaint {
     val graphNode =
       graph.nodes.find { it.id == nodeId }
-        ?: throw GraphValidationException("Node $nodeId not found")
+        ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
       graphNode.data as? NodeData.Paint
         ?: throw GraphValidationException(
-          "Expected Paint node, found ${graphNode.data::class.simpleName}",
-          nodeId,
+          displayMessage = DisplayText.Resource(R.string.bg_err_expected_node_type, listOf("Paint", graphNode.data::class.simpleName ?: "Unknown")),
+          nodeId = nodeId,
         )
 
     val textureEdges = data.texturePortIds.mapNotNull { portId ->
@@ -341,12 +343,12 @@ object BrushFamilyConverter {
   private fun createTextureLayer(nodeId: String, graph: BrushGraph): ProtoBrushPaint.TextureLayer {
     val graphNode =
       graph.nodes.find { it.id == nodeId }
-        ?: throw GraphValidationException("Node $nodeId not found")
+        ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
       graphNode.data as? NodeData.TextureLayer
         ?: throw GraphValidationException(
-          "Expected TextureLayer node, found ${graphNode.data::class.simpleName}",
-          nodeId,
+          displayMessage = DisplayText.Resource(R.string.bg_err_expected_node_type, listOf("TextureLayer", graphNode.data::class.simpleName ?: "Unknown")),
+          nodeId = nodeId,
         )
     return data.layer
   }
@@ -354,12 +356,12 @@ object BrushFamilyConverter {
   private fun createColorFunction(nodeId: String, graph: BrushGraph): ProtoColorFunction {
     val graphNode =
       graph.nodes.find { it.id == nodeId }
-        ?: throw GraphValidationException("Node $nodeId not found")
+        ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
       graphNode.data as? NodeData.ColorFunc
         ?: throw GraphValidationException(
-          "Expected ColorFunc node, found ${graphNode.data::class.simpleName}",
-          nodeId,
+          displayMessage = DisplayText.Resource(R.string.bg_err_expected_node_type, listOf("ColorFunc", graphNode.data::class.simpleName ?: "Unknown")),
+          nodeId = nodeId,
         )
     return data.function
   }
