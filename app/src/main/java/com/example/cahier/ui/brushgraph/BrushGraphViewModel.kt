@@ -1,4 +1,4 @@
-@file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
+@file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class, kotlinx.coroutines.FlowPreview::class)
 
 package com.example.cahier.ui.brushgraph
 
@@ -20,17 +20,18 @@ import androidx.ink.storage.BrushFamilyDecodeCallback
 import androidx.ink.strokes.Stroke
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.brushgraph.data.BrushGraphRepository
+import com.example.cahier.ui.brushgraph.data.BrushGraphPreferences
 import com.example.cahier.ui.brushdesigner.CustomBrushDao
 import com.example.cahier.ui.brushdesigner.CustomBrushEntity
-import android.content.Context
 import androidx.ink.storage.decode
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.zip.GZIPOutputStream
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -73,10 +74,11 @@ import com.example.cahier.ui.brushgraph.model.TutorialAction
 /** ViewModel to manage the state of the brush graph. */
 @HiltViewModel
 class BrushGraphViewModel @Inject constructor(
-  @param:ApplicationContext private val context: Context,
   private val customBrushDao: CustomBrushDao,
   val textureStore: CahierTextureBitmapStore,
-  private val repository: BrushGraphRepository
+  private val repository: BrushGraphRepository,
+  private val preferences: BrushGraphPreferences,
+  private val savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
   /** Saved brushes in the palette. */
@@ -163,19 +165,21 @@ class BrushGraphViewModel @Inject constructor(
   var offset by mutableStateOf(Offset.Zero)
     private set
 
-  private val _events = MutableSharedFlow<BrushGraphEvent>()
-  val events = _events.asSharedFlow()
-
-  sealed class BrushGraphEvent {
-    data class CenterOnNode(val offset: Offset) : BrushGraphEvent()
-  }
-
   /** Whether text fields in the UI are locked for editing. */
   var textFieldsLocked by mutableStateOf(false)
     private set
 
   /** The ID of the node currently selected as the source for the inspector. */
-  var selectedNodeId by mutableStateOf<String?>(null)
+  private val _selectedNodeId = mutableStateOf(savedStateHandle.get<String>("selectedNodeId"))
+  var selectedNodeId: String?
+    get() = _selectedNodeId.value
+    private set(value) {
+      _selectedNodeId.value = value
+      savedStateHandle.set("selectedNodeId", value)
+    }
+
+  /** Trigger to notify UI to focus on the selected node. */
+  var focusTrigger by androidx.compose.runtime.mutableIntStateOf(0)
     private set
 
   /** The edge currently detached for editing. */
@@ -188,12 +192,6 @@ class BrushGraphViewModel @Inject constructor(
   /** Whether the test canvas background is dark. */
   var isDarkCanvas by mutableStateOf(false)
     private set
-
-  /** The current size of the graph viewport in pixels. */
-  var viewportSize by mutableStateOf(Size.Zero)
-    private set
-
-  /** Whether to auto update strokes in the test canvas. */
 
 
   fun updateTestBrushColor(color: Color) {
@@ -211,72 +209,40 @@ class BrushGraphViewModel @Inject constructor(
     allTextureIds = textureStore.getAllIds()
   }
 
-  /** The current step in the tutorial, or null if not in tutorial mode. */
-  var tutorialStep by mutableStateOf<TutorialStep?>(null)
-    private set
+  val tutorialManager = TutorialManager(repository)
 
-  var currentStepIndex by mutableStateOf(0)
-    private set
-
-  private val tutorialSteps = mutableStateListOf<TutorialStep>()
-
-  var savedBrushFamily by mutableStateOf<BrushFamily?>(null)
-    private set
-
-  var isTutorialSandboxMode by mutableStateOf(false)
-    private set
+  val tutorialStep get() = tutorialManager.tutorialStep
+  val currentStepIndex get() = tutorialManager.currentStepIndex
+  val isTutorialSandboxMode get() = tutorialManager.isTutorialSandboxMode
 
   fun startTutorial() {
-    tutorialSteps.clear()
-    tutorialSteps.addAll(TUTORIAL_STEPS)
-    currentStepIndex = 0
-    tutorialStep = tutorialSteps.getOrNull(currentStepIndex)
+    tutorialManager.startTutorial()
   }
 
   fun startTutorialSandbox() {
-    savedBrushFamily = brush.value.family
+    val oldBrushFamily = brush.value.family
     val defaultGraph = repository.createDefaultGraph()
     repository.setGraph(defaultGraph)
     graph = defaultGraph
-    isTutorialSandboxMode = true
     
-    startTutorial()
-    
-
-    // Refresh current step just in case
-    tutorialStep = tutorialSteps.getOrNull(currentStepIndex)
+    tutorialManager.startTutorialSandbox(oldBrushFamily)
     
     validate()
   }
 
   fun advanceTutorial(action: TutorialAction = TutorialAction.CLICK_NEXT): Boolean {
-    val step = tutorialStep
-    if (step != null && step.actionRequired == action) {
-      currentStepIndex++
-      if (currentStepIndex < tutorialSteps.size) {
-        tutorialStep = tutorialSteps[currentStepIndex]
-      } else {
-        tutorialStep = null // Tutorial finished!
-      }
-      return true
-    }
-    return false
+    return tutorialManager.advanceTutorial(action)
   }
 
   fun regressTutorial() {
-    if (currentStepIndex > 0) {
-      currentStepIndex--
-      tutorialStep = tutorialSteps[currentStepIndex]
-    }
+    tutorialManager.regressTutorial()
   }
 
   fun endTutorialSandbox(keepChanges: Boolean) {
-    isTutorialSandboxMode = false
-    if (!keepChanges && savedBrushFamily != null) {
-      loadBrushFamily(savedBrushFamily!!)
+    val brushToRestore = tutorialManager.endTutorialSandbox(keepChanges)
+    if (brushToRestore != null) {
+      loadBrushFamily(brushToRestore)
     }
-    savedBrushFamily = null
-    tutorialStep = null
   }
 
   companion object {
@@ -299,24 +265,24 @@ class BrushGraphViewModel @Inject constructor(
         }
       }
     }
+
+
     
-    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-      val prefs = context.getSharedPreferences("brush_graph_prefs", android.content.Context.MODE_PRIVATE)
-      val savedBrushBase64 = prefs.getString("auto_save_brush", null)
-      if (savedBrushBase64 != null) {
+    viewModelScope.launch(Dispatchers.IO) {
+      val decodedBytes = preferences.getAutoSaveBrush()
+      if (decodedBytes != null) {
         try {
-          val decodedBytes = android.util.Base64.decode(savedBrushBase64, android.util.Base64.DEFAULT)
           val bais = java.io.ByteArrayInputStream(decodedBytes)
-          val family = androidx.ink.storage.AndroidBrushFamilySerialization.decode(
+          val family = AndroidBrushFamilySerialization.decode(
             bais,
-            androidx.ink.storage.BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
+            BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
               if (bitmap != null) {
                 textureStore.loadTexture(id, bitmap)
               }
               id
             }
           )
-          kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+          withContext(Dispatchers.Main) {
             allTextureIds = textureStore.getAllIds()
             loadBrushFamily(family)
           }
@@ -408,9 +374,6 @@ class BrushGraphViewModel @Inject constructor(
     }
     
   }
-
-
-
 
   /** Enters selection mode and selects the initial node. */
   fun enterSelectionMode(initialNodeId: String? = null) {
@@ -562,53 +525,20 @@ class BrushGraphViewModel @Inject constructor(
   /** Handles a click on an issue message: selects the erroneous node and closes the error pane. */
   fun onIssueClick(issue: GraphValidationException, isLandscape: Boolean, density: Float) {
     if (issue.nodeId != null) {
-      centerNode(issue.nodeId, isLandscape, density)
+      centerNode(issue.nodeId)
     }
     
     // Tutorial progression
     advanceTutorial(TutorialAction.CLICK_ERROR_LINK)
   }
 
-  /** Centers the specified node in the safe area of the viewport. */
-  fun centerNode(nodeId: String, isLandscape: Boolean, density: Float) {
+  /** Focuses on the specified node in the UI. */
+  fun centerNode(nodeId: String) {
     selectedNodeId = nodeId
     selectedEdge = null
     isErrorPaneOpen = false
     checkSelectNodeTrigger(nodeId)
-
-    // Center the node in the remaining on-screen safe area, accounting for sidebar and preview
-    // panes.
-    val node = graph.nodes.find { it.id == nodeId }
-    if (node != null && viewportSize.width > 0 && viewportSize.height > 0) {
-      val previewHeightPx =
-        (if (isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED) * density
-
-      val (safeWidth, safeHeight) =
-        if (isLandscape) {
-          val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
-          (viewportSize.width - inspectorWidthPx) to (viewportSize.height - previewHeightPx)
-        } else {
-          val inspectorHeightPx = INSPECTOR_HEIGHT_PORTRAIT * density
-          // Both inspector and preview are at the bottom.
-          viewportSize.width to (viewportSize.height - maxOf(inspectorHeightPx, previewHeightPx))
-        }
-
-      val targetCenterX = safeWidth / 2f
-      val targetCenterY = safeHeight / 2f
-
-      val nodeCenterX = node.position.x + node.data.width() / 2f
-      val nodeCenterY = node.position.y + node.data.height() / 2f
-
-      val newOffset = Offset(targetCenterX - nodeCenterX * zoom, targetCenterY - nodeCenterY * zoom)
-      viewModelScope.launch {
-        _events.emit(BrushGraphEvent.CenterOnNode(newOffset))
-      }
-    }
-  }
-
-  /** Updates the tracked size of the viewport. */
-  fun updateViewportSize(size: Size) {
-    viewportSize = size
+    focusTrigger++
   }
 
   /** Toggles the expansion state of the preview pane. */
@@ -691,7 +621,6 @@ class BrushGraphViewModel @Inject constructor(
 
     val modifiedNodeIds = repository.deleteEdge(edge)
     graph = repository.graph.value
-
   }
 
   fun addNodeBetween(edge: GraphEdge) {
@@ -741,8 +670,6 @@ class BrushGraphViewModel @Inject constructor(
     graph = repository.graph.value
   }
 
-
-
   /** Clears all strokes in the preview area. */
   fun clearStrokes() {
     strokeList.clear()
@@ -756,8 +683,6 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Returns current brush color. */
   fun getBrushColor(): Color = Color(brush.value.colorIntArgb)
-
-
 
   /** Updates the zoom level. */
   fun updateZoom(newZoom: Float) {

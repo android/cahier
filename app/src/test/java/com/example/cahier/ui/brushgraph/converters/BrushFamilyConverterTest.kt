@@ -8,6 +8,7 @@ import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
+import com.example.cahier.ui.brushgraph.converters.GraphValidator
 import ink.proto.BrushBehavior
 import ink.proto.BrushTip
 import ink.proto.BrushPaint
@@ -66,7 +67,7 @@ class BrushFamilyConverterTest {
             edges = edges
         )
 
-        val issues = BrushFamilyConverter.validateAll(graph)
+        val issues = GraphValidator.validateAll(graph)
         println("Test 1 issues: $issues")
         
         // Target node should not report errors because it is disabled.
@@ -147,7 +148,7 @@ class BrushFamilyConverterTest {
             edges = edges
         )
 
-        val issues = BrushFamilyConverter.validateAll(graph)
+        val issues = GraphValidator.validateAll(graph)
         println("Test 2 issues: $issues")
         
         // Should pass because Damping passes through!
@@ -228,7 +229,7 @@ class BrushFamilyConverterTest {
             edges = edges
         )
 
-        val issues = BrushFamilyConverter.validateAll(graph)
+        val issues = GraphValidator.validateAll(graph)
         println("Test 3 issues: $issues")
         
         assertTrue(issues.none { it.severity == ValidationSeverity.ERROR })
@@ -308,7 +309,7 @@ class BrushFamilyConverterTest {
             edges = edges
         )
 
-        val issues = BrushFamilyConverter.validateAll(graph)
+        val issues = GraphValidator.validateAll(graph)
         println("Test 4 issues: $issues")
         
         // Should NOT fail because BinaryOp now passes through ALL inputs!
@@ -375,7 +376,7 @@ class BrushFamilyConverterTest {
             edges = edges
         )
 
-        val issues = BrushFamilyConverter.validateAll(graph)
+        val issues = GraphValidator.validateAll(graph)
         
         // Tip output should be reported as not used because Coat is disabled.
         assertTrue(issues.any { it.nodeId == "tip" && it.message.contains("output is not used") })

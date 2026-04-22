@@ -1,6 +1,5 @@
 package com.example.cahier.ui.brushgraph.data
 
-import android.content.Context
 import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.brushdesigner.CustomBrushDao
 import com.example.cahier.ui.brushgraph.model.BrushGraph
@@ -12,6 +11,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import androidx.ink.storage.AndroidBrushFamilySerialization
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -21,16 +24,40 @@ import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.preserveEdgesOnTypeChange
 import com.example.cahier.ui.brushgraph.converters.BrushFamilyConverter
+import com.example.cahier.ui.brushgraph.converters.GraphValidator
 import com.example.cahier.ui.brushgraph.converters.BrushGraphConverter
+import kotlin.OptIn
+import androidx.ink.brush.ExperimentalInkCustomBrushApi
+import kotlinx.coroutines.FlowPreview
 
 @Singleton
+@OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
 class BrushGraphRepository @Inject constructor(
-  @param:ApplicationContext private val context: Context,
   private val customBrushDao: CustomBrushDao,
-  val textureStore: CahierTextureBitmapStore
+  val textureStore: CahierTextureBitmapStore,
+  private val preferences: BrushGraphPreferences
 ) {
   private val _graph = MutableStateFlow(createDefaultGraph())
   val graph: StateFlow<BrushGraph> = _graph.asStateFlow()
+
+  private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO)
+  init {
+    scope.launch {
+      graph
+        .drop(1)
+        .debounce(1000)
+        .collect { graph ->
+          try {
+            val family = BrushFamilyConverter.convert(graph)
+            val baos = java.io.ByteArrayOutputStream()
+            AndroidBrushFamilySerialization.encode(family, baos, textureStore)
+            preferences.saveAutoSaveBrush(baos.toByteArray())
+          } catch (e: Exception) {
+            android.util.Log.e("BrushGraphRepository", "Failed to auto-save brush", e)
+          }
+        }
+    }
+  }
 
   private val _graphIssues = MutableStateFlow<List<GraphValidationException>>(emptyList())
   val graphIssues: StateFlow<List<GraphValidationException>> = _graphIssues.asStateFlow()
@@ -51,7 +78,7 @@ class BrushGraphRepository @Inject constructor(
   }
 
   fun validate(): Boolean {
-    val issues = BrushFamilyConverter.validateAll(_graph.value).toMutableList()
+    val issues = GraphValidator.validateAll(_graph.value).toMutableList()
 
     val errorNodeIds =
       issues.filter { it.severity == ValidationSeverity.ERROR }.mapNotNull { it.nodeId }.toSet()
@@ -71,6 +98,10 @@ class BrushGraphRepository @Inject constructor(
 
     _graphIssues.update { issues }
     return issues.none { it.severity == ValidationSeverity.ERROR }
+  }
+
+  fun clearIssues() {
+    _graphIssues.value = emptyList()
   }
 
   fun getBrushFamily(): androidx.ink.brush.BrushFamily? {

@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.content.Context
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.geometry.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -17,6 +18,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
+import com.example.cahier.ui.brushdesigner.CustomBrushEntity
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
@@ -109,6 +111,7 @@ import com.example.cahier.ui.DrawingSurface
 import com.example.cahier.ui.brushgraph.BrushGraphViewModel
 import com.example.cahier.ui.brushgraph.inspectors.EdgeInspector
 import com.example.cahier.ui.brushgraph.inspectors.NodeInspector
+import com.example.cahier.ui.brushgraph.inspectors.AdaptiveInspectorPane
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
@@ -154,32 +157,6 @@ fun BrushGraphWidget(
     viewModel.updateTestBrushColor(primaryColor)
   }
 
-
-
-  LaunchedEffect(viewModel.graph) {
-    // Debounce to avoid saving on every single slider movement frame.
-    kotlinx.coroutines.delay(500)
-    android.util.Log.e("BrushGraphWidget", "LaunchedEffect: saving brush to prefs")
-    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-      try {
-        val stream = java.io.ByteArrayOutputStream()
-        androidx.ink.storage.AndroidBrushFamilySerialization.encode(
-          viewModel.brush.value.family,
-          stream,
-          textureStore
-        )
-        val encodedBrushFamily = stream.toByteArray()
-        val prefs = context.getSharedPreferences("brush_graph_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putString(
-          "auto_save_brush",
-          android.util.Base64.encodeToString(encodedBrushFamily, android.util.Base64.DEFAULT),
-        ).apply()
-      } catch (e: Exception) {
-        android.util.Log.e("BrushGraphWidget", "Failed to save brush to prefs", e)
-      }
-    }
-  }
-
   var showColorPicker by remember { mutableStateOf(false) }
   var colorPickerInitialColor by remember { mutableStateOf(Color.Black) }
   var colorPickerOnColorSelected by remember { mutableStateOf({ _: Color -> }) }
@@ -206,49 +183,29 @@ fun BrushGraphWidget(
     }
   }
 
-  if (showTextureNameDialog) {
-    AlertDialog(
-      onDismissRequest = { showTextureNameDialog = false },
-      title = { Text("Name Texture") },
-      text = {
-        OutlinedTextField(
-          value = textureNameInput,
-          onValueChange = { textureNameInput = it },
-          label = { Text("Texture ID") },
-          singleLine = true,
-          modifier = Modifier.fillMaxWidth()
-        )
-      },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            if (textureNameInput.isNotBlank() && pendingTextureUri != null) {
-              val uri = pendingTextureUri!!
-              val name = textureNameInput
-              scope.launch {
-                val bitmap = context.contentResolver.openInputStream(uri)?.use { 
-                    BitmapFactory.decodeStream(it)
-                }
-                if (bitmap != null) {
-                  textureStore.loadTexture(name, bitmap)
-                  viewModel.updateAllTextureIds()
-                }
-              }
-              showTextureNameDialog = false
-              textureNameInput = ""
-            }
+  NameTextureDialog(
+    show = showTextureNameDialog,
+    onDismiss = { showTextureNameDialog = false },
+    textureNameInput = textureNameInput,
+    onTextureNameInputChange = { textureNameInput = it },
+    onConfirm = {
+      if (textureNameInput.isNotBlank() && pendingTextureUri != null) {
+        val uri = pendingTextureUri!!
+        val name = textureNameInput
+        scope.launch {
+          val bitmap = context.contentResolver.openInputStream(uri)?.use { 
+              BitmapFactory.decodeStream(it)
           }
-        ) {
-          Text("OK")
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showTextureNameDialog = false }) {
-          Text("Cancel")
+          if (bitmap != null) {
+            textureStore.loadTexture(name, bitmap)
+            viewModel.updateAllTextureIds()
+          }
+          showTextureNameDialog = false
+          textureNameInput = ""
         }
       }
-    )
-  }
+    }
+  )
 
   val brushFilePickerLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.OpenDocument()
@@ -317,39 +274,19 @@ fun BrushGraphWidget(
   var showSavePaletteDialog by remember { mutableStateOf(false) }
   var paletteBrushNameInput by remember { mutableStateOf("") }
 
-  if (showSavePaletteDialog) {
-    AlertDialog(
-      onDismissRequest = { showSavePaletteDialog = false },
-      title = { Text("Save to Cahier Palette") },
-      text = {
-        OutlinedTextField(
-          value = paletteBrushNameInput,
-          onValueChange = { paletteBrushNameInput = it },
-          label = { Text("Brush Name") },
-          singleLine = true,
-          modifier = Modifier.fillMaxWidth()
-        )
-      },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            if (paletteBrushNameInput.isNotBlank()) {
-              viewModel.saveToPalette(paletteBrushNameInput, textureStore)
-              showSavePaletteDialog = false
-              paletteBrushNameInput = ""
-            }
-          }
-        ) {
-          Text("Save")
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showSavePaletteDialog = false }) {
-          Text("Cancel")
-        }
+  SaveToPaletteDialog(
+    show = showSavePaletteDialog,
+    onDismiss = { showSavePaletteDialog = false },
+    paletteBrushNameInput = paletteBrushNameInput,
+    onPaletteBrushNameInputChange = { paletteBrushNameInput = it },
+    onConfirm = {
+      if (paletteBrushNameInput.isNotBlank()) {
+        viewModel.saveToPalette(paletteBrushNameInput, textureStore)
+        showSavePaletteDialog = false
+        paletteBrushNameInput = ""
       }
-    )
-  }
+    }
+  )
 
   CahierAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -393,6 +330,7 @@ fun BrushGraphStudio(
   onNavigateUp: () -> Unit,
 ) {
   val context = LocalContext.current
+  var viewportSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val isLandscape = maxWidth > maxHeight
@@ -401,7 +339,7 @@ fun BrushGraphStudio(
       Box(
         modifier =
           Modifier.fillMaxSize().padding(paddingValues).onGloballyPositioned { coordinates ->
-            viewModel.updateViewportSize(coordinates.size.toSize())
+            viewportSize = coordinates.size.toSize()
           }
       ) {
         val isSidePaneOpen =
@@ -578,6 +516,7 @@ fun BrushGraphStudio(
         CreateNodeFAB(
           viewModel = viewModel,
           isLandscape = isLandscape,
+          viewportSize = viewportSize,
           modifier = Modifier.align(Alignment.BottomEnd),
         )
 
@@ -592,16 +531,13 @@ fun BrushGraphStudio(
             val node = step.getTargetNode(viewModel.graph)
             if (node != null) {
               val density = context.resources.displayMetrics.density
-              val nodeCenterX = node.position.x + node.data.width() / 2f
-              val nodeCenterY = node.position.y + node.data.height() / 2f
-              
-              // Target node center to be at Y = 280dp, so message at ~100dp is visible
               val targetY = 280f * density
-              val targetX = currentMaxWidth.value * density / 2f
+              val targetX = this@BoxWithConstraints.maxWidth.value * density / 2f
               
-              val newOffset = androidx.compose.ui.geometry.Offset(
-                targetX - nodeCenterX * viewModel.zoom,
-                targetY - nodeCenterY * viewModel.zoom
+              val newOffset = calculateFocusOffset(
+                node = node,
+                zoom = viewModel.zoom,
+                targetScreenPos = Offset(targetX, targetY)
               )
               
               animatableOffset.snapTo(viewModel.offset)
@@ -613,12 +549,23 @@ fun BrushGraphStudio(
         }
 
         // Listen for ViewModel events (e.g. center on node)
-        LaunchedEffect(Unit) {
-          viewModel.events.collect { event ->
-            when (event) {
-              is com.example.cahier.ui.brushgraph.BrushGraphViewModel.BrushGraphEvent.CenterOnNode -> {
+        LaunchedEffect(viewModel.focusTrigger) {
+          if (viewModel.focusTrigger > 0) {
+            viewModel.selectedNodeId?.let { nodeId ->
+              val node = viewModel.graph.nodes.find { it.id == nodeId }
+              if (node != null) {
+                val density = context.resources.displayMetrics.density
+                val isLandscape = this@BoxWithConstraints.maxWidth > this@BoxWithConstraints.maxHeight
+                val newOffset = calculateFocusOffset(
+                  node = node,
+                  zoom = viewModel.zoom,
+                  viewportSize = viewportSize,
+                  density = density,
+                  isLandscape = isLandscape,
+                  isPreviewExpanded = viewModel.isPreviewExpanded
+                )
                 animatableOffset.snapTo(viewModel.offset)
-                animatableOffset.animateTo(event.offset, animationSpec = tween(500)) {
+                animatableOffset.animateTo(newOffset, animationSpec = tween(500)) {
                   viewModel.updateOffset(value)
                 }
               }
@@ -710,1028 +657,37 @@ fun BrushGraphStudio(
   }
 }
 
-@Composable
-fun CreateNodeFAB(
-  viewModel: BrushGraphViewModel,
-  isLandscape: Boolean,
-  modifier: Modifier = Modifier,
-) {
-  var expanded by remember { mutableStateOf(false) }
+/**
+ * Calculates the target offset to center a node in the viewport.
+ */
+private fun calculateFocusOffset(
+  node: GraphNode,
+  zoom: Float,
+  viewportSize: androidx.compose.ui.geometry.Size = androidx.compose.ui.geometry.Size.Zero,
+  density: Float = 1f,
+  isLandscape: Boolean = false,
+  isPreviewExpanded: Boolean = false,
+  targetScreenPos: androidx.compose.ui.geometry.Offset? = null
+): androidx.compose.ui.geometry.Offset {
+  val nodeCenterX = node.position.x + node.data.width() / 2f
+  val nodeCenterY = node.position.y + node.data.height() / 2f
 
-  val previewHeight = if (viewModel.isPreviewExpanded) {
-    PREVIEW_HEIGHT_EXPANDED
+  val targetPos = if (targetScreenPos != null) {
+    Pair(targetScreenPos.x, targetScreenPos.y)
   } else {
-    PREVIEW_HEIGHT_COLLAPSED
-  }
-  val isInspectorOpen = (viewModel.selectedNodeId != null || viewModel.selectedEdge != null)
-  val isErrorPaneOpen = viewModel.isErrorPaneOpen
-  val isAnySidePaneOpen = isInspectorOpen || isErrorPaneOpen
-
-  val fabPaddingBottom by
-    animateDpAsState(
-      targetValue =
-        if (!isLandscape && isAnySidePaneOpen) {
-          (maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT) + 16).dp
-        } else {
-          (previewHeight + 16).dp
-        },
-      label = "fabPaddingBottom",
-    )
-
-  val fabPaddingEnd by
-    animateDpAsState(
-      targetValue =
-        if (isLandscape && isAnySidePaneOpen) {
-          (INSPECTOR_WIDTH_LANDSCAPE + 16).dp
-        } else {
-          16.dp
-        },
-      label = "fabPaddingEnd",
-    )
-
-  val density = LocalDensity.current.density
-  val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
-  val inspectorHeightPx = INSPECTOR_HEIGHT_PORTRAIT * density
-  val previewHeightPx = previewHeight * density
-
-  val (visibleWidth, visibleHeight) =
-    if (isLandscape) {
-      val w =
-        if (isAnySidePaneOpen) {
-          viewModel.viewportSize.width - inspectorWidthPx
-        } else {
-          viewModel.viewportSize.width
-        }
-      val h = viewModel.viewportSize.height - previewHeightPx
-      w to h
+    val previewHeightPx = (if (isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED) * density
+    val safeSize = if (isLandscape) {
+      val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
+      Pair(viewportSize.width - inspectorWidthPx, viewportSize.height - previewHeightPx)
     } else {
-      val w = viewModel.viewportSize.width
-      val h =
-        if (isAnySidePaneOpen) {
-          viewModel.viewportSize.height - maxOf(previewHeightPx, inspectorHeightPx)
-        } else {
-          viewModel.viewportSize.height - previewHeightPx
-        }
-      w to h
+      val inspectorHeightPx = INSPECTOR_HEIGHT_PORTRAIT * density
+      Pair(viewportSize.width, viewportSize.height - maxOf(inspectorHeightPx, previewHeightPx))
     }
-
-  val visibleCenter = Offset(visibleWidth / 2f, visibleHeight / 2f)
-  val centerInCanvas = (visibleCenter - viewModel.offset) / viewModel.zoom
-
-  Box(modifier = modifier.padding(bottom = fabPaddingBottom, end = fabPaddingEnd).zIndex(2f)) {
-    Column(horizontalAlignment = Alignment.End) {
-      AnimatedVisibility(
-        visible = expanded,
-        enter = expandVertically(),
-        exit = shrinkVertically(),
-      ) {
-        Surface(
-          modifier = Modifier.padding(bottom = 8.dp).width(180.dp),
-          shape = RoundedCornerShape(16.dp),
-          color = MaterialTheme.colorScheme.surface,
-          tonalElevation = 4.dp,
-          shadowElevation = 8.dp,
-        ) {
-          Column(modifier = Modifier.padding(vertical = 8.dp)) {
-            DropdownMenuItem(
-              text = { Text("Coat") },
-              leadingIcon = { Icon(Icons.Default.Layers, contentDescription = null) },
-              onClick = {
-                viewModel.addCoatNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text("Paint") },
-              leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null) },
-              onClick = {
-                viewModel.addPaintNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text("Tip") },
-              leadingIcon = { Icon(Icons.Default.ShapeLine, contentDescription = null) },
-              onClick = {
-                viewModel.addTipNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text("Behavior") },
-              leadingIcon = { Icon(Icons.Default.Psychology, contentDescription = null) },
-              onClick = {
-                viewModel.addBehaviorNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text("Color Function") },
-              leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null) },
-              onClick = {
-                viewModel.addColorFunctionNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text("Texture Layer") },
-              leadingIcon = { Icon(Icons.Default.Layers, contentDescription = null) },
-              onClick = {
-                viewModel.addTextureLayerNode(centerInCanvas)
-                expanded = false
-              },
-            )
-          }
-        }
-      }
-
-      androidx.compose.material3.FloatingActionButton(
-        onClick = { expanded = !expanded },
-        shape = CircleShape,
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-      ) {
-        Icon(
-          if (expanded) Icons.Default.Close else Icons.Default.Add,
-          contentDescription = "Create Node",
-        )
-      }
-    }
+    Pair(safeSize.first / 2f, safeSize.second / 2f)
   }
-}
+  
+  val targetX = targetPos.first
+  val targetY = targetPos.second
 
-@Composable
-fun AdaptiveInspectorPane(
-  isLandscape: Boolean,
-  viewModel: BrushGraphViewModel,
-  onChooseColor: (Color, (Color) -> Unit) -> Unit,
-  textureStore: TextureBitmapStore,
-  allTextureIds: Set<String>,
-  onLoadTexture: () -> Unit,
-  strokeRenderer: CanvasStrokeRenderer,
-  modifier: Modifier = Modifier,
-) {
-  val selectedNode = viewModel.graph.nodes.find { it.id == viewModel.selectedNodeId }
-  val selectedEdge = viewModel.selectedEdge
-  val density = androidx.compose.ui.platform.LocalDensity.current.density
-
-  AnimatedVisibility(
-    visible = selectedNode != null || selectedEdge != null,
-    enter =
-      if (isLandscape) {
-        slideInHorizontally(initialOffsetX = { it })
-      } else {
-        slideInVertically(initialOffsetY = { it })
-      },
-    exit =
-      if (isLandscape) {
-        slideOutHorizontally(targetOffsetX = { it })
-      } else {
-        slideOutVertically(targetOffsetY = { it })
-      },
-    modifier = modifier.zIndex(10f),
-  ) {
-    if (selectedNode != null || selectedEdge != null) {
-      Surface(
-        modifier =
-          if (isLandscape) {
-            Modifier.fillMaxHeight().width(INSPECTOR_WIDTH_LANDSCAPE.dp)
-          } else {
-            Modifier.fillMaxWidth().height(INSPECTOR_HEIGHT_PORTRAIT.dp)
-          },
-        tonalElevation = 8.dp,
-        shadowElevation = 8.dp,
-        color = MaterialTheme.colorScheme.surface,
-      ) {
-        Column {
-          // Title bar with close button
-          Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 2.dp) {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
-            ) {
-              val selectionName =
-                if (selectedNode != null) {
-                  selectedNode.data.title()
-                } else {
-                  "Edge"
-                }
-              val titleText = "Inspector: ${selectionName}"
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-              ) {
-                Text(
-                  text = titleText,
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.Bold,
-                )
-                if (selectedNode != null) {
-                  var showNodeTooltip by remember { mutableStateOf(false) }
-                  IconButton(onClick = { showNodeTooltip = true }) {
-                    Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
-                  }
-                  if (showNodeTooltip) {
-                    TooltipDialog(
-                      title = selectedNode.data.title(),
-                      text = selectedNode.data.getTooltip(),
-                      onDismiss = { showNodeTooltip = false }
-                    )
-                  }
-                }
-              }
-              IconButton(
-                onClick = {
-                  viewModel.clearSelectedNode()
-                  viewModel.clearSelectedEdge()
-                }
-              ) {
-                Icon(Icons.Default.Close, contentDescription = "Close Inspector")
-              }
-            }
-          }
-          Box {
-            if (selectedNode != null) {
-              NodeInspector(
-                node = selectedNode,
-                onUpdate = { viewModel.updateNodeData(selectedNode.id, it) },
-                onDisableChange = { viewModel.setNodeDisabled(selectedNode.id, it) },
-                onChooseColor = onChooseColor,
-                allTextureIds = viewModel.allTextureIds,
-                onLoadTexture = onLoadTexture,
-                strokeRenderer = strokeRenderer,
-                textFieldsLocked = viewModel.textFieldsLocked,
-                onDelete = { viewModel.deleteNode(selectedNode.id) },
-                onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) },
-                onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
-              )
-            } else if (selectedEdge != null) {
-              val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromNodeId }
-              val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toNodeId }
-              if (fromNode != null && toNode != null) {
-                val visiblePorts = toNode.getVisiblePorts(viewModel.graph)
-                val port = visiblePorts.find { it.id == selectedEdge.toPortId }
-                val inputLabel = port?.label
-                EdgeInspector(
-                  edge = selectedEdge,
-                  fromNode = fromNode,
-                  toNode = toNode,
-                  inputLabel = inputLabel,
-                  onNodeFocus = { nodeId: String ->
-                    viewModel.centerNode(nodeId, isLandscape, density)
-                  },
-                  onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
-                  onDelete = { viewModel.deleteEdge(selectedEdge) },
-                  onAddNodeBetween = { viewModel.addNodeBetween(selectedEdge) },
-                )
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun CollapsiblePreviewPane(
-  viewModel: BrushGraphViewModel,
-  strokeRenderer: CanvasStrokeRenderer,
-  textureStore: TextureBitmapStore,
-  onChooseColor: (Color, (Color) -> Unit) -> Unit,
-) {
-  Column(modifier = Modifier.fillMaxWidth()) {
-    // Toggle Tab (always visible)
-    Surface(
-      modifier =
-        Modifier.fillMaxWidth().height(40.dp).clickable { viewModel.togglePreviewExpanded() },
-      color = MaterialTheme.colorScheme.surfaceVariant,
-      tonalElevation = 4.dp,
-      shadowElevation = 8.dp,
-    ) {
-      Box(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        contentAlignment = Alignment.Center,
-      ) {
-        Row(
-          modifier = Modifier.align(Alignment.CenterStart),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Icon(
-            if (viewModel.isPreviewExpanded) {
-              Icons.Default.KeyboardArrowDown
-            } else {
-              Icons.Default.KeyboardArrowUp
-            },
-            contentDescription = if (viewModel.isPreviewExpanded) "Collapse" else "Expand",
-          )
-          Spacer(Modifier.width(8.dp))
-          Text(
-            "Test canvas",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-          )
-          if (viewModel.isPreviewExpanded) {
-            Spacer(Modifier.width(16.dp))
-            Text(
-              "Reset",
-              modifier = Modifier.clickable { viewModel.clearStrokes() },
-              style = MaterialTheme.typography.labelLarge,
-              color = MaterialTheme.colorScheme.primary,
-              fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.width(16.dp))
-            Text(
-              "Invert canvas",
-              modifier = Modifier.clickable { viewModel.toggleCanvasTheme() },
-              style = MaterialTheme.typography.labelLarge,
-              color = MaterialTheme.colorScheme.primary,
-              fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.width(16.dp))
-            
-            // Auto-update toggle
-            Row(verticalAlignment = Alignment.CenterVertically) {
-              Checkbox(
-                checked = viewModel.testAutoUpdateStrokes,
-                onCheckedChange = { viewModel.testAutoUpdateStrokes = it }
-              )
-              Spacer(Modifier.width(4.dp))
-              Text("Auto-update", style = MaterialTheme.typography.labelLarge)
-            }
-            Spacer(Modifier.width(16.dp))
-            
-            // Color picker
-            Box(
-              modifier = Modifier
-                .size(20.dp)
-                .background(viewModel.testBrushColor)
-                .border(1.dp, MaterialTheme.colorScheme.outline)
-                .clickable {
-                  onChooseColor(viewModel.testBrushColor) { newColor ->
-                    viewModel.updateTestBrushColor(newColor)
-                  }
-                }
-            )
-            Spacer(Modifier.width(16.dp))
-            
-            // Size selector
-            var sizeExpanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-              expanded = sizeExpanded,
-              onExpandedChange = { sizeExpanded = it },
-              modifier = Modifier.width(80.dp)
-            ) {
-              Text(
-                text = "${viewModel.testBrushSize.toInt()}px",
-                modifier = Modifier.menuAnchor().clickable { sizeExpanded = true },
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-              )
-              ExposedDropdownMenu(
-                expanded = sizeExpanded,
-                onDismissRequest = { sizeExpanded = false }
-              ) {
-                for (size in 10..50 step 10) {
-                  DropdownMenuItem(
-                    text = { Text("${size}px") },
-                    onClick = {
-                      viewModel.updateTestBrushSize(size.toFloat())
-                      sizeExpanded = false
-                    }
-                  )
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // Expanding Drawer Content
-    AnimatedVisibility(
-      visible = viewModel.isPreviewExpanded,
-      enter = expandVertically(),
-      exit = shrinkVertically(),
-    ) {
-      Surface(
-        modifier =
-          Modifier.fillMaxWidth().height((PREVIEW_HEIGHT_EXPANDED - PREVIEW_HEIGHT_COLLAPSED).dp),
-        tonalElevation = 8.dp,
-        color =
-          if (viewModel.isDarkCanvas) {
-            MaterialTheme.colorScheme.inverseSurface
-          } else {
-            MaterialTheme.colorScheme.surface
-          },
-      ) {
-        CanvasSection(
-          viewModel = viewModel,
-          strokeList = viewModel.strokeList,
-          strokeRenderer = strokeRenderer,
-          textureStore = textureStore,
-          brush = viewModel.brush.collectAsState().value,
-          onStrokesAdded = { 
-            viewModel.strokeList.addAll(it)
-            viewModel.advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
-          },
-          isDark = viewModel.isDarkCanvas,
-        )
-      }
-    }
-  }
-}
-
-@Composable
-fun CanvasSection(
-  viewModel: BrushGraphViewModel,
-  strokeList: List<androidx.ink.strokes.Stroke>,
-  strokeRenderer: CanvasStrokeRenderer,
-  textureStore: TextureBitmapStore,
-  brush: androidx.ink.brush.Brush,
-  onStrokesAdded: (List<androidx.ink.strokes.Stroke>) -> Unit,
-  isDark: Boolean = false,
-) {
-  Box(modifier = Modifier.fillMaxSize()) {
-    Text(
-      "Draw here to test",
-      modifier = Modifier.align(Alignment.Center),
-      style = MaterialTheme.typography.labelMedium,
-      color =
-        if (isDark) {
-          MaterialTheme.colorScheme.inverseOnSurface
-        } else {
-          MaterialTheme.colorScheme.onSurface
-        },
-    )
-    DrawingSurface(
-      strokes = strokeList,
-      canvasStrokeRenderer = strokeRenderer,
-      textureStore = textureStore,
-      onStrokesFinished = onStrokesAdded,
-      onErase = { _, _ -> },
-      onEraseStart = {},
-      onEraseEnd = {},
-      currentBrush = brush,
-      onGetNextBrush = { viewModel.brush.value },
-      isEraserMode = false,
-      backgroundImageUri = null,
-      onStartDrag = {},
-    )
-  }
-}
-
-@Composable
-fun FloatingActionMenu(
-  onClose: () -> Unit,
-  onExport: () -> Unit,
-  onLoadBrushFile: () -> Unit,
-  onSaveToPalette: () -> Unit,
-  viewModel: BrushGraphViewModel,
-  textureStore: TextureBitmapStore,
-  onOrganize: () -> Unit,
-  onDeleteBrush: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  val context = LocalContext.current
-  var showMoreMenu by remember { mutableStateOf(false) }
-  var showPaletteMenu by remember { mutableStateOf(false) }
-  var showClearConfirmation by remember { mutableStateOf(false) }
-  var showReorganizeConfirmation by remember { mutableStateOf(false) }
-  var showTemplatesMenu by remember { mutableStateOf(false) }
-  var showOptionsDialog by remember { mutableStateOf(false) }
-  var showTutorialWarningDialog by remember { mutableStateOf(false) }
-  var showTutorialFinishDialog by remember { mutableStateOf(false) }
-
-  val savedBrushes by viewModel.savedPaletteBrushes.collectAsState()
-
-  if (showClearConfirmation) {
-    AlertDialog(
-      onDismissRequest = { showClearConfirmation = false },
-      title = { Text("Clear Graph") },
-      text = {
-        Text("Are you sure you want to clear the entire brush graph? This action cannot be undone.")
-      },
-      confirmButton = {
-        Button(
-          onClick = {
-            onDeleteBrush()
-            showClearConfirmation = false
-          }
-        ) {
-          Text("Clear")
-        }
-      },
-      dismissButton = { Button(onClick = { showClearConfirmation = false }) { Text("Cancel") } },
-    )
-  }
-
-  LaunchedEffect(viewModel.tutorialStep) {
-    if (viewModel.isTutorialSandboxMode && viewModel.tutorialStep == null) {
-      showTutorialFinishDialog = true
-    }
-  }
-
-  if (showTutorialWarningDialog) {
-    AlertDialog(
-      onDismissRequest = { showTutorialWarningDialog = false },
-      title = { Text("Start Tutorial") },
-      text = {
-        Text("Starting the tutorial will clear your current brush graph to start from scratch. Your current brush will be saved and restored when you exit the tutorial.")
-      },
-      confirmButton = {
-        Button(
-          onClick = {
-            viewModel.startTutorialSandbox()
-            showTutorialWarningDialog = false
-          }
-        ) {
-          Text("Start")
-        }
-      },
-      dismissButton = { Button(onClick = { showTutorialWarningDialog = false }) { Text("Cancel") } },
-    )
-  }
-
-  if (showTutorialFinishDialog) {
-    AlertDialog(
-      onDismissRequest = { showTutorialFinishDialog = false },
-      title = { Text("Exit Tutorial") },
-      text = {
-        Text("Do you want to keep the brush you built in the tutorial, or restore your original brush?")
-      },
-      confirmButton = {
-        Button(
-          onClick = {
-            viewModel.endTutorialSandbox(keepChanges = true)
-            showTutorialFinishDialog = false
-          }
-        ) {
-          Text("Keep Tutorial Brush")
-        }
-      },
-      dismissButton = {
-        Button(
-          onClick = {
-            viewModel.endTutorialSandbox(keepChanges = false)
-            showTutorialFinishDialog = false
-          }
-        ) {
-          Text("Restore Original Brush")
-        }
-      },
-    )
-  }
-
-  if (showOptionsDialog) {
-    AlertDialog(
-      onDismissRequest = { showOptionsDialog = false },
-      title = { Text("Options") },
-      text = {
-        Column {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-          ) {
-            Text("Lock text fields", modifier = Modifier.weight(1f))
-            Switch(
-              checked = viewModel.textFieldsLocked,
-              onCheckedChange = { viewModel.toggleTextFieldsLocked() }
-            )
-          }
-        }
-      },
-      confirmButton = {
-        Button(onClick = { showOptionsDialog = false }) {
-          Text("OK")
-        }
-      }
-    )
-  }
-
-  if (showReorganizeConfirmation) {
-    AlertDialog(
-      onDismissRequest = { showReorganizeConfirmation = false },
-      title = { Text("Reorganize Graph") },
-      text = {
-        Text(
-          "Are you sure you want to reorganize the graph? This will reset all node positions and expansion states. This action cannot be undone."
-        )
-      },
-      confirmButton = {
-        Button(
-          onClick = {
-            onOrganize()
-            showReorganizeConfirmation = false
-          }
-        ) {
-          Text("Reorganize")
-        }
-      },
-      dismissButton = {
-        Button(onClick = { showReorganizeConfirmation = false }) { Text("Cancel") }
-      },
-    )
-  }
-
-  Surface(
-    modifier = modifier,
-    shape = RoundedCornerShape(32.dp),
-    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-    tonalElevation = 4.dp,
-    shadowElevation = 8.dp,
-  ) {
-    Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-      IconButton(
-        onClick = onClose,
-        colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent),
-      ) {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Exit")
-      }
-
-      VerticalDivider(
-        modifier = Modifier.height(24.dp).padding(horizontal = 4.dp),
-        thickness = 1.dp,
-        color = MaterialTheme.colorScheme.outlineVariant,
-      )
-
-      Box {
-        IconButton(onClick = { showMoreMenu = true }) {
-          Icon(Icons.Default.MoreVert, contentDescription = "More options")
-        }
-
-        DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {          
-          DropdownMenuItem(
-            text = { Text("Select") },
-            onClick = {
-              viewModel.enterSelectionMode(null)
-              showTemplatesMenu = false
-              showMoreMenu = false
-            }
-          )
-          DropdownMenuItem(
-            text = { Text(if (viewModel.isTutorialSandboxMode) "Exit Tutorial" else "Tutorial") },
-            onClick = {
-              showMoreMenu = false
-              if (viewModel.isTutorialSandboxMode) {
-                showTutorialFinishDialog = true
-              } else {
-                showTutorialWarningDialog = true
-              }
-            }
-          )
-          DropdownMenuItem(
-            text = { Text("Export") },
-            onClick = {
-              showMoreMenu = false
-              onExport()
-            },
-          )
-          DropdownMenuItem(
-            text = { Text("Import") },
-            onClick = {
-              showMoreMenu = false
-              onLoadBrushFile()
-            },
-          )
-          DropdownMenuItem(
-            text = { Text("Organize") },
-            onClick = {
-              showMoreMenu = false
-              showReorganizeConfirmation = true
-            },
-          )
-          Box {
-            DropdownMenuItem(
-              text = { Text("Templates") },
-              onClick = { showTemplatesMenu = true },
-              trailingIcon = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
-            )
-            DropdownMenu(
-              expanded = showTemplatesMenu,
-              onDismissRequest = { showTemplatesMenu = false },
-              offset = DpOffset(x = 127.dp, y = (-56).dp)
-            ) {
-              DropdownMenuItem(
-                text = { Text("Pressure Pen") },
-                onClick = {
-                  viewModel.loadBrushFamily(StockBrushes.pressurePen())
-                  showTemplatesMenu = false
-                  showMoreMenu = false
-                }
-              )
-              DropdownMenuItem(
-                text = { Text("Marker") },
-                onClick = {
-                  viewModel.loadBrushFamily(StockBrushes.marker())
-                  showTemplatesMenu = false
-                  showMoreMenu = false
-                }
-              )
-              DropdownMenuItem(
-                text = { Text("Highlighter") },
-                onClick = {
-                  viewModel.loadBrushFamily(StockBrushes.highlighter())
-                  showTemplatesMenu = false
-                  showMoreMenu = false
-                }
-              )
-              DropdownMenuItem(
-                text = { Text("Dashed Line") },
-                onClick = {
-                  viewModel.loadBrushFamily(StockBrushes.dashedLine())
-                  showTemplatesMenu = false
-                  showMoreMenu = false
-                }
-              )
-              val builtInBrushes = CustomBrushes.getBrushes(context)
-              if (builtInBrushes.isNotEmpty()) {
-                HorizontalDivider()
-                Text(
-                  text = "Custom Brushes",
-                  modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                  style = MaterialTheme.typography.labelLarge,
-                  color = MaterialTheme.colorScheme.primary
-                )
-                builtInBrushes.forEach { customBrush ->
-                  DropdownMenuItem(
-                    text = { Text(customBrush.name) },
-                    onClick = {
-                      viewModel.loadBrushFamily(customBrush.brushFamily)
-                      showTemplatesMenu = false
-                      showMoreMenu = false
-                    }
-                  )
-                }
-              }
-            }
-          }
-          HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-          DropdownMenuItem(
-            text = { Text("Delete Brush", color = MaterialTheme.colorScheme.error) },
-            onClick = {
-              showMoreMenu = false
-              showClearConfirmation = true
-            },
-          )
-          HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-          DropdownMenuItem(
-            text = { Text("Options") },
-            onClick = {
-              showMoreMenu = false
-              showOptionsDialog = true
-            },
-          )
-        }
-      }
-
-      Box {
-        TextButton(onClick = { showPaletteMenu = true }) {
-          Text("My Palette")
-        }
-
-        DropdownMenu(expanded = showPaletteMenu, onDismissRequest = { showPaletteMenu = false }) {
-          if (savedBrushes.isEmpty()) {
-            DropdownMenuItem(
-              text = { Text("No saved brushes yet") },
-              onClick = { showPaletteMenu = false },
-            )
-          } else {
-            savedBrushes.forEach { entity ->
-              DropdownMenuItem(
-                text = {
-                  Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                  ) {
-                    Text(entity.name, modifier = Modifier.weight(1f))
-                    IconButton(onClick = {
-                      viewModel.deleteFromPalette(entity.name)
-                    }) {
-                      Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(18.dp)
-                      )
-                    }
-                  }
-                },
-                onClick = {
-                  viewModel.loadFromPalette(entity, textureStore)
-                  showPaletteMenu = false
-                }
-              )
-            }
-          }
-        }
-      }
-
-      Spacer(Modifier.width(8.dp))
-
-      Button(
-        onClick = onSaveToPalette,
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.height(40.dp),
-      ) {
-        Text("Save to Palette")
-      }
-    }
-  }
-}
-
-@Composable
-fun NotificationPane(
-  isLandscape: Boolean,
-  viewModel: BrushGraphViewModel,
-  modifier: Modifier = Modifier,
-) {
-  val issues = viewModel.graphIssues.collectAsState().value
-  val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
-  val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
-
-  AnimatedVisibility(
-    visible = viewModel.isErrorPaneOpen,
-    enter =
-      if (isLandscape) {
-        slideInHorizontally(initialOffsetX = { it })
-      } else {
-        slideInVertically(initialOffsetY = { it })
-      },
-    exit =
-      if (isLandscape) {
-        slideOutHorizontally(targetOffsetX = { it })
-      } else {
-        slideOutVertically(targetOffsetY = { it })
-      },
-    modifier = modifier.zIndex(10f),
-  ) {
-    Surface(
-      modifier =
-        if (isLandscape) {
-          Modifier.fillMaxHeight().width(INSPECTOR_WIDTH_LANDSCAPE.dp)
-        } else {
-          Modifier.fillMaxWidth().height(INSPECTOR_HEIGHT_PORTRAIT.dp)
-        },
-      tonalElevation = 8.dp,
-      shadowElevation = 8.dp,
-      color = MaterialTheme.colorScheme.surface,
-    ) {
-      Column {
-        // Title bar with close button
-        val headerColor =
-          when {
-            hasErrors -> MaterialTheme.colorScheme.error
-            hasWarnings -> MaterialTheme.extendedColorScheme.warning
-            else -> MaterialTheme.colorScheme.primary
-          }
-        val iconColor =
-          when {
-            hasErrors -> MaterialTheme.colorScheme.onError
-            hasWarnings -> MaterialTheme.extendedColorScheme.onWarning
-            else -> MaterialTheme.colorScheme.onPrimary
-          }
-        val headerIcon =
-          when {
-            hasErrors -> Icons.Default.Error
-            hasWarnings -> Icons.Default.Warning
-            else -> Icons.Default.Info
-          }
-
-        Surface(color = headerColor, tonalElevation = 2.dp) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
-          ) {
-            Icon(headerIcon, contentDescription = null, tint = iconColor)
-            Spacer(Modifier.width(8.dp))
-            Text(
-              text = "Notifications (${issues.size})",
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.Bold,
-              modifier = Modifier.weight(1f),
-              color = iconColor,
-            )
-            IconButton(onClick = { viewModel.toggleErrorPane() }) {
-              Icon(Icons.Default.Close, contentDescription = "Close Pane", tint = iconColor)
-            }
-          }
-        }
-        LazyColumn(modifier = Modifier.padding(16.dp)) {
-          val errors = issues.filter { it.severity == ValidationSeverity.ERROR }
-          val warnings = issues.filter { it.severity == ValidationSeverity.WARNING }
-          val debugs = issues.filter { it.severity == ValidationSeverity.DEBUG }
-
-          if (errors.isNotEmpty()) {
-            item {
-              NotificationGroup(
-                title = "Errors",
-                issues = errors,
-                icon = Icons.Default.Error,
-                color = MaterialTheme.colorScheme.error,
-                viewModel = viewModel,
-                isLandscape = isLandscape,
-              )
-            }
-          }
-          if (warnings.isNotEmpty()) {
-            item {
-              NotificationGroup(
-                title = "Warnings",
-                issues = warnings,
-                icon = Icons.Default.Warning,
-                color = MaterialTheme.extendedColorScheme.warning,
-                viewModel = viewModel,
-                isLandscape = isLandscape,
-              )
-            }
-          }
-          if (debugs.isNotEmpty()) {
-            item {
-              NotificationGroup(
-                title = "Debug",
-                issues = debugs,
-                icon = Icons.Default.Info,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                viewModel = viewModel,
-                isLandscape = isLandscape,
-              )
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
-fun NotificationGroup(
-  title: String,
-  issues: List<GraphValidationException>,
-  icon: androidx.compose.ui.graphics.vector.ImageVector,
-  color: Color,
-  viewModel: BrushGraphViewModel,
-  isLandscape: Boolean,
-) {
-  var expanded by remember { mutableStateOf(true) }
-  Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-    Surface(
-      modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
-      color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-      shape = RoundedCornerShape(8.dp),
-    ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-      ) {
-        Icon(
-          if (expanded) {
-            Icons.Default.KeyboardArrowDown
-          } else {
-            Icons.Default.ChevronRight
-          },
-          contentDescription = null,
-          modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(8.dp))
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(
-          text = "$title (${issues.size})",
-          style = MaterialTheme.typography.titleSmall,
-          fontWeight = FontWeight.Bold,
-          color = color,
-        )
-      }
-    }
-    if (expanded) {
-      Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp)) {
-        for (issue in issues) {
-          val density = androidx.compose.ui.platform.LocalDensity.current.density
-          Surface(
-            modifier =
-              Modifier.fillMaxWidth().padding(vertical = 4.dp).let {
-                if (issue.nodeId != null) {
-                  it.clickable { viewModel.onIssueClick(issue, isLandscape, density) }
-                } else {
-                  it
-                }
-              },
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = RoundedCornerShape(4.dp),
-          ) {
-            Text(
-              text = issue.message,
-              modifier = Modifier.padding(8.dp),
-              style = MaterialTheme.typography.bodySmall,
-              color = color,
-            )
-          }
-        }
-      }
-    }
-  }
+  return androidx.compose.ui.geometry.Offset(targetX - nodeCenterX * zoom, targetY - nodeCenterY * zoom)
 }

@@ -1,0 +1,385 @@
+@file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
+
+package com.example.cahier.ui.brushgraph.inspectors
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.ink.brush.TextureBitmapStore
+import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
+import com.example.cahier.ui.brushgraph.BrushGraphViewModel
+import com.example.cahier.ui.brushgraph.model.GraphEdge
+import com.example.cahier.ui.brushgraph.model.GraphNode
+import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.TutorialAction
+import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
+import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
+import com.example.cahier.ui.brushgraph.ui.NodeFields
+import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.getTooltip
+import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+
+/** Shows connection details between two nodes and allows deletion. */
+@Composable
+fun EdgeInspector(
+  edge: GraphEdge,
+  fromNode: GraphNode,
+  toNode: GraphNode,
+  inputLabel: String? = null,
+  onNodeFocus: (String) -> Unit,
+  onDisableChange: (Boolean) -> Unit,
+  onDelete: () -> Unit,
+  onAddNodeBetween: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+  if (showDeleteConfirmation) {
+    AlertDialog(
+      onDismissRequest = { showDeleteConfirmation = false },
+      title = { Text("Delete Edge") },
+      text = { Text("Are you sure you want to delete this edge?") },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            onDelete()
+            showDeleteConfirmation = false
+          }
+        ) {
+          Text("Delete", color = MaterialTheme.colorScheme.error)
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
+      },
+    )
+  }
+
+  Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    // From Node Section
+    EdgeNodeInfo(label = "From", node = fromNode, onClick = { onNodeFocus(fromNode.id) })
+    if (fromNode.data is NodeData.Behavior && toNode.data is NodeData.Behavior) {
+      Spacer(Modifier.height(8.dp))
+      Button(
+        onClick = { onAddNodeBetween() },
+        modifier = Modifier.align(Alignment.CenterHorizontally)
+      ) {
+        Text("Add Node Between")
+      }
+      Spacer(Modifier.height(8.dp))
+    } else {
+      Spacer(Modifier.height(16.dp))
+    }
+
+    // To Node Section
+    EdgeNodeInfo(
+      label = "To",
+      node = toNode,
+      inputLabel = inputLabel,
+      onClick = { onNodeFocus(toNode.id) },
+    )
+
+    Spacer(modifier = Modifier.weight(1f))
+
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+    ) {
+      Checkbox(
+        checked = edge.isDisabled,
+        onCheckedChange = { checked ->
+          onDisableChange(checked)
+        }
+      )
+      Spacer(Modifier.width(8.dp))
+      Text("Disable edge")
+    }
+    Spacer(Modifier.height(8.dp))
+
+    Button(
+      onClick = { showDeleteConfirmation = true },
+      modifier = Modifier.fillMaxWidth().height(48.dp),
+      colors =
+        ButtonDefaults.buttonColors(
+          containerColor = MaterialTheme.colorScheme.error,
+          contentColor = MaterialTheme.colorScheme.onError,
+        ),
+    ) {
+      Text("Delete")
+    }
+  }
+}
+
+@Composable
+private fun EdgeNodeInfo(
+  label: String,
+  node: GraphNode,
+  inputLabel: String? = null,
+  onClick: () -> Unit,
+) {
+  val title = node.data.title()
+  val subtitles = node.data.subtitles()
+
+  Column(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(8.dp)) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.primary,
+    )
+    Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    for (subtitle in subtitles) {
+      Text(
+        text = subtitle,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    if (inputLabel != null) {
+      Text(
+        text = "Input: $inputLabel",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+  }
+}
+
+/** Renders the content of the node inspector. */
+@Composable
+fun NodeInspector(
+  node: GraphNode,
+  onUpdate: (NodeData) -> Unit,
+  onDisableChange: (Boolean) -> Unit,
+  onChooseColor: (Color, (Color) -> Unit) -> Unit,
+  allTextureIds: Set<String>,
+  onLoadTexture: () -> Unit,
+  strokeRenderer: CanvasStrokeRenderer,
+  textFieldsLocked: Boolean,
+  onDelete: () -> Unit,
+  onFieldEditComplete: () -> Unit = {},
+  onDropdownEditComplete: () -> Unit = {},
+  modifier: Modifier = Modifier,
+) {
+  var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+  if (showDeleteConfirmation) {
+    AlertDialog(
+      onDismissRequest = { showDeleteConfirmation = false },
+      title = { Text("Delete Node") },
+      text = { Text("Are you sure you want to delete this node and all its connections?") },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            onDelete()
+            showDeleteConfirmation = false
+          }
+        ) {
+          Text("Delete", color = MaterialTheme.colorScheme.error)
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
+      },
+    )
+  }
+
+  Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    Box(modifier = Modifier.weight(1f)) {
+      NodeFields(
+        node = node,
+        onUpdate = onUpdate,
+        onChooseColor = onChooseColor,
+        allTextureIds = allTextureIds,
+        onLoadTexture = onLoadTexture,
+        strokeRenderer = strokeRenderer,
+        textFieldsLocked = textFieldsLocked,
+        onFieldEditComplete = onFieldEditComplete,
+        onDropdownEditComplete = onDropdownEditComplete,
+      )
+    }
+
+    Spacer(Modifier.height(16.dp))
+
+    if (node.data !is NodeData.Family) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+      ) {
+        Checkbox(
+          checked = node.isDisabled,
+          onCheckedChange = { checked ->
+            onDisableChange(checked)
+          }
+        )
+        Spacer(Modifier.width(8.dp))
+        Text("Disable node")
+      }
+      Spacer(Modifier.height(8.dp))
+
+      Button(
+        onClick = { showDeleteConfirmation = true },
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+        colors =
+          ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError,
+          ),
+      ) {
+        Text("Delete")
+      }
+    }
+  }
+}
+
+@Composable
+fun AdaptiveInspectorPane(
+  isLandscape: Boolean,
+  viewModel: BrushGraphViewModel,
+  onChooseColor: (Color, (Color) -> Unit) -> Unit,
+  textureStore: TextureBitmapStore,
+  allTextureIds: Set<String>,
+  onLoadTexture: () -> Unit,
+  strokeRenderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier,
+) {
+  val selectedNode = viewModel.graph.nodes.find { it.id == viewModel.selectedNodeId }
+  val selectedEdge = viewModel.selectedEdge
+  val density = androidx.compose.ui.platform.LocalDensity.current.density
+
+  AnimatedVisibility(
+    visible = selectedNode != null || selectedEdge != null,
+    enter =
+      if (isLandscape) {
+        slideInHorizontally(initialOffsetX = { it })
+      } else {
+        slideInVertically(initialOffsetY = { it })
+      },
+    exit =
+      if (isLandscape) {
+        slideOutHorizontally(targetOffsetX = { it })
+      } else {
+        slideOutVertically(targetOffsetY = { it })
+      },
+    modifier = modifier.zIndex(10f),
+  ) {
+    if (selectedNode != null || selectedEdge != null) {
+      Surface(
+        modifier =
+          if (isLandscape) {
+            Modifier.fillMaxHeight().width(INSPECTOR_WIDTH_LANDSCAPE.dp)
+          } else {
+            Modifier.fillMaxWidth().height(INSPECTOR_HEIGHT_PORTRAIT.dp)
+          },
+        tonalElevation = 8.dp,
+        shadowElevation = 8.dp,
+        color = MaterialTheme.colorScheme.surface,
+      ) {
+        Column {
+          // Title bar with close button
+          Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 2.dp) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+            ) {
+              val selectionName =
+                if (selectedNode != null) {
+                  selectedNode.data.title()
+                } else {
+                  "Edge"
+                }
+              val titleText = "Inspector: ${selectionName}"
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+              ) {
+                Text(
+                  text = titleText,
+                  style = MaterialTheme.typography.titleMedium,
+                  fontWeight = FontWeight.Bold,
+                )
+                if (selectedNode != null) {
+                  var showNodeTooltip by remember { mutableStateOf(false) }
+                  IconButton(onClick = { showNodeTooltip = true }) {
+                    Icon(Icons.AutoMirrored.Filled.Help, contentDescription = "Help")
+                  }
+                  if (showNodeTooltip) {
+                    TooltipDialog(
+                      title = selectedNode.data.title(),
+                      text = selectedNode.data.getTooltip(),
+                      onDismiss = { showNodeTooltip = false }
+                    )
+                  }
+                }
+              }
+              IconButton(
+                onClick = {
+                  viewModel.clearSelectedNode()
+                  viewModel.clearSelectedEdge()
+                }
+              ) {
+                Icon(Icons.Default.Close, contentDescription = "Close Inspector")
+              }
+            }
+          }
+          Box {
+            if (selectedNode != null) {
+              NodeInspector(
+                node = selectedNode,
+                onUpdate = { viewModel.updateNodeData(selectedNode.id, it) },
+                onDisableChange = { viewModel.setNodeDisabled(selectedNode.id, it) },
+                onChooseColor = onChooseColor,
+                allTextureIds = viewModel.allTextureIds,
+                onLoadTexture = onLoadTexture,
+                strokeRenderer = strokeRenderer,
+                textFieldsLocked = viewModel.textFieldsLocked,
+                onDelete = { viewModel.deleteNode(selectedNode.id) },
+                onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) },
+                onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
+              )
+            } else if (selectedEdge != null) {
+              val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromNodeId }
+              val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toNodeId }
+              if (fromNode != null && toNode != null) {
+                val visiblePorts = toNode.getVisiblePorts(viewModel.graph)
+                val port = visiblePorts.find { it.id == selectedEdge.toPortId }
+                val inputLabel = port?.label
+                EdgeInspector(
+                  edge = selectedEdge,
+                  fromNode = fromNode,
+                  toNode = toNode,
+                  inputLabel = inputLabel,
+                  onNodeFocus = { nodeId: String ->
+                    viewModel.centerNode(nodeId)
+                  },
+                  onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
+                  onDelete = { viewModel.deleteEdge(selectedEdge) },
+                  onAddNodeBetween = { viewModel.addNodeBetween(selectedEdge) },
+                )
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
