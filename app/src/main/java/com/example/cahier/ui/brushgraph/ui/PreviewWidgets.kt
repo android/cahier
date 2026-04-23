@@ -2,6 +2,10 @@
 
 package com.example.cahier.ui.brushgraph.ui
 
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,13 +54,6 @@ fun ProtoBrushTip.toBrushTip(): BrushTip? {
     .addCoats(ProtoBrushCoat.newBuilder().setTip(this).build())
     .build()
   return runCatching { familyProto.toBrushFamily() }.getOrNull()?.coats?.firstOrNull()?.tip
-}
-
-fun ProtoBrushPaint.toBrushPaint(): BrushPaint? {
-  val familyProto = ProtoBrushFamily.newBuilder()
-    .addCoats(ProtoBrushCoat.newBuilder().addPaintPreferences(this).build())
-    .build()
-  return runCatching { familyProto.toBrushFamily() }.getOrNull()?.coats?.firstOrNull()?.paintPreferences?.firstOrNull()
 }
 
 fun ProtoBrushCoat.toBrushCoat(): BrushCoat? {
@@ -129,7 +126,11 @@ fun SineWavePreview(
 
 @Composable
 fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer) {
-  val family = brushCoat.toBrushCoat()?.let { BrushFamily(coats = listOf(it)) } ?: BrushFamily()
+  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = brushCoat) {
+    value = withContext(Dispatchers.IO) {
+      brushCoat.toBrushCoat()?.let { BrushFamily(coats = listOf(it)) } ?: BrushFamily()
+    }
+  }
   StrokePreviewWidget(
     family,
     renderer = renderer,
@@ -140,7 +141,11 @@ fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer)
 
 @Composable
 fun TipPreviewWidget(brushTip: ProtoBrushTip, renderer: CanvasStrokeRenderer) {
-  val family = brushTip.toBrushTip()?.let { BrushFamily(coats = listOf(BrushCoat(it))) } ?: BrushFamily()
+  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = brushTip) {
+    value = withContext(Dispatchers.IO) {
+      brushTip.toBrushTip()?.let { BrushFamily(coats = listOf(BrushCoat(it))) } ?: BrushFamily()
+    }
+  }
   StrokePreviewWidget(family, renderer = renderer)
 }
 
@@ -149,8 +154,9 @@ fun ColorFunctionPreviewWidget(
   colorFunction: ink.proto.ColorFunction,
   renderer: CanvasStrokeRenderer,
 ) {
-  val family =
-    runCatching {
+  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = colorFunction) {
+    value = withContext(Dispatchers.IO) {
+      runCatching {
         ProtoBrushFamily.newBuilder()
           .addCoats(
             ProtoBrushCoat.newBuilder()
@@ -160,8 +166,9 @@ fun ColorFunctionPreviewWidget(
           )
           .build()
           .toBrushFamily()
-      }
-      .getOrDefault(BrushFamily())
+      }.getOrDefault(BrushFamily())
+    }
+  }
   StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
@@ -170,8 +177,9 @@ fun TextureLayerPreviewWidget(
   textureLayer: ProtoBrushPaint.TextureLayer,
   renderer: CanvasStrokeRenderer,
 ) {
-  val family =
-    runCatching {
+  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = textureLayer) {
+    value = withContext(Dispatchers.IO) {
+      runCatching {
         ProtoBrushFamily.newBuilder()
           .addCoats(
             ProtoBrushCoat.newBuilder()
@@ -181,8 +189,9 @@ fun TextureLayerPreviewWidget(
           )
           .build()
           .toBrushFamily()
-      }
-      .getOrDefault(BrushFamily())
+      }.getOrDefault(BrushFamily())
+    }
+  }
   StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
@@ -193,19 +202,20 @@ fun TextureWrapPreviewWidget(
   renderer: CanvasStrokeRenderer,
   clientTextureId: String = "",
 ) {
-  val textureLayer =
-    ProtoBrushPaint.TextureLayer.newBuilder()
-      .setClientTextureId(clientTextureId)
-      .setSizeX(1f / 3f)
-      .setSizeY(1f / 3f)
-      .setWrapX(wrapX)
-      .setWrapY(wrapY)
-      .setMapping(ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING)
-      .setSizeUnit(ProtoBrushPaint.TextureLayer.SizeUnit.SIZE_UNIT_BRUSH_SIZE)
-      .build()
+  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = Triple(wrapX, wrapY, clientTextureId)) {
+    value = withContext(Dispatchers.IO) {
+      val textureLayer =
+        ProtoBrushPaint.TextureLayer.newBuilder()
+          .setClientTextureId(clientTextureId)
+          .setSizeX(1f / 3f)
+          .setSizeY(1f / 3f)
+          .setWrapX(wrapX)
+          .setWrapY(wrapY)
+          .setMapping(ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING)
+          .setSizeUnit(ProtoBrushPaint.TextureLayer.SizeUnit.SIZE_UNIT_BRUSH_SIZE)
+          .build()
 
-  val family =
-    runCatching {
+      runCatching {
         ProtoBrushFamily.newBuilder()
           .addCoats(
             ProtoBrushCoat.newBuilder()
@@ -215,8 +225,9 @@ fun TextureWrapPreviewWidget(
           )
           .build()
           .toBrushFamily()
-      }
-      .getOrDefault(BrushFamily())
+      }.getOrDefault(BrushFamily())
+    }
+  }
   StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
@@ -226,27 +237,26 @@ fun BlendModePreviewWidget(
   renderer: CanvasStrokeRenderer,
   clientTextureId: String = "",
 ) {
-  // We use two layers to show blending. 
-  // One is a base texture, the other is the one with the blend mode.
-  val topLayer =
-    ProtoBrushPaint.TextureLayer.newBuilder()
-      .setClientTextureId(clientTextureId)
-      .setBlendMode(blendMode)
-      .setSizeX(1f)
-      .setSizeY(1f)
-      .build()
-      
-  val bottomLayer = 
-    ProtoBrushPaint.TextureLayer.newBuilder()
-      .setClientTextureId(clientTextureId) // Or another one if available
-      .setOffsetX(0.2f)
-      .setOffsetY(0.2f)
-      .setSizeX(1f)
-      .setSizeY(1f)
-      .build()
+  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = Pair(blendMode, clientTextureId)) {
+    value = withContext(Dispatchers.IO) {
+      val topLayer =
+        ProtoBrushPaint.TextureLayer.newBuilder()
+          .setClientTextureId(clientTextureId)
+          .setBlendMode(blendMode)
+          .setSizeX(1f)
+          .setSizeY(1f)
+          .build()
+          
+      val bottomLayer = 
+        ProtoBrushPaint.TextureLayer.newBuilder()
+          .setClientTextureId(clientTextureId)
+          .setOffsetX(0.2f)
+          .setOffsetY(0.2f)
+          .setSizeX(1f)
+          .setSizeY(1f)
+          .build()
 
-  val family =
-    runCatching {
+      runCatching {
         ProtoBrushFamily.newBuilder()
           .addCoats(
             ProtoBrushCoat.newBuilder()
@@ -261,8 +271,9 @@ fun BlendModePreviewWidget(
           )
           .build()
           .toBrushFamily()
-      }
-      .getOrDefault(BrushFamily())
+      }.getOrDefault(BrushFamily())
+    }
+  }
   StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
