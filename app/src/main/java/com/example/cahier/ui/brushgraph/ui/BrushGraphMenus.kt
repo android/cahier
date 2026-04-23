@@ -230,22 +230,21 @@ fun PaletteMenu(
 }
 
 @Composable
-fun CreateNodeFAB(
-  viewModel: BrushGraphViewModel,
+fun CreateNodeSpeedDial(
   isLandscape: Boolean,
-  viewportSize: Size,
+  isAnySidePaneOpen: Boolean,
+  isPreviewExpanded: Boolean,
+  viewportSize: androidx.compose.ui.geometry.Size,
   modifier: Modifier = Modifier,
+  menuContent: @Composable (onClose: () -> Unit) -> Unit
 ) {
   var expanded by remember { mutableStateOf(false) }
 
-  val previewHeight = if (viewModel.isPreviewExpanded) {
+  val previewHeight = if (isPreviewExpanded) {
     PREVIEW_HEIGHT_EXPANDED
   } else {
     PREVIEW_HEIGHT_COLLAPSED
   }
-  val isInspectorOpen = (viewModel.selectedNodeId != null || viewModel.selectedEdge != null)
-  val isErrorPaneOpen = viewModel.isErrorPaneOpen
-  val isAnySidePaneOpen = isInspectorOpen || isErrorPaneOpen
 
   val fabPaddingBottom by
     animateDpAsState(
@@ -269,35 +268,6 @@ fun CreateNodeFAB(
       label = "fabPaddingEnd",
     )
 
-  val density = LocalDensity.current.density
-  val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
-  val inspectorHeightPx = INSPECTOR_HEIGHT_PORTRAIT * density
-  val previewHeightPx = previewHeight * density
-
-  val (visibleWidth, visibleHeight) =
-    if (isLandscape) {
-      val w =
-        if (isAnySidePaneOpen) {
-          viewportSize.width - inspectorWidthPx
-        } else {
-          viewportSize.width
-        }
-      val h = viewportSize.height - previewHeightPx
-      w to h
-    } else {
-      val w = viewportSize.width
-      val h =
-        if (isAnySidePaneOpen) {
-          viewportSize.height - maxOf(previewHeightPx, inspectorHeightPx)
-        } else {
-          viewportSize.height - previewHeightPx
-        }
-      w to h
-    }
-
-  val visibleCenter = Offset(visibleWidth / 2f, visibleHeight / 2f)
-  val centerInCanvas = (visibleCenter - viewModel.offset) / viewModel.zoom
-
   Box(modifier = modifier.padding(bottom = fabPaddingBottom, end = fabPaddingEnd).zIndex(2f)) {
     Column(horizontalAlignment = Alignment.End) {
       AnimatedVisibility(
@@ -313,58 +283,10 @@ fun CreateNodeFAB(
           shadowElevation = 8.dp,
         ) {
           Column(modifier = Modifier.padding(vertical = 8.dp)) {
-            DropdownMenuItem(
-              text = { Text(stringResource(R.string.bg_coat)) },
-              leadingIcon = { Icon(Icons.Default.Layers, contentDescription = null) },
-              onClick = {
-                viewModel.addCoatNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text(stringResource(R.string.bg_paint)) },
-              leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null) },
-              onClick = {
-                viewModel.addPaintNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text(stringResource(R.string.bg_tip)) },
-              leadingIcon = { Icon(Icons.Default.ShapeLine, contentDescription = null) },
-              onClick = {
-                viewModel.addTipNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text(stringResource(R.string.bg_behavior)) },
-              leadingIcon = { Icon(Icons.Default.Psychology, contentDescription = null) },
-              onClick = {
-                viewModel.addBehaviorNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text(stringResource(R.string.bg_color_function)) },
-              leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null) },
-              onClick = {
-                viewModel.addColorFunctionNode(centerInCanvas)
-                expanded = false
-              },
-            )
-            DropdownMenuItem(
-              text = { Text(stringResource(R.string.bg_texture_layer)) },
-              leadingIcon = { Icon(Icons.Default.Layers, contentDescription = null) },
-              onClick = {
-                viewModel.addTextureLayerNode(centerInCanvas)
-                expanded = false
-              },
-            )
+            menuContent { expanded = false }
           }
         }
       }
-
       FloatingActionButton(
         onClick = { expanded = !expanded },
         shape = CircleShape,
@@ -381,16 +303,25 @@ fun CreateNodeFAB(
 }
 
 @Composable
-fun FloatingActionMenu(
+fun GraphActionMenu(
   onClose: () -> Unit,
   onExport: () -> Unit,
   onLoadBrushFile: () -> Unit,
   onSaveToPalette: () -> Unit,
-  viewModel: BrushGraphViewModel,
   textureStore: TextureBitmapStore,
   onOrganize: () -> Unit,
   onDeleteBrush: () -> Unit,
   onTutorialExitRequested: () -> Unit,
+  savedBrushes: List<CustomBrushEntity>,
+  tutorialStep: com.example.cahier.ui.brushgraph.model.TutorialStep?,
+  isTutorialSandboxMode: Boolean,
+  onEnterSelectionMode: () -> Unit,
+  onLoadBrushFamily: (BrushFamily) -> Unit,
+  onLoadFromPalette: (CustomBrushEntity) -> Unit,
+  onDeleteFromPalette: (String) -> Unit,
+  onStartTutorialSandbox: () -> Unit,
+  textFieldsLocked: Boolean,
+  onToggleTextFieldsLocked: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val context = LocalContext.current
@@ -402,7 +333,6 @@ fun FloatingActionMenu(
   var showOptionsDialog by remember { mutableStateOf(false) }
   var showTutorialWarningDialog by remember { mutableStateOf(false) }
 
-  val savedBrushes by viewModel.savedPaletteBrushes.collectAsState()
 
   ClearGraphConfirmationDialog(
     show = showClearConfirmation,
@@ -413,8 +343,8 @@ fun FloatingActionMenu(
     }
   )
 
-  LaunchedEffect(viewModel.tutorialStep) {
-    if (viewModel.isTutorialSandboxMode && viewModel.tutorialStep == null) {
+  LaunchedEffect(tutorialStep) {
+    if (isTutorialSandboxMode && tutorialStep == null) {
       onTutorialExitRequested()
     }
   }
@@ -423,7 +353,7 @@ fun FloatingActionMenu(
     show = showTutorialWarningDialog,
     onDismiss = { showTutorialWarningDialog = false },
     onConfirm = {
-      viewModel.startTutorialSandbox()
+      onStartTutorialSandbox()
       showTutorialWarningDialog = false
     }
   )
@@ -431,8 +361,8 @@ fun FloatingActionMenu(
   OptionsDialog(
     show = showOptionsDialog,
     onDismiss = { showOptionsDialog = false },
-    textFieldsLocked = viewModel.textFieldsLocked,
-    onToggleTextFieldsLocked = { viewModel.toggleTextFieldsLocked() }
+    textFieldsLocked = textFieldsLocked,
+    onToggleTextFieldsLocked = onToggleTextFieldsLocked
   )
 
   ReorganizeConfirmationDialog(
@@ -473,15 +403,15 @@ fun FloatingActionMenu(
         MoreOptionsMenu(
           expanded = showMoreMenu,
           onDismiss = { showMoreMenu = false },
-          isTutorialSandboxMode = viewModel.isTutorialSandboxMode,
+          isTutorialSandboxMode = isTutorialSandboxMode,
           onSelectMode = {
-            viewModel.enterSelectionMode(null)
+            onEnterSelectionMode()
             showTemplatesMenu = false
             showMoreMenu = false
           },
           onTutorialAction = {
             showMoreMenu = false
-            if (viewModel.isTutorialSandboxMode) {
+            if (isTutorialSandboxMode) {
               onTutorialExitRequested()
             } else {
               showTutorialWarningDialog = true
@@ -502,13 +432,13 @@ fun FloatingActionMenu(
           showTemplatesMenu = showTemplatesMenu,
           onShowTemplatesMenuChange = { showTemplatesMenu = it },
           onTemplateSelect = { family ->
-            viewModel.loadBrushFamily(family)
+            onLoadBrushFamily(family)
             showTemplatesMenu = false
             showMoreMenu = false
           },
           customBrushes = CustomBrushes.getBrushes(context).map { it.name to it.brushFamily },
           onCustomBrushSelect = { family ->
-            viewModel.loadBrushFamily(family)
+            onLoadBrushFamily(family)
             showTemplatesMenu = false
             showMoreMenu = false
           },
@@ -533,11 +463,11 @@ fun FloatingActionMenu(
           onDismiss = { showPaletteMenu = false },
           savedBrushes = savedBrushes,
           onBrushSelect = { entity ->
-            viewModel.loadFromPalette(entity, textureStore)
+            onLoadFromPalette(entity)
             showPaletteMenu = false
           },
           onBrushDelete = { entity ->
-            viewModel.deleteFromPalette(entity.name)
+            onDeleteFromPalette(entity.name)
           }
         )
       }

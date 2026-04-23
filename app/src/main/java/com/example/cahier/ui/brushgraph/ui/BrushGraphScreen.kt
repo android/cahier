@@ -483,7 +483,7 @@ fun BrushGraphScreen(
             }
           },
           menuSlot = {
-            FloatingActionMenu(
+            GraphActionMenu(
               onClose = onNavigateUp,
               onExport = {
                 brushExportLauncher.launch("brush_${System.currentTimeMillis()}.brushfamily")
@@ -493,20 +493,83 @@ fun BrushGraphScreen(
                 paletteBrushNameInput = ""
                 showSavePaletteDialog = true
               },
-              viewModel = viewModel,
               textureStore = textureStore,
               onOrganize = viewModel::reorganize,
               onDeleteBrush = { viewModel.clearGraph() },
               onTutorialExitRequested = { showTutorialFinishDialog = true },
+              savedBrushes = viewModel.savedPaletteBrushes.collectAsState().value,
+              tutorialStep = viewModel.tutorialStep,
+              isTutorialSandboxMode = viewModel.isTutorialSandboxMode,
+              onEnterSelectionMode = { viewModel.enterSelectionMode(null) },
+              onLoadBrushFamily = { viewModel.loadBrushFamily(it) },
+              onLoadFromPalette = { viewModel.loadFromPalette(it, textureStore) },
+              onDeleteFromPalette = { viewModel.deleteFromPalette(it) },
+              onStartTutorialSandbox = { viewModel.startTutorialSandbox() },
+              textFieldsLocked = viewModel.textFieldsLocked,
+              onToggleTextFieldsLocked = { viewModel.toggleTextFieldsLocked() },
               modifier = Modifier.align(Alignment.TopStart).padding(16.dp).zIndex(2f),
             )
           },
           fabSlot = { vSize ->
-            CreateNodeFAB(
-              viewModel = viewModel,
+            val density = LocalDensity.current.density
+            val previewHeight = if (viewModel.isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED
+            val isInspectorOpen = (viewModel.selectedNodeId != null || viewModel.selectedEdge != null)
+            val isErrorPaneOpen = viewModel.isErrorPaneOpen
+            val isAnySidePaneOpen = isInspectorOpen || isErrorPaneOpen
+
+            val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
+            val inspectorHeightPx = INSPECTOR_HEIGHT_PORTRAIT * density
+            val previewHeightPx = previewHeight * density
+
+            val (visibleWidth, visibleHeight) =
+              if (isLandscape) {
+                val w = if (isAnySidePaneOpen) vSize.width - inspectorWidthPx else vSize.width
+                val h = vSize.height - previewHeightPx
+                w to h
+              } else {
+                val w = vSize.width
+                val h = if (isAnySidePaneOpen) vSize.height - maxOf(previewHeightPx, inspectorHeightPx) else vSize.height - previewHeightPx
+                w to h
+              }
+
+            val visibleCenter = Offset(visibleWidth / 2f, visibleHeight / 2f)
+            val centerInCanvas = (visibleCenter - viewModel.offset) / viewModel.zoom
+
+            CreateNodeSpeedDial(
               isLandscape = isLandscape,
+              isAnySidePaneOpen = isAnySidePaneOpen,
+              isPreviewExpanded = viewModel.isPreviewExpanded,
               viewportSize = vSize,
               modifier = Modifier.align(Alignment.BottomEnd),
+              menuContent = { onClose ->
+                data class SpeedDialAction(
+                  val labelRes: Int,
+                  val icon: androidx.compose.ui.graphics.vector.ImageVector,
+                  val onClick: () -> Unit
+                )
+
+                val actions = remember(centerInCanvas) {
+                  listOf(
+                    SpeedDialAction(R.string.bg_coat, Icons.Default.Layers) { viewModel.addCoatNode(centerInCanvas) },
+                    SpeedDialAction(R.string.bg_paint, Icons.Default.Palette) { viewModel.addPaintNode(centerInCanvas) },
+                    SpeedDialAction(R.string.bg_tip, Icons.Default.ShapeLine) { viewModel.addTipNode(centerInCanvas) },
+                    SpeedDialAction(R.string.bg_behavior, Icons.Default.Psychology) { viewModel.addBehaviorNode(centerInCanvas) },
+                    SpeedDialAction(R.string.bg_color_function, Icons.Default.Palette) { viewModel.addColorFunctionNode(centerInCanvas) },
+                    SpeedDialAction(R.string.bg_texture_layer, Icons.Default.Layers) { viewModel.addTextureLayerNode(centerInCanvas) },
+                  )
+                }
+
+                actions.forEach { action ->
+                  DropdownMenuItem(
+                    text = { Text(stringResource(action.labelRes)) },
+                    leadingIcon = { Icon(action.icon, contentDescription = null) },
+                    onClick = {
+                      action.onClick()
+                      onClose()
+                    }
+                  )
+                }
+              }
             )
           },
           tutorialSlot = { vSize ->
