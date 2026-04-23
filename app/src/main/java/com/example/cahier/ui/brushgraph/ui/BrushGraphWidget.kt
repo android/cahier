@@ -19,6 +19,9 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import com.example.cahier.ui.brushdesigner.CustomBrushEntity
+import com.example.cahier.ui.brushgraph.inspectors.NodeInspector
+import com.example.cahier.ui.brushgraph.inspectors.EdgeInspector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
@@ -445,18 +448,59 @@ fun BrushGraphStudio(
           bottomPadding = trashPaddingBottom,
         )
 
-        // Overlaying Inspector Pane appears on top of the graph.
+        val selectedNode = viewModel.graph.nodes.find { it.id == viewModel.selectedNodeId }
+        val selectedEdge = viewModel.selectedEdge
+        val selectionName = if (selectedNode != null) {
+            stringResource(selectedNode.data.title())
+        } else {
+            stringResource(R.string.bg_label_edge)
+        }
+        val titleText = stringResource(R.string.bg_title_inspector_with_name, selectionName)
+
         AdaptiveInspectorPane(
           isLandscape = isLandscape,
-          viewModel = viewModel,
-          onChooseColor = onChooseColor,
-          textureStore = textureStore,
-          allTextureIds = viewModel.allTextureIds,
-          onLoadTexture = onLoadTexture,
-          strokeRenderer = strokeRenderer,
-          modifier =
-            Modifier.align(if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter),
-        )
+          visible = selectedNode != null || selectedEdge != null,
+          title = titleText,
+          onClose = {
+            viewModel.clearSelectedNode()
+            viewModel.clearSelectedEdge()
+          },
+          modifier = Modifier.align(if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter),
+        ) {
+            if (selectedNode != null) {
+              NodeInspector(
+                node = selectedNode,
+                onUpdate = { viewModel.updateNodeData(selectedNode.id, it) },
+                onDisableChange = { viewModel.setNodeDisabled(selectedNode.id, it) },
+                onChooseColor = onChooseColor,
+                allTextureIds = viewModel.allTextureIds,
+                onLoadTexture = onLoadTexture,
+                strokeRenderer = strokeRenderer,
+                textFieldsLocked = viewModel.textFieldsLocked,
+                onDelete = { viewModel.deleteNode(selectedNode.id) },
+                onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) },
+                onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
+              )
+            } else if (selectedEdge != null) {
+              val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromNodeId }
+              val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toNodeId }
+              if (fromNode != null && toNode != null) {
+                val visiblePorts = toNode.getVisiblePorts(viewModel.graph)
+                val port = visiblePorts.find { it.id == selectedEdge.toPortId }
+                val inputLabel = port?.label
+                EdgeInspector(
+                  edge = selectedEdge,
+                  fromNode = fromNode,
+                  toNode = toNode,
+                  inputLabel = inputLabel,
+                  onNodeFocus = { nodeId: String -> viewModel.centerNode(nodeId) },
+                  onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
+                  onDelete = { viewModel.deleteEdge(selectedEdge) },
+                  onAddNodeBetween = { viewModel.addNodeBetween(selectedEdge) },
+                )
+              }
+            }
+        }
 
         // Overlaying Notification Pane (including errors, warnings, debug)
         NotificationPane(

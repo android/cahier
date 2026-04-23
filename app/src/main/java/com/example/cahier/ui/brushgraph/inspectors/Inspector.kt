@@ -260,20 +260,14 @@ fun NodeInspector(
 @Composable
 fun AdaptiveInspectorPane(
   isLandscape: Boolean,
-  viewModel: BrushGraphViewModel,
-  onChooseColor: (Color, (Color) -> Unit) -> Unit,
-  textureStore: TextureBitmapStore,
-  allTextureIds: Set<String>,
-  onLoadTexture: () -> Unit,
-  strokeRenderer: CanvasStrokeRenderer,
+  visible: Boolean,
+  title: String,
+  onClose: () -> Unit,
   modifier: Modifier = Modifier,
+  content: @Composable () -> Unit
 ) {
-  val selectedNode = viewModel.graph.nodes.find { it.id == viewModel.selectedNodeId }
-  val selectedEdge = viewModel.selectedEdge
-  val density = androidx.compose.ui.platform.LocalDensity.current.density
-
   AnimatedVisibility(
-    visible = selectedNode != null || selectedEdge != null,
+    visible = visible,
     enter =
       if (isLandscape) {
         slideInHorizontally(initialOffsetX = { it })
@@ -288,102 +282,41 @@ fun AdaptiveInspectorPane(
       },
     modifier = modifier.zIndex(10f),
   ) {
-    if (selectedNode != null || selectedEdge != null) {
-      Surface(
-        modifier =
-          if (isLandscape) {
-            Modifier.fillMaxHeight().width(INSPECTOR_WIDTH_LANDSCAPE.dp)
-          } else {
-            Modifier.fillMaxWidth().height(INSPECTOR_HEIGHT_PORTRAIT.dp)
-          },
-        tonalElevation = 8.dp,
-        shadowElevation = 8.dp,
-        color = MaterialTheme.colorScheme.surface,
-      ) {
-        Column {
-          // Title bar with close button
-          Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 2.dp) {
+    Surface(
+      modifier =
+        if (isLandscape) {
+          Modifier.fillMaxHeight().width(INSPECTOR_WIDTH_LANDSCAPE.dp)
+        } else {
+          Modifier.fillMaxWidth().height(INSPECTOR_HEIGHT_PORTRAIT.dp)
+        },
+      tonalElevation = 8.dp,
+      shadowElevation = 8.dp,
+      color = MaterialTheme.colorScheme.surface,
+    ) {
+      Column {
+        // Title bar with close button
+        Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 2.dp) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+          ) {
             Row(
               verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+              modifier = Modifier.weight(1f)
             ) {
-              val selectionName =
-                if (selectedNode != null) {
-                  stringResource(selectedNode.data.title())
-                } else {
-                  stringResource(R.string.bg_label_edge)
-                }
-              val titleText = stringResource(R.string.bg_title_inspector_with_name, selectionName)
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-              ) {
-                Text(
-                  text = titleText,
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.Bold,
-                )
-                if (selectedNode != null) {
-                  var showNodeTooltip by remember { mutableStateOf(false) }
-                  IconButton(onClick = { showNodeTooltip = true }) {
-                    Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_content_description_help))
-                  }
-                  if (showNodeTooltip) {
-                    TooltipDialog(
-                      title = stringResource(selectedNode.data.title()),
-                      text = stringResource(selectedNode.data.getTooltip()),
-                      onDismiss = { showNodeTooltip = false }
-                    )
-                  }
-                }
-              }
-              IconButton(
-                onClick = {
-                  viewModel.clearSelectedNode()
-                  viewModel.clearSelectedEdge()
-                }
-              ) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.bg_content_description_close_inspector))
-              }
-            }
-          }
-          Box {
-            if (selectedNode != null) {
-              NodeInspector(
-                node = selectedNode,
-                onUpdate = { viewModel.updateNodeData(selectedNode.id, it) },
-                onDisableChange = { viewModel.setNodeDisabled(selectedNode.id, it) },
-                onChooseColor = onChooseColor,
-                allTextureIds = viewModel.allTextureIds,
-                onLoadTexture = onLoadTexture,
-                strokeRenderer = strokeRenderer,
-                textFieldsLocked = viewModel.textFieldsLocked,
-                onDelete = { viewModel.deleteNode(selectedNode.id) },
-                onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) },
-                onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
+              Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
               )
-            } else if (selectedEdge != null) {
-              val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromNodeId }
-              val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toNodeId }
-              if (fromNode != null && toNode != null) {
-                val visiblePorts = toNode.getVisiblePorts(viewModel.graph)
-                val port = visiblePorts.find { it.id == selectedEdge.toPortId }
-                val inputLabel = port?.label
-                EdgeInspector(
-                  edge = selectedEdge,
-                  fromNode = fromNode,
-                  toNode = toNode,
-                  inputLabel = inputLabel,
-                  onNodeFocus = { nodeId: String ->
-                    viewModel.centerNode(nodeId)
-                  },
-                  onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
-                  onDelete = { viewModel.deleteEdge(selectedEdge) },
-                  onAddNodeBetween = { viewModel.addNodeBetween(selectedEdge) },
-                )
-              }
+            }
+            IconButton(onClick = onClose) {
+              Icon(Icons.Default.Close, contentDescription = stringResource(R.string.bg_content_description_close_inspector))
             }
           }
+        }
+        Box(modifier = Modifier.fillMaxSize()) {
+          content()
         }
       }
     }
