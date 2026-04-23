@@ -50,8 +50,9 @@ fun TextureLayerNodeFields(
   onLoadTexture: () -> Unit,
   onUpdate: (NodeData.TextureLayer) -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier
 ) {
-  Column {
+  Column(modifier = modifier) {
     Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(bottom = 8.dp)) {
       Box(modifier = Modifier.weight(1f)) {
         var expanded by remember { mutableStateOf(false) }
@@ -489,8 +490,8 @@ fun TextureLayerNodeFields(
 }
 
 @Composable
-private fun InspectorSectionHeader(title: String, subtitle: String) {
-  Column(modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)) {
+private fun InspectorSectionHeader(title: String, subtitle: String, modifier: Modifier = Modifier) {
+  Column(modifier = modifier.padding(top = 16.dp, bottom = 4.dp)) {
     Text(
       text = title,
       style = MaterialTheme.typography.titleMedium,

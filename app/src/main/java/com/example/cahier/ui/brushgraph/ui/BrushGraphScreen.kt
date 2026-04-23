@@ -92,6 +92,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -145,6 +146,7 @@ import androidx.compose.ui.unit.DpOffset
 @Composable
 fun BrushGraphScreen(
   onNavigateUp: () -> Unit,
+  modifier: Modifier = Modifier
 ) {
   val viewModel: BrushGraphViewModel = hiltViewModel()
   val context = LocalContext.current
@@ -158,7 +160,7 @@ fun BrushGraphScreen(
   val primaryColor = MaterialTheme.colorScheme.primary
   val onSurfaceColor = MaterialTheme.colorScheme.onSurface
   LaunchedEffect(primaryColor) {
-    viewModel.updateTestBrushColor(primaryColor)
+    viewModel.updateTestBrushColor(primaryColor.toArgb())
   }
 
   var showColorPicker by remember { mutableStateOf(false) }
@@ -291,7 +293,7 @@ fun BrushGraphScreen(
   )
 
   CahierAppTheme {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
       val isLandscape = maxWidth > maxHeight
       var viewportSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
       var showTutorialFinishDialog by remember { mutableStateOf(false) }
@@ -337,9 +339,9 @@ fun BrushGraphScreen(
             GraphCanvas(
               graph = viewModel.graph,
               zoom = viewModel.zoom,
-              offset = viewModel.offset,
+              offset = Offset(viewModel.offset.x, viewModel.offset.y),
               onZoomChange = { viewModel.updateZoom(it) },
-              onOffsetChange = { viewModel.updateOffset(it) },
+              onOffsetChange = { viewModel.updateOffset(GraphPoint(it.x, it.y)) },
               onNodeMove = { id, pos -> viewModel.moveNode(id, GraphPoint(pos.x, pos.y)) },
               onNodeMoveFinished = { viewModel.advanceTutorial(TutorialAction.MOVE_NODE) },
               onNodeClick = { id, _ ->
@@ -533,7 +535,8 @@ fun BrushGraphScreen(
               }
 
             val visibleCenter = Offset(visibleWidth / 2f, visibleHeight / 2f)
-            val centerInCanvas = (visibleCenter - viewModel.offset) / viewModel.zoom
+            val centerInCanvasOffset = (visibleCenter - Offset(viewModel.offset.x, viewModel.offset.y)) / viewModel.zoom
+            val centerInCanvas = GraphPoint(centerInCanvasOffset.x, centerInCanvasOffset.y)
 
             CreateNodeSpeedDial(
               isLandscape = isLandscape,
@@ -577,7 +580,7 @@ fun BrushGraphScreen(
               tutorialStep = viewModel.tutorialStep,
               graph = viewModel.graph,
               zoom = viewModel.zoom,
-              offset = viewModel.offset,
+              offset = Offset(viewModel.offset.x, viewModel.offset.y),
               selectedNodeId = viewModel.selectedNodeId,
               selectedEdge = viewModel.selectedEdge,
               currentStepIndex = viewModel.currentStepIndex,
@@ -607,14 +610,14 @@ fun BrushGraphScreen(
       }
 
       GraphCameraController(
-        offset = viewModel.offset,
+        offset = Offset(viewModel.offset.x, viewModel.offset.y),
         tutorialStep = viewModel.tutorialStep,
         focusTrigger = viewModel.focusTrigger,
         graph = viewModel.graph,
         zoom = viewModel.zoom,
         isPreviewExpanded = viewModel.isPreviewExpanded,
         selectedNodeId = viewModel.selectedNodeId,
-        updateOffset = { viewModel.updateOffset(it) },
+        updateOffset = { viewModel.updateOffset(GraphPoint(it.x, it.y)) },
         viewportSize = viewportSize,
         context = context,
         isLandscape = isLandscape,
@@ -706,6 +709,7 @@ fun BoxScope.TutorialOverlayHost(
   onAdvanceTutorial: (TutorialAction) -> Unit,
   onRegressTutorial: () -> Unit,
   onCloseTutorial: () -> Unit,
+  modifier: Modifier = Modifier
 ) {
   tutorialStep?.let { step ->
     val density = androidx.compose.ui.platform.LocalDensity.current
@@ -778,7 +782,7 @@ fun BoxScope.TutorialOverlayHost(
       onNext = { onAdvanceTutorial(step.actionRequired) },
       onBack = if (currentStepIndex > 0) { { onRegressTutorial() } } else null,
       onClose = onCloseTutorial,
-      modifier = tutorialModifier.onGloballyPositioned { coordinates ->
+      modifier = modifier.then(tutorialModifier).onGloballyPositioned { coordinates ->
         overlaySize = coordinates.size
       }
     )

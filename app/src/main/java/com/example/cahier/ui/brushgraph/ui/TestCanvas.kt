@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.ink.brush.Brush
@@ -169,11 +170,11 @@ fun CollapsiblePreviewPane(
             Box(
               modifier = Modifier
                 .size(20.dp)
-                .background(viewModel.testBrushColor)
+                .background(Color(viewModel.testBrushColor ?: 0))
                 .border(1.dp, MaterialTheme.colorScheme.outline)
                 .clickable {
-                  onChooseColor(viewModel.testBrushColor) { newColor ->
-                    viewModel.updateTestBrushColor(newColor)
+                  onChooseColor(Color(viewModel.testBrushColor ?: 0)) { newColor ->
+                    viewModel.updateTestBrushColor(newColor.toArgb())
                   }
                 }
             )

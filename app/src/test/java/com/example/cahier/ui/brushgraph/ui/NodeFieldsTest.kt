@@ -21,7 +21,7 @@ import com.example.cahier.ui.brushgraph.ui.fields.isAngle
 class NodeFieldsTest {
 
   @Test
-  fun testAllSourcesAccountedFor() {
+  fun sources_allValues_areCategorized() {
     val allSources = ProtoBrushBehavior.Source.values()
       .filter { it != ProtoBrushBehavior.Source.SOURCE_UNSPECIFIED && it.ordinal >= 0 }
       .toSet()
@@ -38,7 +38,7 @@ class NodeFieldsTest {
   }
 
   @Test
-  fun testAllTargetsAccountedFor() {
+  fun targets_allValues_areCategorized() {
     val allTargets = ProtoBrushBehavior.Target.values()
       .filter { it != ProtoBrushBehavior.Target.TARGET_UNSPECIFIED && it.ordinal >= 0 }
       .toSet()
@@ -53,7 +53,7 @@ class NodeFieldsTest {
   }
 
   @Test
-  fun testAllNodeTypesAccountedFor() {
+  fun nodeTypes_allValues_areCategorized() {
     val allBehaviorNodes = listOf(
       "Source", "Constant", "Noise", "ToolTypeFilter", "Damping",
       "Response", "Integral", "BinaryOp", "Interpolation", "Target", "PolarTarget"
@@ -69,7 +69,7 @@ class NodeFieldsTest {
   }
 
   @Test
-  fun testIsAngleSource() {
+  fun source_isAngle_returnsTrueForAngleSources() {
     assertTrue(ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS.isAngle())
     assertTrue(ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS.isAngle())
     assertTrue(ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS.isAngle())
@@ -83,7 +83,7 @@ class NodeFieldsTest {
   }
 
   @Test
-  fun testIsAngleTarget() {
+  fun target_isAngle_returnsTrueForAngleTargets() {
     assertTrue(ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS.isAngle())
     assertTrue(ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS.isAngle())
     assertTrue(ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS.isAngle())

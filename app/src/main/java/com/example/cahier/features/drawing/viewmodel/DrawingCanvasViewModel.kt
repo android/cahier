@@ -470,14 +470,12 @@ class DrawingCanvasViewModel @Inject constructor(
                     textureStore
                 )
                 val encodedBrushFamily = stream.toByteArray()
-                val prefs = context.getSharedPreferences("brush_graph_prefs", Context.MODE_PRIVATE)
-                prefs.edit().putString(
-                    "auto_save_brush",
-                    android.util.Base64.encodeToString(encodedBrushFamily, android.util.Base64.DEFAULT),
-                ).apply()
-                Log.d(TAG, "Saved brush to prefs successfully")
+                customBrushDao.saveCustomBrush(
+                    com.example.cahier.ui.brushdesigner.CustomBrushEntity("__autosave__", encodedBrushFamily)
+                )
+                Log.d(TAG, "Auto saved brush to database successfully")
             } catch (e: Exception) {
-                Log.e(TAG, "Error saving brush to prefs", e)
+                Log.e(TAG, "Error auto saving brush to database", e)
             }
         }
     }

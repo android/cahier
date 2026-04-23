@@ -6,11 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import com.example.cahier.ui.theme.Purple40
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushBehavior
 import androidx.ink.brush.BrushFamily
@@ -30,7 +25,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.brushgraph.data.BrushGraphRepository
-import com.example.cahier.ui.brushgraph.data.BrushGraphPreferences
 import com.example.cahier.ui.brushdesigner.CustomBrushDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.zip.GZIPOutputStream
@@ -42,6 +36,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import com.example.cahier.ui.brushgraph.converters.BrushFamilyConverter
 import com.example.cahier.ui.brushgraph.converters.BrushGraphConverter
 import com.example.cahier.ui.brushgraph.model.BrushGraph
@@ -78,7 +73,6 @@ class BrushGraphViewModel @Inject constructor(
   private val customBrushDao: CustomBrushDao,
   val textureStore: CahierTextureBitmapStore,
   private val repository: BrushGraphRepository,
-  private val preferences: BrushGraphPreferences,
   private val savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
@@ -116,7 +110,7 @@ class BrushGraphViewModel @Inject constructor(
   var testAutoUpdateStrokes by mutableStateOf(true)
 
   /** The current color of the brush in the test canvas. */
-  var testBrushColor by mutableStateOf(Purple40)
+  var testBrushColor by mutableStateOf<Int?>(null)
 
   /** The current size of the brush in the test canvas. */
   var testBrushSize by androidx.compose.runtime.mutableFloatStateOf(10f)
@@ -124,7 +118,7 @@ class BrushGraphViewModel @Inject constructor(
   /** The current brush being designed. */
   val brush: StateFlow<Brush> = combine(
     repository.graph,
-    snapshotFlow { testBrushColor },
+    snapshotFlow { testBrushColor }.filterNotNull(),
     snapshotFlow { testBrushSize }
   ) { graph, color, size ->
     val family = try {
@@ -133,16 +127,16 @@ class BrushGraphViewModel @Inject constructor(
       null
     }
     if (family != null) {
-      Brush.createWithColorIntArgb(family, color.toArgb(), size, 0.1f)
+      Brush.createWithColorIntArgb(family, color, size, 0.1f)
     } else {
-      Brush.createWithColorIntArgb(StockBrushes.marker(), color.toArgb(), size, 0.1f)
+      Brush.createWithColorIntArgb(StockBrushes.marker(), color, size, 0.1f)
     }
   }.stateIn(
     scope = viewModelScope,
     started = SharingStarted.Eagerly,
     initialValue = Brush.createWithColorIntArgb(
       StockBrushes.marker(),
-      0xFF0000FF.toInt(), // blue
+      0, // Transparent until initialized by UI
       size = 20f,
       epsilon = 0.1f,
     )
@@ -163,7 +157,7 @@ class BrushGraphViewModel @Inject constructor(
     private set
 
   /** The current pan offset of the graph canvas. */
-  var offset by mutableStateOf(Offset.Zero)
+  var offset by mutableStateOf(GraphPoint(0f, 0f))
     private set
 
   /** Whether text fields in the UI are locked for editing. */
@@ -195,8 +189,8 @@ class BrushGraphViewModel @Inject constructor(
     private set
 
 
-  fun updateTestBrushColor(color: Color) {
-    testBrushColor = color
+  fun updateTestBrushColor(colorArgb: Int) {
+    testBrushColor = colorArgb
   }
 
   fun updateTestBrushSize(size: Float) {
@@ -299,37 +293,37 @@ class BrushGraphViewModel @Inject constructor(
   }
 
   /** Adds a new Family node at the specified position. */
-  fun addFamilyNode(position: Offset) {
-    addNode(NodeData.Family(), GraphPoint(position.x, position.y))
+  fun addFamilyNode(position: GraphPoint) {
+    addNode(NodeData.Family(), position)
   }
 
   /** Adds a new Coat node at the specified position. */
-  fun addCoatNode(position: Offset) {
-    addNode(NodeData.Coat(), GraphPoint(position.x, position.y))
+  fun addCoatNode(position: GraphPoint) {
+    addNode(NodeData.Coat(), position)
   }
 
   /** Adds a new Paint node at the specified position. */
-  fun addPaintNode(position: Offset) {
-    addNode(NodeData.Paint(ProtoBrushPaint.getDefaultInstance()), GraphPoint(position.x, position.y))
+  fun addPaintNode(position: GraphPoint) {
+    addNode(NodeData.Paint(ProtoBrushPaint.getDefaultInstance()), position)
   }
 
   /** Adds a new Tip node at the specified position. */
-  fun addTipNode(position: Offset) {
-    addNode(NodeData.Tip(ProtoBrushTip.getDefaultInstance()), GraphPoint(position.x, position.y))
+  fun addTipNode(position: GraphPoint) {
+    addNode(NodeData.Tip(ProtoBrushTip.getDefaultInstance()), position)
   }
 
   /** Adds a new Color Function node at the specified position. */
-  fun addColorFunctionNode(position: Offset) {
-    addNode(NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), GraphPoint(position.x, position.y))
+  fun addColorFunctionNode(position: GraphPoint) {
+    addNode(NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), position)
   }
 
   /** Adds a new Texture Layer node at the specified position. */
-  fun addTextureLayerNode(position: Offset) {
-    addNode(NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()), GraphPoint(position.x, position.y))
+  fun addTextureLayerNode(position: GraphPoint) {
+    addNode(NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()), position)
   }
 
   /** Adds a new Behavior node (TargetNode by default) at the specified position. */
-  fun addBehaviorNode(position: Offset) {
+  fun addBehaviorNode(position: GraphPoint) {
     addNode(
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
@@ -341,7 +335,7 @@ class BrushGraphViewModel @Inject constructor(
           )
           .build()
       ),
-      GraphPoint(position.x, position.y),
+      position,
     )
   }
 
@@ -666,7 +660,7 @@ class BrushGraphViewModel @Inject constructor(
   }
 
   /** Returns current brush color. */
-  fun getBrushColor(): Color = Color(brush.value.colorIntArgb)
+  fun getBrushColor(): Int = brush.value.colorIntArgb
 
   /** Updates the zoom level. */
   fun updateZoom(newZoom: Float) {
@@ -674,7 +668,7 @@ class BrushGraphViewModel @Inject constructor(
   }
 
   /** Updates the pan offset. */
-  fun updateOffset(newOffset: Offset) {
+  fun updateOffset(newOffset: GraphPoint) {
     offset = newOffset
   }
 

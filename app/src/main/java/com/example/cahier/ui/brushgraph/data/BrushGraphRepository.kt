@@ -10,6 +10,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.debounce
@@ -38,8 +39,7 @@ import kotlinx.coroutines.FlowPreview
 @OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
 class BrushGraphRepository @Inject constructor(
   private val customBrushDao: CustomBrushDao,
-  val textureStore: CahierTextureBitmapStore,
-  private val preferences: BrushGraphPreferences
+  val textureStore: CahierTextureBitmapStore
 ) {
   private val _graph = MutableStateFlow(createDefaultGraph())
   val graph: StateFlow<BrushGraph> = _graph.asStateFlow()
@@ -55,7 +55,7 @@ class BrushGraphRepository @Inject constructor(
             val family = BrushFamilyConverter.convert(graph)
             val baos = java.io.ByteArrayOutputStream()
             AndroidBrushFamilySerialization.encode(family, baos, textureStore)
-            preferences.saveAutoSaveBrush(baos.toByteArray())
+            customBrushDao.saveCustomBrush(com.example.cahier.ui.brushdesigner.CustomBrushEntity("__autosave__", baos.toByteArray()))
           } catch (e: Exception) {
             android.util.Log.e("BrushGraphRepository", "Failed to auto-save brush", e)
           }
@@ -108,8 +108,9 @@ class BrushGraphRepository @Inject constructor(
     _graphIssues.value = emptyList()
   }
 
-  fun loadAutoSaveBrush(): Boolean {
-    val decodedBytes = preferences.getAutoSaveBrush() ?: return false
+  suspend fun loadAutoSaveBrush(): Boolean {
+    val entity = customBrushDao.getAutoSaveBrush().firstOrNull() ?: return false
+    val decodedBytes = entity.brushBytes
     return try {
       val bais = ByteArrayInputStream(decodedBytes)
       val family = AndroidBrushFamilySerialization.decode(
@@ -124,7 +125,7 @@ class BrushGraphRepository @Inject constructor(
       loadBrushFamily(family)
       true
     } catch (e: Exception) {
-      android.util.Log.e("BrushGraphRepository", "Failed to decode brush family from prefs", e)
+      android.util.Log.e("BrushGraphRepository", "Failed to decode auto saved brush family", e)
       false
     }
   }
