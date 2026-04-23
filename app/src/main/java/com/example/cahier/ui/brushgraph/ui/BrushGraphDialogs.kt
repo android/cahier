@@ -229,3 +229,21 @@ fun ReorganizeConfirmationDialog(
         )
     }
 }
+
+@Composable
+internal fun TooltipDialog(
+    title: String,
+    text: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.bg_ok))
+            }
+        }
+    )
+}

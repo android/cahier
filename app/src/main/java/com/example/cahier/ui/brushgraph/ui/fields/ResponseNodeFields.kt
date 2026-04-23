@@ -1,67 +1,74 @@
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 
-package com.example.cahier.ui.brushgraph.ui
+package com.example.cahier.ui.brushgraph.ui.fields
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import com.example.cahier.ui.brushgraph.model.displayStringRId
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.drawscope.Stroke as DrawStroke
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
-import com.example.cahier.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke as DrawStroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.cahier.R
 import com.example.cahier.ui.brushdesigner.BrushSliderControl
-import com.example.cahier.ui.brushgraph.model.displayString
+import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.displayStringRId
 import com.example.cahier.ui.brushgraph.model.safeCopy
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.CubicBezierEasingFunction as ProtoCubicBezier
 import ink.proto.StepsEasingFunction as ProtoSteps
 
 @Composable
-fun ResponseCurveEditor(
+fun ResponseNodeFields(
   responseNode: ProtoBrushBehavior.ResponseNode,
-  onResponseNodeChanged: (ProtoBrushBehavior.ResponseNode) -> Unit,
+  behaviorNode: ProtoBrushBehavior.Node,
+  onUpdate: (NodeData) -> Unit,
+  modifier: Modifier = Modifier
 ) {
-  Column {
+  Column(modifier = modifier) {
     CurvePreviewWidget(
       responseNode = responseNode,
       modifier = Modifier.padding(bottom = 8.dp)
     )
     ResponseCurveWidget(
       responseNode = responseNode,
-      onResponseNodeChanged = onResponseNodeChanged
+      onResponseNodeChanged = {
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.safeCopy(responseNode = it)
+          )
+        )
+      }
     )
   }
 }
@@ -155,7 +162,6 @@ fun CurvePreviewWidget(
               path.lineTo(widthPx, centerY - scaleY)
             }
             else -> {
-              // Cubic approximations for ease, ease-in, ease-out, ease-in-out
               val (x1, y1, x2, y2) =
                 when (func) {
                   ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE ->
@@ -207,7 +213,6 @@ private fun evaluateSteps(x: Float, n: Int, position: ink.proto.StepPosition): F
       if (n <= 1) xClamped else kotlin.math.floor(xClamped * (n - 1)) / (n - 1)
     }
     else -> {
-      // Default jump-end
       kotlin.math.floor(xClamped * n) / n
     }
   }

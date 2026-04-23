@@ -1,6 +1,6 @@
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 
-package com.example.cahier.ui.brushgraph.ui
+package com.example.cahier.ui.brushgraph.ui.fields
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,16 +31,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.example.cahier.ui.brushdesigner.BrushSliderControl
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import com.example.cahier.ui.brushgraph.model.safeCopy
+import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.getTooltip
+import com.example.cahier.ui.brushgraph.ui.TextureLayerPreviewWidget
+import com.example.cahier.ui.brushgraph.ui.TextureWrapPreviewWidget
+import com.example.cahier.ui.brushgraph.ui.BlendModePreviewWidget
 import ink.proto.BrushPaint as ProtoBrushPaint
 
 @Composable
-fun TextureLayerInspector(
+fun TextureLayerNodeFields(
   layer: ProtoBrushPaint.TextureLayer,
   allTextureIds: Set<String>,
   onLoadTexture: () -> Unit,
