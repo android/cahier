@@ -82,6 +82,8 @@ fun CurvePreviewWidget(
 
     val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
     val primaryColor = MaterialTheme.colorScheme.primary
+    val outlineColor = MaterialTheme.colorScheme.outline
+    val outlineVariantColor = MaterialTheme.colorScheme.outlineVariant
 
     Canvas(modifier = Modifier.fillMaxSize()) {
       // Background and Grid
@@ -90,9 +92,9 @@ fun CurvePreviewWidget(
       val scaleY = heightPx * 0.6f
 
       // Zero line
-      drawLine(Color.Gray, Offset(0f, centerY), Offset(widthPx, centerY))
+      drawLine(outlineColor, Offset(0f, centerY), Offset(widthPx, centerY))
       // One line
-      drawLine(Color.LightGray, Offset(0f, centerY - scaleY), Offset(widthPx, centerY - scaleY))
+      drawLine(outlineVariantColor, Offset(0f, centerY - scaleY), Offset(widthPx, centerY - scaleY))
 
       val path = androidx.compose.ui.graphics.Path()
       when (responseNode.responseCurveCase) {

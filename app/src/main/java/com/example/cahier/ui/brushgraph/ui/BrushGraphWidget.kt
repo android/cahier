@@ -155,12 +155,13 @@ fun BrushGraphWidget(
   val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
 
   val primaryColor = MaterialTheme.colorScheme.primary
+  val onSurfaceColor = MaterialTheme.colorScheme.onSurface
   LaunchedEffect(primaryColor) {
     viewModel.updateTestBrushColor(primaryColor)
   }
 
   var showColorPicker by remember { mutableStateOf(false) }
-  var colorPickerInitialColor by remember { mutableStateOf(Color.Black) }
+  var colorPickerInitialColor by remember { mutableStateOf(onSurfaceColor) }
   var colorPickerOnColorSelected by remember { mutableStateOf({ _: Color -> }) }
 
   if (showColorPicker) {
@@ -333,6 +334,20 @@ fun BrushGraphStudio(
 ) {
   val context = LocalContext.current
   var viewportSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+  var showTutorialFinishDialog by remember { mutableStateOf(false) }
+
+  TutorialFinishDialog(
+    show = showTutorialFinishDialog,
+    onDismiss = { showTutorialFinishDialog = false },
+    onKeepChanges = {
+      viewModel.endTutorialSandbox(keepChanges = true)
+      showTutorialFinishDialog = false
+    },
+    onRestoreOriginal = {
+      viewModel.endTutorialSandbox(keepChanges = false)
+      showTutorialFinishDialog = false
+    }
+  )
 
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val isLandscape = maxWidth > maxHeight
@@ -511,6 +526,7 @@ fun BrushGraphStudio(
           textureStore = textureStore,
           onOrganize = viewModel::reorganize,
           onDeleteBrush = { viewModel.clearGraph() },
+          onTutorialExitRequested = { showTutorialFinishDialog = true },
           modifier = Modifier.align(Alignment.TopStart).padding(16.dp).zIndex(2f),
         )
 
@@ -649,6 +665,7 @@ fun BrushGraphStudio(
             step = step,
             onNext = { viewModel.advanceTutorial(step.actionRequired) },
             onBack = if (viewModel.currentStepIndex > 0) { { viewModel.regressTutorial() } } else null,
+            onClose = { showTutorialFinishDialog = true },
             modifier = tutorialModifier.onGloballyPositioned { coordinates ->
               overlaySize = coordinates.size
             }

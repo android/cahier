@@ -277,6 +277,7 @@
     <string name="bg_keep_tutorial_brush">Keep Tutorial Brush</string>
     <string name="bg_restore_original_brush">Restore Original Brush</string>
     <string name="bg_options">Options</string>
+    <string name="bg_menu_feedback">Feedback</string>
     <string name="bg_lock_text_fields">Lock text fields</string>
     <string name="bg_reorganize_graph">Reorganize Graph</string>
     <string name="bg_reorganize_graph_confirmation">Are you sure you want to reorganize the graph? This will reset all node positions and expansion states. This action cannot be undone.</string>

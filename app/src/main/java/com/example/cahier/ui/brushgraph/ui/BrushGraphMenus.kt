@@ -38,6 +38,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
 import androidx.compose.material3.Text
@@ -89,6 +91,7 @@ fun MoreOptionsMenu(
     onDeleteBrush: () -> Unit,
     onOptions: () -> Unit
 ) {
+    val uriHandler = LocalUriHandler.current
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         DropdownMenuItem(
             text = { Text(stringResource(R.string.bg_select)) },
@@ -178,6 +181,14 @@ fun MoreOptionsMenu(
         DropdownMenuItem(
             text = { Text(stringResource(R.string.bg_options)) },
             onClick = onOptions
+        )
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.bg_menu_feedback)) },
+            leadingIcon = { Icon(painterResource(R.drawable.outline_open_in_new_24), contentDescription = null) },
+            onClick = {
+                onDismiss()
+                uriHandler.openUri("https://github.com/android/cahier/issues")
+            }
         )
     }
 }
@@ -379,6 +390,7 @@ fun FloatingActionMenu(
   textureStore: TextureBitmapStore,
   onOrganize: () -> Unit,
   onDeleteBrush: () -> Unit,
+  onTutorialExitRequested: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val context = LocalContext.current
@@ -389,7 +401,6 @@ fun FloatingActionMenu(
   var showTemplatesMenu by remember { mutableStateOf(false) }
   var showOptionsDialog by remember { mutableStateOf(false) }
   var showTutorialWarningDialog by remember { mutableStateOf(false) }
-  var showTutorialFinishDialog by remember { mutableStateOf(false) }
 
   val savedBrushes by viewModel.savedPaletteBrushes.collectAsState()
 
@@ -404,7 +415,7 @@ fun FloatingActionMenu(
 
   LaunchedEffect(viewModel.tutorialStep) {
     if (viewModel.isTutorialSandboxMode && viewModel.tutorialStep == null) {
-      showTutorialFinishDialog = true
+      onTutorialExitRequested()
     }
   }
 
@@ -414,19 +425,6 @@ fun FloatingActionMenu(
     onConfirm = {
       viewModel.startTutorialSandbox()
       showTutorialWarningDialog = false
-    }
-  )
-
-  TutorialFinishDialog(
-    show = showTutorialFinishDialog,
-    onDismiss = { showTutorialFinishDialog = false },
-    onKeepChanges = {
-      viewModel.endTutorialSandbox(keepChanges = true)
-      showTutorialFinishDialog = false
-    },
-    onRestoreOriginal = {
-      viewModel.endTutorialSandbox(keepChanges = false)
-      showTutorialFinishDialog = false
     }
   )
 
@@ -484,7 +482,7 @@ fun FloatingActionMenu(
           onTutorialAction = {
             showMoreMenu = false
             if (viewModel.isTutorialSandboxMode) {
-              showTutorialFinishDialog = true
+              onTutorialExitRequested()
             } else {
               showTutorialWarningDialog = true
             }

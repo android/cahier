@@ -496,8 +496,7 @@ private fun InspectorSectionHeader(title: String, subtitle: String) {
     Text(
       text = subtitle,
       style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.secondary,
-      lineHeight = 16.sp
+      color = MaterialTheme.colorScheme.secondary
     )
     HorizontalDivider(modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
   }

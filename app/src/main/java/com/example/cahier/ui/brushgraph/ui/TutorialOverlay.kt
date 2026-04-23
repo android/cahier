@@ -10,7 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +27,7 @@ import com.example.cahier.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import com.example.cahier.ui.brushgraph.model.TutorialStep
 import com.example.cahier.ui.brushgraph.model.TutorialAction
 
@@ -30,6 +36,7 @@ fun TutorialOverlay(
     step: TutorialStep,
     onNext: () -> Unit,
     onBack: (() -> Unit)? = null,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -41,12 +48,25 @@ fun TutorialOverlay(
             .padding(16.dp)
     ) {
         Column {
-            Text(
-                text = stringResource(step.title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(step.title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(vertical = 4.dp).weight(1f)
+                )
+                IconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(R.string.bg_cd_close_pane),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
             Text(
                 text = stringResource(step.message),
                 style = MaterialTheme.typography.bodyMedium,
@@ -58,7 +78,16 @@ fun TutorialOverlay(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 if (onBack != null) {
-                    Button(onClick = onBack) {
+                    OutlinedButton(
+                        onClick = onBack,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
+                        )
+                    ) {
                         Text(stringResource(R.string.bg_back))
                     }
                 } else {

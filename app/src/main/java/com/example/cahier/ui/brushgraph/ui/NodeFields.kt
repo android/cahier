@@ -452,7 +452,7 @@ fun NodeFields(
           }
           ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {
             val filterNode = behaviorNode.toolTypeFilterNode
-            Text(stringResource(R.string.bg_enabled_tool_types), fontSize = 12.sp)
+            Text(stringResource(R.string.bg_enabled_tool_types), style = MaterialTheme.typography.bodySmall)
             ALL_TOOL_TYPES.forEach { toolType ->
               Row(verticalAlignment = Alignment.CenterVertically) {
                 val bitIndex = toolTypeBitIndex(toolType)
@@ -1129,7 +1129,7 @@ fun NodeFields(
         )
       }
       is NodeData.Coat -> {
-        Text(stringResource(R.string.bg_coat_node_description), fontSize = 12.sp)
+        Text(stringResource(R.string.bg_coat_node_description), style = MaterialTheme.typography.bodySmall)
       }
       is NodeData.Paint -> {
         val paint = data.paint

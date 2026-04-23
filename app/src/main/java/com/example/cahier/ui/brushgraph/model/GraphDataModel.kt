@@ -192,7 +192,10 @@ sealed interface NodeData {
     val node: ProtoBrushBehavior.Node,
     val developerComment: String = "",
     val behaviorId: String = "",
-    val inputPortIds: List<String> = emptyList()
+    val inputPortIds: List<String> = when (node.nodeCase) {
+        ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf("value", "start", "end")
+        else -> emptyList()
+    }
   ) : NodeData {
     override fun inputLabels(): List<Int> {
       return when (node.nodeCase) {
@@ -284,7 +287,7 @@ sealed interface NodeData {
             ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
                 val labels = inputLabels()
                 for (i in labels.indices) {
-                    val portId: String = if (i < inputPortIds.size) inputPortIds[i] else labels[i].toString()
+                    val portId = inputPortIds.getOrElse(i) { "invalid_port_$i" }
                     ports.add(Port.Input(nodeId, portId, label = DisplayText.Resource(labels[i])))
                 }
             }
@@ -321,7 +324,7 @@ sealed interface NodeData {
                     ports.add(Port.AddInput(nodeId, "add_input", label = DisplayText.Resource(R.string.bg_add_input)))
                 } else {
                     for (i in labels.indices) {
-                        val portId = if (i < inputPortIds.size) inputPortIds[i] else labels[i].toString()
+                        val portId = inputPortIds.getOrElse(i) { "invalid_port_$i" }
                         ports.add(Port.Input(nodeId, portId, label = DisplayText.Resource(labels[i])))
                     }
                 }
@@ -626,10 +629,14 @@ fun preserveEdgesOnTypeChange(
 
         when (newCase) {
           ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
-            incomingEdges.take(3).forEachIndexed { index, edge ->
-              val portId = if (index < newData.inputPortIds.size) newData.inputPortIds[index] else java.util.UUID.randomUUID().toString()
+            val defaultIds = listOf("value", "start", "end")
+            for (i in 0..2) {
+              val edge = incomingEdges.getOrNull(i)
+              val portId = edge?.toPortId ?: defaultIds[i]
               newIds.add(portId)
-              updatedEdges.add(edge.copy(toPortId = portId))
+              if (edge != null) {
+                updatedEdges.add(edge.copy(toPortId = portId))
+              }
             }
           }
           ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
@@ -714,7 +721,7 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
       }
     is Port.Input -> {
         val data = node.data
-        if (data is NodeData.Behavior && data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+        if (data is NodeData.Behavior) {
             NodeData.Behavior(
               ProtoBrushBehavior.Node.newBuilder()
                 .setSourceNode(

@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.example.cahier.ui.theme.Purple40
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushBehavior
 import androidx.ink.brush.BrushFamily
@@ -115,7 +116,7 @@ class BrushGraphViewModel @Inject constructor(
   var testAutoUpdateStrokes by mutableStateOf(true)
 
   /** The current color of the brush in the test canvas. */
-  var testBrushColor by mutableStateOf(Color.Black)
+  var testBrushColor by mutableStateOf(Purple40)
 
   /** The current size of the brush in the test canvas. */
   var testBrushSize by androidx.compose.runtime.mutableFloatStateOf(10f)

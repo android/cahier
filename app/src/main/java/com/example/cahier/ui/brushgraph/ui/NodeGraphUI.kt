@@ -40,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
 import androidx.compose.runtime.getValue
@@ -982,8 +983,8 @@ fun PortDot(
   dragOffset: Float = 0f,
   isLargeHandle: Boolean = false,
 ) {
-  var portCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
-  val density = LocalDensity.current
+  var portCoordinates by remember { mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(null) }
+  val density = androidx.compose.ui.platform.LocalDensity.current
 
   val currentOnDrag by androidx.compose.runtime.rememberUpdatedState(onDrag)
   val currentOnDragUpdate by androidx.compose.runtime.rememberUpdatedState(onDragUpdate)
@@ -993,88 +994,139 @@ fun PortDot(
   val currentPortId by androidx.compose.runtime.rememberUpdatedState(port.id)
   val currentPortSide by androidx.compose.runtime.rememberUpdatedState(port.side)
 
-  with(density) {
-    val outerX = if (port.side == PortSide.INPUT) (-24).dp else 14.dp
-    
-    val animatedY by androidx.compose.animation.core.animateDpAsState(
-        targetValue = portPosition.y.toDp() - 6.dp,
-        label = "portY"
-    )
-    val finalY = if (isDragging) portPosition.y.toDp() - 6.dp else animatedY
+  val outerWidth = if (port.side == PortSide.INPUT) 24.dp else 12.dp
+  val outerHeight = if (port.side == PortSide.INPUT) 32.dp else 12.dp
+  val outerX = if (port.side == PortSide.INPUT) (-24).dp else 14.dp
+  
+  val animatedY by androidx.compose.animation.core.animateDpAsState(
+      targetValue = with(density) { portPosition.y.toDp() } - (if (port.side == PortSide.INPUT) 16.dp else 6.dp),
+      label = "portY"
+  )
+  val finalY = if (isDragging) with(density) { portPosition.y.toDp() } - (if (port.side == PortSide.INPUT) 16.dp else 6.dp) else animatedY
 
-    Box(
-      modifier =
-        modifier
-          .offset {
-            IntOffset(outerX.roundToPx(), finalY.roundToPx())
+  Box(
+    modifier =
+      modifier
+        .offset {
+          IntOffset(outerX.roundToPx(), finalY.roundToPx())
+        }
+        .size(width = outerWidth, height = outerHeight)
+        .graphicsLayer {
+          if (isDragging) {
+              translationY = dragOffset
           }
-          .size(width = if (port.side == PortSide.INPUT) 24.dp else 12.dp, height = 12.dp)
-          .graphicsLayer {
-            if (isDragging) {
-                translationY = dragOffset
-            }
-          }
-          .zIndex(if (isDragging) 1f else 0f)
-    ) {
+        }
+        .zIndex(if (isDragging) 1f else 0f)
+  ) {
+    if (port.side == PortSide.INPUT) {
+      // Input Port (Left Half)
       Box(
-        modifier =
-          Modifier
-            .align(if (port.side == PortSide.INPUT) Alignment.TopStart else Alignment.TopEnd)
-            .size(12.dp)
-            .background(
-                if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                CircleShape
-            )
-            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-            .onGloballyPositioned { coordinates ->
-              portCoordinates = coordinates
+        modifier = Modifier
+          .align(Alignment.TopStart)
+          .size(width = 12.dp, height = 32.dp)
+          .pointerInput(port.nodeId, port.side, canvasCoordinates, zoom) {
+              detectPortDragGestures(
+                zoom = zoom,
+                onDragStart = { currentOnDrag(currentPortSide, currentPortId, true) },
+                onDragEnd = { currentOnDragEnd() },
+                onDragCancel = { currentOnDragEnd() },
+              ) { change, _ ->
+              change.consume()
               val canvasCo = canvasCoordinates
-              if (canvasCo != null && coordinates.isAttached) {
-                val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
-                val graphSpacePos = canvasCo.localPositionOf(coordinates, center)
-                onPortPositioned(graphSpacePos)
+              val portCo = portCoordinates
+              if (canvasCo != null && portCo != null && canvasCo.isAttached && portCo.isAttached) {
+                val graphSpacePos = canvasCo.localPositionOf(portCo, change.position)
+                currentOnDragUpdate(graphSpacePos)
               }
             }
-            .pointerInput(port.nodeId, port.side, canvasCoordinates, zoom) {
-                detectPortDragGestures(
-                  zoom = zoom,
-                  onDragStart = { currentOnDrag(currentPortSide, currentPortId, true) },
-                  onDragEnd = { currentOnDragEnd() },
-                  onDragCancel = { currentOnDragEnd() },
-                ) { change, _ ->
-                change.consume()
+          }
+      ) {
+          Box(
+            modifier = Modifier
+              .align(Alignment.Center)
+              .size(12.dp)
+              .background(
+                  if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                  CircleShape
+              )
+              .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+              .onGloballyPositioned { coordinates: androidx.compose.ui.layout.LayoutCoordinates ->
+                portCoordinates = coordinates
                 val canvasCo = canvasCoordinates
-                val portCo = portCoordinates
-                if (canvasCo != null && portCo != null && canvasCo.isAttached && portCo.isAttached) {
-                  val graphSpacePos = canvasCo.localPositionOf(portCo, change.position)
-                  currentOnDragUpdate(graphSpacePos)
+                if (canvasCo != null && coordinates.isAttached) {
+                  val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
+                  val graphSpacePos = canvasCo.localPositionOf(coordinates, center)
+                  onPortPositioned(graphSpacePos)
                 }
               }
-            }
-      )
-
-      if (port.side == PortSide.INPUT && isReorderable) {
-        Icon(
-          imageVector = androidx.compose.material.icons.Icons.Default.DragHandle,
-          contentDescription = stringResource(R.string.bg_cd_reorder),
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier =
-            Modifier
-              .align(Alignment.TopEnd)
-              .size(width = 10.dp, height = if (isLargeHandle) with(density) { (com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT * 2).toDp() } else 10.dp)
-              .pointerInput(port.nodeId, port.side, zoom) {
-                detectPortDragGestures(
-                  zoom = zoom,
-                  onDrag = { change, dragAmount ->
-                    change.consume()
-                    currentOnReorderUpdate(dragAmount.y)
-                  },
-                  onDragEnd = { currentOnReorderEnd() },
-                  onDragCancel = { currentOnReorderEnd() }
-                )
-              }
-        )
+          )
       }
+
+      // Reorder Handle (Right Half)
+      if (isReorderable) {
+        val handleHeight = if (isLargeHandle) with(density) { (com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT * 2).toDp() } else 32.dp
+        Box(
+          modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .size(width = 12.dp, height = handleHeight)
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), RoundedCornerShape(2.dp))
+            .pointerInput(port.nodeId, port.side, zoom) {
+              detectPortDragGestures(
+                zoom = zoom,
+                onDrag = { change, dragAmount ->
+                  change.consume()
+                  currentOnReorderUpdate(dragAmount.y)
+                },
+                onDragEnd = { currentOnReorderEnd() },
+                onDragCancel = { currentOnReorderEnd() }
+              )
+            }
+        ) {
+            Icon(
+              painter = painterResource(R.drawable.gs_drag_indicator_vd_theme_24),
+              contentDescription = stringResource(R.string.bg_cd_reorder),
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              modifier = Modifier.align(Alignment.Center).size(12.dp)
+            )
+        }
+      }
+    } else {
+      // Output Port
+      Box(
+        modifier = Modifier
+          .align(Alignment.Center)
+          .size(12.dp)
+          .background(
+              if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+              CircleShape
+          )
+          .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+          .onGloballyPositioned { coordinates: androidx.compose.ui.layout.LayoutCoordinates ->
+            portCoordinates = coordinates
+            val canvasCo = canvasCoordinates
+            if (canvasCo != null && coordinates.isAttached) {
+              val center = Offset(coordinates.size.width / 2f, coordinates.size.height / 2f)
+              val graphSpacePos = canvasCo.localPositionOf(coordinates, center)
+              onPortPositioned(graphSpacePos)
+            }
+          }
+          .pointerInput(port.nodeId, port.side, canvasCoordinates, zoom) {
+              detectPortDragGestures(
+                zoom = zoom,
+                onDragStart = { currentOnDrag(currentPortSide, currentPortId, true) },
+                onDragEnd = { currentOnDragEnd() },
+                onDragCancel = { currentOnDragEnd() },
+              ) { change, _ ->
+              change.consume()
+              val canvasCo = canvasCoordinates
+              val portCo = portCoordinates
+              if (canvasCo != null && portCo != null && canvasCo.isAttached && portCo.isAttached) {
+                val graphSpacePos = canvasCo.localPositionOf(portCo, change.position)
+                currentOnDragUpdate(graphSpacePos)
+              }
+            }
+          }
+      )
     }
   }
 }

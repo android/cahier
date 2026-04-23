@@ -82,16 +82,16 @@ object GraphValidator {
               when (nodeCase) {
                   ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE -> listOf("input_0", "input_1")
                   ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> listOf("angle_0", "mag_0")
-                  ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf("Value", "Start", "End")
+                  ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf("value", "start", "end")
                   else -> if (labels.size == 1) listOf("Input") else emptyList()
               }
           } else data.inputPortIds
 
           if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
-            val labels = listOf("Value", "Start", "End")
-            for (label in labels) {
-              if (!connectedPortIds.contains(label)) {
-                issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_interp_missing_input, listOf(label)), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
+            val labels = listOf(R.string.bg_port_value, R.string.bg_port_start, R.string.bg_port_end)
+            for (i in ids.indices) {
+              if (i < 3 && !connectedPortIds.contains(ids[i])) {
+                issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_interp_missing_input, listOf(DisplayText.Resource(labels[i]))), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
               }
             }
           } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {

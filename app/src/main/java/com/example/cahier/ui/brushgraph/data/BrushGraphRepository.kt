@@ -284,6 +284,8 @@ class BrushGraphRepository @Inject constructor(
                 modifiedNodeIds.add(edge.toNodeId)
               }
             }
+          } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
+            // Do nothing to inputPortIds for fixed schema nodes!
           } else {
             if (toData.inputPortIds.contains(edge.toPortId)) {
               val newData = toData.copy(inputPortIds = toData.inputPortIds - edge.toPortId)
@@ -394,6 +396,7 @@ class BrushGraphRepository @Inject constructor(
         nodes = currentGraph.nodes.map { if (it.id == nodeId) it.copy(isDisabled = isDisabled) else it }
       )
     }
+    validate()
   }
 
   fun reorderPorts(nodeId: String, fromIndex: Int, toIndex: Int) {
