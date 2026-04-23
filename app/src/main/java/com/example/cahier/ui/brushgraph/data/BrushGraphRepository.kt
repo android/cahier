@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import androidx.ink.storage.AndroidBrushFamilySerialization
+import androidx.ink.storage.BrushFamilyDecodeCallback
+import java.io.ByteArrayInputStream
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -104,6 +106,27 @@ class BrushGraphRepository @Inject constructor(
 
   fun clearIssues() {
     _graphIssues.value = emptyList()
+  }
+
+  fun loadAutoSaveBrush(): Boolean {
+    val decodedBytes = preferences.getAutoSaveBrush() ?: return false
+    return try {
+      val bais = ByteArrayInputStream(decodedBytes)
+      val family = AndroidBrushFamilySerialization.decode(
+        bais,
+        BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
+          if (bitmap != null) {
+            textureStore.loadTexture(id, bitmap)
+          }
+          id
+        }
+      )
+      loadBrushFamily(family)
+      true
+    } catch (e: Exception) {
+      android.util.Log.e("BrushGraphRepository", "Failed to decode brush family from prefs", e)
+      false
+    }
   }
 
   fun getBrushFamily(): androidx.ink.brush.BrushFamily? {
@@ -418,6 +441,11 @@ class BrushGraphRepository @Inject constructor(
           if (fromSet == toSet) return
           
           val newList = data.inputPortIds.toMutableList()
+          val requiredSize = maxOf(fromSet * 2 + 2, toSet * 2 + 2)
+          while (newList.size < requiredSize) {
+            newList.add("invalid_port_${newList.size}")
+          }
+          
           val temp0 = newList[fromSet * 2]
           val temp1 = newList[fromSet * 2 + 1]
           newList[fromSet * 2] = newList[toSet * 2]

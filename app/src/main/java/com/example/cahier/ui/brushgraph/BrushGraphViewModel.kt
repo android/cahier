@@ -18,7 +18,9 @@ import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
+import androidx.ink.storage.decode
 import androidx.ink.strokes.Stroke
+import com.example.cahier.ui.brushdesigner.CustomBrushEntity
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.debounce
@@ -30,8 +32,6 @@ import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.brushgraph.data.BrushGraphRepository
 import com.example.cahier.ui.brushgraph.data.BrushGraphPreferences
 import com.example.cahier.ui.brushdesigner.CustomBrushDao
-import com.example.cahier.ui.brushdesigner.CustomBrushEntity
-import androidx.ink.storage.decode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.zip.GZIPOutputStream
 import javax.inject.Inject
@@ -253,7 +253,6 @@ class BrushGraphViewModel @Inject constructor(
 
 
   init {
-    android.util.Log.d(TAG, "Initializing BrushGraphViewModel")
     graph = repository.graph.value
     validate()
     
@@ -270,25 +269,11 @@ class BrushGraphViewModel @Inject constructor(
 
     
     viewModelScope.launch(Dispatchers.IO) {
-      val decodedBytes = preferences.getAutoSaveBrush()
-      if (decodedBytes != null) {
-        try {
-          val bais = java.io.ByteArrayInputStream(decodedBytes)
-          val family = AndroidBrushFamilySerialization.decode(
-            bais,
-            BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
-              if (bitmap != null) {
-                textureStore.loadTexture(id, bitmap)
-              }
-              id
-            }
-          )
-          withContext(Dispatchers.Main) {
-            allTextureIds = textureStore.getAllIds()
-            loadBrushFamily(family)
-          }
-        } catch (e: Exception) {
-          android.util.Log.e(TAG, "Failed to decode brush family from prefs", e)
+      val success = repository.loadAutoSaveBrush()
+      if (success) {
+        withContext(Dispatchers.Main) {
+          allTextureIds = textureStore.getAllIds()
+          graph = repository.graph.value
         }
       }
     }
@@ -460,7 +445,6 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Handles a click on a node, depending on the current mode. */
   fun onNodeClick(nodeId: String) {
-    android.util.Log.d(TAG, "onNodeClick: $nodeId")
     selectedNodeId = if (selectedNodeId == nodeId) null else nodeId
     selectedEdge = null
     isErrorPaneOpen = false
@@ -484,7 +468,6 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Handles a click on an edge. */
   fun onEdgeClick(edge: GraphEdge) {
-    android.util.Log.d(TAG, "onEdgeClick: $edge")
     selectedEdge = if (selectedEdge?.fromNodeId == edge.fromNodeId && 
                        selectedEdge?.toNodeId == edge.toNodeId && selectedEdge?.toPortId == edge.toPortId) null else edge
     selectedNodeId = null
@@ -712,7 +695,7 @@ class BrushGraphViewModel @Inject constructor(
           CustomBrushEntity(name = brushName, brushBytes = finalCompressedBytes)
         )
       } catch (e: Exception) {
-        android.util.Log.e(TAG, "Failed to save brush to palette", e)
+        println("Failed to save brush to palette: $e")
       }
     }
   }
@@ -741,7 +724,7 @@ class BrushGraphViewModel @Inject constructor(
            loadBrushFamily(family)
         }
       } catch (e: Exception) {
-        android.util.Log.e(TAG, "Failed to load brush from palette", e)
+        println("Failed to load brush from palette: $e")
       }
     }
   }

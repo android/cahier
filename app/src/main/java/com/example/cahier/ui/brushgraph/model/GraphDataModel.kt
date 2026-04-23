@@ -742,4 +742,18 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
     else -> null
 }
 
+fun NodeData.isPortReorderable(port: Port, index: Int, hasAddPort: Boolean): Boolean {
+  return !port.isAddPort && hasAddPort && when (this) {
+    is NodeData.Coat -> index != 0
+    is NodeData.Behavior -> {
+      if (this.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+        index % 2 == 0
+      } else {
+        true
+      }
+    }
+    else -> true
+  }
+}
+
 

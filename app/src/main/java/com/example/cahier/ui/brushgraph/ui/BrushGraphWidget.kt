@@ -389,7 +389,7 @@ fun BrushGraphStudio(
         val nodeRegistry = remember { NodeRegistry() }
 
         // Main node graph canvas as the background.
-        NodeGraphCanvas(
+        GraphCanvas(
           graph = viewModel.graph,
           zoom = viewModel.zoom,
           offset = viewModel.offset,

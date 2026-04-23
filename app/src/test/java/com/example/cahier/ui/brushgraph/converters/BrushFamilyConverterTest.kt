@@ -532,9 +532,10 @@ class BrushFamilyConverterTest {
         val lerpNode = GraphNode(
             id = "lerp",
             data = NodeData.Behavior(
-                ink.proto.BrushBehavior.Node.newBuilder()
+                node = ink.proto.BrushBehavior.Node.newBuilder()
                     .setInterpolationNode(ink.proto.BrushBehavior.InterpolationNode.newBuilder().setInterpolation(ink.proto.BrushBehavior.Interpolation.INTERPOLATION_LERP).build())
-                    .build()
+                    .build(),
+                inputPortIds = listOf("Value", "Start", "End")
             ),
             position = GraphPoint(0f, 0f)
         )
