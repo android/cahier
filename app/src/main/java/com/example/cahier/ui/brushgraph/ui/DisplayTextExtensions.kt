@@ -11,6 +11,15 @@ fun DisplayText.asString(): String = when (this) {
         val resolvedArgs = args.map {
             when (it) {
                 is DisplayText -> it.asString()
+                is List<*> -> {
+                    val stringList = it.map { item ->
+                        when (item) {
+                            is DisplayText -> item.asString()
+                            else -> item.toString()
+                        }
+                    }
+                    stringList.joinToString(", ")
+                }
                 else -> it
             }
         }

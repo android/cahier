@@ -237,7 +237,7 @@ object GraphValidator {
           if (sourceNode.sourceValueRangeStart == sourceNode.sourceValueRangeEnd) {
             issues.add(
               GraphValidationException(
-                displayMessage = DisplayText.Resource(R.string.bg_err_source_range_equal, listOf(node.data.subtitles().joinToString())),
+                displayMessage = DisplayText.Resource(R.string.bg_err_source_range_equal, listOf(node.data.subtitles())),
                 nodeId = node.id,
                 severity = if (isActive) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
               )
