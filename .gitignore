@@ -16,3 +16,4 @@
 .cxx
 local.properties
 ink-proto/bin/
+gradle/gradle-daemon-jvm.properties
