@@ -43,12 +43,13 @@ fun NotificationPane(
   viewModel: BrushGraphViewModel,
   modifier: Modifier = Modifier,
 ) {
-  val issues = viewModel.graphIssues.collectAsStateWithLifecycle().value
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val issues = uiState.graphIssues
   val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
   val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
 
   AnimatedVisibility(
-    visible = viewModel.isErrorPaneOpen,
+    visible = uiState.isErrorPaneOpen,
     enter =
       if (isLandscape) {
         slideInHorizontally(initialOffsetX = { it })

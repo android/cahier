@@ -119,6 +119,7 @@ fun BrushGraphScreen(
   modifier: Modifier = Modifier
 ) {
   val viewModel: BrushGraphViewModel = hiltViewModel()
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
   
@@ -268,19 +269,19 @@ fun BrushGraphScreen(
       var viewportSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
       var showTutorialFinishDialog by remember { mutableStateOf(false) }
 
-      val isSidePaneOpen = isLandscape && (viewModel.selectedNodeId != null || viewModel.isErrorPaneOpen)
+      val isSidePaneOpen = isLandscape && (uiState.selectedNodeId != null || uiState.isErrorPaneOpen)
       val indicatorPaddingEnd by animateDpAsState(
         targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
         label = "indicatorPaddingEnd",
       )
-      val previewHeight = if (viewModel.isPreviewExpanded) {
+      val previewHeight = if (uiState.isPreviewExpanded) {
         PREVIEW_HEIGHT_EXPANDED
       } else {
         PREVIEW_HEIGHT_COLLAPSED
       }
-      val isNodeSelected = viewModel.selectedNodeId != null
-      val isEdgeSelected = viewModel.selectedEdge != null
-      val isErrorPaneOpen = viewModel.isErrorPaneOpen
+      val isNodeSelected = uiState.selectedNodeId != null
+      val isEdgeSelected = uiState.selectedEdge != null
+      val isErrorPaneOpen = uiState.isErrorPaneOpen
       val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
 
       val trashPaddingBottom by animateDpAsState(
@@ -294,7 +295,7 @@ fun BrushGraphScreen(
       )
 
       val nodeRegistry = remember { NodeRegistry() }
-      val issues = viewModel.graphIssues.collectAsStateWithLifecycle().value
+      val issues = uiState.graphIssues
 
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         BrushGraphContent(
@@ -302,20 +303,20 @@ fun BrushGraphScreen(
           isNodeSelected = isNodeSelected,
           isEdgeSelected = isEdgeSelected,
           isErrorPaneOpen = isErrorPaneOpen,
-          isPreviewExpanded = viewModel.isPreviewExpanded,
+          isPreviewExpanded = uiState.isPreviewExpanded,
           viewportSize = viewportSize,
           onViewportSizeChange = { viewportSize = it },
           canvasSlot = { padding ->
             GraphCanvas(
-              graph = viewModel.graph,
-              zoom = viewModel.zoom,
-              offset = Offset(viewModel.offset.x, viewModel.offset.y),
+              graph = uiState.graph,
+              zoom = uiState.zoom,
+              offset = Offset(uiState.offset.x, uiState.offset.y),
               onZoomChange = { viewModel.updateZoom(it) },
               onOffsetChange = { viewModel.updateOffset(GraphPoint(it.x, it.y)) },
               onNodeMove = { id, pos -> viewModel.moveNode(id, GraphPoint(pos.x, pos.y)) },
               onNodeMoveFinished = { viewModel.advanceTutorial(TutorialAction.MOVE_NODE) },
               onNodeClick = { id, _ ->
-                if (viewModel.isSelectionMode) {
+                if (uiState.isSelectionMode) {
                   viewModel.toggleNodeSelection(id)
                 } else {
                   viewModel.onNodeClick(id)
@@ -323,8 +324,8 @@ fun BrushGraphScreen(
               },
               onNodeLongPress = { id -> viewModel.enterSelectionMode(id) },
               onNodeDelete = { id -> viewModel.deleteNode(id) },
-              isSelectionMode = viewModel.isSelectionMode,
-              selectedNodeIds = viewModel.selectedNodeIds,
+              isSelectionMode = uiState.isSelectionMode,
+              selectedNodeIds = uiState.selectedNodeIds,
               onSelectAll = { viewModel.selectAllNodes() },
               onDuplicateSelected = { viewModel.duplicateSelectedNodes() },
               onDeleteSelected = { viewModel.deleteSelectedNodes() },
@@ -336,10 +337,10 @@ fun BrushGraphScreen(
               onFinalizeEdgeEdit = { oldEdge, fromId, toId, portId -> viewModel.finalizeEdgeEdit(oldEdge, fromId, toId, portId) },
               onCanvasClick = { viewModel.dismissPanes() },
               onPortClick = { nodeId, port ->
-                val node = viewModel.graph.nodes.find { it.id == nodeId }
+                val node = uiState.graph.nodes.find { it.id == nodeId }
                 val nodeData = node?.let { port.inferNodeData(it) }
                 if (nodeData != null) {
-                  val portPos = nodeRegistry.getPortPosition(nodeId, port.id, viewModel.graph)
+                  val portPos = nodeRegistry.getPortPosition(nodeId, port.id, uiState.graph)
                   val newX = node.position.x - nodeData.width() - 100f
                   val newY = portPos.y - nodeData.height() / 2f
                   viewModel.addNodeAndConnect(nodeData, GraphPoint(newX, newY), nodeId, port.id)
@@ -347,9 +348,9 @@ fun BrushGraphScreen(
               },
               onReorderPorts = { nodeId, fromIndex, toIndex -> viewModel.reorderPorts(nodeId, fromIndex, toIndex) },
               nodeRegistry = nodeRegistry,
-              selectedEdge = viewModel.selectedEdge,
-              detachedEdge = viewModel.detachedEdge,
-              activeEdgeSourceId = viewModel.activeEdgeSourceId,
+              selectedEdge = uiState.selectedEdge,
+              detachedEdge = uiState.detachedEdge,
+              activeEdgeSourceId = uiState.activeEdgeSourceId,
               onNodeDataUpdate = { id, data -> viewModel.updateNodeData(id, data) },
               onChooseColor = { initialColor, onColorSelected ->
                 colorPickerInitialColor = initialColor
@@ -357,18 +358,18 @@ fun BrushGraphScreen(
                 showColorPicker = true
               },
               textureStore = textureStore,
-              allTextureIds = viewModel.allTextureIds,
+              allTextureIds = uiState.allTextureIds,
               onLoadTexture = { texturePickerLauncher.launch(arrayOf("image/*")) },
               strokeRenderer = renderer,
-              textFieldsLocked = viewModel.textFieldsLocked,
-              selectedNodeId = viewModel.selectedNodeId,
+              textFieldsLocked = uiState.textFieldsLocked,
+              selectedNodeId = uiState.selectedNodeId,
               brush = viewModel.brush.collectAsStateWithLifecycle().value,
               bottomPadding = padding,
             )
           },
           inspectorSlot = {
-            val selectedNode = viewModel.graph.nodes.find { it.id == viewModel.selectedNodeId }
-            val selectedEdge = viewModel.selectedEdge
+            val selectedNode = uiState.graph.nodes.find { it.id == uiState.selectedNodeId }
+            val selectedEdge = uiState.selectedEdge
             val selectionName = if (selectedNode != null) {
                 stringResource(selectedNode.data.title())
             } else {
@@ -398,19 +399,19 @@ fun BrushGraphScreen(
                       colorPickerOnColorSelected = onColorSelected
                       showColorPicker = true
                     },
-                    allTextureIds = viewModel.allTextureIds,
+                    allTextureIds = uiState.allTextureIds,
                     onLoadTexture = { texturePickerLauncher.launch(arrayOf("image/*")) },
                     strokeRenderer = renderer,
-                    textFieldsLocked = viewModel.textFieldsLocked,
+                    textFieldsLocked = uiState.textFieldsLocked,
                     onDelete = { viewModel.deleteNode(selectedNode.id) },
                     onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) },
                     onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
                   )
                 } else if (selectedEdge != null) {
-                  val fromNode = viewModel.graph.nodes.find { it.id == selectedEdge.fromNodeId }
-                  val toNode = viewModel.graph.nodes.find { it.id == selectedEdge.toNodeId }
+                  val fromNode = uiState.graph.nodes.find { it.id == selectedEdge.fromNodeId }
+                  val toNode = uiState.graph.nodes.find { it.id == selectedEdge.toNodeId }
                   if (fromNode != null && toNode != null) {
-                    val visiblePorts = toNode.getVisiblePorts(viewModel.graph)
+                    val visiblePorts = toNode.getVisiblePorts(uiState.graph)
                     val port = visiblePorts.find { it.id == selectedEdge.toPortId }
                     val inputLabel = port?.label
                     EdgeInspector(
@@ -479,16 +480,16 @@ fun BrushGraphScreen(
               onLoadFromPalette = { viewModel.loadFromPalette(it, textureStore) },
               onDeleteFromPalette = { viewModel.deleteFromPalette(it) },
               onStartTutorialSandbox = { viewModel.startTutorialSandbox() },
-              textFieldsLocked = viewModel.textFieldsLocked,
+              textFieldsLocked = uiState.textFieldsLocked,
               onToggleTextFieldsLocked = { viewModel.toggleTextFieldsLocked() },
               modifier = Modifier.align(Alignment.TopStart).padding(16.dp).zIndex(2f),
             )
           },
           fabSlot = { vSize ->
             val density = LocalDensity.current.density
-            val previewHeight = if (viewModel.isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED
-            val isInspectorOpen = (viewModel.selectedNodeId != null || viewModel.selectedEdge != null)
-            val isErrorPaneOpen = viewModel.isErrorPaneOpen
+            val previewHeight = if (uiState.isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED
+            val isInspectorOpen = (uiState.selectedNodeId != null || uiState.selectedEdge != null)
+            val isErrorPaneOpen = uiState.isErrorPaneOpen
             val isAnySidePaneOpen = isInspectorOpen || isErrorPaneOpen
 
             val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
@@ -507,13 +508,13 @@ fun BrushGraphScreen(
               }
 
             val visibleCenter = Offset(visibleWidth / 2f, visibleHeight / 2f)
-            val centerInCanvasOffset = (visibleCenter - Offset(viewModel.offset.x, viewModel.offset.y)) / viewModel.zoom
+            val centerInCanvasOffset = (visibleCenter - Offset(uiState.offset.x, uiState.offset.y)) / uiState.zoom
             val centerInCanvas = GraphPoint(centerInCanvasOffset.x, centerInCanvasOffset.y)
 
             CreateNodeSpeedDial(
               isLandscape = isLandscape,
               isAnySidePaneOpen = isAnySidePaneOpen,
-              isPreviewExpanded = viewModel.isPreviewExpanded,
+              isPreviewExpanded = uiState.isPreviewExpanded,
               viewportSize = vSize,
               modifier = Modifier.align(Alignment.BottomEnd),
               menuContent = { onClose ->
@@ -550,15 +551,15 @@ fun BrushGraphScreen(
           tutorialSlot = { vSize ->
             TutorialOverlayHost(
               tutorialStep = viewModel.tutorialStep,
-              graph = viewModel.graph,
-              zoom = viewModel.zoom,
-              offset = Offset(viewModel.offset.x, viewModel.offset.y),
-              selectedNodeId = viewModel.selectedNodeId,
-              selectedEdge = viewModel.selectedEdge,
+              graph = uiState.graph,
+              zoom = uiState.zoom,
+              offset = Offset(uiState.offset.x, uiState.offset.y),
+              selectedNodeId = uiState.selectedNodeId,
+              selectedEdge = uiState.selectedEdge,
               currentStepIndex = viewModel.currentStepIndex,
               isLandscape = isLandscape,
               viewportSize = vSize,
-              isPreviewExpanded = viewModel.isPreviewExpanded,
+              isPreviewExpanded = uiState.isPreviewExpanded,
               onAdvanceTutorial = { viewModel.advanceTutorial(it) },
               onRegressTutorial = { viewModel.regressTutorial() },
               onCloseTutorial = { showTutorialFinishDialog = true }
@@ -582,13 +583,13 @@ fun BrushGraphScreen(
       }
 
       GraphCameraController(
-        offset = Offset(viewModel.offset.x, viewModel.offset.y),
+        offset = Offset(uiState.offset.x, uiState.offset.y),
         tutorialStep = viewModel.tutorialStep,
-        focusTrigger = viewModel.focusTrigger,
-        graph = viewModel.graph,
-        zoom = viewModel.zoom,
-        isPreviewExpanded = viewModel.isPreviewExpanded,
-        selectedNodeId = viewModel.selectedNodeId,
+        focusTrigger = uiState.focusTrigger,
+        graph = uiState.graph,
+        zoom = uiState.zoom,
+        isPreviewExpanded = uiState.isPreviewExpanded,
+        selectedNodeId = uiState.selectedNodeId,
         updateOffset = { viewModel.updateOffset(GraphPoint(it.x, it.y)) },
         viewportSize = viewportSize,
         context = context,

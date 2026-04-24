@@ -26,8 +26,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.filterNotNull
 import com.example.cahier.developer.brushgraph.data.BrushFamilyConverter
 import com.example.cahier.developer.brushgraph.data.BrushGraphConverter
@@ -56,6 +60,28 @@ import com.example.cahier.developer.brushgraph.data.TutorialAction
 import java.io.ByteArrayOutputStream
 import java.io.ByteArrayInputStream
 
+data class BrushGraphUiState(
+  val graph: BrushGraph = BrushGraph(),
+  val isSelectionMode: Boolean = false,
+  val selectedNodeIds: Set<String> = emptySet(),
+  val activeEdgeSourceId: String? = null,
+  val selectedEdge: GraphEdge? = null,
+  val testAutoUpdateStrokes: Boolean = true,
+  val testBrushColor: Int? = null,
+  val testBrushSize: Float = 10f,
+  val isErrorPaneOpen: Boolean = false,
+  val zoom: Float = 1f,
+  val offset: GraphPoint = GraphPoint(0f, 0f),
+  val textFieldsLocked: Boolean = false,
+  val selectedNodeId: String? = null,
+  val focusTrigger: Int = 0,
+  val detachedEdge: GraphEdge? = null,
+  val isPreviewExpanded: Boolean = true,
+  val isDarkCanvas: Boolean = false,
+  val graphIssues: List<GraphValidationException> = emptyList(),
+  val allTextureIds: Set<String> = emptySet()
+)
+
 /** ViewModel to manage the state of the brush graph. */
 @HiltViewModel
 class BrushGraphViewModel @Inject constructor(
@@ -74,45 +100,17 @@ class BrushGraphViewModel @Inject constructor(
         initialValue = emptyList()
       )
 
-  /** The current state of the brush graph. */
-  var graph by mutableStateOf(BrushGraph())
-    private set
+  private val _uiState = MutableStateFlow(BrushGraphUiState())
+  val uiState: StateFlow<BrushGraphUiState> = _uiState.asStateFlow()
 
-  /** Whether we are in multi-selection mode. */
-  var isSelectionMode by mutableStateOf(false)
-    private set
-
-  /** The set of selected node IDs. */
-  var selectedNodeIds by mutableStateOf(setOf<String>())
-    private set
-
-  /** The ID of the node currently selected as the source for a new edge. */
-  var activeEdgeSourceId by mutableStateOf<String?>(null)
-    private set
-
-  /** The edge currently selected for inspection. */
-  var selectedEdge by mutableStateOf<GraphEdge?>(null)
-    private set
-
-  var testAutoUpdateStrokes by mutableStateOf(true)
-
-  /** The current color of the brush in the test canvas. */
-  var testBrushColor by mutableStateOf<Int?>(null)
-
-  /** The current size of the brush in the test canvas. */
-  var testBrushSize by androidx.compose.runtime.mutableFloatStateOf(10f)
-
-  /** The current brush being designed. */
-  val brush: StateFlow<Brush> = combine(
-    repository.graph,
-    snapshotFlow { testBrushColor }.filterNotNull(),
-    snapshotFlow { testBrushSize }
-  ) { graph, color, size ->
+  val brush: StateFlow<androidx.ink.brush.Brush> = uiState.map { state ->
     val family = try {
-      BrushFamilyConverter.convert(graph)
+      BrushFamilyConverter.convert(state.graph)
     } catch (e: Exception) {
       null
     }
+    val color = state.testBrushColor ?: 0
+    val size = state.testBrushSize
     if (family != null) {
       Brush.createWithColorIntArgb(family, color, size, 0.1f)
     } else {
@@ -130,65 +128,18 @@ class BrushGraphViewModel @Inject constructor(
   )
 
   /** The list of strokes drawn in the preview area. */
-  val strokeList = mutableStateListOf<Stroke>()
-
-  /** All current validation issues and notifications (errors, warnings, debug). */
-  val graphIssues: StateFlow<List<GraphValidationException>> = repository.graphIssues
-
-  /** Whether the error pane is currently open. */
-  var isErrorPaneOpen by mutableStateOf(false)
-    private set
-
-  /** The current zoom level of the graph canvas. */
-  var zoom by androidx.compose.runtime.mutableFloatStateOf(1f)
-    private set
-
-  /** The current pan offset of the graph canvas. */
-  var offset by mutableStateOf(GraphPoint(0f, 0f))
-    private set
-
-  /** Whether text fields in the UI are locked for editing. */
-  var textFieldsLocked by mutableStateOf(false)
-    private set
-
-  /** The ID of the node currently selected as the source for the inspector. */
-  private val _selectedNodeId = mutableStateOf(savedStateHandle.get<String>("selectedNodeId"))
-  var selectedNodeId: String?
-    get() = _selectedNodeId.value
-    private set(value) {
-      _selectedNodeId.value = value
-      savedStateHandle.set("selectedNodeId", value)
-    }
-
-  /** Trigger to notify UI to focus on the selected node. */
-  var focusTrigger by androidx.compose.runtime.mutableIntStateOf(0)
-    private set
-
-  /** The edge currently detached for editing. */
-  var detachedEdge by mutableStateOf<GraphEdge?>(null)
-
-  /** Whether the preview pane at the bottom is expanded. */
-  var isPreviewExpanded by mutableStateOf(true)
-    private set
-
-  /** Whether the test canvas background is dark. */
-  var isDarkCanvas by mutableStateOf(false)
-    private set
-
+  val strokeList = mutableStateListOf<androidx.ink.strokes.Stroke>()
 
   fun updateTestBrushColor(colorArgb: Int) {
-    testBrushColor = colorArgb
+    _uiState.update { it.copy(testBrushColor = colorArgb) }
   }
 
   fun updateTestBrushSize(size: Float) {
-    testBrushSize = size
+    _uiState.update { it.copy(testBrushSize = size) }
   }
 
-  var allTextureIds by mutableStateOf(textureStore.getAllIds())
-    private set
-
   fun updateAllTextureIds() {
-    allTextureIds = textureStore.getAllIds()
+    _uiState.update { state -> state.copy(allTextureIds = textureStore.getAllIds()) }
   }
 
   val tutorialManager = TutorialManager(repository)
@@ -205,7 +156,6 @@ class BrushGraphViewModel @Inject constructor(
     val oldBrushFamily = brush.value.family
     val defaultGraph = repository.createDefaultGraph()
     repository.setGraph(defaultGraph)
-    graph = defaultGraph
     
     tutorialManager.startTutorialSandbox(oldBrushFamily)
     
@@ -227,19 +177,24 @@ class BrushGraphViewModel @Inject constructor(
     }
   }
 
-  companion object {
-    private const val TAG = "BrushGraphViewModel"
-  }
-
-
-
   init {
-    graph = repository.graph.value
     validate()
     
     viewModelScope.launch {
+      repository.graph.collect { newGraph ->
+        _uiState.update { it.copy(graph = newGraph) }
+      }
+    }
+    
+    viewModelScope.launch {
+      repository.graphIssues.collect { newIssues ->
+        _uiState.update { it.copy(graphIssues = newIssues) }
+      }
+    }
+    
+    viewModelScope.launch {
       brush.collect { newBrush ->
-        if (testAutoUpdateStrokes) {
+        if (uiState.value.testAutoUpdateStrokes) {
           for (i in strokeList.indices) {
             strokeList[i] = strokeList[i].copy(brush = newBrush)
           }
@@ -247,20 +202,16 @@ class BrushGraphViewModel @Inject constructor(
       }
     }
 
-
-    
     viewModelScope.launch(Dispatchers.IO) {
       val success = repository.loadAutoSaveBrush()
       if (success) {
         withContext(Dispatchers.Main) {
-          allTextureIds = textureStore.getAllIds()
-          graph = repository.graph.value
+          _uiState.update { state -> state.copy(allTextureIds = textureStore.getAllIds()) }
         }
       }
     }
   }
 
-  /** Posts a transient debug message. */
   fun postDebug(text: String) {
     repository.postDebug(text)
   }
@@ -268,8 +219,7 @@ class BrushGraphViewModel @Inject constructor(
   fun addNode(data: NodeData, position: GraphPoint) {
     dismissPanes()
     val newNodeId = repository.addNode(data, position)
-    graph = repository.graph.value
-    selectedNodeId = newNodeId
+    _uiState.update { it.copy(selectedNodeId = newNodeId) }
     validate()
     
     if (data is NodeData.Behavior) {
@@ -279,37 +229,30 @@ class BrushGraphViewModel @Inject constructor(
     }
   }
 
-  /** Adds a new Family node at the specified position. */
   fun addFamilyNode(position: GraphPoint) {
     addNode(NodeData.Family(), position)
   }
 
-  /** Adds a new Coat node at the specified position. */
   fun addCoatNode(position: GraphPoint) {
     addNode(NodeData.Coat(), position)
   }
 
-  /** Adds a new Paint node at the specified position. */
   fun addPaintNode(position: GraphPoint) {
     addNode(NodeData.Paint(ProtoBrushPaint.getDefaultInstance()), position)
   }
 
-  /** Adds a new Tip node at the specified position. */
   fun addTipNode(position: GraphPoint) {
     addNode(NodeData.Tip(ProtoBrushTip.getDefaultInstance()), position)
   }
 
-  /** Adds a new Color Function node at the specified position. */
   fun addColorFunctionNode(position: GraphPoint) {
     addNode(NodeData.ColorFunction(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), position)
   }
 
-  /** Adds a new Texture Layer node at the specified position. */
   fun addTextureLayerNode(position: GraphPoint) {
     addNode(NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()), position)
   }
 
-  /** Adds a new Behavior node (TargetNode by default) at the specified position. */
   fun addBehaviorNode(position: GraphPoint) {
     addNode(
       NodeData.Behavior(
@@ -326,203 +269,170 @@ class BrushGraphViewModel @Inject constructor(
     )
   }
 
-  /** Updates the position of a node. */
   fun moveNode(nodeId: String, newPosition: GraphPoint) {
-    val node = graph.nodes.find { it.id == nodeId } ?: return
+    val node = uiState.value.graph.nodes.find { it.id == nodeId } ?: return
     
-    if (isSelectionMode && selectedNodeIds.contains(nodeId)) {
+    if (uiState.value.isSelectionMode && uiState.value.selectedNodeIds.contains(nodeId)) {
       val deltaX = newPosition.x - node.position.x
       val deltaY = newPosition.y - node.position.y
-      repository.moveNodes(selectedNodeIds, deltaX, deltaY)
-      graph = repository.graph.value
+      repository.moveNodes(uiState.value.selectedNodeIds, deltaX, deltaY)
     } else {
       repository.moveNode(nodeId, newPosition)
-      graph = repository.graph.value
     }
     
   }
 
-  /** Enters selection mode and selects the initial node. */
   fun enterSelectionMode(initialNodeId: String? = null) {
-    val node = initialNodeId?.let { id -> graph.nodes.find { it.id == id } }
+    val node = initialNodeId?.let { id -> uiState.value.graph.nodes.find { it.id == id } }
     if (node?.data is NodeData.Family) return
-    isSelectionMode = true
-    selectedNodeIds = if (initialNodeId != null) setOf(initialNodeId) else emptySet()
+    _uiState.update { state -> state.copy(
+      isSelectionMode = true,
+      selectedNodeIds = if (initialNodeId != null) setOf(initialNodeId) else emptySet()
+    ) }
     dismissPanes()
     
-    // Tutorial progression
     advanceTutorial(TutorialAction.LONG_PRESS_NODE)
   }
 
-  /** Toggles selection of a node. */
   fun toggleNodeSelection(nodeId: String) {
-    val node = graph.nodes.find { it.id == nodeId }
+    val node = uiState.value.graph.nodes.find { it.id == nodeId }
     if (node?.data is NodeData.Family) return
-    selectedNodeIds = if (selectedNodeIds.contains(nodeId)) {
-      selectedNodeIds - nodeId
-    } else {
-      selectedNodeIds + nodeId
+    _uiState.update { state ->
+      val newSelected = if (state.selectedNodeIds.contains(nodeId)) {
+        state.selectedNodeIds - nodeId
+      } else {
+        state.selectedNodeIds + nodeId
+      }
+      state.copy(selectedNodeIds = newSelected)
     }
-    if (selectedNodeIds.isEmpty()) {
+    if (uiState.value.selectedNodeIds.isEmpty()) {
       exitSelectionMode()
     }
   }
 
-  /** Selects all nodes in the graph. */
   fun selectAllNodes() {
-    selectedNodeIds = graph.nodes.filter { it.data !is NodeData.Family }.map { it.id }.toSet()
+    val allNodeIds = uiState.value.graph.nodes.filter { it.data !is NodeData.Family }.map { it.id }.toSet()
+    _uiState.update { it.copy(selectedNodeIds = allNodeIds) }
   }
 
-  /** Exits selection mode. */
   fun exitSelectionMode() {
-    isSelectionMode = false
-    selectedNodeIds = emptySet()
+    _uiState.update { it.copy(isSelectionMode = false) }
+    _uiState.update { it.copy(selectedNodeIds = emptySet()) }
     
-    // Tutorial progression
     advanceTutorial(TutorialAction.CLICK_DONE)
   }
 
   fun deleteSelectedNodes() {
-    val modifiedNodeIds = repository.deleteSelectedNodes(selectedNodeIds)
-    graph = repository.graph.value
+    val modifiedNodeIds = repository.deleteSelectedNodes(uiState.value.selectedNodeIds)
 
-    
-    // Tutorial progression
     advanceTutorial(TutorialAction.DELETE_NODE)
     
     exitSelectionMode()
   }
 
   fun duplicateSelectedNodes() {
-    val newNodeIds = repository.duplicateSelectedNodes(selectedNodeIds)
-    graph = repository.graph.value
+    val newNodeIds = repository.duplicateSelectedNodes(uiState.value.selectedNodeIds)
     
-    // Select the duplicated nodes!
-    selectedNodeIds = newNodeIds
+    _uiState.update { it.copy(selectedNodeIds = newNodeIds) }
     
-    // Tutorial progression
     advanceTutorial(TutorialAction.DUPLICATE_NODES)
   }
 
-  /** Updates the data/properties of a node. */
   fun updateNodeData(nodeId: String, newData: NodeData) {
     repository.updateNodeData(nodeId, newData)
-    graph = repository.graph.value
 
     validate()
   }
 
   fun setNodeDisabled(nodeId: String, isDisabled: Boolean) {
     repository.setNodeDisabled(nodeId, isDisabled)
-    graph = repository.graph.value
     validate()
   }
 
   fun setEdgeDisabled(edge: GraphEdge, isDisabled: Boolean) {
-    selectedEdge = repository.setEdgeDisabled(edge, isDisabled)
-    graph = repository.graph.value
+    _uiState.update { it.copy(selectedEdge = repository.setEdgeDisabled(edge, isDisabled)) }
     validate()
   }
 
-  /** Handles a click on a node, depending on the current mode. */
   fun onNodeClick(nodeId: String) {
-    selectedNodeId = if (selectedNodeId == nodeId) null else nodeId
-    selectedEdge = null
-    isErrorPaneOpen = false
+    _uiState.update { state -> state.copy(selectedNodeId = if (state.selectedNodeId == nodeId) null else nodeId, selectedEdge = null, isErrorPaneOpen = false) }
     
     advanceTutorial(TutorialAction.SELECT_NODE)
   }
 
   private fun checkSelectNodeTrigger(nodeId: String) {
-    val node = graph.nodes.find { it.id == nodeId }
+    val node = uiState.value.graph.nodes.find { it.id == nodeId }
     if (node != null) {
       val shouldAdvance = (node.data is NodeData.Tip) ||
                           (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE) ||
                           (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE) ||
                           (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE) ||
-                          tutorialStep?.getTargetNode(graph)?.id == nodeId
+                          tutorialStep?.getTargetNode(uiState.value.graph)?.id == nodeId
       if (shouldAdvance) {
         advanceTutorial(TutorialAction.SELECT_NODE)
       }
     }
   }
 
-  /** Handles a click on an edge. */
   fun onEdgeClick(edge: GraphEdge) {
-    selectedEdge = if (selectedEdge?.fromNodeId == edge.fromNodeId && 
-                       selectedEdge?.toNodeId == edge.toNodeId && selectedEdge?.toPortId == edge.toPortId) null else edge
-    selectedNodeId = null
-    isErrorPaneOpen = false
+    _uiState.update { state ->
+      val newEdge = if (state.selectedEdge?.fromNodeId == edge.fromNodeId && 
+                         state.selectedEdge?.toNodeId == edge.toNodeId && state.selectedEdge?.toPortId == edge.toPortId) null else edge
+      state.copy(selectedEdge = newEdge, isErrorPaneOpen = false, selectedNodeId = null)
+    }
     
-    // Tutorial progression
     advanceTutorial(TutorialAction.SELECT_EDGE)
   }
 
-  /** Clears the current node selection (closes the inspector). */
   fun clearSelectedNode() {
-    selectedNodeId = null
+    _uiState.update { it.copy(selectedNodeId = null) }
     
     advanceTutorial(TutorialAction.EXIT_INSPECTOR)
   }
 
-  /** Clears the current edge selection. */
   fun clearSelectedEdge() {
-    selectedEdge = null
+    _uiState.update { it.copy(selectedEdge = null) }
   }
 
-  /** Toggles the visibility of the error pane. */
   fun toggleErrorPane() {
-    isErrorPaneOpen = !isErrorPaneOpen
-    if (isErrorPaneOpen) {
-      selectedNodeId = null
+    _uiState.update { it.copy(isErrorPaneOpen = !it.isErrorPaneOpen) }
+    if (uiState.value.isErrorPaneOpen) {
+      _uiState.update { it.copy(selectedNodeId = null) }
       advanceTutorial(TutorialAction.CLICK_NOTIFICATION)
     }
   }
 
-  /** Dismisses any open inspector or notification panes and clears selection. */
   fun dismissPanes() {
     clearSelectedNode()
-    selectedEdge = null
-    isErrorPaneOpen = false
-    activeEdgeSourceId = null
+    _uiState.update { it.copy(selectedEdge = null, isErrorPaneOpen = false, activeEdgeSourceId = null) }
   }
 
-  /** Handles a click on an issue message: selects the erroneous node and closes the error pane. */
   fun onIssueClick(issue: GraphValidationException, isLandscape: Boolean, density: Float) {
     if (issue.nodeId != null) {
       centerNode(issue.nodeId)
     }
     
-    // Tutorial progression
     advanceTutorial(TutorialAction.CLICK_ERROR_LINK)
   }
 
-  /** Focuses on the specified node in the UI. */
   fun centerNode(nodeId: String) {
-    selectedNodeId = nodeId
-    selectedEdge = null
-    isErrorPaneOpen = false
+    _uiState.update { it.copy(selectedNodeId = nodeId, selectedEdge = null, isErrorPaneOpen = false, focusTrigger = it.focusTrigger + 1) }
     checkSelectNodeTrigger(nodeId)
-    focusTrigger++
   }
 
-  /** Toggles the expansion state of the preview pane. */
   fun togglePreviewExpanded() {
-    isPreviewExpanded = !isPreviewExpanded
+    _uiState.update { it.copy(isPreviewExpanded = !it.isPreviewExpanded) }
   }
 
-  /** Toggles the theme of the test canvas. */
   fun toggleCanvasTheme() {
-    isDarkCanvas = !isDarkCanvas
+    _uiState.update { it.copy(isDarkCanvas = !it.isDarkCanvas) }
   }
 
   fun addNodeAndConnect(nodeData: NodeData, position: GraphPoint, targetNodeId: String, targetPortId: String) {
     val newNodeId = repository.addNode(nodeData, position)
-    graph = repository.graph.value
     
     addEdge(newNodeId, targetNodeId, targetPortId)
 
-    // Tutorial progression
     if (nodeData is NodeData.Behavior) {
       advanceTutorial(TutorialAction.ADD_BEHAVIOR)
     } else if (nodeData is NodeData.ColorFunction) {
@@ -533,12 +443,10 @@ class BrushGraphViewModel @Inject constructor(
   /** Adds a new edge between two nodes. */
   fun addEdge(fromNodeId: String, toNodeId: String, initialToPortId: String) {
     repository.addEdge(fromNodeId, toNodeId, initialToPortId)
-    graph = repository.graph.value
     validate()
     
-    // Tutorial progression
-    val fromNode = graph.nodes.find { it.id == fromNodeId } ?: return
-    val toNode = graph.nodes.find { it.id == toNodeId } ?: return
+    val fromNode = uiState.value.graph.nodes.find { it.id == fromNodeId } ?: return
+    val toNode = uiState.value.graph.nodes.find { it.id == toNodeId } ?: return
     val shouldAdvance = (fromNode.data is NodeData.Behavior && fromNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE &&
                           toNode.data is NodeData.Behavior && toNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE) ||
                          (fromNode.data is NodeData.Coat && toNode.data is NodeData.Family) ||
@@ -553,7 +461,7 @@ class BrushGraphViewModel @Inject constructor(
     if (oldEdge.toNodeId == newToNodeId && oldEdge.toPortId == newToPortId) {
       // Reconnecting to the same port, just re-enable it.
       setEdgeDisabled(oldEdge, false)
-      detachedEdge = null
+      _uiState.update { it.copy(detachedEdge = null) }
       return
     }
 
@@ -564,43 +472,36 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Detaches an edge for editing by marking it as disabled. */
   fun detachEdge(edge: GraphEdge) {
-    detachedEdge = edge
+    _uiState.update { state -> state.copy(detachedEdge = edge) }
     repository.setEdgeDisabled(edge, true)
-    graph = repository.graph.value
   }
 
   fun reorderPorts(nodeId: String, fromIndex: Int, toIndex: Int) {
     repository.reorderPorts(nodeId, fromIndex, toIndex)
-    graph = repository.graph.value
     advanceTutorial(TutorialAction.SWAP_PORTS)
   }
 
-  /** Deletes an edge. */
   fun deleteEdge(edge: GraphEdge) {
-    if (selectedEdge == edge) {
-      selectedEdge = null
+    if (uiState.value.selectedEdge == edge) {
+      _uiState.update { state -> state.copy(selectedEdge = null) }
     }
-    if (detachedEdge == edge) {
-      detachedEdge = null
+    if (uiState.value.detachedEdge == edge) {
+      _uiState.update { state -> state.copy(detachedEdge = null) }
     }
 
     val modifiedNodeIds = repository.deleteEdge(edge)
-    graph = repository.graph.value
   }
 
   fun addNodeBetween(edge: GraphEdge) {
     dismissPanes()
     val newNodeId = repository.addNodeBetween(edge)
-    graph = repository.graph.value
     if (newNodeId != null) {
-      selectedNodeId = newNodeId
+      _uiState.update { it.copy(selectedNodeId = newNodeId) }
     }
     
-    // Tutorial progression
     advanceTutorial(TutorialAction.ADD_NODE_BETWEEN)
   }
 
-  /** Clears the graph. */
   fun clearGraph() {
     dismissPanes()
     repository.clearGraph()
@@ -609,33 +510,29 @@ class BrushGraphViewModel @Inject constructor(
   }
 
   fun deleteNode(nodeId: String) {
-    val node = graph.nodes.find { it.id == nodeId } ?: return
+    val node = uiState.value.graph.nodes.find { it.id == nodeId } ?: return
     if (node.data is NodeData.Family) {
       return
     }
-    if (selectedNodeId == nodeId) {
-      selectedNodeId = null
+    if (uiState.value.selectedNodeId == nodeId) {
+      _uiState.update { it.copy(selectedNodeId = null) }
     }
     
-    // Tutorial progression
     advanceTutorial(TutorialAction.DELETE_NODE)
     
     val modifiedNodeIds = repository.deleteNode(nodeId)
-    graph = repository.graph.value
     validate()
   }
 
   fun validate() {
-    graph = repository.graph.value
+    repository.validate()
   }
 
   fun reorganize() {
     dismissPanes()
     repository.reorganize()
-    graph = repository.graph.value
   }
 
-  /** Clears all strokes in the preview area. */
   fun clearStrokes() {
     strokeList.clear()
   }
@@ -643,28 +540,22 @@ class BrushGraphViewModel @Inject constructor(
   fun loadBrushFamily(family: BrushFamily) {
     dismissPanes()
     repository.loadBrushFamily(family)
-    graph = repository.graph.value
   }
 
-  /** Returns current brush color. */
   fun getBrushColor(): Int = brush.value.colorIntArgb
 
-  /** Updates the zoom level. */
   fun updateZoom(newZoom: Float) {
-    zoom = newZoom
+    _uiState.update { state -> state.copy(zoom = newZoom) }
   }
 
-  /** Updates the pan offset. */
   fun updateOffset(newOffset: GraphPoint) {
-    offset = newOffset
+    _uiState.update { state -> state.copy(offset = newOffset) }
   }
 
-  /** Toggles the text fields locked state. */
   fun toggleTextFieldsLocked() {
-    textFieldsLocked = !textFieldsLocked
+    _uiState.update { state -> state.copy(textFieldsLocked = !state.textFieldsLocked) }
   }
 
-  /** Saves the current brush to the palette. */
   fun saveToPalette(brushName: String, textureStore: TextureBitmapStore) {
     viewModelScope.launch(Dispatchers.IO) {
       try {
@@ -681,14 +572,12 @@ class BrushGraphViewModel @Inject constructor(
     }
   }
 
-  /** Deletes a brush from the palette. */
   fun deleteFromPalette(name: String) {
     viewModelScope.launch(Dispatchers.IO) {
       customBrushDao.deleteCustomBrush(name)
     }
   }
 
-  /** Loads a brush from the palette. */
   fun loadFromPalette(entity: CustomBrushEntity, textureStore: TextureBitmapStore) {
     viewModelScope.launch(Dispatchers.IO) {
       try {
@@ -708,5 +597,9 @@ class BrushGraphViewModel @Inject constructor(
         println("Failed to load brush from palette: $e")
       }
     }
+  }
+
+  fun setTestAutoUpdateStrokes(value: Boolean) {
+    _uiState.update { state -> state.copy(testAutoUpdateStrokes = value) }
   }
 }

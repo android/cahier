@@ -103,6 +103,7 @@ fun CollapsiblePreviewPane(
   textureStore: TextureBitmapStore,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
 ) {
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   Column(modifier = Modifier.fillMaxWidth()) {
     // Toggle Tab (always visible)
     Surface(
@@ -121,12 +122,12 @@ fun CollapsiblePreviewPane(
           verticalAlignment = Alignment.CenterVertically,
         ) {
           Icon(
-            if (viewModel.isPreviewExpanded) {
+            if (uiState.isPreviewExpanded) {
               Icons.Default.KeyboardArrowDown
             } else {
               Icons.Default.KeyboardArrowUp
             },
-            contentDescription = if (viewModel.isPreviewExpanded) stringResource(R.string.bg_test_canvas_collapse) else stringResource(R.string.bg_test_canvas_expand),
+            contentDescription = if (uiState.isPreviewExpanded) stringResource(R.string.bg_test_canvas_collapse) else stringResource(R.string.bg_test_canvas_expand),
           )
           Spacer(Modifier.width(8.dp))
           Text(
@@ -134,7 +135,7 @@ fun CollapsiblePreviewPane(
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
           )
-          if (viewModel.isPreviewExpanded) {
+          if (uiState.isPreviewExpanded) {
             Spacer(Modifier.width(16.dp))
             Text(
               stringResource(R.string.bg_test_canvas_reset),
@@ -156,8 +157,8 @@ fun CollapsiblePreviewPane(
             // Auto-update toggle
             Row(verticalAlignment = Alignment.CenterVertically) {
               Checkbox(
-                checked = viewModel.testAutoUpdateStrokes,
-                onCheckedChange = { viewModel.testAutoUpdateStrokes = it }
+                checked = uiState.testAutoUpdateStrokes,
+                onCheckedChange = { viewModel.setTestAutoUpdateStrokes(it) }
               )
               Spacer(Modifier.width(4.dp))
               Text(stringResource(R.string.bg_auto_update), style = MaterialTheme.typography.labelLarge)
@@ -168,10 +169,10 @@ fun CollapsiblePreviewPane(
             Box(
               modifier = Modifier
                 .size(20.dp)
-                .background(Color(viewModel.testBrushColor ?: 0))
+                .background(Color(uiState.testBrushColor ?: 0))
                 .border(1.dp, MaterialTheme.colorScheme.outline)
                 .clickable {
-                  onChooseColor(Color(viewModel.testBrushColor ?: 0)) { newColor ->
+                  onChooseColor(Color(uiState.testBrushColor ?: 0)) { newColor ->
                     viewModel.updateTestBrushColor(newColor.toArgb())
                   }
                 }
@@ -186,7 +187,7 @@ fun CollapsiblePreviewPane(
               modifier = Modifier.width(80.dp)
             ) {
               Text(
-                text = "${viewModel.testBrushSize.toInt()}px",
+                text = "${uiState.testBrushSize.toInt()}px",
                 modifier = Modifier.menuAnchor().clickable { sizeExpanded = true },
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
@@ -214,7 +215,7 @@ fun CollapsiblePreviewPane(
 
     // Expanding Drawer Content
     AnimatedVisibility(
-      visible = viewModel.isPreviewExpanded,
+      visible = uiState.isPreviewExpanded,
       enter = expandVertically(),
       exit = shrinkVertically(),
     ) {
@@ -223,7 +224,7 @@ fun CollapsiblePreviewPane(
           Modifier.fillMaxWidth().height((PREVIEW_HEIGHT_EXPANDED - PREVIEW_HEIGHT_COLLAPSED).dp),
         tonalElevation = 8.dp,
         color =
-          if (viewModel.isDarkCanvas) {
+          if (uiState.isDarkCanvas) {
             MaterialTheme.colorScheme.inverseSurface
           } else {
             MaterialTheme.colorScheme.surface
@@ -239,7 +240,7 @@ fun CollapsiblePreviewPane(
             viewModel.strokeList.addAll(it)
             viewModel.advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
           },
-          isDark = viewModel.isDarkCanvas,
+          isDark = uiState.isDarkCanvas,
         )
       }
     }
