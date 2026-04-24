@@ -33,7 +33,7 @@ import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.InputToolType
 import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.compose.createWithComposeColor
-import com.example.cahier.ui.brushgraph.model.toBrushFamily
+import com.example.cahier.ui.brushgraph.data.toBrushFamily
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue

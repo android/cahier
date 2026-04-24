@@ -13,13 +13,13 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
-import com.example.cahier.ui.brushgraph.model.getNumericLimits
+import com.example.cahier.ui.brushgraph.data.NodeData
+import com.example.cahier.ui.brushgraph.data.ProgressDomainContext
+import com.example.cahier.ui.brushgraph.data.getNumericLimits
 
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_OUT_OF_RANGE
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_PROGRESS_DOMAINS
-import com.example.cahier.ui.brushgraph.model.displayStringRId
+import com.example.cahier.ui.brushgraph.data.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable

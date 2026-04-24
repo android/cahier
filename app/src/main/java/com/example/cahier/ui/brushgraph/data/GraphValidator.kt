@@ -1,13 +1,13 @@
-package com.example.cahier.ui.brushgraph.converters
+package com.example.cahier.ui.brushgraph.data
 
 import com.example.cahier.R
-import com.example.cahier.ui.brushgraph.model.BrushGraph
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.GraphValidationException
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.DisplayText
-import com.example.cahier.ui.brushgraph.model.ValidationSeverity
-import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import com.example.cahier.ui.brushgraph.data.BrushGraph
+import com.example.cahier.ui.brushgraph.data.GraphNode
+import com.example.cahier.ui.brushgraph.data.GraphValidationException
+import com.example.cahier.ui.brushgraph.data.NodeData
+import com.example.cahier.ui.brushgraph.data.DisplayText
+import com.example.cahier.ui.brushgraph.data.ValidationSeverity
+import com.example.cahier.ui.brushgraph.data.getVisiblePorts
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushPaint as ProtoBrushPaint
 

@@ -61,12 +61,12 @@ import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.R
-import com.example.cahier.ui.brushgraph.model.BrushGraph
-import com.example.cahier.ui.brushgraph.model.GraphEdge
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.Port
-import com.example.cahier.ui.brushgraph.model.PortSide
+import com.example.cahier.ui.brushgraph.data.BrushGraph
+import com.example.cahier.ui.brushgraph.data.GraphEdge
+import com.example.cahier.ui.brushgraph.data.GraphNode
+import com.example.cahier.ui.brushgraph.data.NodeData
+import com.example.cahier.ui.brushgraph.data.Port
+import com.example.cahier.ui.brushgraph.data.PortSide
 import kotlin.math.roundToInt
 
 /**

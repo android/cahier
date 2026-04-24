@@ -58,18 +58,18 @@ import androidx.compose.ui.zIndex
 import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.example.cahier.R
-import com.example.cahier.ui.brushgraph.model.BrushGraph
-import com.example.cahier.ui.brushgraph.model.DisplayText
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
-import com.example.cahier.ui.brushgraph.model.NODE_PADDING_BOTTOM
-import com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL
-import com.example.cahier.ui.brushgraph.model.NODE_WIDTH
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.Port
-import com.example.cahier.ui.brushgraph.model.PortSide
-import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import com.example.cahier.ui.brushgraph.model.isPortReorderable
+import com.example.cahier.ui.brushgraph.data.BrushGraph
+import com.example.cahier.ui.brushgraph.data.DisplayText
+import com.example.cahier.ui.brushgraph.data.GraphNode
+import com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT
+import com.example.cahier.ui.brushgraph.data.NODE_PADDING_BOTTOM
+import com.example.cahier.ui.brushgraph.data.NODE_PADDING_VERTICAL
+import com.example.cahier.ui.brushgraph.data.NODE_WIDTH
+import com.example.cahier.ui.brushgraph.data.NodeData
+import com.example.cahier.ui.brushgraph.data.Port
+import com.example.cahier.ui.brushgraph.data.PortSide
+import com.example.cahier.ui.brushgraph.data.getVisiblePorts
+import com.example.cahier.ui.brushgraph.data.isPortReorderable
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import ink.proto.BrushCoat as ProtoBrushCoat
 import kotlin.math.roundToInt
@@ -412,7 +412,7 @@ fun PortDot(
 
       // Reorder Handle (Right Half)
       if (isReorderable) {
-        val handleHeight = if (isLargeHandle) with(density) { (com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT * 2).toDp() } else 32.dp
+        val handleHeight = if (isLargeHandle) with(density) { (com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT * 2).toDp() } else 32.dp
         Box(
           modifier = Modifier
             .align(Alignment.CenterEnd)
@@ -523,7 +523,7 @@ fun NodeHeader(
         }
       } else if (data is NodeData.Coat) {
         val coat = try {
-            com.example.cahier.ui.brushgraph.converters.BrushFamilyConverter.createCoat(node, graph, mutableMapOf())
+            com.example.cahier.ui.brushgraph.data.BrushFamilyConverter.createCoat(node, graph, mutableMapOf())
         } catch (e: Exception) {
             ProtoBrushCoat.getDefaultInstance()
         }
@@ -564,7 +564,7 @@ fun NodePortLabels(
           val isPortEmpty = graph.edges.none { it.toNodeId == node.id && it.toPortId == port.id }
           Box(
             modifier =
-              Modifier.height(com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT.toDp())
+              Modifier.height(com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT.toDp())
                 .fillMaxWidth()
                 .padding(start = 8.dp, end = if (index == 0 && node.data.hasOutput()) 48.dp else 8.dp)
                 .let {
@@ -657,7 +657,7 @@ fun BoxScope.NodePortDots(
         canvasCoordinates = canvasCoordinates,
         portPosition = getPortPosition(port.id, true) - Offset(node.position.x, node.position.y),
         isReorderable = node.data.isPortReorderable(port, index, hasAddPort),
-        isLargeHandle = node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && index % 2 == 0,
+        isLargeHandle = node.data is com.example.cahier.ui.brushgraph.data.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && index % 2 == 0,
         onReorderUpdate = { deltaY ->
           if (activeReorderPortIndex != index) {
             activeReorderPortIndex = index
@@ -669,10 +669,10 @@ fun BoxScope.NodePortDots(
           var maxValidIndex = visiblePorts.size - 2 // Exclude add port
           var minValidIndex = if (node.data is NodeData.Coat) 1 else 0
           
-          if (node.data is com.example.cahier.ui.brushgraph.model.NodeData.Paint) {
+          if (node.data is com.example.cahier.ui.brushgraph.data.NodeData.Paint) {
               val textureEdges = graph.edges.filter { edge ->
                   val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
-                  fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.TextureLayer && edge.toNodeId == node.id
+                  fromNode?.data is com.example.cahier.ui.brushgraph.data.NodeData.TextureLayer && edge.toNodeId == node.id
               }
               val T = textureEdges.size
               
@@ -691,19 +691,19 @@ fun BoxScope.NodePortDots(
               }
           }
           
-          val minDragY = com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL + node.data.titleHeight() + (0 + 0.5f) * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
-          val maxDragY = com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL + node.data.titleHeight() + (visiblePorts.size - 1 + 0.5f) * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
+          val minDragY = com.example.cahier.ui.brushgraph.data.NODE_PADDING_VERTICAL + node.data.titleHeight() + (0 + 0.5f) * com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT
+          val maxDragY = com.example.cahier.ui.brushgraph.data.NODE_PADDING_VERTICAL + node.data.titleHeight() + (visiblePorts.size - 1 + 0.5f) * com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT
           
           val requestedY = originalY + cumulativeDeltaY
           
-          val isPolarTarget = node.data is com.example.cahier.ui.brushgraph.model.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE
+          val isPolarTarget = node.data is com.example.cahier.ui.brushgraph.data.NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE
           
           val targetIndex = if (isPolarTarget) {
               val setSize = 2
-              val currentSet = ((requestedY - com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL - node.data.titleHeight()) / (com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT * setSize) - 0.5f).roundToInt()
+              val currentSet = ((requestedY - com.example.cahier.ui.brushgraph.data.NODE_PADDING_VERTICAL - node.data.titleHeight()) / (com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT * setSize) - 0.5f).roundToInt()
               currentSet * setSize
           } else {
-              ((requestedY - com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL - node.data.titleHeight()) / com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT - 0.5f).roundToInt()
+              ((requestedY - com.example.cahier.ui.brushgraph.data.NODE_PADDING_VERTICAL - node.data.titleHeight()) / com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT - 0.5f).roundToInt()
           }
           
           val currentY = requestedY.coerceIn(minDragY, maxDragY)
@@ -711,7 +711,7 @@ fun BoxScope.NodePortDots(
           
           if (targetIndex in minValidIndex..maxValidIndex && targetIndex != index) {
             onReorderPorts(node.id, index, targetIndex)
-            cumulativeDeltaY -= (targetIndex - index) * com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
+            cumulativeDeltaY -= (targetIndex - index) * com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT
             activeReorderPortIndex = targetIndex
           }
         },

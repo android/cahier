@@ -3,7 +3,7 @@
   androidx.compose.material3.ExperimentalMaterial3Api::class
 )
 
-package com.example.cahier.ui.brushgraph.ui
+package com.example.cahier.ui.brushgraph.ui.fields
 
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import androidx.compose.foundation.layout.Box
@@ -52,9 +52,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.fillMaxWidth
 
-import com.example.cahier.ui.brushgraph.model.*
+import com.example.cahier.ui.brushgraph.data.*
 import com.example.cahier.ui.brushgraph.ui.TipPreviewWidget
-import com.example.cahier.ui.brushgraph.ui.fields.*
 
 /** Renders the editable fields for a node. */
 @Composable

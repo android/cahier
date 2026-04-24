@@ -1,6 +1,6 @@
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
 
-package com.example.cahier.ui.brushgraph.inspectors
+package com.example.cahier.ui.brushgraph.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
@@ -23,17 +23,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
-import com.example.cahier.ui.brushgraph.model.GraphEdge
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.ui.brushgraph.ui.NodeFields
+import com.example.cahier.ui.brushgraph.data.GraphEdge
+import com.example.cahier.ui.brushgraph.data.GraphNode
+import com.example.cahier.ui.brushgraph.data.NodeData
+import com.example.cahier.ui.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
+import com.example.cahier.ui.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
+import com.example.cahier.ui.brushgraph.ui.fields.NodeFields
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
-import com.example.cahier.ui.brushgraph.model.DisplayText
+import com.example.cahier.ui.brushgraph.data.DisplayText
 
 /** Shows connection details between two nodes and allows deletion. */
 @Composable

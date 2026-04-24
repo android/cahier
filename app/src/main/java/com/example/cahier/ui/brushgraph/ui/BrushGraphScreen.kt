@@ -92,29 +92,29 @@ import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.cahier.core.ui.ClassicColorPickerDialog
-import com.example.cahier.ui.brushgraph.BrushGraphViewModel
-import com.example.cahier.ui.brushgraph.inspectors.EdgeInspector
-import com.example.cahier.ui.brushgraph.inspectors.NodeInspector
-import com.example.cahier.ui.brushgraph.inspectors.AdaptiveInspectorPane
-import com.example.cahier.ui.brushgraph.model.BrushGraph
-import com.example.cahier.ui.brushgraph.model.GraphEdge
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.GraphPoint
-import com.example.cahier.ui.brushgraph.model.GraphValidationException
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import com.example.cahier.ui.brushgraph.viewmodel.BrushGraphViewModel
+import com.example.cahier.ui.brushgraph.ui.EdgeInspector
+import com.example.cahier.ui.brushgraph.ui.NodeInspector
+import com.example.cahier.ui.brushgraph.ui.AdaptiveInspectorPane
+import com.example.cahier.ui.brushgraph.data.BrushGraph
+import com.example.cahier.ui.brushgraph.data.GraphEdge
+import com.example.cahier.ui.brushgraph.data.GraphNode
+import com.example.cahier.ui.brushgraph.data.GraphPoint
+import com.example.cahier.ui.brushgraph.data.GraphValidationException
+import com.example.cahier.ui.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
+import com.example.cahier.ui.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
+import com.example.cahier.ui.brushgraph.data.NodeData
+import com.example.cahier.ui.brushgraph.data.getVisiblePorts
 import com.example.cahier.ui.brushgraph.ui.getTooltip
-import com.example.cahier.ui.brushgraph.model.inferNodeData
-import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
+import com.example.cahier.ui.brushgraph.data.inferNodeData
+import com.example.cahier.ui.brushgraph.data.PREVIEW_HEIGHT_COLLAPSED
 import kotlinx.coroutines.launch
 import com.example.cahier.core.ui.theme.CahierAppTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.animation.core.VectorConverter
-import com.example.cahier.ui.brushgraph.model.ValidationSeverity
-import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
-import com.example.cahier.ui.brushgraph.model.TutorialAction
+import com.example.cahier.ui.brushgraph.data.ValidationSeverity
+import com.example.cahier.ui.brushgraph.data.PREVIEW_HEIGHT_EXPANDED
+import com.example.cahier.ui.brushgraph.data.TutorialAction
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import androidx.compose.ui.res.painterResource
@@ -675,12 +675,12 @@ fun BrushGraphContent(
 
 @Composable
 fun BoxScope.TutorialOverlayHost(
-  tutorialStep: com.example.cahier.ui.brushgraph.model.TutorialStep?,
+  tutorialStep: com.example.cahier.ui.brushgraph.data.TutorialStep?,
   graph: BrushGraph,
   zoom: Float,
   offset: androidx.compose.ui.geometry.Offset,
   selectedNodeId: String?,
-  selectedEdge: com.example.cahier.ui.brushgraph.model.GraphEdge?,
+  selectedEdge: com.example.cahier.ui.brushgraph.data.GraphEdge?,
   currentStepIndex: Int,
   isLandscape: Boolean,
   viewportSize: androidx.compose.ui.geometry.Size,
@@ -696,9 +696,9 @@ fun BoxScope.TutorialOverlayHost(
     var overlaySize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     
     val tutorialModifier = when (step.anchor) {
-      com.example.cahier.ui.brushgraph.model.TutorialAnchor.SCREEN_CENTER -> Modifier.align(Alignment.Center)
+      com.example.cahier.ui.brushgraph.data.TutorialAnchor.SCREEN_CENTER -> Modifier.align(Alignment.Center)
       
-      com.example.cahier.ui.brushgraph.model.TutorialAnchor.FAB -> {
+      com.example.cahier.ui.brushgraph.data.TutorialAnchor.FAB -> {
         if (isInspectorOpen) {
           if (isLandscape) {
             Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp, end = (INSPECTOR_WIDTH_LANDSCAPE + 80).dp)
@@ -710,7 +710,7 @@ fun BoxScope.TutorialOverlayHost(
         }
       }
       
-      com.example.cahier.ui.brushgraph.model.TutorialAnchor.NODE_CANVAS -> {
+      com.example.cahier.ui.brushgraph.data.TutorialAnchor.NODE_CANVAS -> {
         val node = step.getTargetNode(graph)
         if (node != null) {
           val nodeCenterX = node.position.x + node.data.width() / 2f
@@ -731,7 +731,7 @@ fun BoxScope.TutorialOverlayHost(
         }
       }
       
-      com.example.cahier.ui.brushgraph.model.TutorialAnchor.INSPECTOR -> {
+      com.example.cahier.ui.brushgraph.data.TutorialAnchor.INSPECTOR -> {
         if (isLandscape) {
           Modifier.align(Alignment.CenterEnd).padding(end = (INSPECTOR_WIDTH_LANDSCAPE + 16).dp)
         } else {
@@ -739,7 +739,7 @@ fun BoxScope.TutorialOverlayHost(
         }
       }
       
-      com.example.cahier.ui.brushgraph.model.TutorialAnchor.TEST_CANVAS -> {
+      com.example.cahier.ui.brushgraph.data.TutorialAnchor.TEST_CANVAS -> {
         val basePadding = if (isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED
         if (isInspectorOpen && !isLandscape) {
           Modifier.align(Alignment.BottomCenter).padding(bottom = (maxOf(INSPECTOR_HEIGHT_PORTRAIT, basePadding) + 16).dp)
@@ -748,9 +748,9 @@ fun BoxScope.TutorialOverlayHost(
         }
       }
       
-      com.example.cahier.ui.brushgraph.model.TutorialAnchor.ACTION_BAR -> Modifier.align(Alignment.TopStart).padding(top = 80.dp, start = 16.dp)
+      com.example.cahier.ui.brushgraph.data.TutorialAnchor.ACTION_BAR -> Modifier.align(Alignment.TopStart).padding(top = 80.dp, start = 16.dp)
       
-      com.example.cahier.ui.brushgraph.model.TutorialAnchor.NOTIFICATION_ICON -> {
+      com.example.cahier.ui.brushgraph.data.TutorialAnchor.NOTIFICATION_ICON -> {
         val indicatorPaddingEnd = if (isLandscape && isInspectorOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp
         Modifier.align(Alignment.TopEnd).padding(top = 80.dp, end = indicatorPaddingEnd)
       }
@@ -771,7 +771,7 @@ fun BoxScope.TutorialOverlayHost(
 @Composable
 fun GraphCameraController(
   offset: androidx.compose.ui.geometry.Offset,
-  tutorialStep: com.example.cahier.ui.brushgraph.model.TutorialStep?,
+  tutorialStep: com.example.cahier.ui.brushgraph.data.TutorialStep?,
   focusTrigger: Int,
   graph: BrushGraph,
   zoom: Float,
@@ -788,7 +788,7 @@ fun GraphCameraController(
   // Auto-pan to node in tutorial
   LaunchedEffect(tutorialStep) {
     val step = tutorialStep
-    if (step != null && step.anchor == com.example.cahier.ui.brushgraph.model.TutorialAnchor.NODE_CANVAS) {
+    if (step != null && step.anchor == com.example.cahier.ui.brushgraph.data.TutorialAnchor.NODE_CANVAS) {
       val node = step.getTargetNode(graph)
       if (node != null) {
         val density = context.resources.displayMetrics.density

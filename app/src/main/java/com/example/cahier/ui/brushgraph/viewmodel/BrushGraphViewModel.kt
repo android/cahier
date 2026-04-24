@@ -1,6 +1,6 @@
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class, kotlinx.coroutines.FlowPreview::class)
 
-package com.example.cahier.ui.brushgraph
+package com.example.cahier.ui.brushgraph.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -29,18 +29,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import com.example.cahier.ui.brushgraph.converters.BrushFamilyConverter
-import com.example.cahier.ui.brushgraph.converters.BrushGraphConverter
-import com.example.cahier.ui.brushgraph.model.BrushGraph
-import com.example.cahier.ui.brushgraph.model.GraphEdge
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.GraphPoint
-import com.example.cahier.ui.brushgraph.model.Port
-import com.example.cahier.ui.brushgraph.model.PortSide
-import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import com.example.cahier.ui.brushgraph.model.GraphValidationException
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.ValidationSeverity
+import com.example.cahier.ui.brushgraph.data.BrushFamilyConverter
+import com.example.cahier.ui.brushgraph.data.BrushGraphConverter
+import com.example.cahier.ui.brushgraph.data.BrushGraph
+import com.example.cahier.ui.brushgraph.data.GraphEdge
+import com.example.cahier.ui.brushgraph.data.GraphNode
+import com.example.cahier.ui.brushgraph.data.GraphPoint
+import com.example.cahier.ui.brushgraph.data.Port
+import com.example.cahier.ui.brushgraph.data.PortSide
+import com.example.cahier.ui.brushgraph.data.getVisiblePorts
+import com.example.cahier.ui.brushgraph.data.GraphValidationException
+import com.example.cahier.ui.brushgraph.data.NodeData
+import com.example.cahier.ui.brushgraph.data.ValidationSeverity
 import androidx.compose.runtime.snapshotFlow
 import com.example.cahier.ui.brushgraph.ui.NodeRegistry
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -49,10 +49,10 @@ import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.ColorFunction as ProtoColorFunction
-import com.example.cahier.ui.brushgraph.model.TUTORIAL_STEPS
-import com.example.cahier.ui.brushgraph.model.TutorialStep
-import com.example.cahier.ui.brushgraph.model.TutorialAnchor
-import com.example.cahier.ui.brushgraph.model.TutorialAction
+import com.example.cahier.ui.brushgraph.data.TUTORIAL_STEPS
+import com.example.cahier.ui.brushgraph.data.TutorialStep
+import com.example.cahier.ui.brushgraph.data.TutorialAnchor
+import com.example.cahier.ui.brushgraph.data.TutorialAction
 import java.io.ByteArrayOutputStream
 import java.io.ByteArrayInputStream
 

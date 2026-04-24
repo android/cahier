@@ -28,11 +28,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.example.cahier.ui.brushgraph.BrushGraphViewModel
-import com.example.cahier.ui.brushgraph.model.GraphValidationException
-import com.example.cahier.ui.brushgraph.model.ValidationSeverity
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
+import com.example.cahier.ui.brushgraph.viewmodel.BrushGraphViewModel
+import com.example.cahier.ui.brushgraph.data.GraphValidationException
+import com.example.cahier.ui.brushgraph.data.ValidationSeverity
+import com.example.cahier.ui.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
+import com.example.cahier.ui.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import android.util.Log
 

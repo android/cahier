@@ -1,6 +1,6 @@
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
 
-package com.example.cahier.ui.brushgraph.model
+package com.example.cahier.ui.brushgraph.data
 
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushCoat as ProtoBrushCoat

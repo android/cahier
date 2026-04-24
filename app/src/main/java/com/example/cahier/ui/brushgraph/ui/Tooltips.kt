@@ -1,6 +1,6 @@
 package com.example.cahier.ui.brushgraph.ui
 
-import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.data.NodeData
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushPaint as ProtoBrushPaint
 import com.example.cahier.R

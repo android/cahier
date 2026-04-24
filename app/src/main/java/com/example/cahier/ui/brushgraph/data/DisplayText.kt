@@ -1,4 +1,4 @@
-package com.example.cahier.ui.brushgraph.model
+package com.example.cahier.ui.brushgraph.data
 
 sealed class DisplayText {
   data class Resource(val resId: Int, val args: List<Any> = emptyList()) : DisplayText()

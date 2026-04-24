@@ -17,9 +17,9 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
-import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.data.NodeData
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
-import com.example.cahier.ui.brushgraph.model.displayStringRId
+import com.example.cahier.ui.brushgraph.data.displayStringRId
 import com.example.cahier.ui.brushgraph.ui.getInputModelTooltip
 import ink.proto.BrushFamily as ProtoBrushFamily
 

@@ -1,4 +1,4 @@
-package com.example.cahier.ui.brushgraph
+package com.example.cahier.ui.brushgraph.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -7,9 +7,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.ink.brush.BrushFamily
 import com.example.cahier.ui.brushgraph.data.BrushGraphRepository
-import com.example.cahier.ui.brushgraph.model.TutorialAction
-import com.example.cahier.ui.brushgraph.model.TutorialStep
-import com.example.cahier.ui.brushgraph.model.TUTORIAL_STEPS
+import com.example.cahier.ui.brushgraph.data.TutorialAction
+import com.example.cahier.ui.brushgraph.data.TutorialStep
+import com.example.cahier.ui.brushgraph.data.TUTORIAL_STEPS
 
 class TutorialManager(
   private val repository: BrushGraphRepository,

@@ -10,10 +10,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
-import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.data.NodeData
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
-import com.example.cahier.ui.brushgraph.model.displayStringRId
+import com.example.cahier.ui.brushgraph.data.displayStringRId
 import ink.proto.BrushPaint as ProtoBrushPaint
 
 @Composable

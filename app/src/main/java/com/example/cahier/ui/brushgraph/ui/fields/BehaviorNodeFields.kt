@@ -23,9 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.ui.createDefaultNode
-import com.example.cahier.ui.brushgraph.model.displayStringRId
+import com.example.cahier.ui.brushgraph.data.NodeData
+import com.example.cahier.ui.brushgraph.data.displayStringRId
 import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_START
 import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_OPERATOR
 import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_TERMINAL

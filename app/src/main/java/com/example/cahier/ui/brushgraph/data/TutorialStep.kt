@@ -1,4 +1,4 @@
-package com.example.cahier.ui.brushgraph.model
+package com.example.cahier.ui.brushgraph.data
 
 import com.example.cahier.R
 import ink.proto.BrushBehavior

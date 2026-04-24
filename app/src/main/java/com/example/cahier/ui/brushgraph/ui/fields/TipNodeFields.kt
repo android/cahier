@@ -6,7 +6,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
-import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.data.NodeData
 import com.example.cahier.ui.brushgraph.ui.TipPreviewWidget
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import ink.proto.BrushTip as ProtoBrushTip

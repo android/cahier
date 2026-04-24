@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import com.example.cahier.ui.brushgraph.model.TutorialStep
-import com.example.cahier.ui.brushgraph.model.TutorialAction
+import com.example.cahier.ui.brushgraph.data.TutorialStep
+import com.example.cahier.ui.brushgraph.data.TutorialAction
 
 @Composable
 fun TutorialOverlay(

@@ -2,7 +2,7 @@ package com.example.cahier.ui.brushgraph.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import com.example.cahier.ui.brushgraph.model.DisplayText
+import com.example.cahier.ui.brushgraph.data.DisplayText
 
 @Composable
 fun DisplayText.asString(): String = when (this) {

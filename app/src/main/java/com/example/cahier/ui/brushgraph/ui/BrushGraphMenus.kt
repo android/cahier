@@ -42,7 +42,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
-import com.example.cahier.ui.brushgraph.model.TutorialStep
+import com.example.cahier.ui.brushgraph.data.TutorialStep
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
@@ -68,11 +68,11 @@ import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.features.drawing.CustomBrushes
-import com.example.cahier.ui.brushgraph.BrushGraphViewModel
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
-import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
+import com.example.cahier.ui.brushgraph.viewmodel.BrushGraphViewModel
+import com.example.cahier.ui.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
+import com.example.cahier.ui.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
+import com.example.cahier.ui.brushgraph.data.PREVIEW_HEIGHT_COLLAPSED
+import com.example.cahier.ui.brushgraph.data.PREVIEW_HEIGHT_EXPANDED
 
 @Composable
 fun MoreOptionsMenu(

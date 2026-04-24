@@ -1,14 +1,14 @@
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
 
-package com.example.cahier.ui.brushgraph.converters
+package com.example.cahier.ui.brushgraph.data
 
 import androidx.ink.brush.BrushFamily
 import androidx.ink.storage.encode
-import com.example.cahier.ui.brushgraph.model.BrushGraph
-import com.example.cahier.ui.brushgraph.model.GraphEdge
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.GraphPoint
-import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.data.BrushGraph
+import com.example.cahier.ui.brushgraph.data.GraphEdge
+import com.example.cahier.ui.brushgraph.data.GraphNode
+import com.example.cahier.ui.brushgraph.data.GraphPoint
+import com.example.cahier.ui.brushgraph.data.NodeData
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.UUID

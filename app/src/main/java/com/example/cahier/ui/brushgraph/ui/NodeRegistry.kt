@@ -5,12 +5,12 @@ package com.example.cahier.ui.brushgraph.ui
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import com.example.cahier.ui.brushgraph.model.PortSide
-import com.example.cahier.ui.brushgraph.model.Port
-import com.example.cahier.ui.brushgraph.model.BrushGraph
-import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import com.example.cahier.ui.brushgraph.model.NODE_PADDING_VERTICAL
-import com.example.cahier.ui.brushgraph.model.INPUT_ROW_HEIGHT
+import com.example.cahier.ui.brushgraph.data.PortSide
+import com.example.cahier.ui.brushgraph.data.Port
+import com.example.cahier.ui.brushgraph.data.BrushGraph
+import com.example.cahier.ui.brushgraph.data.getVisiblePorts
+import com.example.cahier.ui.brushgraph.data.NODE_PADDING_VERTICAL
+import com.example.cahier.ui.brushgraph.data.INPUT_ROW_HEIGHT
 
 /** Registry to track the actual position of ports and sizes of nodes on the screen. */
 data class PortKey(val nodeId: String, val portId: String)
