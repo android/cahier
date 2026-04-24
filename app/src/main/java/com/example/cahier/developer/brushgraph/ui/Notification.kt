@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -42,7 +43,7 @@ fun NotificationPane(
   viewModel: BrushGraphViewModel,
   modifier: Modifier = Modifier,
 ) {
-  val issues = viewModel.graphIssues.collectAsState().value
+  val issues = viewModel.graphIssues.collectAsStateWithLifecycle().value
   val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
   val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
 

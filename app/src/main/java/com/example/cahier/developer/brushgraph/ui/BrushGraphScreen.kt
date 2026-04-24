@@ -68,6 +68,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -301,7 +302,7 @@ fun BrushGraphScreen(
       )
 
       val nodeRegistry = remember { NodeRegistry() }
-      val issues = viewModel.graphIssues.collectAsState().value
+      val issues = viewModel.graphIssues.collectAsStateWithLifecycle().value
 
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         BrushGraphContent(
@@ -369,7 +370,7 @@ fun BrushGraphScreen(
               strokeRenderer = renderer,
               textFieldsLocked = viewModel.textFieldsLocked,
               selectedNodeId = viewModel.selectedNodeId,
-              brush = viewModel.brush.collectAsState().value,
+              brush = viewModel.brush.collectAsStateWithLifecycle().value,
               bottomPadding = padding,
             )
           },
@@ -478,7 +479,7 @@ fun BrushGraphScreen(
               onOrganize = viewModel::reorganize,
               onDeleteBrush = { viewModel.clearGraph() },
               onTutorialExitRequested = { showTutorialFinishDialog = true },
-              savedBrushes = viewModel.savedPaletteBrushes.collectAsState().value,
+              savedBrushes = viewModel.savedPaletteBrushes.collectAsStateWithLifecycle().value,
               tutorialStep = viewModel.tutorialStep,
               isTutorialSandboxMode = viewModel.isTutorialSandboxMode,
               onEnterSelectionMode = { viewModel.enterSelectionMode(null) },

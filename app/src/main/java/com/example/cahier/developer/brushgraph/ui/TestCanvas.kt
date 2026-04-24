@@ -33,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -233,7 +234,7 @@ fun CollapsiblePreviewPane(
           strokeList = viewModel.strokeList,
           strokeRenderer = strokeRenderer,
           textureStore = textureStore,
-          brush = viewModel.brush.collectAsState().value,
+          brush = viewModel.brush.collectAsStateWithLifecycle().value,
           onStrokesAdded = { 
             viewModel.strokeList.addAll(it)
             viewModel.advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
