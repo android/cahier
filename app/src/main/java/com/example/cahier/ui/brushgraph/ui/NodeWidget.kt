@@ -2,8 +2,6 @@
 
 package com.example.cahier.ui.brushgraph.ui
 
-import android.util.Log
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,8 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,7 +43,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -649,7 +644,7 @@ fun BoxScope.NodePortDots(
   for ((index, port) in visiblePorts.withIndex()) {
     val edge = graph.edges.find { it.toNodeId == node.id && it.toPortId == port.id }
     val portKey = edge?.let { "${it.fromNodeId}_${port.id}" } ?: "port_${port.id}"
-    androidx.compose.runtime.key(portKey) {
+    key(portKey) {
       PortDot(
         port = port,
         count = visiblePorts.size,

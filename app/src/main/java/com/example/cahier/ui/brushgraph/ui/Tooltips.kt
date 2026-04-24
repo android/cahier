@@ -3,8 +3,9 @@ package com.example.cahier.ui.brushgraph.ui
 import com.example.cahier.ui.brushgraph.model.NodeData
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushPaint as ProtoBrushPaint
-
 import com.example.cahier.R
+import ink.proto.PredefinedEasingFunction
+import ink.proto.StepPosition
 
 /** Extension functions to provide tooltips for nodes and enums. */
 
@@ -188,22 +189,22 @@ fun ProtoBrushBehavior.Interpolation.getTooltip(): Int = when (this) {
   else -> R.string.bg_tooltip_interpolation_default
 }
 
-fun ink.proto.PredefinedEasingFunction.getTooltip(): Int = when (this) {
-  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> R.string.bg_tooltip_easing_linear
-  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE -> R.string.bg_tooltip_easing_ease
-  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN -> R.string.bg_tooltip_easing_ease_in
-  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT -> R.string.bg_tooltip_easing_ease_out
-  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT -> R.string.bg_tooltip_easing_ease_in_out
-  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> R.string.bg_tooltip_easing_step_start
-  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> R.string.bg_tooltip_easing_step_end
+fun PredefinedEasingFunction.getTooltip(): Int = when (this) {
+  PredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> R.string.bg_tooltip_easing_linear
+  PredefinedEasingFunction.PREDEFINED_EASING_EASE -> R.string.bg_tooltip_easing_ease
+  PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN -> R.string.bg_tooltip_easing_ease_in
+  PredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT -> R.string.bg_tooltip_easing_ease_out
+  PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT -> R.string.bg_tooltip_easing_ease_in_out
+  PredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> R.string.bg_tooltip_easing_step_start
+  PredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> R.string.bg_tooltip_easing_step_end
   else -> R.string.bg_tooltip_easing_default
 }
 
-fun ink.proto.StepPosition.getTooltip(): Int = when (this) {
-  ink.proto.StepPosition.STEP_POSITION_JUMP_START -> R.string.bg_tooltip_step_position_jump_start
-  ink.proto.StepPosition.STEP_POSITION_JUMP_END -> R.string.bg_tooltip_step_position_jump_end
-  ink.proto.StepPosition.STEP_POSITION_JUMP_NONE -> R.string.bg_tooltip_step_position_jump_none
-  ink.proto.StepPosition.STEP_POSITION_JUMP_BOTH -> R.string.bg_tooltip_step_position_jump_both
+fun StepPosition.getTooltip(): Int = when (this) {
+  StepPosition.STEP_POSITION_JUMP_START -> R.string.bg_tooltip_step_position_jump_start
+  StepPosition.STEP_POSITION_JUMP_END -> R.string.bg_tooltip_step_position_jump_end
+  StepPosition.STEP_POSITION_JUMP_NONE -> R.string.bg_tooltip_step_position_jump_none
+  StepPosition.STEP_POSITION_JUMP_BOTH -> R.string.bg_tooltip_step_position_jump_both
   else -> R.string.bg_tooltip_step_position_default
 }
 

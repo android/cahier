@@ -2,12 +2,9 @@
 
 package com.example.cahier.ui.brushgraph.converters
 
-import androidx.ink.brush.Brush
-import androidx.ink.brush.BrushCoat
 import androidx.ink.brush.BrushFamily
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.toBrushFamily
-import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -15,9 +12,6 @@ import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.DisplayText
 import com.example.cahier.R
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.util.zip.GZIPOutputStream
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushFamily as ProtoBrushFamily

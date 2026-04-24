@@ -5,7 +5,6 @@ package com.example.cahier.ui.brushgraph.ui
 import androidx.compose.runtime.produceState
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
-
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,12 +29,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.toArgb
 import androidx.ink.brush.Brush
-import androidx.ink.brush.BrushCoat
 import androidx.ink.brush.BrushFamily
-import androidx.ink.brush.BrushPaint
-import androidx.ink.brush.BrushTip
-import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.InputToolType
+import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.compose.createWithComposeColor
 import com.example.cahier.ui.brushgraph.model.toBrushFamily
 import androidx.compose.runtime.getValue
@@ -111,7 +107,7 @@ fun SineWavePreview(
 
       if (stroke != null) {
         drawIntoCanvas { canvas ->
-          strokeRenderer.draw(canvas.nativeCanvas, stroke, android.graphics.Matrix())
+          strokeRenderer.draw(canvas.nativeCanvas, stroke, Matrix())
         }
       }
     }
@@ -122,7 +118,7 @@ fun SineWavePreview(
 fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer) {
   val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = brushCoat) {
     value = withContext(Dispatchers.IO) {
-      val familyProto = ink.proto.BrushFamily.newBuilder().addCoats(brushCoat).build()
+      val familyProto = ProtoBrushFamily.newBuilder().addCoats(brushCoat).build()
       runCatching { familyProto.toBrushFamily() }.getOrDefault(StockBrushes.marker())
     }
   }
@@ -138,8 +134,8 @@ fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer)
 fun TipPreviewWidget(brushTip: ProtoBrushTip, renderer: CanvasStrokeRenderer) {
   val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = brushTip) {
     value = withContext(Dispatchers.IO) {
-      val familyProto = ink.proto.BrushFamily.newBuilder()
-        .addCoats(ink.proto.BrushCoat.newBuilder().setTip(brushTip).build())
+      val familyProto = ProtoBrushFamily.newBuilder()
+        .addCoats(ProtoBrushCoat.newBuilder().setTip(brushTip).build())
         .build()
       runCatching { familyProto.toBrushFamily() }.getOrDefault(StockBrushes.marker())
     }

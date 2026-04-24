@@ -2,12 +2,13 @@
 
 package com.example.cahier.ui.brushgraph.model
 
-import androidx.ink.brush.EasingFunction
 import androidx.ink.brush.InputToolType
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushFamily as ProtoBrushFamily
 import com.example.cahier.R
+import ink.proto.StepPosition
+import ink.proto.PredefinedEasingFunction
 
 fun ProtoBrushBehavior.Source.displayStringRId(): Int =
   when (this) {
@@ -132,24 +133,24 @@ fun ProtoBrushBehavior.Interpolation.displayStringRId(): Int =
     else -> R.string.bg_node_unknown
   }
 
-fun ink.proto.StepPosition.displayStringRId(): Int =
+fun StepPosition.displayStringRId(): Int =
   when (this) {
-    ink.proto.StepPosition.STEP_POSITION_JUMP_START -> R.string.bg_step_position_jump_start
-    ink.proto.StepPosition.STEP_POSITION_JUMP_END -> R.string.bg_step_position_jump_end
-    ink.proto.StepPosition.STEP_POSITION_JUMP_BOTH -> R.string.bg_step_position_jump_both
-    ink.proto.StepPosition.STEP_POSITION_JUMP_NONE -> R.string.bg_step_position_jump_none
+    StepPosition.STEP_POSITION_JUMP_START -> R.string.bg_step_position_jump_start
+    StepPosition.STEP_POSITION_JUMP_END -> R.string.bg_step_position_jump_end
+    StepPosition.STEP_POSITION_JUMP_BOTH -> R.string.bg_step_position_jump_both
+    StepPosition.STEP_POSITION_JUMP_NONE -> R.string.bg_step_position_jump_none
     else -> R.string.bg_node_unknown
   }
 
-fun ink.proto.PredefinedEasingFunction.displayStringRId(): Int =
+fun PredefinedEasingFunction.displayStringRId(): Int =
   when (this) {
-    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> R.string.bg_easing_linear
-    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE -> R.string.bg_easing_ease
-    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN -> R.string.bg_easing_ease_in
-    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT -> R.string.bg_easing_ease_out
-    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT -> R.string.bg_easing_ease_in_out
-    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> R.string.bg_easing_step_start
-    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> R.string.bg_easing_step_end
+    PredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> R.string.bg_easing_linear
+    PredefinedEasingFunction.PREDEFINED_EASING_EASE -> R.string.bg_easing_ease
+    PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN -> R.string.bg_easing_ease_in
+    PredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT -> R.string.bg_easing_ease_out
+    PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT -> R.string.bg_easing_ease_in_out
+    PredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> R.string.bg_easing_step_start
+    PredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> R.string.bg_easing_step_end
     else -> R.string.bg_node_unknown
   }
 

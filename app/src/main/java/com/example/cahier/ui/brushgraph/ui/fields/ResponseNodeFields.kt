@@ -17,14 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import ink.proto.PredefinedEasingFunction
+import ink.proto.StepPosition
+import ink.proto.LinearEasingFunction
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -48,6 +47,8 @@ import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.CubicBezierEasingFunction as ProtoCubicBezier
 import ink.proto.StepsEasingFunction as ProtoSteps
+import kotlin.math.ceil
+import kotlin.math.floor
 
 @Composable
 fun ResponseNodeFields(
@@ -149,15 +150,15 @@ fun CurvePreviewWidget(
         ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE -> {
           val func = responseNode.predefinedResponseCurve
           when (func) {
-            ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> {
+            PredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> {
               path.moveTo(0f, centerY)
               path.lineTo(widthPx, centerY - scaleY)
             }
-            ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> {
+            PredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> {
               path.moveTo(0f, centerY - scaleY)
               path.lineTo(widthPx, centerY - scaleY)
             }
-            ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> {
+            PredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> {
               path.moveTo(0f, centerY)
               path.lineTo(widthPx, centerY)
               path.lineTo(widthPx, centerY - scaleY)
@@ -165,13 +166,13 @@ fun CurvePreviewWidget(
             else -> {
               val (x1, y1, x2, y2) =
                 when (func) {
-                  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE ->
+                  PredefinedEasingFunction.PREDEFINED_EASING_EASE ->
                     listOf(0.25f, 0.1f, 0.25f, 1f)
-                  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN ->
+                  PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN ->
                     listOf(0.42f, 0f, 1f, 1f)
-                  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT ->
+                  PredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT ->
                     listOf(0f, 0f, 0.58f, 1f)
-                  ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT ->
+                  PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT ->
                     listOf(0.42f, 0f, 0.58f, 1f)
                   else -> listOf(0f, 0f, 1f, 1f)
                 }
@@ -201,20 +202,20 @@ fun CurvePreviewWidget(
   }
 }
 
-private fun evaluateSteps(x: Float, n: Int, position: ink.proto.StepPosition): Float {
+private fun evaluateSteps(x: Float, n: Int, position: StepPosition): Float {
   val xClamped = x.coerceIn(0f, 1f)
   return when (position) {
-    ink.proto.StepPosition.STEP_POSITION_JUMP_START -> {
-      kotlin.math.ceil(xClamped * n).coerceAtLeast(1f) / n
+    StepPosition.STEP_POSITION_JUMP_START -> {
+      ceil(xClamped * n).coerceAtLeast(1f) / n
     }
-    ink.proto.StepPosition.STEP_POSITION_JUMP_BOTH -> {
-      kotlin.math.floor(xClamped * (n + 1) + 1f) / (n + 1)
+    StepPosition.STEP_POSITION_JUMP_BOTH -> {
+      floor(xClamped * (n + 1) + 1f) / (n + 1)
     }
-    ink.proto.StepPosition.STEP_POSITION_JUMP_NONE -> {
-      if (n <= 1) xClamped else kotlin.math.floor(xClamped * (n - 1)) / (n - 1)
+    StepPosition.STEP_POSITION_JUMP_NONE -> {
+      if (n <= 1) xClamped else floor(xClamped * (n - 1)) / (n - 1)
     }
     else -> {
-      kotlin.math.floor(xClamped * n) / n
+      floor(xClamped * n) / n
     }
   }
 }
@@ -246,7 +247,7 @@ fun ResponseCurveWidget(
               when (case) {
                 ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE ->
                   builder.setPredefinedResponseCurve(
-                    ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR
+                    PredefinedEasingFunction.PREDEFINED_EASING_LINEAR
                   )
                 ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE ->
                   builder.setCubicBezierResponseCurve(
@@ -261,12 +262,12 @@ fun ResponseCurveWidget(
                   builder.setStepsResponseCurve(
                     ProtoSteps.newBuilder()
                       .setStepCount(3)
-                      .setStepPosition(ink.proto.StepPosition.STEP_POSITION_JUMP_START)
+                      .setStepPosition(StepPosition.STEP_POSITION_JUMP_START)
                       .build()
                   )
                 ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE ->
                   builder.setLinearResponseCurve(
-                    ink.proto.LinearEasingFunction.getDefaultInstance()
+                    LinearEasingFunction.getDefaultInstance()
                   )
                 else -> {}
               }
@@ -307,8 +308,8 @@ fun ResponseCurveWidget(
 
 @Composable
 fun LinearWidget(
-  curve: ink.proto.LinearEasingFunction,
-  onCurveChanged: (ink.proto.LinearEasingFunction) -> Unit,
+  curve: LinearEasingFunction,
+  onCurveChanged: (LinearEasingFunction) -> Unit,
 ) {
   Column(modifier = Modifier.padding(8.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -400,8 +401,8 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
     EnumDropdown(
       label = stringResource(R.string.bg_step_position),
       currentValue = curve.stepPosition,
-      values = ink.proto.StepPosition.values().filter {
-        it != ink.proto.StepPosition.STEP_POSITION_UNSPECIFIED && it.ordinal >= 0
+      values = StepPosition.values().filter {
+        it != StepPosition.STEP_POSITION_UNSPECIFIED && it.ordinal >= 0
       }.toList(),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { position ->
@@ -413,14 +414,14 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
 
 @Composable
 fun PredefinedFunctionWidget(
-  current: ink.proto.PredefinedEasingFunction,
-  onChanged: (ink.proto.PredefinedEasingFunction) -> Unit,
+  current: PredefinedEasingFunction,
+  onChanged: (PredefinedEasingFunction) -> Unit,
 ) {
   EnumDropdown(
     label = stringResource(R.string.bg_predefined_function),
     currentValue = current,
-    values = ink.proto.PredefinedEasingFunction.values().filter {
-      it != ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_UNSPECIFIED && it.ordinal >= 0
+    values = PredefinedEasingFunction.values().filter {
+      it != PredefinedEasingFunction.PREDEFINED_EASING_UNSPECIFIED && it.ordinal >= 0
     }.toList(),
     modifier = Modifier.padding(8.dp),
     displayName = { stringResource(it.displayStringRId()) },

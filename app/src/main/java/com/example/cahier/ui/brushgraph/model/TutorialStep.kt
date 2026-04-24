@@ -1,6 +1,7 @@
 package com.example.cahier.ui.brushgraph.model
 
 import com.example.cahier.R
+import ink.proto.BrushBehavior
 
 /**
  * Represents a step in the guided tutorial.
@@ -162,7 +163,7 @@ val TUTORIAL_STEPS = listOf(
         getTargetNode = { graph ->
             graph.nodes.find {
                 it.data is NodeData.Behavior &&
-                it.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE
+                it.data.node.nodeCase == BrushBehavior.Node.NodeCase.TARGET_NODE
             }
         }
     ),
@@ -192,7 +193,7 @@ val TUTORIAL_STEPS = listOf(
         getTargetNode = { graph ->
             graph.nodes.find {
                 it.data is NodeData.Behavior &&
-                it.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE
+                it.data.node.nodeCase == BrushBehavior.Node.NodeCase.SOURCE_NODE
             }
         }
     ),
@@ -270,7 +271,7 @@ val TUTORIAL_STEPS = listOf(
         getTargetNode = { graph ->
             graph.nodes.find {
                 it.data is NodeData.Behavior &&
-                it.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE
+                it.data.node.nodeCase == BrushBehavior.Node.NodeCase.SOURCE_NODE
             }
         }
     ),
@@ -312,7 +313,7 @@ val TUTORIAL_STEPS = listOf(
         getTargetNode = { graph ->
             graph.nodes.find {
                 it.data is NodeData.Behavior &&
-                it.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.RESPONSE_NODE
+                it.data.node.nodeCase == BrushBehavior.Node.NodeCase.RESPONSE_NODE
             }
         }
     ),
@@ -330,7 +331,7 @@ val TUTORIAL_STEPS = listOf(
         getTargetNode = { graph ->
             graph.nodes.find {
                 it.data is NodeData.Behavior &&
-                it.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE
+                it.data.node.nodeCase == BrushBehavior.Node.NodeCase.BINARY_OP_NODE
             }
         }
     ),
@@ -373,7 +374,7 @@ val TUTORIAL_STEPS = listOf(
         getTargetNode = { graph ->
             graph.nodes.find {
                 it.data is NodeData.Behavior &&
-                it.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE
+                it.data.node.nodeCase == BrushBehavior.Node.NodeCase.BINARY_OP_NODE
             }
         }
     ),
@@ -563,7 +564,7 @@ val TUTORIAL_STEPS = listOf(
         getTargetNode = { graph ->
             graph.nodes.find {
                 it.data is NodeData.Behavior &&
-                it.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE
+                it.data.node.nodeCase == BrushBehavior.Node.NodeCase.TARGET_NODE
             }
         }
     ),

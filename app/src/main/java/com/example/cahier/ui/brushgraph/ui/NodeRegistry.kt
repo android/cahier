@@ -2,7 +2,6 @@
 
 package com.example.cahier.ui.brushgraph.ui
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size

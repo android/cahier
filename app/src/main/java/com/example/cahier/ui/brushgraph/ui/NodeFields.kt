@@ -44,15 +44,8 @@ import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.ColorFunction as ProtoColorFunction
 import androidx.ink.brush.InputToolType
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextField
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,7 +65,7 @@ fun NodeFields(
   textFieldsLocked: Boolean,
   allTextureIds: Set<String>,
   onLoadTexture: () -> Unit,
-  strokeRenderer: androidx.ink.rendering.android.canvas.CanvasStrokeRenderer,
+  strokeRenderer: CanvasStrokeRenderer,
   onFieldEditComplete: () -> Unit = {},
   onDropdownEditComplete: () -> Unit = {},
 ) {

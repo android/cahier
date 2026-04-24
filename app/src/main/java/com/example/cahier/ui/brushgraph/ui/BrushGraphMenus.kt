@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
+import com.example.cahier.ui.brushgraph.model.TutorialStep
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
@@ -313,7 +314,7 @@ fun GraphActionMenu(
   onDeleteBrush: () -> Unit,
   onTutorialExitRequested: () -> Unit,
   savedBrushes: List<CustomBrushEntity>,
-  tutorialStep: com.example.cahier.ui.brushgraph.model.TutorialStep?,
+  tutorialStep: TutorialStep?,
   isTutorialSandboxMode: Boolean,
   onEnterSelectionMode: () -> Unit,
   onLoadBrushFamily: (BrushFamily) -> Unit,

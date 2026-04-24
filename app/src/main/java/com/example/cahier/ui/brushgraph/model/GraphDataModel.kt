@@ -2,8 +2,6 @@
 
 package com.example.cahier.ui.brushgraph.model
 
-import android.util.Log
-import androidx.compose.ui.geometry.Offset
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushFamily as ProtoBrushFamily
@@ -17,6 +15,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import com.example.cahier.R
+import ink.proto.Color
 
 /**
  * Converts a [ProtoBrushFamily] into a functional [BrushFamily] object.
@@ -193,7 +192,7 @@ sealed interface NodeData {
     val developerComment: String = "",
     val behaviorId: String = "",
     val inputPortIds: List<String> = when (node.nodeCase) {
-        ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf("value", "start", "end")
+        ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf("value", "start", "end")
         else -> emptyList()
     }
   ) : NodeData {
@@ -284,14 +283,14 @@ sealed interface NodeData {
     override fun getVisiblePorts(nodeId: String, graph: BrushGraph): List<Port> {
         val ports = mutableListOf<Port>()
         when (node.nodeCase) {
-            ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
+            ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
                 val labels = inputLabels()
                 for (i in labels.indices) {
                     val portId = inputPortIds.getOrElse(i) { "invalid_port_$i" }
                     ports.add(Port.Input(nodeId, portId, label = DisplayText.Resource(labels[i])))
                 }
             }
-            ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
+            ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
                 var nextIndex = 0
                 for (portId in inputPortIds) {
                     var n = nextIndex + 1
@@ -307,7 +306,7 @@ sealed interface NodeData {
                 }
                 ports.add(Port.AddInput(nodeId, "add_input", label = DisplayText.Resource(R.string.bg_add_input)))
             }
-            ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
+            ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
                 val labels = inputLabels()
                 for (i in inputPortIds.indices) {
                     val label = labels[i % labels.size]
@@ -628,7 +627,7 @@ fun preserveEdgesOnTypeChange(
         val updatedEdges = mutableListOf<GraphEdge>()
 
         when (newCase) {
-          ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
+          ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
             val defaultIds = listOf("value", "start", "end")
             for (i in 0..2) {
               val edge = incomingEdges.getOrNull(i)
@@ -639,16 +638,16 @@ fun preserveEdgesOnTypeChange(
               }
             }
           }
-          ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
+          ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
             incomingEdges.take(26).forEachIndexed { index, edge ->
-              val portId = if (index < newData.inputPortIds.size) newData.inputPortIds[index] else java.util.UUID.randomUUID().toString()
+              val portId = if (index < newData.inputPortIds.size) newData.inputPortIds[index] else UUID.randomUUID().toString()
               newIds.add(portId)
               updatedEdges.add(edge.copy(toPortId = portId))
             }
           }
-          ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
+          ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
             incomingEdges.forEachIndexed { index, edge ->
-              val portId = if (index < newData.inputPortIds.size) newData.inputPortIds[index] else java.util.UUID.randomUUID().toString()
+              val portId = if (index < newData.inputPortIds.size) newData.inputPortIds[index] else UUID.randomUUID().toString()
               newIds.add(portId)
               updatedEdges.add(edge.copy(toPortId = portId))
             }
@@ -657,7 +656,7 @@ fun preserveEdgesOnTypeChange(
             val labels = newData.inputLabels()
             if (labels.size == 1) {
               incomingEdges.forEachIndexed { index, edge ->
-                val portId = if (index < newData.inputPortIds.size) newData.inputPortIds[index] else java.util.UUID.randomUUID().toString()
+                val portId = if (index < newData.inputPortIds.size) newData.inputPortIds[index] else UUID.randomUUID().toString()
                 newIds.add(portId)
                 updatedEdges.add(edge.copy(toPortId = portId))
               }
@@ -682,7 +681,7 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
     is Port.AddTexture -> NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance())
     is Port.AddColor -> NodeData.ColorFunc(ProtoColorFunction.newBuilder()
             .setReplaceColor(
-                    ink.proto.Color.newBuilder()
+                    Color.newBuilder()
                       .setRed(0f)
                       .setGreen(0f)
                       .setBlue(0f)
@@ -694,7 +693,7 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
           ProtoBrushBehavior.Node.newBuilder()
             .setTargetNode(
               ProtoBrushBehavior.TargetNode.newBuilder()
-                .setTarget(ink.proto.BrushBehavior.Target.TARGET_OPACITY_MULTIPLIER)
+                .setTarget(ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER)
                 .setTargetModifierRangeStart(0.0f)
                 .setTargetModifierRangeEnd(1.0f)
             )
@@ -709,8 +708,8 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
           ProtoBrushBehavior.Node.newBuilder()
             .setSourceNode(
               ProtoBrushBehavior.SourceNode.newBuilder()
-                .setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE)
-                .setSourceOutOfRangeBehavior(ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
+                .setSource(ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE)
+                .setSourceOutOfRangeBehavior(ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
                 .setSourceValueRangeStart(0.0f)
                 .setSourceValueRangeEnd(1.0f)
             )
@@ -726,8 +725,8 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
               ProtoBrushBehavior.Node.newBuilder()
                 .setSourceNode(
                   ProtoBrushBehavior.SourceNode.newBuilder()
-                    .setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE)
-                    .setSourceOutOfRangeBehavior(ink.proto.BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
+                    .setSource(ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE)
+                    .setSourceOutOfRangeBehavior(ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
                     .setSourceValueRangeStart(0.0f)
                     .setSourceValueRangeEnd(1.0f)
                 )
@@ -746,7 +745,7 @@ fun NodeData.isPortReorderable(port: Port, index: Int, hasAddPort: Boolean): Boo
   return !port.isAddPort && hasAddPort && when (this) {
     is NodeData.Coat -> index != 0
     is NodeData.Behavior -> {
-      if (this.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+      if (this.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
         index % 2 == 0
       } else {
         true

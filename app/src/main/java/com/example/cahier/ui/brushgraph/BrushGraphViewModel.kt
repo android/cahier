@@ -12,17 +12,14 @@ import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
-import androidx.ink.storage.decode
 import androidx.ink.strokes.Stroke
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
-import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.brushgraph.data.BrushGraphRepository
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.zip.GZIPOutputStream
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,15 +39,10 @@ import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 import com.example.cahier.ui.brushgraph.model.GraphValidationException
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
-import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import androidx.compose.runtime.snapshotFlow
 import com.example.cahier.ui.brushgraph.ui.NodeRegistry
-import java.util.UUID
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushFamily as ProtoBrushFamily
@@ -61,6 +53,8 @@ import com.example.cahier.ui.brushgraph.model.TUTORIAL_STEPS
 import com.example.cahier.ui.brushgraph.model.TutorialStep
 import com.example.cahier.ui.brushgraph.model.TutorialAnchor
 import com.example.cahier.ui.brushgraph.model.TutorialAction
+import java.io.ByteArrayOutputStream
+import java.io.ByteArrayInputStream
 
 /** ViewModel to manage the state of the brush graph. */
 @HiltViewModel
@@ -91,8 +85,6 @@ class BrushGraphViewModel @Inject constructor(
   /** The set of selected node IDs. */
   var selectedNodeIds by mutableStateOf(setOf<String>())
     private set
-
-
 
   /** The ID of the node currently selected as the source for a new edge. */
   var activeEdgeSourceId by mutableStateOf<String?>(null)
@@ -676,7 +668,7 @@ class BrushGraphViewModel @Inject constructor(
   fun saveToPalette(brushName: String, textureStore: TextureBitmapStore) {
     viewModelScope.launch(Dispatchers.IO) {
       try {
-        val baos = java.io.ByteArrayOutputStream()
+        val baos = ByteArrayOutputStream()
         AndroidBrushFamilySerialization.encode(brush.value.family, baos, textureStore)
         val finalCompressedBytes = baos.toByteArray()
 
@@ -701,7 +693,7 @@ class BrushGraphViewModel @Inject constructor(
     viewModelScope.launch(Dispatchers.IO) {
       try {
         val family = AndroidBrushFamilySerialization.decode(
-          java.io.ByteArrayInputStream(entity.brushBytes),
+          ByteArrayInputStream(entity.brushBytes),
           BrushFamilyDecodeCallback { id, bitmap ->
             if (bitmap != null && textureStore is CahierTextureBitmapStore) {
               textureStore.loadTexture(id, bitmap)

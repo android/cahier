@@ -80,27 +80,27 @@ object GraphValidator {
           val labels = data.inputLabels()
           val ids = if (data.inputPortIds.isEmpty()) {
               when (nodeCase) {
-                  ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE -> listOf("input_0", "input_1")
-                  ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> listOf("angle_0", "mag_0")
-                  ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf("value", "start", "end")
+                  ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> listOf("input_0", "input_1")
+                  ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> listOf("angle_0", "mag_0")
+                  ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf("value", "start", "end")
                   else -> if (labels.size == 1) listOf("Input") else emptyList()
               }
           } else data.inputPortIds
 
-          if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
+          if (nodeCase == ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
             val labels = listOf(R.string.bg_port_value, R.string.bg_port_start, R.string.bg_port_end)
             for (i in ids.indices) {
               if (i < 3 && !connectedPortIds.contains(ids[i])) {
                 issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_interp_missing_input, listOf(DisplayText.Resource(labels[i]))), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
               }
             }
-          } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+          } else if (nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
             val chunkedIds = ids.chunked(2)
             val hasValidSet = chunkedIds.any { set -> set.size == 2 && set.all { connectedPortIds.contains(it) } }
             if (!hasValidSet) {
               issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_polar_missing_inputs), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
             }
-          } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE) {
+          } else if (nodeCase == ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE) {
             val numInputs = ids.count { connectedPortIds.contains(it) }
             if (numInputs < 2) {
               issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_binary_min_inputs), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))

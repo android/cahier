@@ -1,39 +1,43 @@
 package com.example.cahier.ui.brushgraph.data
 
+import android.graphics.Bitmap
+import android.util.Log
+import com.example.cahier.R
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
+import com.example.cahier.ui.brushgraph.converters.BrushFamilyConverter
+import com.example.cahier.ui.brushgraph.converters.BrushGraphConverter
+import com.example.cahier.ui.brushgraph.converters.GraphValidator
 import com.example.cahier.ui.brushgraph.model.BrushGraph
+import com.example.cahier.ui.brushgraph.model.DisplayText
+import com.example.cahier.ui.brushgraph.model.GraphEdge
+import com.example.cahier.ui.brushgraph.model.GraphNode
+import com.example.cahier.ui.brushgraph.model.GraphPoint
+import com.example.cahier.ui.brushgraph.model.GraphValidationException
+import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.ui.brushgraph.model.Port
+import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
+import com.example.cahier.ui.brushgraph.model.preserveEdgesOnTypeChange
+import androidx.ink.brush.ExperimentalInkCustomBrushApi
+import androidx.ink.brush.BrushFamily
 import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
 import java.io.ByteArrayInputStream
-import com.example.cahier.ui.brushgraph.model.GraphValidationException
-import com.example.cahier.ui.brushgraph.model.ValidationSeverity
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.DisplayText
-import com.example.cahier.R
-import com.example.cahier.ui.brushgraph.model.GraphPoint
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.Port
-import com.example.cahier.ui.brushgraph.model.GraphEdge
-import com.example.cahier.ui.brushgraph.model.preserveEdgesOnTypeChange
-import com.example.cahier.ui.brushgraph.converters.BrushFamilyConverter
-import com.example.cahier.ui.brushgraph.converters.GraphValidator
-import com.example.cahier.ui.brushgraph.converters.BrushGraphConverter
+import java.io.ByteArrayOutputStream
+import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.OptIn
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 @Singleton
 @OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
@@ -53,7 +57,7 @@ class BrushGraphRepository @Inject constructor(
         .collect { graph ->
           try {
             val family = BrushFamilyConverter.convert(graph)
-            val baos = java.io.ByteArrayOutputStream()
+            val baos = ByteArrayOutputStream()
             AndroidBrushFamilySerialization.encode(family, baos, textureStore)
             customBrushDao.saveCustomBrush(com.example.cahier.developer.brushdesigner.data.CustomBrushEntity("__autosave__", baos.toByteArray()))
           } catch (e: Exception) {
@@ -115,7 +119,7 @@ class BrushGraphRepository @Inject constructor(
       val bais = ByteArrayInputStream(decodedBytes)
       val family = AndroidBrushFamilySerialization.decode(
         bais,
-        BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
+        BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
           if (bitmap != null) {
             textureStore.loadTexture(id, bitmap)
           }
@@ -144,7 +148,7 @@ class BrushGraphRepository @Inject constructor(
   }
 
   fun addNode(data: NodeData, position: GraphPoint): String {
-    val newNode = GraphNode(id = java.util.UUID.randomUUID().toString(), data = data, position = position)
+    val newNode = GraphNode(id = UUID.randomUUID().toString(), data = data, position = position)
     _graph.update { it.copy(nodes = it.nodes + newNode) }
     validate()
     return newNode.id
@@ -186,31 +190,31 @@ class BrushGraphRepository @Inject constructor(
       val toPort = toNode.getVisiblePorts(currentGraph).find { it.id == toPortId }
       when (toPort) {
         is Port.AddTexture -> {
-          val newPortId = java.util.UUID.randomUUID().toString()
+          val newPortId = UUID.randomUUID().toString()
           val newData = (toData as NodeData.Paint).copy(texturePortIds = toData.texturePortIds + newPortId)
           newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
           toPortId = newPortId
         }
         is Port.AddColor -> {
-          val newPortId = java.util.UUID.randomUUID().toString()
+          val newPortId = UUID.randomUUID().toString()
           val newData = (toData as NodeData.Paint).copy(colorPortIds = toData.colorPortIds + newPortId)
           newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
           toPortId = newPortId
         }
         is Port.AddPaint -> {
-          val newPortId = java.util.UUID.randomUUID().toString()
+          val newPortId = UUID.randomUUID().toString()
           val newData = (toData as NodeData.Coat).copy(paintPortIds = toData.paintPortIds + newPortId)
           newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
           toPortId = newPortId
         }
         is Port.AddCoat -> {
-          val newPortId = java.util.UUID.randomUUID().toString()
+          val newPortId = UUID.randomUUID().toString()
           val newData = (toData as NodeData.Family).copy(coatPortIds = toData.coatPortIds + newPortId)
           newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
           toPortId = newPortId
         }
         is Port.AddBehavior -> {
-          val newPortId = java.util.UUID.randomUUID().toString()
+          val newPortId = UUID.randomUUID().toString()
           val newData = (toData as NodeData.Tip).copy(behaviorPortIds = toData.behaviorPortIds + newPortId)
           newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
           toPortId = newPortId
@@ -218,13 +222,13 @@ class BrushGraphRepository @Inject constructor(
         is Port.AddInput -> {
           val data = toData as NodeData.Behavior
           if (data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
-            val newPortId1 = java.util.UUID.randomUUID().toString()
-            val newPortId2 = java.util.UUID.randomUUID().toString()
+            val newPortId1 = UUID.randomUUID().toString()
+            val newPortId2 = UUID.randomUUID().toString()
             val newData = data.copy(inputPortIds = data.inputPortIds + listOf(newPortId1, newPortId2))
             newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
             toPortId = newPortId1
           } else {
-            val newPortId = java.util.UUID.randomUUID().toString()
+            val newPortId = UUID.randomUUID().toString()
             val newData = data.copy(inputPortIds = data.inputPortIds + newPortId)
             newGraph = newGraph.copy(nodes = newGraph.nodes.map { if (it.id == toNodeId) it.copy(data = newData) else it })
             toPortId = newPortId
@@ -512,9 +516,9 @@ class BrushGraphRepository @Inject constructor(
         return@update currentGraph // Only for behavior nodes!
       }
       
-      val id = java.util.UUID.randomUUID().toString()
+      val id = UUID.randomUUID().toString()
       newNodeId = id
-      val newPortId = java.util.UUID.randomUUID().toString()
+      val newPortId = UUID.randomUUID().toString()
       val newNode = GraphNode(
         id = id,
         data = NodeData.Behavior(
@@ -544,8 +548,8 @@ class BrushGraphRepository @Inject constructor(
     return newNodeId
   }
 
-  fun reorganize(): androidx.ink.brush.BrushFamily? {
-    var family: androidx.ink.brush.BrushFamily? = null
+  fun reorganize(): BrushFamily? {
+    var family: BrushFamily? = null
     var success = false
     _graph.update { currentGraph ->
       val clearedNodes = currentGraph.nodes.map { it.copy(hasError = false) }
@@ -570,14 +574,14 @@ class BrushGraphRepository @Inject constructor(
     return family
   }
 
-  fun loadBrushFamily(family: androidx.ink.brush.BrushFamily): Boolean {
+  fun loadBrushFamily(family: BrushFamily): Boolean {
     return try {
       _graph.update { BrushGraphConverter.fromBrushFamily(family) }
       validate()
       postDebug("Brush loaded successfully")
       true
     } catch (e: Exception) {
-      android.util.Log.e("BrushGraph", "Failed to load brush", e)
+      Log.e("BrushGraph", "Failed to load brush", e)
       postDebug("Failed to load brush")
       false
     }
@@ -587,7 +591,7 @@ class BrushGraphRepository @Inject constructor(
     var newIds = emptySet<String>()
     _graph.update { currentGraph ->
       val nodesToDuplicate = currentGraph.nodes.filter { selectedNodeIds.contains(it.id) }
-      val idMap = nodesToDuplicate.associate { it.id to java.util.UUID.randomUUID().toString() }
+      val idMap = nodesToDuplicate.associate { it.id to UUID.randomUUID().toString() }
       newIds = idMap.values.toSet()
       
       val newNodes = nodesToDuplicate.map { node ->

@@ -22,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -162,7 +164,7 @@ fun NotificationPane(
 fun NotificationGroup(
   title: String,
   issues: List<GraphValidationException>,
-  icon: androidx.compose.ui.graphics.vector.ImageVector,
+  icon: ImageVector,
   color: Color,
   viewModel: BrushGraphViewModel,
   isLandscape: Boolean,
@@ -201,7 +203,7 @@ fun NotificationGroup(
     if (expanded) {
       Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp)) {
         for (issue in issues) {
-          val density = androidx.compose.ui.platform.LocalDensity.current.density
+          val density = LocalDensity.current.density
           val message = issue.displayMessage.asString()
           LaunchedEffect(issue) {
             Log.d("NotificationPane", message)

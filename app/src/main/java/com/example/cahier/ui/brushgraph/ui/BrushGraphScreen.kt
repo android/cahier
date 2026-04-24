@@ -6,18 +6,16 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInHorizontally
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -41,7 +39,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -49,7 +46,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -61,20 +57,13 @@ import androidx.compose.material.icons.filled.ShapeLine
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -98,15 +87,11 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
-import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
-import androidx.ink.storage.decode
-import androidx.ink.storage.encode
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.cahier.core.ui.ClassicColorPickerDialog
-import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.ui.brushgraph.BrushGraphViewModel
 import com.example.cahier.ui.brushgraph.inspectors.EdgeInspector
 import com.example.cahier.ui.brushgraph.inspectors.NodeInspector
@@ -123,19 +108,16 @@ import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.inferNodeData
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
-import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
-import com.example.cahier.ui.brushgraph.model.PortSide
-import com.example.cahier.ui.brushgraph.model.ValidationSeverity
-import com.example.cahier.ui.brushgraph.model.toBrushFamily
-import com.example.cahier.ui.brushgraph.model.TutorialAction
-import com.example.cahier.core.ui.theme.CahierAppTheme
-import com.example.cahier.core.ui.theme.extendedColorScheme
 import kotlinx.coroutines.launch
+import com.example.cahier.core.ui.theme.CahierAppTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.animation.core.VectorConverter
+import com.example.cahier.ui.brushgraph.model.ValidationSeverity
+import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
+import com.example.cahier.ui.brushgraph.model.TutorialAction
+import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.core.ui.CahierTextureBitmapStore
-import com.example.cahier.features.drawing.CustomBrushes
-import androidx.ink.brush.StockBrushes
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.DpOffset
 
 /** The main UI for the Brush Graph studio. */
 @Composable
@@ -216,9 +198,9 @@ fun BrushGraphScreen(
         try {
           val family = context.contentResolver.openInputStream(it)?.use { stream ->
             try {
-              androidx.ink.storage.AndroidBrushFamilySerialization.decode(
+              AndroidBrushFamilySerialization.decode(
                 stream,
-                androidx.ink.storage.BrushFamilyDecodeCallback { id: String, bitmap: android.graphics.Bitmap? ->
+                BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
                   if (bitmap != null) {
                     textureStore.loadTexture(id, bitmap)
                     viewModel.updateAllTextureIds()
@@ -227,13 +209,13 @@ fun BrushGraphScreen(
                 }
               )
             } catch (e: Exception) {
-              android.util.Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, trying legacy fallback")
+              Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, trying legacy fallback")
               null
             }
           }
 
           if (family == null) {
-            android.util.Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, and legacy fallback is disabled.")
+            Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, and legacy fallback is disabled.")
             viewModel.postDebug("Failed to load brush: Legacy format not supported yet.")
           } else {
             viewModel.loadBrushFamily(family)
@@ -801,7 +783,7 @@ fun GraphCameraController(
   isLandscape: Boolean,
   maxWidthDp: Dp
 ) {
-  val animatableOffset = remember { Animatable(offset, androidx.compose.ui.geometry.Offset.VectorConverter) }
+  val animatableOffset = remember { Animatable(offset, Offset.VectorConverter) }
 
   // Auto-pan to node in tutorial
   LaunchedEffect(tutorialStep) {

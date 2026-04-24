@@ -9,8 +9,6 @@ import com.example.cahier.ui.brushgraph.model.GraphEdge
 import com.example.cahier.ui.brushgraph.model.GraphNode
 import com.example.cahier.ui.brushgraph.model.GraphPoint
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.Port
-import com.example.cahier.ui.brushgraph.model.PortSide
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.UUID
@@ -262,8 +260,8 @@ object BrushGraphConverter {
         
         val x = tipX - (depth + 1) * (info.data.width() + HORIZONTAL_GAP)
         val portCount = when (info.data.node.nodeCase) {
-            ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE -> info.children.size + 1
-            ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
+            ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> info.children.size + 1
+            ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
                 val numSets = maxOf(1, info.children.size / 2)
                 numSets * 2 + 1
             }
