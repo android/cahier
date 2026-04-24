@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
@@ -50,7 +51,6 @@ fun ColorFuncNodeFields(
   onFieldEditComplete: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  var expandedType by remember { mutableStateOf(false) }
   val currentTypeResId = if (function.hasOpacityMultiplier()) {
     R.string.bg_opacity_multiplier
   } else {
@@ -63,56 +63,38 @@ fun ColorFuncNodeFields(
     verticalAlignment = Alignment.CenterVertically,
     modifier = modifier.fillMaxWidth()
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedType,
-      onExpandedChange = { expandedType = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(currentTypeResId),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_function_type)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedType,
-        onDismissRequest = { expandedType = false }
-      ) {
-        listOf(R.string.bg_opacity_multiplier, R.string.bg_replace_color).forEach { resId ->
-          DropdownMenuItem(
-            text = { Text(stringResource(resId)) },
-            onClick = {
-              if (resId != currentTypeResId) {
-                onUpdate(
-                  if (resId == R.string.bg_opacity_multiplier) {
-                    NodeData.ColorFunc(
-                      ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
-                    )
-                  } else {
-                    NodeData.ColorFunc(
-                      ProtoColorFunction.newBuilder()
-                        .setReplaceColor(
-                          ink.proto.Color.newBuilder()
-                            .setRed(0f)
-                            .setGreen(0f)
-                            .setBlue(0f)
-                            .setAlpha(1f)
-                            .build()
-                        )
-                        .build()
-                    )
-                  }
-                )
-              }
-              onDropdownEditComplete()
-              expandedType = false
+    EnumDropdown(
+      label = stringResource(R.string.bg_function_type),
+      currentValue = currentTypeResId,
+      values = listOf(R.string.bg_opacity_multiplier, R.string.bg_replace_color),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it) },
+      onSelected = { resId ->
+        if (resId != currentTypeResId) {
+          onUpdate(
+            if (resId == R.string.bg_opacity_multiplier) {
+              NodeData.ColorFunc(
+                ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
+              )
+            } else {
+              NodeData.ColorFunc(
+                ProtoColorFunction.newBuilder()
+                  .setReplaceColor(
+                    ink.proto.Color.newBuilder()
+                      .setRed(0f)
+                      .setGreen(0f)
+                      .setBlue(0f)
+                      .setAlpha(1f)
+                      .build()
+                  )
+                  .build()
+              )
             }
           )
         }
+        onDropdownEditComplete()
       }
-    }
+    )
     IconButton(onClick = { showTypeTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }

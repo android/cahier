@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -40,123 +41,79 @@ fun IntegralNodeFields(
   modifier: Modifier = Modifier
 ) {
   val limits = integralNode.integrateOver.getNumericLimits(ProgressDomainContext.INTEGRAL)
-  var expandedOver by remember { mutableStateOf(false) }
-  
   Row(modifier = modifier.fillMaxWidth()) {
-    ExposedDropdownMenuBox(
-      expanded = expandedOver,
-      onExpandedChange = { expandedOver = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(integralNode.integrateOver.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_integrate_over)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOver) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedOver,
-        onDismissRequest = { expandedOver = false }
-      ) {
-        ALL_PROGRESS_DOMAINS.forEach { domain ->
-          DropdownMenuItem(
-            text = { Text(stringResource(domain.displayStringRId())) },
-            onClick = {
-              val newLimits = domain.getNumericLimits(ProgressDomainContext.INTEGRAL)
-              val clampedStart = integralNode.integralValueRangeStart.coerceIn(newLimits.min, newLimits.max)
-              val clampedEnd = integralNode.integralValueRangeEnd.coerceIn(newLimits.min, newLimits.max)
+    EnumDropdown(
+      label = stringResource(R.string.bg_integrate_over),
+      currentValue = integralNode.integrateOver,
+      values = ALL_PROGRESS_DOMAINS.toList(),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { domain ->
+        val newLimits = domain.getNumericLimits(ProgressDomainContext.INTEGRAL)
+        val clampedStart = integralNode.integralValueRangeStart.coerceIn(newLimits.min, newLimits.max)
+        val clampedEnd = integralNode.integralValueRangeEnd.coerceIn(newLimits.min, newLimits.max)
 
-              onUpdate(
-                NodeData.Behavior(
-                  behaviorNode.safeCopy(
-                    integralNode = integralNode.safeCopy(
-                      integrateOver = domain,
-                      integralValueRangeStart = clampedStart,
-                      integralValueRangeEnd = clampedEnd
-                    )
-                  )
-                )
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.safeCopy(
+              integralNode = integralNode.safeCopy(
+                integrateOver = domain,
+                integralValueRangeStart = clampedStart,
+                integralValueRangeEnd = clampedEnd
               )
-              onDropdownEditComplete()
-              expandedOver = false
-            }
+            )
           )
-        }
+        )
+        onDropdownEditComplete()
       }
-    }
+    )
   }
   
   NumericField(
     title = stringResource(R.string.bg_label_range_start),
     value = integralNode.integralValueRangeStart,
     limits = limits,
-    onValueChanged = {
-      onUpdate(
-        NodeData.Behavior(
-          behaviorNode.safeCopy(
-            integralNode = integralNode.safeCopy(integralValueRangeStart = it)
-          )
+    onValueChangeFinished = onFieldEditComplete
+  ) {
+    onUpdate(
+      NodeData.Behavior(
+        behaviorNode.safeCopy(
+          integralNode = integralNode.safeCopy(integralValueRangeStart = it)
         )
       )
-    },
-    onValueChangeFinished = onFieldEditComplete
-  )
+    )
+  }
   NumericField(
     title = stringResource(R.string.bg_label_range_end),
     value = integralNode.integralValueRangeEnd,
     limits = limits,
-    onValueChanged = {
-      onUpdate(
-        NodeData.Behavior(
-          behaviorNode.safeCopy(
-            integralNode = integralNode.safeCopy(integralValueRangeEnd = it)
-          )
+    onValueChangeFinished = onFieldEditComplete
+  ) {
+    onUpdate(
+      NodeData.Behavior(
+        behaviorNode.safeCopy(
+          integralNode = integralNode.safeCopy(integralValueRangeEnd = it)
         )
       )
-    },
-    onValueChangeFinished = onFieldEditComplete
-  )
-  
-  var expandedIntegralOor by remember { mutableStateOf(false) }
+    )
+  }
   
   Row(modifier = Modifier.fillMaxWidth()) {
-    ExposedDropdownMenuBox(
-      expanded = expandedIntegralOor,
-      onExpandedChange = { expandedIntegralOor = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(integralNode.integralOutOfRangeBehavior.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_out_of_range_behavior)) },
-        trailingIcon = {
-          ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedIntegralOor)
-        },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedIntegralOor,
-        onDismissRequest = { expandedIntegralOor = false }
-      ) {
-        ALL_OUT_OF_RANGE.forEach { oor ->
-          DropdownMenuItem(
-            text = { Text(stringResource(oor.displayStringRId())) },
-            onClick = {
-              onUpdate(
-                NodeData.Behavior(
-                  behaviorNode.safeCopy(
-                    integralNode = integralNode.safeCopy(integralOutOfRangeBehavior = oor)
-                  )
-                )
-              )
-              expandedIntegralOor = false
-            }
+    EnumDropdown(
+      label = stringResource(R.string.bg_out_of_range_behavior),
+      currentValue = integralNode.integralOutOfRangeBehavior,
+      values = ALL_OUT_OF_RANGE.toList(),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { oor ->
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.safeCopy(
+              integralNode = integralNode.safeCopy(integralOutOfRangeBehavior = oor)
+            )
           )
-        }
+        )
       }
-    }
+    )
   }
 }

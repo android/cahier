@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
@@ -37,47 +38,28 @@ fun InterpolationNodeFields(
   onUpdate: (NodeData) -> Unit,
   modifier: Modifier = Modifier
 ) {
-  var expandedInterp by remember { mutableStateOf(false) }
   var showInterpTooltip by remember { mutableStateOf(false) }
   
   Row(
     verticalAlignment = Alignment.CenterVertically,
     modifier = modifier.fillMaxWidth()
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedInterp,
-      onExpandedChange = { expandedInterp = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(interpNode.interpolation.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_interpolation)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedInterp) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedInterp,
-        onDismissRequest = { expandedInterp = false }
-      ) {
-        ALL_INTERPOLATIONS.forEach { interp ->
-          DropdownMenuItem(
-            text = { Text(stringResource(interp.displayStringRId())) },
-            onClick = {
-              onUpdate(
-                NodeData.Behavior(
-                  behaviorNode.safeCopy(
-                    interpolationNode = interpNode.safeCopy(interpolation = interp)
-                  )
-                )
-              )
-              expandedInterp = false
-            }
+    EnumDropdown(
+      label = stringResource(R.string.bg_interpolation),
+      currentValue = interpNode.interpolation,
+      values = ALL_INTERPOLATIONS.toList(),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { interp ->
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.safeCopy(
+              interpolationNode = interpNode.safeCopy(interpolation = interp)
+            )
           )
-        }
+        )
       }
-    }
+    )
     IconButton(onClick = { showInterpTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }

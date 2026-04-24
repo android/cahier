@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.safeCopy
@@ -39,46 +40,27 @@ fun PaintNodeFields(
   modifier: Modifier = Modifier
 ) {
   val paint = data.paint
-  var expanded by remember { mutableStateOf(false) }
   var showTooltip by remember { mutableStateOf(false) }
   
   Row(
     verticalAlignment = Alignment.CenterVertically,
     modifier = modifier.fillMaxWidth().padding(vertical = 4.dp)
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expanded,
-      onExpandedChange = { expanded = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(paint.selfOverlap.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_self_overlap)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { expanded = false }
-      ) {
-        arrayOf(
-          ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ANY,
-          ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ACCUMULATE,
-          ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD,
-        ).forEach { so ->
-          DropdownMenuItem(
-            text = { Text(stringResource(so.displayStringRId())) },
-            onClick = {
-              onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so), texturePortIds = data.texturePortIds, colorPortIds = data.colorPortIds))
-              onDropdownEditComplete()
-              expanded = false
-            }
-          )
-        }
+    EnumDropdown(
+      label = stringResource(R.string.bg_self_overlap),
+      currentValue = paint.selfOverlap,
+      values = listOf(
+        ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ANY,
+        ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ACCUMULATE,
+        ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD,
+      ),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { so ->
+        onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so), texturePortIds = data.texturePortIds, colorPortIds = data.colorPortIds))
+        onDropdownEditComplete()
       }
-    }
+    )
     IconButton(onClick = { showTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }

@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.features.drawing.CustomBrushes
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
@@ -59,67 +60,48 @@ fun FamilyNodeFields(
     enabled = !textFieldsLocked,
   )
   
-  var expandedModel by remember { mutableStateOf(false) }
   var showModelTooltip by remember { mutableStateOf(false) }
   
   Row(
     verticalAlignment = Alignment.CenterVertically,
     modifier = Modifier.fillMaxWidth()
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedModel,
-      onExpandedChange = { expandedModel = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(data.inputModel.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_input_model)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedModel) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedModel,
-        onDismissRequest = { expandedModel = false }
-      ) {
-        listOf(R.string.bg_model_sliding_window, R.string.bg_model_spring, R.string.bg_model_naive_experimental).forEach { modelResId ->
-          DropdownMenuItem(
-            text = { Text(stringResource(modelResId)) },
-            onClick = {
-              val newModel =
-                when (modelResId) {
-                  R.string.bg_model_naive_experimental ->
-                    ProtoBrushFamily.InputModel.newBuilder()
-                      .setExperimentalNaiveModel(
-                        ProtoBrushFamily.ExperimentalNaiveModel.getDefaultInstance()
-                      )
-                      .build()
-                  R.string.bg_model_sliding_window ->
-                    ProtoBrushFamily.InputModel.newBuilder()
-                      .setSlidingWindowModel(
-                        ProtoBrushFamily.SlidingWindowModel.newBuilder()
-                          .setWindowSizeSeconds(0.02f)
-                          .setExperimentalUpsamplingPeriodSeconds(0.005f)
-                      )
-                      .build()
-                  R.string.bg_model_spring ->
-                    ProtoBrushFamily.InputModel.newBuilder()
-                      .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
-                      .build()
-                  else ->
-                    ProtoBrushFamily.InputModel.newBuilder()
-                      .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
-                      .build()
-                }
-              onUpdate(data.copy(inputModel = newModel))
-              onDropdownEditComplete()
-              expandedModel = false
-            }
-          )
-        }
+    EnumDropdown(
+      label = stringResource(R.string.bg_input_model),
+      currentValue = data.inputModel.displayStringRId(),
+      values = listOf(R.string.bg_model_sliding_window, R.string.bg_model_spring, R.string.bg_model_naive_experimental),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it) },
+      onSelected = { modelResId ->
+        val newModel =
+          when (modelResId) {
+            R.string.bg_model_naive_experimental ->
+              ProtoBrushFamily.InputModel.newBuilder()
+                .setExperimentalNaiveModel(
+                  ProtoBrushFamily.ExperimentalNaiveModel.getDefaultInstance()
+                )
+                .build()
+            R.string.bg_model_sliding_window ->
+              ProtoBrushFamily.InputModel.newBuilder()
+                .setSlidingWindowModel(
+                  ProtoBrushFamily.SlidingWindowModel.newBuilder()
+                    .setWindowSizeSeconds(0.02f)
+                    .setExperimentalUpsamplingPeriodSeconds(0.005f)
+                )
+                .build()
+            R.string.bg_model_spring ->
+              ProtoBrushFamily.InputModel.newBuilder()
+                .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
+                .build()
+            else ->
+              ProtoBrushFamily.InputModel.newBuilder()
+                .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
+                .build()
+          }
+        onUpdate(data.copy(inputModel = newModel))
+        onDropdownEditComplete()
       }
-    }
+    )
     IconButton(onClick = { showModelTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }

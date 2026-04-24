@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke as DrawStroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -397,33 +398,17 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
         onCurveChanged(curve.safeCopy(stepCount = it.toInt()))
       }
     )
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-      OutlinedTextField(
-        value = stringResource(curve.stepPosition.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_step_position)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        ink.proto.StepPosition.values().forEach { position ->
-          if (
-            position != ink.proto.StepPosition.STEP_POSITION_UNSPECIFIED &&
-              position.ordinal >= 0
-          ) {
-            DropdownMenuItem(
-              text = { Text(stringResource(position.displayStringRId())) },
-              onClick = {
-                onCurveChanged(curve.safeCopy(stepPosition = position))
-                expanded = false
-              }
-            )
-          }
-        }
+    EnumDropdown(
+      label = stringResource(R.string.bg_step_position),
+      currentValue = curve.stepPosition,
+      values = ink.proto.StepPosition.values().filter {
+        it != ink.proto.StepPosition.STEP_POSITION_UNSPECIFIED && it.ordinal >= 0
+      }.toList(),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { position ->
+        onCurveChanged(curve.safeCopy(stepPosition = position))
       }
-    }
+    )
   }
 }
 
@@ -432,37 +417,16 @@ fun PredefinedFunctionWidget(
   current: ink.proto.PredefinedEasingFunction,
   onChanged: (ink.proto.PredefinedEasingFunction) -> Unit,
 ) {
-  var expanded by remember { mutableStateOf(false) }
-  ExposedDropdownMenuBox(
-    expanded = expanded,
-    onExpandedChange = { expanded = it },
-    modifier = Modifier.padding(8.dp)
-  ) {
-    OutlinedTextField(
-      value = stringResource(current.displayStringRId()),
-      onValueChange = {},
-      readOnly = true,
-      label = { Text(stringResource(R.string.bg_predefined_function)) },
-      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-      modifier = Modifier.menuAnchor().fillMaxWidth()
-    )
-    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-      ink.proto.PredefinedEasingFunction.values().forEach { func ->
-        if (
-          func != ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_UNSPECIFIED &&
-            func.ordinal >= 0
-        ) {
-          DropdownMenuItem(
-            text = {
-              Text(stringResource(func.displayStringRId()))
-            },
-            onClick = {
-              onChanged(func)
-              expanded = false
-            }
-          )
-        }
-      }
+  EnumDropdown(
+    label = stringResource(R.string.bg_predefined_function),
+    currentValue = current,
+    values = ink.proto.PredefinedEasingFunction.values().filter {
+      it != ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_UNSPECIFIED && it.ordinal >= 0
+    }.toList(),
+    modifier = Modifier.padding(8.dp),
+    displayName = { stringResource(it.displayStringRId()) },
+    onSelected = { func ->
+      onChanged(func)
     }
-  }
+  )
 }

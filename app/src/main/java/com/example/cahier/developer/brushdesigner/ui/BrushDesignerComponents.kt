@@ -42,6 +42,11 @@ import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import com.godaddy.android.colorpicker.ClassicColorPicker
 import com.godaddy.android.colorpicker.HsvColor
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.DropdownMenuItem
 
 /**
  * A reusable slider control for brush property editing.
@@ -123,4 +128,53 @@ fun CustomColorPickerDialog(
             }
         }
     )
+}
+
+/**
+ * A generic [ExposedDropdownMenuBox] for selecting from enum-like value lists.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun <T> EnumDropdown(
+    label: String,
+    currentValue: T,
+    values: List<T>,
+    modifier: Modifier = Modifier,
+    displayName: @Composable (T) -> String,
+    onSelected: (T) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = displayName(currentValue),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            values.forEach { value ->
+                DropdownMenuItem(
+                    text = { Text(displayName(value)) },
+                    onClick = {
+                        onSelected(value)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }

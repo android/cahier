@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -175,43 +176,26 @@ fun SourceNodeFields(
   )
   val isTimeSinceSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
                           sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
-  var expandedOor by remember { mutableStateOf(false) }
   var showOorTooltip by remember { mutableStateOf(false) }
   Row(
     verticalAlignment = Alignment.CenterVertically,
     modifier = Modifier.fillMaxWidth()
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedOor,
-      onExpandedChange = { expandedOor = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(sourceNode.sourceOutOfRangeBehavior.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_out_of_range_behavior)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOor) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedOor,
-        onDismissRequest = { expandedOor = false }
-      ) {
-        ALL_OUT_OF_RANGE.forEach { oor ->
-          val isEnabled = !isTimeSinceSource || oor == ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
-          DropdownMenuItem(
-            text = { Text(stringResource(oor.displayStringRId())) },
-            onClick = {
-              onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
-              onDropdownEditComplete()
-              expandedOor = false
-            },
-            enabled = isEnabled
-          )
-        }
+    EnumDropdown(
+      label = stringResource(R.string.bg_out_of_range_behavior),
+      currentValue = sourceNode.sourceOutOfRangeBehavior,
+      values = if (isTimeSinceSource) {
+          listOf(ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
+      } else {
+          ALL_OUT_OF_RANGE.toList()
+      },
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { oor ->
+        onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
+        onDropdownEditComplete()
       }
-    }
+    )
     IconButton(onClick = { showOorTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }

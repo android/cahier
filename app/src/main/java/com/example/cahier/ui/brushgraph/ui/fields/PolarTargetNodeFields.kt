@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -44,61 +45,37 @@ fun PolarTargetNodeFields(
   onDropdownEditComplete: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  var expandedPolar by remember { mutableStateOf(false) }
   var showPolarTooltip by remember { mutableStateOf(false) }
   
   Row(
     verticalAlignment = Alignment.CenterVertically,
     modifier = modifier.fillMaxWidth()
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedPolar,
-      onExpandedChange = { expandedPolar = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(polarNode.target.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_polar_target)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPolar) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedPolar,
-        onDismissRequest = { expandedPolar = false }
-      ) {
-        ALL_POLAR_TARGETS.forEach { target ->
-          DropdownMenuItem(
-            text = { Text(stringResource(target.displayStringRId())) },
-            onClick = {
-              val newMagLimits = if (target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE ||
-                                  target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE) {
-                  NumericLimits(-10.0f, 10.0f, 0.01f)
-              } else {
-                  NumericLimits(0.0f, 1.0f, 0.1f)
-              }
-              val clampedMagStart = polarNode.magnitudeRangeStart.coerceIn(newMagLimits.min, newMagLimits.max)
-              val clampedMagEnd = polarNode.magnitudeRangeEnd.coerceIn(newMagLimits.min, newMagLimits.max)
+    EnumDropdown(
+      label = stringResource(R.string.bg_polar_target),
+      currentValue = polarNode.target,
+      values = ALL_POLAR_TARGETS.toList(),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { target ->
+        val newMagLimits = NumericLimits.standard(-10.0f, 10.0f, 0.01f)
+        val clampedMagStart = polarNode.magnitudeRangeStart.coerceIn(newMagLimits.min, newMagLimits.max)
+        val clampedMagEnd = polarNode.magnitudeRangeEnd.coerceIn(newMagLimits.min, newMagLimits.max)
 
-              onUpdate(
-                NodeData.Behavior(
-                  behaviorNode.safeCopy(
-                    polarTargetNode = polarNode.safeCopy(
-                      target = target,
-                      magnitudeRangeStart = clampedMagStart,
-                      magnitudeRangeEnd = clampedMagEnd
-                    )
-                  )
-                )
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.safeCopy(
+              polarTargetNode = polarNode.safeCopy(
+                target = target,
+                magnitudeRangeStart = clampedMagStart,
+                magnitudeRangeEnd = clampedMagEnd
               )
-              onDropdownEditComplete()
-              expandedPolar = false
-            }
+            )
           )
-        }
+        )
+        onDropdownEditComplete()
       }
-    }
+    )
     IconButton(onClick = { showPolarTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }

@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -45,54 +46,35 @@ fun DampingNodeFields(
   modifier: Modifier = Modifier
 ) {
   val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
-  var expandedSource by remember { mutableStateOf(false) }
   var showDampingTooltip by remember { mutableStateOf(false) }
   
   Row(
     verticalAlignment = Alignment.CenterVertically,
     modifier = modifier.fillMaxWidth()
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedSource,
-      onExpandedChange = { expandedSource = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(dampingNode.dampingSource.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_damping_source)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedSource,
-        onDismissRequest = { expandedSource = false }
-      ) {
-        ALL_PROGRESS_DOMAINS.forEach { domain ->
-          DropdownMenuItem(
-            text = { Text(stringResource(domain.displayStringRId())) },
-            onClick = {
-              val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
-              val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
+    EnumDropdown(
+      label = stringResource(R.string.bg_damping_source),
+      currentValue = dampingNode.dampingSource,
+      values = ALL_PROGRESS_DOMAINS.toList(),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { domain ->
+        val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
+        val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
 
-              onUpdate(
-                NodeData.Behavior(
-                  behaviorNode.safeCopy(
-                    dampingNode = dampingNode.safeCopy(
-                      dampingSource = domain,
-                      dampingGap = clampedGap
-                    )
-                  )
-                )
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.safeCopy(
+              dampingNode = dampingNode.safeCopy(
+                dampingSource = domain,
+                dampingGap = clampedGap
               )
-              onDropdownEditComplete()
-              expandedSource = false
-            }
+            )
           )
-        }
+        )
+        onDropdownEditComplete()
       }
-    }
+    )
     IconButton(onClick = { showDampingTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }

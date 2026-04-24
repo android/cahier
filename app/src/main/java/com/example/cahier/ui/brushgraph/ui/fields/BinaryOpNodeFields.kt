@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
@@ -38,46 +39,27 @@ fun BinaryOpNodeFields(
   onDropdownEditComplete: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  var expandedOp by remember { mutableStateOf(false) }
   var showOpTooltip by remember { mutableStateOf(false) }
   
   Row(
     verticalAlignment = Alignment.CenterVertically,
     modifier = modifier.fillMaxWidth()
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedOp,
-      onExpandedChange = { expandedOp = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(binaryNode.operation.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_operation)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOp) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedOp,
-        onDismissRequest = { expandedOp = false }
-      ) {
-        ALL_BINARY_OPS.forEach { op ->
-          DropdownMenuItem(
-            text = { Text(stringResource(op.displayStringRId())) },
-            onClick = {
-              onUpdate(
-                NodeData.Behavior(
-                  behaviorNode.safeCopy(binaryOpNode = binaryNode.safeCopy(operation = op))
-                )
-              )
-              onDropdownEditComplete()
-              expandedOp = false
-            }
+    EnumDropdown(
+      label = stringResource(R.string.bg_operation),
+      currentValue = binaryNode.operation,
+      values = ALL_BINARY_OPS.toList(),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { op ->
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.safeCopy(binaryOpNode = binaryNode.safeCopy(operation = op))
           )
-        }
+        )
+        onDropdownEditComplete()
       }
-    }
+    )
     IconButton(onClick = { showOpTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }

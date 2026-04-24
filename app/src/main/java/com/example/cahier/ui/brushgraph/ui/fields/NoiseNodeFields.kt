@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -63,54 +64,35 @@ fun NoiseNodeFields(
     onValueChangeFinished = onFieldEditComplete
   )
   
-  var expandedVary by remember { mutableStateOf(false) }
   var showVaryTooltip by remember { mutableStateOf(false) }
   
   Row(
     verticalAlignment = Alignment.CenterVertically,
     modifier = Modifier.fillMaxWidth()
   ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedVary,
-      onExpandedChange = { expandedVary = it },
-      modifier = Modifier.weight(1f)
-    ) {
-      OutlinedTextField(
-        value = stringResource(noiseNode.varyOver.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_vary_over)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedVary) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
-        expanded = expandedVary,
-        onDismissRequest = { expandedVary = false }
-      ) {
-        ALL_PROGRESS_DOMAINS.forEach { domain ->
-          DropdownMenuItem(
-            text = { Text(stringResource(domain.displayStringRId())) },
-            onClick = {
-              val newLimits = domain.getNumericLimits(ProgressDomainContext.NOISE)
-              val clampedBasePeriod = noiseNode.basePeriod.coerceIn(newLimits.min, newLimits.max)
+    EnumDropdown(
+      label = stringResource(R.string.bg_vary_over),
+      currentValue = noiseNode.varyOver,
+      values = ALL_PROGRESS_DOMAINS.toList(),
+      modifier = Modifier.weight(1f),
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { domain ->
+        val newLimits = domain.getNumericLimits(ProgressDomainContext.NOISE)
+        val clampedBasePeriod = noiseNode.basePeriod.coerceIn(newLimits.min, newLimits.max)
 
-              onUpdate(
-                NodeData.Behavior(
-                  behaviorNode.safeCopy(
-                    noiseNode = noiseNode.safeCopy(
-                      varyOver = domain,
-                      basePeriod = clampedBasePeriod
-                    )
-                  )
-                )
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.safeCopy(
+              noiseNode = noiseNode.safeCopy(
+                varyOver = domain,
+                basePeriod = clampedBasePeriod
               )
-              onDropdownEditComplete()
-              expandedVary = false
-            }
+            )
           )
-        }
+        )
+        onDropdownEditComplete()
       }
-    }
+    )
     IconButton(onClick = { showVaryTooltip = true }) {
       Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
     }
