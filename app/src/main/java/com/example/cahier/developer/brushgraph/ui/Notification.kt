@@ -233,3 +233,48 @@ fun NotificationGroup(
     }
   }
 }
+
+@Composable
+fun NotificationIcon(
+  issues: List<GraphValidationException>,
+  indicatorPaddingEnd: androidx.compose.ui.unit.Dp,
+  onToggleErrorPane: () -> Unit,
+  modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier,
+) {
+  if (issues.isNotEmpty()) {
+    val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
+    val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
+    val icon =
+      when {
+        hasErrors -> Icons.Default.Error
+        hasWarnings -> Icons.Default.Warning
+        else -> Icons.Default.Info
+      }
+    val containerColor =
+      when {
+        hasErrors -> MaterialTheme.colorScheme.error
+        hasWarnings -> MaterialTheme.extendedColorScheme.warning
+        else -> MaterialTheme.colorScheme.secondary
+      }
+    val contentColor =
+      when {
+        hasErrors -> MaterialTheme.colorScheme.onError
+        hasWarnings -> MaterialTheme.extendedColorScheme.onWarning
+        else -> MaterialTheme.colorScheme.onSecondary
+      }
+
+    IconButton(
+      onClick = onToggleErrorPane,
+      modifier = modifier
+        .padding(top = 16.dp, end = indicatorPaddingEnd)
+        .zIndex(2f),
+      colors =
+        IconButtonDefaults.iconButtonColors(
+          containerColor = containerColor,
+          contentColor = contentColor,
+        ),
+    ) {
+      Icon(icon, contentDescription = stringResource(R.string.bg_cd_show_notifications))
+    }
+  }
+}

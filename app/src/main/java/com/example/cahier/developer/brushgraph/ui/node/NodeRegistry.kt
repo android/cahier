@@ -1,6 +1,6 @@
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
 
-package com.example.cahier.developer.brushgraph.ui
+package com.example.cahier.developer.brushgraph.ui.node
 
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.geometry.Offset

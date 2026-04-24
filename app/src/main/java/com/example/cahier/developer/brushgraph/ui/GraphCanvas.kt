@@ -61,6 +61,8 @@ import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.R
+import com.example.cahier.developer.brushgraph.ui.node.NodeRegistry
+import com.example.cahier.developer.brushgraph.ui.node.NodeWidget
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.GraphNode
