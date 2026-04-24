@@ -33,7 +33,6 @@ import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -57,7 +56,9 @@ fun NoiseNodeFields(
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(
-          behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(seed = it.toInt()))
+          behaviorNode.toBuilder()
+            .setNoiseNode(noiseNode.toBuilder().setSeed(it.toInt()).build())
+            .build()
         )
       )
     },
@@ -79,12 +80,14 @@ fun NoiseNodeFields(
 
         onUpdate(
           NodeData.Behavior(
-            behaviorNode.safeCopy(
-              noiseNode = noiseNode.safeCopy(
-                varyOver = domain,
-                basePeriod = clampedBasePeriod
+            behaviorNode.toBuilder()
+              .setNoiseNode(
+                noiseNode.toBuilder()
+                  .setVaryOver(domain)
+                  .setBasePeriod(clampedBasePeriod)
+                  .build()
               )
-            )
+              .build()
           )
         )
         onDropdownEditComplete()
@@ -99,7 +102,9 @@ fun NoiseNodeFields(
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(
-          behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(basePeriod = it))
+          behaviorNode.toBuilder()
+            .setNoiseNode(noiseNode.toBuilder().setBasePeriod(it).build())
+            .build()
         )
       )
     },

@@ -9,7 +9,6 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
@@ -26,7 +25,7 @@ fun ConstantNodeFields(
     limits = NumericLimits.standard(-100f, 100f, 0.01f),
     onValueChanged = {
       onUpdate(
-        NodeData.Behavior(behaviorNode.safeCopy(constantNode = constantNode.safeCopy(value = it)))
+        NodeData.Behavior(behaviorNode.toBuilder().setConstantNode(constantNode.toBuilder().setValue(it).build()).build())
       )
     },
     onValueChangeFinished = onFieldEditComplete

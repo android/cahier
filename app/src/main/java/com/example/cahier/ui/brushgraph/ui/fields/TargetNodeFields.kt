@@ -31,7 +31,6 @@ import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -101,13 +100,15 @@ fun TargetNodeFields(
 
                 onUpdate(
                   NodeData.Behavior(
-                    behaviorNode.safeCopy(
-                      targetNode = targetNode.safeCopy(
-                        target = target,
-                        targetModifierRangeStart = newProtoStart,
-                        targetModifierRangeEnd = newProtoEnd
+                    behaviorNode.toBuilder()
+                      .setTargetNode(
+                        targetNode.toBuilder()
+                          .setTarget(target)
+                          .setTargetModifierRangeStart(newProtoStart)
+                          .setTargetModifierRangeEnd(newProtoEnd)
+                          .build()
                       )
-                    )
+                      .build()
                   )
                 )
                 onDropdownEditComplete()
@@ -140,9 +141,9 @@ fun TargetNodeFields(
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(
-          behaviorNode.safeCopy(
-            targetNode = targetNode.safeCopy(targetModifierRangeStart = it)
-          )
+          behaviorNode.toBuilder()
+            .setTargetNode(targetNode.toBuilder().setTargetModifierRangeStart(it).build())
+            .build()
         )
       )
     },
@@ -155,9 +156,9 @@ fun TargetNodeFields(
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(
-          behaviorNode.safeCopy(
-            targetNode = targetNode.safeCopy(targetModifierRangeEnd = it)
-          )
+          behaviorNode.toBuilder()
+            .setTargetNode(targetNode.toBuilder().setTargetModifierRangeEnd(it).build())
+            .build()
         )
       )
     },

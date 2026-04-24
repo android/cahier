@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_INTERPOLATIONS
 import com.example.cahier.ui.brushgraph.ui.getTooltip
@@ -51,9 +50,9 @@ fun InterpolationNodeFields(
       onSelected = { interp ->
         onUpdate(
           NodeData.Behavior(
-            behaviorNode.safeCopy(
-              interpolationNode = interpNode.safeCopy(interpolation = interp)
-            )
+            behaviorNode.toBuilder()
+              .setInterpolationNode(interpNode.toBuilder().setInterpolation(interp).build())
+              .build()
           )
         )
       }

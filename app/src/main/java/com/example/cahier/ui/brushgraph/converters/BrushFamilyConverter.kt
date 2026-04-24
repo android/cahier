@@ -14,7 +14,6 @@ import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.DisplayText
 import com.example.cahier.R
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream

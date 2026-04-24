@@ -27,7 +27,6 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.ui.getTooltip
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushPaint as ProtoBrushPaint
@@ -55,7 +54,7 @@ fun PaintNodeFields(
       ),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { so ->
-        onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so), texturePortIds = data.texturePortIds, colorPortIds = data.colorPortIds))
+        onUpdate(NodeData.Paint(paint.toBuilder().setSelfOverlap(so).build(), texturePortIds = data.texturePortIds, colorPortIds = data.colorPortIds))
         onDropdownEditComplete()
       }
     )

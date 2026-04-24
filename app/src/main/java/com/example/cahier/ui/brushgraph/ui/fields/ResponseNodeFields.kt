@@ -45,7 +45,6 @@ import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.displayStringRId
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.CubicBezierEasingFunction as ProtoCubicBezier
 import ink.proto.StepsEasingFunction as ProtoSteps
@@ -67,7 +66,7 @@ fun ResponseNodeFields(
       onResponseNodeChanged = {
         onUpdate(
           NodeData.Behavior(
-            behaviorNode.safeCopy(responseNode = it)
+            behaviorNode.toBuilder().setResponseNode(it).build()
           )
         )
       }
@@ -380,10 +379,10 @@ fun LinearWidget(
 @Composable
 fun CubicBezierWidget(curve: ProtoCubicBezier, onCurveChanged: (ProtoCubicBezier) -> Unit) {
   Column(modifier = Modifier.padding(8.dp)) {
-    NumericField(title = "x1", value = curve.x1, limits = NumericLimits.standard(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.safeCopy(x1 = it)) })
-    NumericField(title = "y1", value = curve.y1, limits = NumericLimits.standard(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.safeCopy(y1 = it)) })
-    NumericField(title = "x2", value = curve.x2, limits = NumericLimits.standard(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.safeCopy(x2 = it)) })
-    NumericField(title = "y2", value = curve.y2, limits = NumericLimits.standard(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.safeCopy(y2 = it)) })
+    NumericField(title = "x1", value = curve.x1, limits = NumericLimits.standard(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setX1(it).build()) })
+    NumericField(title = "y1", value = curve.y1, limits = NumericLimits.standard(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setY1(it).build()) })
+    NumericField(title = "x2", value = curve.x2, limits = NumericLimits.standard(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setX2(it).build()) })
+    NumericField(title = "y2", value = curve.y2, limits = NumericLimits.standard(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setY2(it).build()) })
   }
 }
 
@@ -395,7 +394,7 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
       value = curve.stepCount.toFloat(),
       limits = NumericLimits.standard(1f, 20f, 1f),
       onValueChanged = {
-        onCurveChanged(curve.safeCopy(stepCount = it.toInt()))
+        onCurveChanged(curve.toBuilder().setStepCount(it.toInt()).build())
       }
     )
     EnumDropdown(
@@ -406,7 +405,7 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
       }.toList(),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { position ->
-        onCurveChanged(curve.safeCopy(stepPosition = position))
+        onCurveChanged(curve.toBuilder().setStepPosition(position).build())
       }
     )
   }

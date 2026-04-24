@@ -33,7 +33,6 @@ import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -108,14 +107,16 @@ fun SourceNodeFields(
                 
                 onUpdate(
                   NodeData.Behavior(
-                    behaviorNode.safeCopy(
-                      sourceNode = sourceNode.safeCopy(
-                        source = source, 
-                        sourceOutOfRangeBehavior = newOor,
-                        sourceValueRangeStart = newProtoStart,
-                        sourceValueRangeEnd = newProtoEnd
+                    behaviorNode.toBuilder()
+                      .setSourceNode(
+                        sourceNode.toBuilder()
+                          .setSource(source)
+                          .setSourceOutOfRangeBehavior(newOor)
+                          .setSourceValueRangeStart(newProtoStart)
+                          .setSourceValueRangeEnd(newProtoEnd)
+                          .build()
                       )
-                    )
+                      .build()
                   )
                 )
                 onDropdownEditComplete()
@@ -161,7 +162,7 @@ fun SourceNodeFields(
     limits = limits,
     onValueChanged = {
       val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
-      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeStart = newValue))))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeStart(newValue).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
@@ -171,7 +172,7 @@ fun SourceNodeFields(
     limits = limits,
     onValueChanged = {
       val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
-      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeEnd = newValue))))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeEnd(newValue).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
@@ -191,7 +192,7 @@ fun SourceNodeFields(
       },
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { oor ->
-        onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
+        onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceOutOfRangeBehavior(oor).build()).build()))
         onDropdownEditComplete()
       }
     )

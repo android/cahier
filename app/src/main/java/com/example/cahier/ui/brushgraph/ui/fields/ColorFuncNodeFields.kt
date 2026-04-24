@@ -37,7 +37,6 @@ import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.getColorFunctionTooltip
 import ink.proto.ColorFunction as ProtoColorFunction
@@ -100,7 +99,7 @@ fun ColorFuncNodeFields(
       title = stringResource(R.string.bg_label_opacity_multiplier),
       value = function.opacityMultiplier,
       limits = NumericLimits.standard(0f, 2f, 0.01f),
-      onValueChanged = { onUpdate(NodeData.ColorFunc(function.safeCopy(opacityMultiplier = it))) },
+      onValueChanged = { onUpdate(NodeData.ColorFunc(function.toBuilder().setOpacityMultiplier(it).build())) },
       onValueChangeFinished = onFieldEditComplete
     )
   } else if (function.hasReplaceColor()) {
@@ -117,15 +116,16 @@ fun ColorFuncNodeFields(
           onChooseColor(composeColor) { newColor ->
             onUpdate(
               NodeData.ColorFunc(
-                function.safeCopy(
-                  replaceColor =
+                function.toBuilder()
+                  .setReplaceColor(
                     ink.proto.Color.newBuilder()
                       .setRed(newColor.red)
                       .setGreen(newColor.green)
                       .setBlue(newColor.blue)
                       .setAlpha(newColor.alpha)
                       .build()
-                )
+                  )
+                  .build()
               )
             )
           }

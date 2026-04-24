@@ -25,7 +25,7 @@ import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
-import com.example.cahier.ui.brushgraph.model.safeCopy
+
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_OUT_OF_RANGE
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_PROGRESS_DOMAINS
 import com.example.cahier.ui.brushgraph.model.displayStringRId
@@ -55,13 +55,15 @@ fun IntegralNodeFields(
 
         onUpdate(
           NodeData.Behavior(
-            behaviorNode.safeCopy(
-              integralNode = integralNode.safeCopy(
-                integrateOver = domain,
-                integralValueRangeStart = clampedStart,
-                integralValueRangeEnd = clampedEnd
+            behaviorNode.toBuilder()
+              .setIntegralNode(
+                integralNode.toBuilder()
+                  .setIntegrateOver(domain)
+                  .setIntegralValueRangeStart(clampedStart)
+                  .setIntegralValueRangeEnd(clampedEnd)
+                  .build()
               )
-            )
+              .build()
           )
         )
         onDropdownEditComplete()
@@ -77,9 +79,9 @@ fun IntegralNodeFields(
   ) {
     onUpdate(
       NodeData.Behavior(
-        behaviorNode.safeCopy(
-          integralNode = integralNode.safeCopy(integralValueRangeStart = it)
-        )
+        behaviorNode.toBuilder()
+          .setIntegralNode(integralNode.toBuilder().setIntegralValueRangeStart(it).build())
+          .build()
       )
     )
   }
@@ -91,9 +93,9 @@ fun IntegralNodeFields(
   ) {
     onUpdate(
       NodeData.Behavior(
-        behaviorNode.safeCopy(
-          integralNode = integralNode.safeCopy(integralValueRangeEnd = it)
-        )
+        behaviorNode.toBuilder()
+          .setIntegralNode(integralNode.toBuilder().setIntegralValueRangeEnd(it).build())
+          .build()
       )
     )
   }
@@ -108,9 +110,9 @@ fun IntegralNodeFields(
       onSelected = { oor ->
         onUpdate(
           NodeData.Behavior(
-            behaviorNode.safeCopy(
-              integralNode = integralNode.safeCopy(integralOutOfRangeBehavior = oor)
-            )
+            behaviorNode.toBuilder()
+              .setIntegralNode(integralNode.toBuilder().setIntegralOutOfRangeBehavior(oor).build())
+              .build()
           )
         )
       }

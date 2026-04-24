@@ -37,7 +37,6 @@ import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.displayStringRId
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.ui.TextureLayerPreviewWidget
@@ -63,7 +62,7 @@ fun TextureLayerNodeFields(
         modifier = Modifier.weight(1f),
         displayName = { it },
         onSelected = { id ->
-          onUpdate(NodeData.TextureLayer(layer.safeCopy(clientTextureId = id)))
+          onUpdate(NodeData.TextureLayer(layer.toBuilder().setClientTextureId(id).build()))
         }
       )
       IconButton(onClick = onLoadTexture, enabled = true) {
@@ -89,7 +88,7 @@ fun TextureLayerNodeFields(
         ),
         displayName = { stringResource(it.displayStringRId()) },
         onSelected = { mapping ->
-          onUpdate(NodeData.TextureLayer(layer.safeCopy(mapping = mapping)))
+          onUpdate(NodeData.TextureLayer(layer.toBuilder().setMapping(mapping).build()))
         }
       )
     }
@@ -99,13 +98,13 @@ fun TextureLayerNodeFields(
         title = stringResource(R.string.bg_label_size_x),
         value = layer.sizeX,
         limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeX = it))) }
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setSizeX(it).build())) }
       )
       NumericField(
         title = stringResource(R.string.bg_label_size_y),
         value = layer.sizeY,
         limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeY = it))) }
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setSizeY(it).build())) }
       )
       FieldWithTooltip(
         tooltipTitle = stringResource(R.string.bg_label_size_unit_with_value, stringResource(layer.sizeUnit.displayStringRId())),
@@ -121,7 +120,7 @@ fun TextureLayerNodeFields(
           ),
           displayName = { stringResource(it.displayStringRId()) },
           onSelected = { unit ->
-            onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeUnit = unit)))
+            onUpdate(NodeData.TextureLayer(layer.toBuilder().setSizeUnit(unit).build()))
           }
         )
       }
@@ -131,25 +130,25 @@ fun TextureLayerNodeFields(
         title = stringResource(R.string.bg_label_animation_rows),
         value = layer.animationRows.toFloat(),
         limits = NumericLimits.standard(1f, 100f, 1f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationRows = it.toInt()))) }
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationRows(it.toInt()).build())) }
       )
       NumericField(
         title = stringResource(R.string.bg_label_animation_columns),
         value = layer.animationColumns.toFloat(),
         limits = NumericLimits.standard(1f, 100f, 1f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationColumns = it.toInt()))) }
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationColumns(it.toInt()).build())) }
       )
       NumericField(
         title = stringResource(R.string.bg_label_animation_frames),
         value = layer.animationFrames.toFloat(),
         limits = NumericLimits.standard(1f, 100f, 1f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationFrames = it.toInt()))) }
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationFrames(it.toInt()).build())) }
       )
       NumericField(
         title = stringResource(R.string.bg_label_animation_duration_ms),
         value = layer.animationDurationSeconds,
         limits = NumericLimits(1f, 10000f, 1f, "ms", unitScale = 1000f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationDurationSeconds = it))) }
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationDurationSeconds(it).build())) }
       )
     }
 
@@ -170,7 +169,7 @@ fun TextureLayerNodeFields(
         ),
         displayName = { stringResource(it.displayStringRId()) },
         onSelected = { origin ->
-          onUpdate(NodeData.TextureLayer(layer.safeCopy(origin = origin)))
+          onUpdate(NodeData.TextureLayer(layer.toBuilder().setOrigin(origin).build()))
         }
       )
     }
@@ -178,19 +177,19 @@ fun TextureLayerNodeFields(
       title = stringResource(R.string.bg_label_offset_x),
       value = layer.offsetX,
       limits = NumericLimits.standard(-1f, 1f, 0.01f),
-      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetX = it))) }
+      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setOffsetX(it).build())) }
     )
     NumericField(
       title = stringResource(R.string.bg_label_offset_y),
       value = layer.offsetY,
       limits = NumericLimits.standard(-1f, 1f, 0.01f),
-      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetY = it))) }
+      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setOffsetY(it).build())) }
     )
     NumericField(
       title = stringResource(R.string.bg_label_rotation_degrees),
       value = layer.rotationInRadians,
       limits = NumericLimits.radiansShownAsDegrees(0f, 360f),
-      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(rotationInRadians = it))) }
+      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setRotationInRadians(it).build())) }
     )
 
     InspectorSectionHeader(stringResource(R.string.bg_section_wrapping), stringResource(R.string.bg_section_wrapping_sub))
@@ -212,7 +211,7 @@ fun TextureLayerNodeFields(
             ),
             displayName = { stringResource(it.displayStringRId()) },
             onSelected = { wrap ->
-              onUpdate(NodeData.TextureLayer(layer.safeCopy(wrapX = wrap)))
+              onUpdate(NodeData.TextureLayer(layer.toBuilder().setWrapX(wrap).build()))
             }
           )
         }
@@ -231,7 +230,7 @@ fun TextureLayerNodeFields(
             ),
             displayName = { stringResource(it.displayStringRId()) },
             onSelected = { wrap ->
-              onUpdate(NodeData.TextureLayer(layer.safeCopy(wrapY = wrap)))
+              onUpdate(NodeData.TextureLayer(layer.toBuilder().setWrapY(wrap).build()))
             }
           )
         }
@@ -274,7 +273,7 @@ fun TextureLayerNodeFields(
             ),
             displayName = { stringResource(it.displayStringRId()) },
             onSelected = { mode ->
-              onUpdate(NodeData.TextureLayer(layer.safeCopy(blendMode = mode)))
+              onUpdate(NodeData.TextureLayer(layer.toBuilder().setBlendMode(mode).build()))
             }
           )
         }

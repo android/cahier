@@ -31,7 +31,6 @@ import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -62,12 +61,14 @@ fun DampingNodeFields(
 
         onUpdate(
           NodeData.Behavior(
-            behaviorNode.safeCopy(
-              dampingNode = dampingNode.safeCopy(
-                dampingSource = domain,
-                dampingGap = clampedGap
+            behaviorNode.toBuilder()
+              .setDampingNode(
+                dampingNode.toBuilder()
+                  .setDampingSource(domain)
+                  .setDampingGap(clampedGap)
+                  .build()
               )
-            )
+              .build()
           )
         )
         onDropdownEditComplete()
@@ -82,7 +83,9 @@ fun DampingNodeFields(
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(
-          behaviorNode.safeCopy(dampingNode = dampingNode.safeCopy(dampingGap = it))
+          behaviorNode.toBuilder()
+            .setDampingNode(dampingNode.toBuilder().setDampingGap(it).build())
+            .build()
         )
       )
     },

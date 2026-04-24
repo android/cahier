@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import androidx.ink.brush.InputToolType
 import com.example.cahier.R
@@ -39,9 +38,9 @@ fun ToolTypeFilterNodeFields(
             }
           onUpdate(
             NodeData.Behavior(
-              behaviorNode.safeCopy(
-                toolTypeFilterNode = filterNode.safeCopy(enabledToolTypes = newMask)
-              )
+              behaviorNode.toBuilder()
+                .setToolTypeFilterNode(filterNode.toBuilder().setEnabledToolTypes(newMask).build())
+                .build()
             )
           )
         }

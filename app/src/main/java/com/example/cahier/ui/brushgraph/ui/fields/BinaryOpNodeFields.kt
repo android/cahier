@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_BINARY_OPS
 import com.example.cahier.ui.brushgraph.ui.getTooltip
@@ -52,7 +51,9 @@ fun BinaryOpNodeFields(
       onSelected = { op ->
         onUpdate(
           NodeData.Behavior(
-            behaviorNode.safeCopy(binaryOpNode = binaryNode.safeCopy(operation = op))
+            behaviorNode.toBuilder()
+              .setBinaryOpNode(binaryNode.toBuilder().setOperation(op).build())
+              .build()
           )
         )
         onDropdownEditComplete()

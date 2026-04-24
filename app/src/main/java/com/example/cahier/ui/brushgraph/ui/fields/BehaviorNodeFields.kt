@@ -28,7 +28,6 @@ import com.example.cahier.R
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.ui.createDefaultNode
 import com.example.cahier.ui.brushgraph.model.displayStringRId
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_START
 import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_OPERATOR
 import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_TERMINAL

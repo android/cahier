@@ -30,7 +30,6 @@ import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
-import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_POLAR_TARGETS
 import com.example.cahier.ui.brushgraph.model.displayStringRId
@@ -62,13 +61,15 @@ fun PolarTargetNodeFields(
 
         onUpdate(
           NodeData.Behavior(
-            behaviorNode.safeCopy(
-              polarTargetNode = polarNode.safeCopy(
-                target = target,
-                magnitudeRangeStart = clampedMagStart,
-                magnitudeRangeEnd = clampedMagEnd
+            behaviorNode.toBuilder()
+              .setPolarTargetNode(
+                polarNode.toBuilder()
+                  .setTarget(target)
+                  .setMagnitudeRangeStart(clampedMagStart)
+                  .setMagnitudeRangeEnd(clampedMagEnd)
+                  .build()
               )
-            )
+              .build()
           )
         )
         onDropdownEditComplete()
@@ -81,7 +82,7 @@ fun PolarTargetNodeFields(
     value = polarNode.angleRangeStart,
     limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
     onValueChanged = {
-      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeStart = it))))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setAngleRangeStart(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
@@ -91,7 +92,7 @@ fun PolarTargetNodeFields(
     value = polarNode.angleRangeEnd,
     limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
     onValueChanged = {
-      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeEnd = it))))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setAngleRangeEnd(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
@@ -103,7 +104,7 @@ fun PolarTargetNodeFields(
     value = polarNode.magnitudeRangeStart,
     limits = magLimits,
     onValueChanged = {
-      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(magnitudeRangeStart = it))))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setMagnitudeRangeStart(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
@@ -113,7 +114,7 @@ fun PolarTargetNodeFields(
     value = polarNode.magnitudeRangeEnd,
     limits = magLimits,
     onValueChanged = {
-      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(magnitudeRangeEnd = it))))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setMagnitudeRangeEnd(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
