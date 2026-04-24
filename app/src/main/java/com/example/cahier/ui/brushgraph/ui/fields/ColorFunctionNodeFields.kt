@@ -30,7 +30,7 @@ import com.example.cahier.ui.brushgraph.ui.getColorFunctionTooltip
 import ink.proto.ColorFunction as ProtoColorFunction
 
 @Composable
-fun ColorFuncNodeFields(
+fun ColorFunctionNodeFields(
   function: ProtoColorFunction,
   onUpdate: (NodeData) -> Unit,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
@@ -58,11 +58,11 @@ fun ColorFuncNodeFields(
         if (resId != currentTypeResId) {
           onUpdate(
             if (resId == R.string.bg_opacity_multiplier) {
-              NodeData.ColorFunc(
+              NodeData.ColorFunction(
                 ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
               )
             } else {
-              NodeData.ColorFunc(
+              NodeData.ColorFunction(
                 ProtoColorFunction.newBuilder()
                   .setReplaceColor(
                     ProtoColor.newBuilder()
@@ -87,7 +87,7 @@ fun ColorFuncNodeFields(
       title = stringResource(R.string.bg_label_opacity_multiplier),
       value = function.opacityMultiplier,
       limits = NumericLimits.standard(0f, 2f, 0.01f),
-      onValueChanged = { onUpdate(NodeData.ColorFunc(function.toBuilder().setOpacityMultiplier(it).build())) },
+      onValueChanged = { onUpdate(NodeData.ColorFunction(function.toBuilder().setOpacityMultiplier(it).build())) },
       onValueChangeFinished = onFieldEditComplete
     )
   } else if (function.hasReplaceColor()) {
@@ -103,7 +103,7 @@ fun ColorFuncNodeFields(
         onClick = {
           onChooseColor(composeColor) { newColor ->
             onUpdate(
-              NodeData.ColorFunc(
+              NodeData.ColorFunction(
                 function.toBuilder()
                   .setReplaceColor(
                     ProtoColor.newBuilder()

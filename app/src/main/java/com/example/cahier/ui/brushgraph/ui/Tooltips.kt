@@ -28,7 +28,7 @@ fun NodeData.getTooltip(): Int = when (this) {
     else -> R.string.bg_tooltip_node_unknown
   }
   is NodeData.TextureLayer -> R.string.bg_tooltip_node_texture_layer
-  is NodeData.ColorFunc -> R.string.bg_tooltip_node_color_func
+  is NodeData.ColorFunction -> R.string.bg_tooltip_node_color_func
   is NodeData.Coat -> R.string.bg_tooltip_node_coat
   is NodeData.Family -> R.string.bg_tooltip_node_family
 }

@@ -315,7 +315,7 @@ object BrushFamilyConverter {
         graph.edges.find { edge ->
             if (edge.isDisabled || edge.toNodeId != nodeId || edge.toPortId != portId) return@find false
             val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
-            fromNode != null && !fromNode.isDisabled && fromNode.data is NodeData.ColorFunc
+            fromNode != null && !fromNode.isDisabled && fromNode.data is NodeData.ColorFunction
         }
     }
 
@@ -351,9 +351,9 @@ object BrushFamilyConverter {
       graph.nodes.find { it.id == nodeId }
         ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
-      graphNode.data as? NodeData.ColorFunc
+      graphNode.data as? NodeData.ColorFunction
         ?: throw GraphValidationException(
-          displayMessage = DisplayText.Resource(R.string.bg_err_expected_node_type, listOf("ColorFunc", graphNode.data::class.simpleName ?: "Unknown")),
+          displayMessage = DisplayText.Resource(R.string.bg_err_expected_node_type, listOf("ColorFunction", graphNode.data::class.simpleName ?: "Unknown")),
           nodeId = nodeId,
         )
     return data.function

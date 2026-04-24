@@ -274,7 +274,7 @@ class BrushGraphViewModel @Inject constructor(
     
     if (data is NodeData.Behavior) {
       advanceTutorial(TutorialAction.ADD_INPUT_FAB) || advanceTutorial(TutorialAction.ADD_BEHAVIOR)
-    } else if (data is NodeData.ColorFunc) {
+    } else if (data is NodeData.ColorFunction) {
       advanceTutorial(TutorialAction.ADD_COLOR)
     }
   }
@@ -301,7 +301,7 @@ class BrushGraphViewModel @Inject constructor(
 
   /** Adds a new Color Function node at the specified position. */
   fun addColorFunctionNode(position: GraphPoint) {
-    addNode(NodeData.ColorFunc(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), position)
+    addNode(NodeData.ColorFunction(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), position)
   }
 
   /** Adds a new Texture Layer node at the specified position. */
@@ -525,7 +525,7 @@ class BrushGraphViewModel @Inject constructor(
     // Tutorial progression
     if (nodeData is NodeData.Behavior) {
       advanceTutorial(TutorialAction.ADD_BEHAVIOR)
-    } else if (nodeData is NodeData.ColorFunc) {
+    } else if (nodeData is NodeData.ColorFunction) {
       advanceTutorial(TutorialAction.ADD_COLOR)
     }
   }

@@ -185,7 +185,7 @@ fun NodeWidget(
                   is NodeData.Paint -> MaterialTheme.colorScheme.secondaryContainer
                   is NodeData.Family -> MaterialTheme.colorScheme.tertiaryContainer
                   is NodeData.TextureLayer,
-                  is NodeData.ColorFunc -> MaterialTheme.colorScheme.surfaceVariant
+                  is NodeData.ColorFunction -> MaterialTheme.colorScheme.surfaceVariant
                   else -> MaterialTheme.colorScheme.surfaceDim
                 }
               }
@@ -534,7 +534,7 @@ fun NodeHeader(
       }
     }
 
-    if (data is NodeData.ColorFunc) {
+    if (data is NodeData.ColorFunction) {
       Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
         ColorFunctionPreviewWidget(data.function, strokeRenderer)
       }
@@ -678,7 +678,7 @@ fun BoxScope.NodePortDots(
               
               val colorEdges = graph.edges.filter { edge ->
                   val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
-                  fromNode?.data is com.example.cahier.ui.brushgraph.model.NodeData.ColorFunc && edge.toNodeId == node.id
+                  fromNode?.data is NodeData.ColorFunction && edge.toNodeId == node.id
               }
               val C = colorEdges.size
               

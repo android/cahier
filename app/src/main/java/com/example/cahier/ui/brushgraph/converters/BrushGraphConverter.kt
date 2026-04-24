@@ -178,7 +178,7 @@ object BrushGraphConverter {
     var colorIndex = 0
     for (cf in paint.colorFunctionsList) {
       val cfId = UUID.randomUUID().toString()
-      val cfData = NodeData.ColorFunc(cf)
+      val cfData = NodeData.ColorFunction(cf)
       nodes.add(
         GraphNode(
           id = cfId,

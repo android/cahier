@@ -87,7 +87,7 @@ sealed interface NodeData {
    * padding.
    */
   fun height(portCount: Int = inputLabels().size): Float {
-    val previewH = if (this is NodeData.ColorFunc || this is NodeData.TextureLayer) PREVIEW_AREA_HEIGHT else 0f
+    val previewH = if (this is NodeData.ColorFunction || this is NodeData.TextureLayer) PREVIEW_AREA_HEIGHT else 0f
     return NODE_PADDING_VERTICAL +
       titleHeight() +
       previewH +
@@ -172,7 +172,7 @@ sealed interface NodeData {
   }
 
   /** Wraps a [ProtoColorFunction]. */
-  data class ColorFunc(
+  data class ColorFunction(
     val function: ProtoColorFunction
   ) : NodeData {
     override fun title() = R.string.bg_color_function
@@ -450,14 +450,14 @@ data class BrushGraph(
           fromData is NodeData.Coat ||
           fromData is NodeData.Paint ||
           fromData is NodeData.TextureLayer ||
-          fromData is NodeData.ColorFunc ||
+          fromData is NodeData.ColorFunction ||
           fromData is NodeData.Family
       val toIsStructural =
         toData is NodeData.Tip ||
           toData is NodeData.Coat ||
           toData is NodeData.Paint ||
           toData is NodeData.TextureLayer ||
-          toData is NodeData.ColorFunc ||
+          toData is NodeData.ColorFunction ||
           toData is NodeData.Family
 
       val toPort = to.getVisiblePorts(graph).find { it.id == toPortId }
@@ -512,7 +512,7 @@ data class BrushGraph(
                   DisplayText.Resource(R.string.bg_err_paint_only_accepts_texture)
                 }
             } else if (toData.colorPortIds.contains(toPortId) || toPort is Port.AddColor) {
-                if (fromData is NodeData.ColorFunc) {
+                if (fromData is NodeData.ColorFunction) {
                   null
                 } else {
                   DisplayText.Resource(R.string.bg_err_paint_only_accepts_color)
@@ -522,7 +522,7 @@ data class BrushGraph(
             }
         }
         is NodeData.TextureLayer -> DisplayText.Resource(R.string.bg_err_texture_cannot_accept_inputs)
-        is NodeData.ColorFunc -> DisplayText.Resource(R.string.bg_err_color_cannot_accept_inputs)
+        is NodeData.ColorFunction -> DisplayText.Resource(R.string.bg_err_color_cannot_accept_inputs)
         else -> {
           // 'to' is a behavior node.
           if (
@@ -679,7 +679,7 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
     is Port.AddTip -> NodeData.Tip(ProtoBrushTip.getDefaultInstance())
     is Port.AddPaint -> NodeData.Paint(ProtoBrushPaint.getDefaultInstance())
     is Port.AddTexture -> NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance())
-    is Port.AddColor -> NodeData.ColorFunc(ProtoColorFunction.newBuilder()
+    is Port.AddColor -> NodeData.ColorFunction(ProtoColorFunction.newBuilder()
             .setReplaceColor(
                     Color.newBuilder()
                       .setRed(0f)

@@ -504,7 +504,7 @@ val TUTORIAL_STEPS = listOf(
         actionRequired = TutorialAction.SELECT_NODE,
         getTargetNode = { graph ->
             graph.nodes.find {
-                it.data is NodeData.ColorFunc
+                it.data is NodeData.ColorFunction
             }
         }
     ),

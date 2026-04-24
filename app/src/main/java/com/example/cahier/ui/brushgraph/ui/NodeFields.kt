@@ -83,8 +83,8 @@ fun NodeFields(
           textFieldsLocked = textFieldsLocked
         )
       }
-      is NodeData.ColorFunc -> {
-        ColorFuncNodeFields(
+      is NodeData.ColorFunction -> {
+        ColorFunctionNodeFields(
           function = data.function,
           onUpdate = onUpdate,
           onChooseColor = onChooseColor,
