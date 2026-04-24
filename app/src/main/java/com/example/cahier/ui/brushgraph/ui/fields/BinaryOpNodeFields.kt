@@ -25,7 +25,7 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.safeCopy
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_BINARY_OPS
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
@@ -39,17 +39,15 @@ fun BinaryOpNodeFields(
   onDropdownEditComplete: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  var showOpTooltip by remember { mutableStateOf(false) }
-  
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth()
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_operation_format, stringResource(binaryNode.operation.displayStringRId())),
+    tooltipText = stringResource(binaryNode.operation.getTooltip()),
+    modifier = modifier
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_operation),
       currentValue = binaryNode.operation,
       values = ALL_BINARY_OPS.toList(),
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { op ->
         onUpdate(
@@ -59,16 +57,6 @@ fun BinaryOpNodeFields(
         )
         onDropdownEditComplete()
       }
-    )
-    IconButton(onClick = { showOpTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
-  }
-  if (showOpTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_operation_format, stringResource(binaryNode.operation.displayStringRId())),
-      text = stringResource(binaryNode.operation.getTooltip()),
-      onDismiss = { showOpTooltip = false }
     )
   }
 }

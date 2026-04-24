@@ -120,6 +120,7 @@ import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
+import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.inferNodeData
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_COLLAPSED
 import com.example.cahier.ui.brushgraph.model.PREVIEW_HEIGHT_EXPANDED
@@ -399,11 +400,13 @@ fun BrushGraphScreen(
                 stringResource(R.string.bg_label_edge)
             }
             val titleText = stringResource(R.string.bg_title_inspector_with_name, selectionName)
+            val selectionTooltip = selectedNode?.data?.getTooltip()?.let { stringResource(it) }
 
             AdaptiveInspectorPane(
               isLandscape = isLandscape,
               visible = selectedNode != null || selectedEdge != null,
               title = titleText,
+              tooltipText = selectionTooltip,
               onClose = {
                 viewModel.clearSelectedNode()
                 viewModel.clearSelectedEdge()

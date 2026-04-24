@@ -3,7 +3,9 @@
 package com.example.cahier.ui.brushgraph.ui.fields
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
@@ -26,9 +28,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.features.drawing.CustomBrushes
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import com.example.cahier.ui.brushgraph.ui.getInputModelTooltip
 import ink.proto.BrushFamily as ProtoBrushFamily
@@ -60,17 +64,14 @@ fun FamilyNodeFields(
     enabled = !textFieldsLocked,
   )
   
-  var showModelTooltip by remember { mutableStateOf(false) }
-  
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier.fillMaxWidth()
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_input_model_format, stringResource(data.inputModel.displayStringRId())),
+    tooltipText = stringResource(getInputModelTooltip(data.inputModel.displayStringRId()))
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_input_model),
       currentValue = data.inputModel.displayStringRId(),
       values = listOf(R.string.bg_model_sliding_window, R.string.bg_model_spring, R.string.bg_model_naive_experimental),
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it) },
       onSelected = { modelResId ->
         val newModel =
@@ -102,16 +103,48 @@ fun FamilyNodeFields(
         onDropdownEditComplete()
       }
     )
-    IconButton(onClick = { showModelTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
   }
   
-  if (showModelTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_input_model_format, stringResource(data.inputModel.displayStringRId())),
-      text = stringResource(getInputModelTooltip(data.inputModel.displayStringRId())),
-      onDismiss = { showModelTooltip = false }
+  val inputModel = data.inputModel
+  if (inputModel.hasSlidingWindowModel() || (!inputModel.hasSpringModel() && !inputModel.hasExperimentalNaiveModel())) {
+    val swModel = inputModel.slidingWindowModel
+    val windowMs = if (swModel.hasWindowSizeSeconds()) (swModel.windowSizeSeconds * 1000).toLong() else 20L
+    val upsamplingHz = if (swModel.hasExperimentalUpsamplingPeriodSeconds()) {
+        val period = swModel.experimentalUpsamplingPeriodSeconds
+        if (period == Float.POSITIVE_INFINITY || period == 0f) 0 else (1f / period).toInt()
+    } else 180
+
+    Spacer(Modifier.height(16.dp))
+    
+    NumericField(
+      title = stringResource(R.string.brush_designer_window_size_ms),
+      value = windowMs.toFloat(),
+      limits = NumericLimits.standard(1f, 100f, 1f),
+      onValueChanged = { newValue ->
+        val newModel = inputModel.toBuilder()
+          .setSlidingWindowModel(
+            swModel.toBuilder()
+              .setWindowSizeSeconds(newValue / 1000f)
+          )
+          .build()
+        onUpdate(data.copy(inputModel = newModel))
+      }
+    )
+    
+    NumericField(
+      title = stringResource(R.string.brush_designer_upsampling_frequency_hz),
+      value = upsamplingHz.toFloat(),
+      limits = NumericLimits.standard(0f, 500f, 1f),
+      onValueChanged = { newValue ->
+        val newPeriod = if (newValue == 0f) Float.POSITIVE_INFINITY else 1f / newValue
+        val newModel = inputModel.toBuilder()
+          .setSlidingWindowModel(
+            swModel.toBuilder()
+              .setExperimentalUpsamplingPeriodSeconds(newPeriod)
+          )
+          .build()
+        onUpdate(data.copy(inputModel = newModel))
+      }
     )
   }
 }

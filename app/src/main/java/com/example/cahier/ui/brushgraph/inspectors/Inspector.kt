@@ -264,6 +264,7 @@ fun AdaptiveInspectorPane(
   title: String,
   onClose: () -> Unit,
   modifier: Modifier = Modifier,
+  tooltipText: String? = null,
   content: @Composable () -> Unit
 ) {
   AnimatedVisibility(
@@ -296,6 +297,7 @@ fun AdaptiveInspectorPane(
       Column {
         // Title bar with close button
         Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 2.dp) {
+          var showTooltip by remember { mutableStateOf(false) }
           Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
@@ -309,9 +311,26 @@ fun AdaptiveInspectorPane(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
               )
+              if (tooltipText != null) {
+                Spacer(Modifier.width(4.dp))
+                IconButton(onClick = { showTooltip = true }, modifier = Modifier.size(24.dp)) {
+                  Icon(
+                    Icons.AutoMirrored.Filled.Help,
+                    contentDescription = stringResource(R.string.bg_cd_help),
+                    modifier = Modifier.size(16.dp)
+                  )
+                }
+              }
             }
             IconButton(onClick = onClose) {
               Icon(Icons.Default.Close, contentDescription = stringResource(R.string.bg_content_description_close_inspector))
+            }
+            if (showTooltip && tooltipText != null) {
+              TooltipDialog(
+                title = title,
+                text = tooltipText,
+                onDismiss = { showTooltip = false }
+              )
             }
           }
         }

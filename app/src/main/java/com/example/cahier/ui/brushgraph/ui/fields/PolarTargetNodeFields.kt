@@ -31,7 +31,7 @@ import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.safeCopy
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_POLAR_TARGETS
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -45,17 +45,15 @@ fun PolarTargetNodeFields(
   onDropdownEditComplete: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  var showPolarTooltip by remember { mutableStateOf(false) }
-  
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth()
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_polar_target_format, stringResource(polarNode.target.displayStringRId())),
+    tooltipText = stringResource(polarNode.target.getTooltip()),
+    modifier = modifier
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_polar_target),
       currentValue = polarNode.target,
       values = ALL_POLAR_TARGETS.toList(),
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { target ->
         val newMagLimits = NumericLimits.standard(-10.0f, 10.0f, 0.01f)
@@ -75,16 +73,6 @@ fun PolarTargetNodeFields(
         )
         onDropdownEditComplete()
       }
-    )
-    IconButton(onClick = { showPolarTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
-  }
-  if (showPolarTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_polar_target_format, stringResource(polarNode.target.displayStringRId())),
-      text = stringResource(polarNode.target.getTooltip()),
-      onDismiss = { showPolarTooltip = false }
     )
   }
   

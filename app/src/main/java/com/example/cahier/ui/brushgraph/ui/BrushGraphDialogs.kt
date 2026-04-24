@@ -16,6 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun NameTextureDialog(
@@ -246,4 +256,32 @@ internal fun TooltipDialog(
             }
         }
     )
+}
+
+@Composable
+internal fun FieldWithTooltip(
+    tooltipTitle: String,
+    tooltipText: String,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
+    var showTooltip by remember { mutableStateOf(false) }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            content()
+        }
+        IconButton(onClick = { showTooltip = true }) {
+            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
+        }
+    }
+    if (showTooltip) {
+        TooltipDialog(
+            title = tooltipTitle,
+            text = tooltipText,
+            onDismiss = { showTooltip = false }
+        )
+    }
 }

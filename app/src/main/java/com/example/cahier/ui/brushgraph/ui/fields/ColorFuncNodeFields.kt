@@ -38,7 +38,7 @@ import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.safeCopy
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.getColorFunctionTooltip
 import ink.proto.ColorFunction as ProtoColorFunction
 
@@ -57,17 +57,15 @@ fun ColorFuncNodeFields(
     R.string.bg_replace_color
   }
 
-  var showTypeTooltip by remember { mutableStateOf(false) }
-  
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth()
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_function_type_format, stringResource(currentTypeResId)),
+    tooltipText = stringResource(getColorFunctionTooltip(currentTypeResId)),
+    modifier = modifier
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_function_type),
       currentValue = currentTypeResId,
       values = listOf(R.string.bg_opacity_multiplier, R.string.bg_replace_color),
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it) },
       onSelected = { resId ->
         if (resId != currentTypeResId) {
@@ -94,17 +92,6 @@ fun ColorFuncNodeFields(
         }
         onDropdownEditComplete()
       }
-    )
-    IconButton(onClick = { showTypeTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
-  }
-  
-  if (showTypeTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_function_type_format, stringResource(currentTypeResId)),
-      text = stringResource(getColorFunctionTooltip(currentTypeResId)),
-      onDismiss = { showTypeTooltip = false }
     )
   }
   

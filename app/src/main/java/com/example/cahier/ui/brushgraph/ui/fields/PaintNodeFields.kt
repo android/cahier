@@ -28,7 +28,7 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.safeCopy
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushPaint as ProtoBrushPaint
 
@@ -40,11 +40,10 @@ fun PaintNodeFields(
   modifier: Modifier = Modifier
 ) {
   val paint = data.paint
-  var showTooltip by remember { mutableStateOf(false) }
-  
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth().padding(vertical = 4.dp)
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_self_overlap_format, stringResource(paint.selfOverlap.displayStringRId())),
+    tooltipText = stringResource(paint.selfOverlap.getTooltip()),
+    modifier = modifier.padding(vertical = 4.dp)
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_self_overlap),
@@ -54,22 +53,11 @@ fun PaintNodeFields(
         ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ACCUMULATE,
         ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD,
       ),
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { so ->
         onUpdate(NodeData.Paint(paint.safeCopy(selfOverlap = so), texturePortIds = data.texturePortIds, colorPortIds = data.colorPortIds))
         onDropdownEditComplete()
       }
-    )
-    IconButton(onClick = { showTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
-  }
-  if (showTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_self_overlap_format, stringResource(paint.selfOverlap.displayStringRId())),
-      text = stringResource(paint.selfOverlap.getTooltip()),
-      onDismiss = { showTooltip = false }
     )
   }
 }

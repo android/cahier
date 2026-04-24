@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
@@ -176,10 +177,9 @@ fun SourceNodeFields(
   )
   val isTimeSinceSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
                           sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
-  var showOorTooltip by remember { mutableStateOf(false) }
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier.fillMaxWidth()
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_out_of_range_behavior_format, stringResource(sourceNode.sourceOutOfRangeBehavior.displayStringRId())),
+    tooltipText = stringResource(sourceNode.sourceOutOfRangeBehavior.getTooltip())
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_out_of_range_behavior),
@@ -189,23 +189,11 @@ fun SourceNodeFields(
       } else {
           ALL_OUT_OF_RANGE.toList()
       },
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { oor ->
         onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceOutOfRangeBehavior = oor))))
         onDropdownEditComplete()
       }
-    )
-    IconButton(onClick = { showOorTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
-  }
-  
-  if (showOorTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_out_of_range_behavior_format, stringResource(sourceNode.sourceOutOfRangeBehavior.displayStringRId())),
-      text = stringResource(sourceNode.sourceOutOfRangeBehavior.getTooltip()),
-      onDismiss = { showOorTooltip = false }
     )
   }
   if (isTimeSinceSource) {

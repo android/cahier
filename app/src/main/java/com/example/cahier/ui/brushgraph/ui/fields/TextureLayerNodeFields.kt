@@ -38,7 +38,7 @@ import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import com.example.cahier.ui.brushgraph.model.safeCopy
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.ui.TextureLayerPreviewWidget
 import com.example.cahier.ui.brushgraph.ui.TextureWrapPreviewWidget
@@ -75,10 +75,10 @@ fun TextureLayerNodeFields(
 
     InspectorSectionHeader(stringResource(R.string.bg_section_mapping), stringResource(R.string.bg_section_mapping_sub))
 
-    var showMappingTooltip by remember { mutableStateOf(false) }
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    FieldWithTooltip(
+      tooltipTitle = stringResource(R.string.bg_label_mapping_mode_with_value, stringResource(layer.mapping.displayStringRId())),
+      tooltipText = stringResource(layer.mapping.getTooltip()),
+      modifier = Modifier.padding(vertical = 4.dp)
     ) {
       EnumDropdown(
         label = stringResource(R.string.bg_mapping_mode),
@@ -87,21 +87,10 @@ fun TextureLayerNodeFields(
           ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING,
           ProtoBrushPaint.TextureLayer.Mapping.MAPPING_STAMPING,
         ),
-        modifier = Modifier.weight(1f),
         displayName = { stringResource(it.displayStringRId()) },
         onSelected = { mapping ->
           onUpdate(NodeData.TextureLayer(layer.safeCopy(mapping = mapping)))
         }
-      )
-      IconButton(onClick = { showMappingTooltip = true }) {
-        Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-      }
-    }
-    if (showMappingTooltip) {
-      TooltipDialog(
-        title = stringResource(R.string.bg_label_mapping_mode_with_value, stringResource(layer.mapping.displayStringRId())),
-        text = stringResource(layer.mapping.getTooltip()),
-        onDismiss = { showMappingTooltip = false }
       )
     }
 
@@ -118,10 +107,10 @@ fun TextureLayerNodeFields(
         limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeY = it))) }
       )
-      var showUnitTooltip by remember { mutableStateOf(false) }
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+      FieldWithTooltip(
+        tooltipTitle = stringResource(R.string.bg_label_size_unit_with_value, stringResource(layer.sizeUnit.displayStringRId())),
+        tooltipText = stringResource(layer.sizeUnit.getTooltip()),
+        modifier = Modifier.padding(vertical = 4.dp)
       ) {
         EnumDropdown(
           label = stringResource(R.string.bg_size_unit),
@@ -130,21 +119,10 @@ fun TextureLayerNodeFields(
             ProtoBrushPaint.TextureLayer.SizeUnit.SIZE_UNIT_BRUSH_SIZE,
             ProtoBrushPaint.TextureLayer.SizeUnit.SIZE_UNIT_STROKE_COORDINATES,
           ),
-          modifier = Modifier.weight(1f),
           displayName = { stringResource(it.displayStringRId()) },
           onSelected = { unit ->
             onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeUnit = unit)))
           }
-        )
-        IconButton(onClick = { showUnitTooltip = true }) {
-          Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-        }
-      }
-      if (showUnitTooltip) {
-        TooltipDialog(
-          title = stringResource(R.string.bg_label_size_unit_with_value, stringResource(layer.sizeUnit.displayStringRId())),
-          text = stringResource(layer.sizeUnit.getTooltip()),
-          onDismiss = { showUnitTooltip = false }
         )
       }
     } else {
@@ -177,10 +155,10 @@ fun TextureLayerNodeFields(
 
     InspectorSectionHeader(stringResource(R.string.bg_section_positioning), stringResource(R.string.bg_section_positioning_sub))
 
-    var showOriginTooltip by remember { mutableStateOf(false) }
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    FieldWithTooltip(
+      tooltipTitle = stringResource(R.string.bg_label_origin_with_value, stringResource(layer.origin.displayStringRId())),
+      tooltipText = stringResource(layer.origin.getTooltip()),
+      modifier = Modifier.padding(vertical = 4.dp)
     ) {
       EnumDropdown(
         label = stringResource(R.string.bg_origin),
@@ -190,21 +168,10 @@ fun TextureLayerNodeFields(
           ProtoBrushPaint.TextureLayer.Origin.ORIGIN_FIRST_STROKE_INPUT,
           ProtoBrushPaint.TextureLayer.Origin.ORIGIN_LAST_STROKE_INPUT,
         ),
-        modifier = Modifier.weight(1f),
         displayName = { stringResource(it.displayStringRId()) },
         onSelected = { origin ->
           onUpdate(NodeData.TextureLayer(layer.safeCopy(origin = origin)))
         }
-      )
-      IconButton(onClick = { showOriginTooltip = true }) {
-        Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-      }
-    }
-    if (showOriginTooltip) {
-      TooltipDialog(
-        title = stringResource(R.string.bg_label_origin_with_value, stringResource(layer.origin.displayStringRId())),
-        text = stringResource(layer.origin.getTooltip()),
-        onDismiss = { showOriginTooltip = false }
       )
     }
     NumericField(
@@ -230,10 +197,10 @@ fun TextureLayerNodeFields(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
       Column(modifier = Modifier.weight(1f)) {
-        var showWrapXTooltip by remember { mutableStateOf(false) }
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        FieldWithTooltip(
+          tooltipTitle = stringResource(R.string.bg_label_wrap_x_with_value, stringResource(layer.wrapX.displayStringRId())),
+          tooltipText = stringResource(layer.wrapX.getTooltip()),
+          modifier = Modifier.padding(vertical = 4.dp)
         ) {
           EnumDropdown(
             label = stringResource(R.string.bg_wrap_x),
@@ -243,27 +210,16 @@ fun TextureLayerNodeFields(
               ProtoBrushPaint.TextureLayer.Wrap.WRAP_MIRROR,
               ProtoBrushPaint.TextureLayer.Wrap.WRAP_CLAMP,
             ),
-            modifier = Modifier.weight(1f),
             displayName = { stringResource(it.displayStringRId()) },
             onSelected = { wrap ->
               onUpdate(NodeData.TextureLayer(layer.safeCopy(wrapX = wrap)))
             }
           )
-          IconButton(onClick = { showWrapXTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-          }
         }
-        if (showWrapXTooltip) {
-          TooltipDialog(
-            title = stringResource(R.string.bg_label_wrap_x_with_value, stringResource(layer.wrapX.displayStringRId())),
-            text = stringResource(layer.wrapX.getTooltip()),
-            onDismiss = { showWrapXTooltip = false }
-          )
-        }
-        var showWrapYTooltip by remember { mutableStateOf(false) }
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        FieldWithTooltip(
+          tooltipTitle = stringResource(R.string.bg_label_wrap_y_with_value, stringResource(layer.wrapY.displayStringRId())),
+          tooltipText = stringResource(layer.wrapY.getTooltip()),
+          modifier = Modifier.padding(vertical = 4.dp)
         ) {
           EnumDropdown(
             label = stringResource(R.string.bg_wrap_y),
@@ -273,21 +229,10 @@ fun TextureLayerNodeFields(
               ProtoBrushPaint.TextureLayer.Wrap.WRAP_MIRROR,
               ProtoBrushPaint.TextureLayer.Wrap.WRAP_CLAMP,
             ),
-            modifier = Modifier.weight(1f),
             displayName = { stringResource(it.displayStringRId()) },
             onSelected = { wrap ->
               onUpdate(NodeData.TextureLayer(layer.safeCopy(wrapY = wrap)))
             }
-          )
-          IconButton(onClick = { showWrapYTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-          }
-        }
-        if (showWrapYTooltip) {
-          TooltipDialog(
-            title = stringResource(R.string.bg_label_wrap_y_with_value, stringResource(layer.wrapY.displayStringRId())),
-            text = stringResource(layer.wrapY.getTooltip()),
-            onDismiss = { showWrapYTooltip = false }
           )
         }
       }
@@ -305,10 +250,10 @@ fun TextureLayerNodeFields(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
       Box(modifier = Modifier.weight(1f)) {
-        var showBlendTooltip by remember { mutableStateOf(false) }
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        FieldWithTooltip(
+          tooltipTitle = stringResource(R.string.bg_label_blend_mode_with_value, stringResource(layer.blendMode.displayStringRId())),
+          tooltipText = stringResource(layer.blendMode.getTooltip()),
+          modifier = Modifier.padding(vertical = 4.dp)
         ) {
           EnumDropdown(
             label = stringResource(R.string.bg_blend_mode),
@@ -327,21 +272,10 @@ fun TextureLayerNodeFields(
               ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST_ATOP,
               ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_XOR,
             ),
-            modifier = Modifier.weight(1f),
             displayName = { stringResource(it.displayStringRId()) },
             onSelected = { mode ->
               onUpdate(NodeData.TextureLayer(layer.safeCopy(blendMode = mode)))
             }
-          )
-          IconButton(onClick = { showBlendTooltip = true }) {
-            Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-          }
-        }
-        if (showBlendTooltip) {
-          TooltipDialog(
-            title = stringResource(R.string.bg_label_blend_mode_with_value, stringResource(layer.blendMode.displayStringRId())),
-            text = stringResource(layer.blendMode.getTooltip()),
-            onDismiss = { showBlendTooltip = false }
           )
         }
       }

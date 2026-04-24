@@ -32,7 +32,7 @@ import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.safeCopy
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
@@ -46,17 +46,15 @@ fun DampingNodeFields(
   modifier: Modifier = Modifier
 ) {
   val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
-  var showDampingTooltip by remember { mutableStateOf(false) }
-  
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth()
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_damping_source_format, stringResource(dampingNode.dampingSource.displayStringRId())),
+    tooltipText = stringResource(dampingNode.dampingSource.getTooltip()),
+    modifier = modifier
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_damping_source),
       currentValue = dampingNode.dampingSource,
       values = ALL_PROGRESS_DOMAINS.toList(),
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { domain ->
         val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
@@ -74,17 +72,6 @@ fun DampingNodeFields(
         )
         onDropdownEditComplete()
       }
-    )
-    IconButton(onClick = { showDampingTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
-  }
-  
-  if (showDampingTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_damping_source_format, stringResource(dampingNode.dampingSource.displayStringRId())),
-      text = stringResource(dampingNode.dampingSource.getTooltip()),
-      onDismiss = { showDampingTooltip = false }
     )
   }
   

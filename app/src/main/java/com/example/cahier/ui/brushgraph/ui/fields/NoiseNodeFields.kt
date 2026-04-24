@@ -34,7 +34,7 @@ import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.safeCopy
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
@@ -64,17 +64,14 @@ fun NoiseNodeFields(
     onValueChangeFinished = onFieldEditComplete
   )
   
-  var showVaryTooltip by remember { mutableStateOf(false) }
-  
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier.fillMaxWidth()
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_vary_over_format, stringResource(noiseNode.varyOver.displayStringRId())),
+    tooltipText = stringResource(noiseNode.varyOver.getTooltip())
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_vary_over),
       currentValue = noiseNode.varyOver,
       values = ALL_PROGRESS_DOMAINS.toList(),
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { domain ->
         val newLimits = domain.getNumericLimits(ProgressDomainContext.NOISE)
@@ -92,17 +89,6 @@ fun NoiseNodeFields(
         )
         onDropdownEditComplete()
       }
-    )
-    IconButton(onClick = { showVaryTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
-  }
-  
-  if (showVaryTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_vary_over_format, stringResource(noiseNode.varyOver.displayStringRId())),
-      text = stringResource(noiseNode.varyOver.getTooltip()),
-      onDismiss = { showVaryTooltip = false }
     )
   }
   

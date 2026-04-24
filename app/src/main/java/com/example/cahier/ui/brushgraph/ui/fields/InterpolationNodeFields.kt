@@ -25,7 +25,7 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.safeCopy
-import com.example.cahier.ui.brushgraph.ui.TooltipDialog
+import com.example.cahier.ui.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.ui.brushgraph.ui.fields.ALL_INTERPOLATIONS
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.displayStringRId
@@ -38,17 +38,15 @@ fun InterpolationNodeFields(
   onUpdate: (NodeData) -> Unit,
   modifier: Modifier = Modifier
 ) {
-  var showInterpTooltip by remember { mutableStateOf(false) }
-  
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth()
+  FieldWithTooltip(
+    tooltipTitle = stringResource(R.string.bg_title_interpolation_format, stringResource(interpNode.interpolation.displayStringRId())),
+    tooltipText = stringResource(interpNode.interpolation.getTooltip()),
+    modifier = modifier
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_interpolation),
       currentValue = interpNode.interpolation,
       values = ALL_INTERPOLATIONS.toList(),
-      modifier = Modifier.weight(1f),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { interp ->
         onUpdate(
@@ -59,16 +57,6 @@ fun InterpolationNodeFields(
           )
         )
       }
-    )
-    IconButton(onClick = { showInterpTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
-    }
-  }
-  if (showInterpTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_interpolation_format, stringResource(interpNode.interpolation.displayStringRId())),
-      text = stringResource(interpNode.interpolation.getTooltip()),
-      onDismiss = { showInterpTooltip = false }
     )
   }
 }
