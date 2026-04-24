@@ -54,11 +54,12 @@ object BrushFamilyConverter {
     }
 
     val behaviorCache = mutableMapOf<String, List<List<ink.proto.BrushBehavior.Node>>>()
-    val coats = sortedCoatEdges.map { edge ->
+    val coats = sortedCoatEdges.mapNotNull { edge ->
       val coatNode =
         graph.nodes.find { it.id == edge.fromNodeId }
           ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_coat_node_not_found, listOf(edge.fromNodeId)))
-      createCoat(coatNode, graph, behaviorCache)
+      if (coatNode.isDisabled) null
+      else createCoat(coatNode, graph, behaviorCache)
     }
 
     return ProtoBrushFamily.newBuilder()
