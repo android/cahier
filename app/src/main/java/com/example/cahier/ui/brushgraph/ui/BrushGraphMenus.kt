@@ -65,8 +65,8 @@ import androidx.compose.ui.zIndex
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.TextureBitmapStore
-import com.example.cahier.ui.brushdesigner.CustomBrushEntity
-import com.example.cahier.ui.CustomBrushes
+import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
+import com.example.cahier.features.drawing.CustomBrushes
 import com.example.cahier.ui.brushgraph.BrushGraphViewModel
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE

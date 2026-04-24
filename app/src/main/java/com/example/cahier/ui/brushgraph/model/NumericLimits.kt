@@ -1,26 +1,19 @@
 package com.example.cahier.ui.brushgraph.model
 
 import ink.proto.BrushBehavior as ProtoBrushBehavior
-
-/** Represents the numeric limits for a node field. */
-data class NumericLimits(
-  val min: Float,
-  val max: Float,
-  val step: Float? = null,
-  val displayUnit: String? = null,
-)
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 
 /** Returns the numeric limits for a given [ProtoBrushBehavior.Source]. */
 fun ProtoBrushBehavior.Source.getNumericLimits(): NumericLimits {
   return when (this) {
     ProtoBrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE -> NumericLimits(0f, 1f, 0.01f)
-    ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS -> NumericLimits(0f, 90f, displayUnit = "°")
+    ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS -> NumericLimits.radiansShownAsDegrees(0f, 90f)
     ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS,
-    ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS -> NumericLimits(-90f, 90f, displayUnit = "°")
+    ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS -> NumericLimits.radiansShownAsDegrees(-90f, 90f)
     ProtoBrushBehavior.Source.SOURCE_DIRECTION_IN_RADIANS,
-    ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS -> NumericLimits(0f, 360f, displayUnit = "°")
+    ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS -> NumericLimits.radiansShownAsDegrees(0f, 360f)
     ProtoBrushBehavior.Source.SOURCE_DIRECTION_ABOUT_ZERO_IN_RADIANS,
-    ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS -> NumericLimits(-180f, 180f, displayUnit = "°")
+    ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS -> NumericLimits.radiansShownAsDegrees(-180f, 180f)
     ProtoBrushBehavior.Source.SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND -> NumericLimits(0f, 1000f, 0.01f)
     ProtoBrushBehavior.Source.SOURCE_VELOCITY_X_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND,
     ProtoBrushBehavior.Source.SOURCE_VELOCITY_Y_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND -> NumericLimits(-1000f, 1000f, 0.01f, "/s")
@@ -51,8 +44,8 @@ fun ProtoBrushBehavior.Source.getNumericLimits(): NumericLimits {
     ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED,
     ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED,
     ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED -> NumericLimits(-5000f, 5000f, 0.1f, "cm/s²")
-    ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH -> NumericLimits(0f, 100f, displayUnit = "%")
-    else -> NumericLimits(-100f, 100f)
+    ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH -> NumericLimits.floatShownAsPercent(0f, 100f)
+    else -> NumericLimits(-100f, 100f, 0.01f)
   }
 }
 
@@ -60,11 +53,11 @@ fun ProtoBrushBehavior.Source.getNumericLimits(): NumericLimits {
 fun ProtoBrushBehavior.Target.getNumericLimits(): NumericLimits {
   return when (this) {
     ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS,
-    ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS -> NumericLimits(-360f, 360f, displayUnit = "°")
-    ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS -> NumericLimits(-90f, 90f, displayUnit = "°")
+    ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS -> NumericLimits.radiansShownAsDegrees(-360f, 360f)
+    ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS -> NumericLimits.radiansShownAsDegrees(-90f, 90f)
     ProtoBrushBehavior.Target.TARGET_PINCH_OFFSET,
     ProtoBrushBehavior.Target.TARGET_CORNER_ROUNDING_OFFSET,
-    ProtoBrushBehavior.Target.TARGET_LUMINOSITY -> NumericLimits(-100f, 100f, displayUnit = "%")
+    ProtoBrushBehavior.Target.TARGET_LUMINOSITY -> NumericLimits.floatShownAsPercent(-100f, 100f)
     ProtoBrushBehavior.Target.TARGET_WIDTH_MULTIPLIER,
     ProtoBrushBehavior.Target.TARGET_HEIGHT_MULTIPLIER,
     ProtoBrushBehavior.Target.TARGET_SIZE_MULTIPLIER,
@@ -74,8 +67,7 @@ fun ProtoBrushBehavior.Target.getNumericLimits(): NumericLimits {
     ProtoBrushBehavior.Target.TARGET_POSITION_OFFSET_Y_IN_MULTIPLES_OF_BRUSH_SIZE,
     ProtoBrushBehavior.Target.TARGET_POSITION_OFFSET_FORWARD_IN_MULTIPLES_OF_BRUSH_SIZE,
     ProtoBrushBehavior.Target.TARGET_POSITION_OFFSET_LATERAL_IN_MULTIPLES_OF_BRUSH_SIZE -> NumericLimits(-10.0f, 10.0f, 0.01f)
-    // Add TARGET_TEXTURE_ANIMATION_PROGRESS_OFFSET if it exists in proto, otherwise default
-    else -> NumericLimits(-100f, 100f)
+    else -> NumericLimits(-100f, 100f, 0.01f)
   }
 }
 
@@ -103,19 +95,19 @@ fun ProtoBrushBehavior.ProgressDomain.getNumericLimits(context: ProgressDomainCo
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_TIME_IN_SECONDS -> NumericLimits(0f, 10f, 0.001f, "s")
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_CENTIMETERS -> NumericLimits(0f, 100f, 0.1f, "mm")
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE -> NumericLimits(0f, 10f, 0.01f)
-      else -> NumericLimits(0f, 100f)
+      else -> NumericLimits(0f, 100f, 1f)
     }
     ProgressDomainContext.INTEGRAL -> when (this) {
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_TIME_IN_SECONDS -> NumericLimits(0f, 10f, 0.001f, "s ⋅ input")
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_CENTIMETERS -> NumericLimits(0f, 10f, 0.01f, "cm ⋅ input")
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE -> NumericLimits(0f, 10f, 0.01f, "⋅ input")
-      else -> NumericLimits(0f, 100f)
+      else -> NumericLimits(0f, 100f, 1f)
     }
     ProgressDomainContext.NOISE -> when (this) {
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_TIME_IN_SECONDS -> NumericLimits(0f, 10f, 0.01f, "s")
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_CENTIMETERS -> NumericLimits(0f, 10f, 0.1f, "cm")
       ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE -> NumericLimits(0f, 10f, 0.01f)
-      else -> NumericLimits(0f, 100f)
+      else -> NumericLimits(0f, 100f, 1f)
     }
   }
 }

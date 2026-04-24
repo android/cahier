@@ -5,7 +5,7 @@
 
 package com.example.cahier.ui.brushgraph.ui
 
-import com.example.cahier.ui.brushgraph.model.NumericLimits
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,7 +58,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.fillMaxWidth
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
 
 import com.example.cahier.ui.brushgraph.model.*
 import com.example.cahier.ui.brushgraph.ui.TipPreviewWidget

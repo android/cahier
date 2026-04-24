@@ -26,7 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
@@ -132,41 +133,30 @@ fun TargetNodeFields(
       onDismiss = { showTargetTooltip = false }
     )
   }
-  val isAngleTarget = targetNode.target == ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS ||
-                      targetNode.target == ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS ||
-                      targetNode.target == ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS
-
-  val displayValueStart = if (isAngleTarget) Math.toDegrees(targetNode.targetModifierRangeStart.toDouble()).toFloat() else targetNode.targetModifierRangeStart
-  val displayValueEnd = if (isAngleTarget) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
-
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_range_start),
-    value = displayValueStart,
-    valueRange = limits.min..limits.max,
-    unit = limits.displayUnit,
-    onValueChange = {
-      val newValue = if (isAngleTarget) Math.toRadians(it.toDouble()).toFloat() else it
+  NumericField(
+    title = stringResource(R.string.bg_label_range_start),
+    value = targetNode.targetModifierRangeStart,
+    limits = limits,
+    onValueChanged = {
       onUpdate(
         NodeData.Behavior(
           behaviorNode.safeCopy(
-            targetNode = targetNode.safeCopy(targetModifierRangeStart = newValue)
+            targetNode = targetNode.safeCopy(targetModifierRangeStart = it)
           )
         )
       )
     },
     onValueChangeFinished = onFieldEditComplete
   )
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_range_end),
-    value = displayValueEnd,
-    valueRange = limits.min..limits.max,
-    unit = limits.displayUnit,
-    onValueChange = {
-      val newValue = if (isAngleTarget) Math.toRadians(it.toDouble()).toFloat() else it
+  NumericField(
+    title = stringResource(R.string.bg_label_range_end),
+    value = targetNode.targetModifierRangeEnd,
+    limits = limits,
+    onValueChanged = {
       onUpdate(
         NodeData.Behavior(
           behaviorNode.safeCopy(
-            targetNode = targetNode.safeCopy(targetModifierRangeEnd = newValue)
+            targetNode = targetNode.safeCopy(targetModifierRangeEnd = it)
           )
         )
       )

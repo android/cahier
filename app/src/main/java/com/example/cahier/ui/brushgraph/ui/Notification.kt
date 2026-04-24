@@ -31,7 +31,7 @@ import com.example.cahier.ui.brushgraph.model.GraphValidationException
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.ui.brushgraph.model.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.ui.theme.extendedColorScheme
+import com.example.cahier.core.ui.theme.extendedColorScheme
 import android.util.Log
 
 @Composable

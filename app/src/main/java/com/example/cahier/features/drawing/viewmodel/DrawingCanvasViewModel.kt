@@ -471,7 +471,7 @@ class DrawingCanvasViewModel @Inject constructor(
                 )
                 val encodedBrushFamily = stream.toByteArray()
                 customBrushDao.saveCustomBrush(
-                    com.example.cahier.ui.brushdesigner.CustomBrushEntity("__autosave__", encodedBrushFamily)
+                    com.example.cahier.developer.brushdesigner.data.CustomBrushEntity("__autosave__", encodedBrushFamily)
                 )
                 Log.d(TAG, "Auto saved brush to database successfully")
             } catch (e: Exception) {

@@ -19,7 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
@@ -87,11 +88,11 @@ fun IntegralNodeFields(
     }
   }
   
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_range_start),
+  NumericField(
+    title = stringResource(R.string.bg_label_range_start),
     value = integralNode.integralValueRangeStart,
-    valueRange = limits.min..limits.max,
-    onValueChange = {
+    limits = limits,
+    onValueChanged = {
       onUpdate(
         NodeData.Behavior(
           behaviorNode.safeCopy(
@@ -102,11 +103,11 @@ fun IntegralNodeFields(
     },
     onValueChangeFinished = onFieldEditComplete
   )
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_range_end),
+  NumericField(
+    title = stringResource(R.string.bg_label_range_end),
     value = integralNode.integralValueRangeEnd,
-    valueRange = limits.min..limits.max,
-    onValueChange = {
+    limits = limits,
+    onValueChanged = {
       onUpdate(
         NodeData.Behavior(
           behaviorNode.safeCopy(

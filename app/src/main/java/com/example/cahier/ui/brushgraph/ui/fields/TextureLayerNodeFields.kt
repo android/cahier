@@ -32,7 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import com.example.cahier.ui.brushgraph.model.safeCopy
@@ -143,17 +144,17 @@ fun TextureLayerNodeFields(
     }
 
     if (layer.mapping == ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING) {
-      BrushSliderControl(
-        label = stringResource(R.string.bg_label_size_x),
+      NumericField(
+        title = stringResource(R.string.bg_label_size_x),
         value = layer.sizeX,
-        valueRange = 0.1f..1000f,
-        onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeX = it))) }
+        limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeX = it))) }
       )
-      BrushSliderControl(
-        label = stringResource(R.string.bg_label_size_y),
+      NumericField(
+        title = stringResource(R.string.bg_label_size_y),
         value = layer.sizeY,
-        valueRange = 0.1f..1000f,
-        onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeY = it))) }
+        limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(sizeY = it))) }
       )
       var expandedUnit by remember { mutableStateOf(false) }
       var showUnitTooltip by remember { mutableStateOf(false) }
@@ -205,29 +206,29 @@ fun TextureLayerNodeFields(
       }
     } else {
       // Stamping mapping
-      BrushSliderControl(
-        label = stringResource(R.string.bg_label_animation_rows),
+      NumericField(
+        title = stringResource(R.string.bg_label_animation_rows),
         value = layer.animationRows.toFloat(),
-        valueRange = 1f..100f,
-        onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationRows = it.toInt()))) }
+        limits = NumericLimits.standard(1f, 100f, 1f),
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationRows = it.toInt()))) }
       )
-      BrushSliderControl(
-        label = stringResource(R.string.bg_label_animation_columns),
+      NumericField(
+        title = stringResource(R.string.bg_label_animation_columns),
         value = layer.animationColumns.toFloat(),
-        valueRange = 1f..100f,
-        onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationColumns = it.toInt()))) }
+        limits = NumericLimits.standard(1f, 100f, 1f),
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationColumns = it.toInt()))) }
       )
-      BrushSliderControl(
-        label = stringResource(R.string.bg_label_animation_frames),
+      NumericField(
+        title = stringResource(R.string.bg_label_animation_frames),
         value = layer.animationFrames.toFloat(),
-        valueRange = 1f..100f,
-        onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationFrames = it.toInt()))) }
+        limits = NumericLimits.standard(1f, 100f, 1f),
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationFrames = it.toInt()))) }
       )
-      BrushSliderControl(
-        label = stringResource(R.string.bg_label_animation_duration_ms),
-        value = layer.animationDurationSeconds * 1000f,
-        valueRange = 1f..10000f,
-        onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationDurationSeconds = it / 1000f))) }
+      NumericField(
+        title = stringResource(R.string.bg_label_animation_duration_ms),
+        value = layer.animationDurationSeconds,
+        limits = NumericLimits(1f, 10000f, 1f, "ms", unitScale = 1000f),
+        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(animationDurationSeconds = it))) }
       )
     }
 
@@ -282,23 +283,23 @@ fun TextureLayerNodeFields(
         onDismiss = { showOriginTooltip = false }
       )
     }
-    BrushSliderControl(
-      label = stringResource(R.string.bg_label_offset_x),
+    NumericField(
+      title = stringResource(R.string.bg_label_offset_x),
       value = layer.offsetX,
-      valueRange = -1f..1f,
-      onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetX = it))) }
+      limits = NumericLimits.standard(-1f, 1f, 0.01f),
+      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetX = it))) }
     )
-    BrushSliderControl(
-      label = stringResource(R.string.bg_label_offset_y),
+    NumericField(
+      title = stringResource(R.string.bg_label_offset_y),
       value = layer.offsetY,
-      valueRange = -1f..1f,
-      onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetY = it))) }
+      limits = NumericLimits.standard(-1f, 1f, 0.01f),
+      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(offsetY = it))) }
     )
-    BrushSliderControl(
-      label = stringResource(R.string.bg_label_rotation_degrees),
-      value = Math.toDegrees(layer.rotationInRadians.toDouble()).toFloat(),
-      valueRange = 0f..360f,
-      onValueChange = { onUpdate(NodeData.TextureLayer(layer.safeCopy(rotationInRadians = Math.toRadians(it.toDouble()).toFloat()))) }
+    NumericField(
+      title = stringResource(R.string.bg_label_rotation_degrees),
+      value = layer.rotationInRadians,
+      limits = NumericLimits.radiansShownAsDegrees(0f, 360f),
+      onValueChanged = { onUpdate(NodeData.TextureLayer(layer.safeCopy(rotationInRadians = it))) }
     )
 
     InspectorSectionHeader(stringResource(R.string.bg_section_wrapping), stringResource(R.string.bg_section_wrapping_sub))

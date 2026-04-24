@@ -18,7 +18,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
-import com.example.cahier.ui.brushdesigner.CustomBrushEntity
+import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
@@ -105,8 +105,8 @@ import androidx.ink.storage.BrushFamilyDecodeCallback
 import androidx.ink.storage.decode
 import androidx.ink.storage.encode
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.cahier.ui.ClassicColorPickerDialog
-import com.example.cahier.ui.DrawingSurface
+import com.example.cahier.core.ui.ClassicColorPickerDialog
+import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.ui.brushgraph.BrushGraphViewModel
 import com.example.cahier.ui.brushgraph.inspectors.EdgeInspector
 import com.example.cahier.ui.brushgraph.inspectors.NodeInspector
@@ -127,11 +127,11 @@ import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.ValidationSeverity
 import com.example.cahier.ui.brushgraph.model.toBrushFamily
 import com.example.cahier.ui.brushgraph.model.TutorialAction
-import com.example.cahier.ui.theme.CahierAppTheme
-import com.example.cahier.ui.theme.extendedColorScheme
+import com.example.cahier.core.ui.theme.CahierAppTheme
+import com.example.cahier.core.ui.theme.extendedColorScheme
 import kotlinx.coroutines.launch
-import com.example.cahier.ui.CahierTextureBitmapStore
-import com.example.cahier.ui.CustomBrushes
+import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.features.drawing.CustomBrushes
 import androidx.ink.brush.StockBrushes
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpOffset

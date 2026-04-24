@@ -75,7 +75,7 @@ import com.example.cahier.ui.brushgraph.model.Port
 import com.example.cahier.ui.brushgraph.model.PortSide
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 import com.example.cahier.ui.brushgraph.model.isPortReorderable
-import com.example.cahier.ui.theme.extendedColorScheme
+import com.example.cahier.core.ui.theme.extendedColorScheme
 import ink.proto.BrushCoat as ProtoBrushCoat
 import kotlin.math.roundToInt
 

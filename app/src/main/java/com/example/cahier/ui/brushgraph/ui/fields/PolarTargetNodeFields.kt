@@ -24,9 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.NumericLimits
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.safeCopy
@@ -111,55 +111,43 @@ fun PolarTargetNodeFields(
     )
   }
   
-  val displayAngleStart = Math.toDegrees(polarNode.angleRangeStart.toDouble()).toFloat()
-  val displayAngleEnd = Math.toDegrees(polarNode.angleRangeEnd.toDouble()).toFloat()
-
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_angle_start),
-    value = displayAngleStart,
-    valueRange = -360f..360f,
-    unit = "°",
-    onValueChange = {
-      val newValue = Math.toRadians(it.toDouble()).toFloat()
-      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeStart = newValue))))
+  NumericField(
+    title = stringResource(R.string.bg_label_angle_start),
+    value = polarNode.angleRangeStart,
+    limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
+    onValueChanged = {
+      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeStart = it))))
     },
     onValueChangeFinished = onFieldEditComplete
   )
   
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_angle_end),
-    value = displayAngleEnd,
-    valueRange = -360f..360f,
-    unit = "°",
-    onValueChange = {
-      val newValue = Math.toRadians(it.toDouble()).toFloat()
-      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeEnd = newValue))))
+  NumericField(
+    title = stringResource(R.string.bg_label_angle_end),
+    value = polarNode.angleRangeEnd,
+    limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
+    onValueChanged = {
+      onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(angleRangeEnd = it))))
     },
     onValueChangeFinished = onFieldEditComplete
   )
   
-  val magLimits = if (polarNode.target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_ABSOLUTE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE ||
-                      polarNode.target == ProtoBrushBehavior.PolarTarget.POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE) {
-      NumericLimits(-10.0f, 10.0f, 0.01f)
-  } else {
-      NumericLimits(0.0f, 1.0f, 0.1f)
-  }
+  val magLimits = NumericLimits.standard(-10.0f, 10.0f, 0.01f)
   
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_mag_start),
+  NumericField(
+    title = stringResource(R.string.bg_label_mag_start),
     value = polarNode.magnitudeRangeStart,
-    valueRange = magLimits.min..magLimits.max,
-    onValueChange = {
+    limits = magLimits,
+    onValueChanged = {
       onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(magnitudeRangeStart = it))))
     },
     onValueChangeFinished = onFieldEditComplete
   )
   
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_mag_end),
+  NumericField(
+    title = stringResource(R.string.bg_label_mag_end),
     value = polarNode.magnitudeRangeEnd,
-    valueRange = magLimits.min..magLimits.max,
-    onValueChange = {
+    limits = magLimits,
+    onValueChanged = {
       onUpdate(NodeData.Behavior(behaviorNode.safeCopy(polarTargetNode = polarNode.safeCopy(magnitudeRangeEnd = it))))
     },
     onValueChangeFinished = onFieldEditComplete

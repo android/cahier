@@ -24,7 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
@@ -105,11 +106,11 @@ fun DampingNodeFields(
     )
   }
   
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_damping_gap),
+  NumericField(
+    title = stringResource(R.string.bg_label_damping_gap),
     value = dampingNode.dampingGap,
-    valueRange = limits.min..limits.max,
-    onValueChange = {
+    limits = limits,
+    onValueChanged = {
       onUpdate(
         NodeData.Behavior(
           behaviorNode.safeCopy(dampingNode = dampingNode.safeCopy(dampingGap = it))

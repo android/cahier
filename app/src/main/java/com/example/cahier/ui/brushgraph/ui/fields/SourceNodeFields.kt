@@ -26,9 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.NumericLimits
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
 import com.example.cahier.ui.brushgraph.ui.getTooltip
 import com.example.cahier.ui.brushgraph.model.safeCopy
@@ -153,21 +153,21 @@ fun SourceNodeFields(
   val displayValueStart = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
   val displayValueEnd = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
 
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_range_start),
+  NumericField(
+    title = stringResource(R.string.bg_label_range_start),
     value = displayValueStart,
     limits = limits,
-    onValueChange = {
+    onValueChanged = {
       val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
       onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeStart = newValue))))
     },
     onValueChangeFinished = onFieldEditComplete
   )
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_range_end),
+  NumericField(
+    title = stringResource(R.string.bg_label_range_end),
     value = displayValueEnd,
     limits = limits,
-    onValueChange = {
+    onValueChanged = {
       val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
       onUpdate(NodeData.Behavior(behaviorNode.safeCopy(sourceNode = sourceNode.safeCopy(sourceValueRangeEnd = newValue))))
     },

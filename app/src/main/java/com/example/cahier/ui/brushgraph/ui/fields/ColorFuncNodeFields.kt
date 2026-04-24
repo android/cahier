@@ -33,7 +33,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.safeCopy
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
@@ -126,11 +127,11 @@ fun ColorFuncNodeFields(
   }
   
   if (function.hasOpacityMultiplier()) {
-    BrushSliderControl(
-      label = stringResource(R.string.bg_label_opacity_multiplier),
+    NumericField(
+      title = stringResource(R.string.bg_label_opacity_multiplier),
       value = function.opacityMultiplier,
-      valueRange = 0f..2f,
-      onValueChange = { onUpdate(NodeData.ColorFunc(function.safeCopy(opacityMultiplier = it))) },
+      limits = NumericLimits.standard(0f, 2f, 0.01f),
+      onValueChanged = { onUpdate(NodeData.ColorFunc(function.safeCopy(opacityMultiplier = it))) },
       onValueChangeFinished = onFieldEditComplete
     )
   } else if (function.hasReplaceColor()) {

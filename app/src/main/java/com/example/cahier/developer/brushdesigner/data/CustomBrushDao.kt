@@ -1,4 +1,4 @@
-package com.example.cahier.ui.brushdesigner
+package com.example.cahier.developer.brushdesigner.data
 
 import androidx.room.Dao
 import androidx.room.Insert

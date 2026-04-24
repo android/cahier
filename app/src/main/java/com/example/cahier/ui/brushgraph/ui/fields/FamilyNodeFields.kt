@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.CustomBrushes
+import com.example.cahier.features.drawing.CustomBrushes
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.ui.TooltipDialog
 import com.example.cahier.ui.brushgraph.model.displayStringRId

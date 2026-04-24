@@ -14,13 +14,13 @@ import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
 import androidx.ink.storage.decode
 import androidx.ink.strokes.Stroke
-import com.example.cahier.ui.brushdesigner.CustomBrushEntity
+import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cahier.ui.CahierTextureBitmapStore
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.brushgraph.data.BrushGraphRepository
-import com.example.cahier.ui.brushdesigner.CustomBrushDao
+import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.zip.GZIPOutputStream
 import javax.inject.Inject

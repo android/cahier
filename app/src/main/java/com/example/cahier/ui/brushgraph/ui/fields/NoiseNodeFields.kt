@@ -26,7 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.ProgressDomainContext
 import com.example.cahier.ui.brushgraph.model.getNumericLimits
@@ -48,11 +49,11 @@ fun NoiseNodeFields(
 ) {
   val limits = noiseNode.varyOver.getNumericLimits(ProgressDomainContext.NOISE)
   
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_seed),
+  NumericField(
+    title = stringResource(R.string.bg_label_seed),
     value = noiseNode.seed.toFloat(),
-    valueRange = 0f..100f,
-    onValueChange = {
+    limits = NumericLimits.standard(0f, 100f, 1f),
+    onValueChanged = {
       onUpdate(
         NodeData.Behavior(
           behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(seed = it.toInt()))
@@ -123,11 +124,11 @@ fun NoiseNodeFields(
     )
   }
   
-  BrushSliderControl(
-    label = stringResource(R.string.bg_label_base_period),
+  NumericField(
+    title = stringResource(R.string.bg_label_base_period),
     value = noiseNode.basePeriod,
-    valueRange = limits.min..limits.max,
-    onValueChange = {
+    limits = limits,
+    onValueChanged = {
       onUpdate(
         NodeData.Behavior(
           behaviorNode.safeCopy(noiseNode = noiseNode.safeCopy(basePeriod = it))

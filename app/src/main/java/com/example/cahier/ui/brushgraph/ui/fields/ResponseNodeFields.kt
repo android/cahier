@@ -40,7 +40,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke as DrawStroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.ui.brushdesigner.BrushSliderControl
+import com.example.cahier.developer.brushdesigner.ui.NumericField
+import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.ui.brushgraph.model.NodeData
 import com.example.cahier.ui.brushgraph.model.displayStringRId
 import com.example.cahier.ui.brushgraph.model.safeCopy
@@ -328,11 +329,11 @@ fun LinearWidget(
     for (i in 0 until curve.xCount) {
       Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-          BrushSliderControl(
-            label = "X",
+          NumericField(
+            title = "X",
             value = curve.getX(i),
-            valueRange = 0f..1f,
-            onValueChange = { newValue ->
+            limits = NumericLimits.standard(0f, 1f, 0.01f),
+            onValueChanged = { newValue ->
               val builder = curve.toBuilder()
               builder.setX(i, newValue)
               onCurveChanged(builder.build())
@@ -341,11 +342,11 @@ fun LinearWidget(
         }
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-          BrushSliderControl(
-            label = "Y",
+          NumericField(
+            title = "Y",
             value = curve.getY(i),
-            valueRange = -2f..2f,
-            onValueChange = { newValue ->
+            limits = NumericLimits.standard(-2f, 2f, 0.01f),
+            onValueChanged = { newValue ->
               val builder = curve.toBuilder()
               builder.setY(i, newValue)
               onCurveChanged(builder.build())
@@ -378,21 +379,21 @@ fun LinearWidget(
 @Composable
 fun CubicBezierWidget(curve: ProtoCubicBezier, onCurveChanged: (ProtoCubicBezier) -> Unit) {
   Column(modifier = Modifier.padding(8.dp)) {
-    BrushSliderControl(label = "x1", value = curve.x1, valueRange = 0f..1f, onValueChange = { onCurveChanged(curve.safeCopy(x1 = it)) })
-    BrushSliderControl(label = "y1", value = curve.y1, valueRange = -2f..2f, onValueChange = { onCurveChanged(curve.safeCopy(y1 = it)) })
-    BrushSliderControl(label = "x2", value = curve.x2, valueRange = 0f..1f, onValueChange = { onCurveChanged(curve.safeCopy(x2 = it)) })
-    BrushSliderControl(label = "y2", value = curve.y2, valueRange = -2f..2f, onValueChange = { onCurveChanged(curve.safeCopy(y2 = it)) })
+    NumericField(title = "x1", value = curve.x1, limits = NumericLimits.standard(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.safeCopy(x1 = it)) })
+    NumericField(title = "y1", value = curve.y1, limits = NumericLimits.standard(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.safeCopy(y1 = it)) })
+    NumericField(title = "x2", value = curve.x2, limits = NumericLimits.standard(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.safeCopy(x2 = it)) })
+    NumericField(title = "y2", value = curve.y2, limits = NumericLimits.standard(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.safeCopy(y2 = it)) })
   }
 }
 
 @Composable
 fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
   Column(modifier = Modifier.padding(8.dp)) {
-    BrushSliderControl(
-      label = stringResource(R.string.bg_label_step_count),
+    NumericField(
+      title = stringResource(R.string.bg_label_step_count),
       value = curve.stepCount.toFloat(),
-      valueRange = 1f..20f,
-      onValueChange = {
+      limits = NumericLimits.standard(1f, 20f, 1f),
+      onValueChanged = {
         onCurveChanged(curve.safeCopy(stepCount = it.toInt()))
       }
     )

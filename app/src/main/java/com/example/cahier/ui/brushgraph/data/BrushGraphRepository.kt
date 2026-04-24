@@ -1,7 +1,7 @@
 package com.example.cahier.ui.brushgraph.data
 
-import com.example.cahier.ui.CahierTextureBitmapStore
-import com.example.cahier.ui.brushdesigner.CustomBrushDao
+import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import com.example.cahier.ui.brushgraph.model.BrushGraph
 import com.example.cahier.ui.brushgraph.model.getVisiblePorts
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -55,7 +55,7 @@ class BrushGraphRepository @Inject constructor(
             val family = BrushFamilyConverter.convert(graph)
             val baos = java.io.ByteArrayOutputStream()
             AndroidBrushFamilySerialization.encode(family, baos, textureStore)
-            customBrushDao.saveCustomBrush(com.example.cahier.ui.brushdesigner.CustomBrushEntity("__autosave__", baos.toByteArray()))
+            customBrushDao.saveCustomBrush(com.example.cahier.developer.brushdesigner.data.CustomBrushEntity("__autosave__", baos.toByteArray()))
           } catch (e: Exception) {
             android.util.Log.e("BrushGraphRepository", "Failed to auto-save brush", e)
           }
