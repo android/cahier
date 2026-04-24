@@ -1,6 +1,6 @@
-package com.example.cahier.ui.brushgraph.ui
+package com.example.cahier.developer.brushgraph.ui
 
-import com.example.cahier.ui.brushgraph.model.NodeData
+import com.example.cahier.developer.brushgraph.model.NodeData
 import ink.proto.BrushBehavior
 import ink.proto.BrushPaint
 import ink.proto.PredefinedEasingFunction

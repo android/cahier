@@ -1,10 +1,10 @@
-package com.example.cahier.ui.brushgraph
+package com.example.cahier.developer.brushgraph
 
 import androidx.compose.ui.geometry.Offset
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.TutorialAction
-import com.example.cahier.ui.brushgraph.model.TutorialAnchor
-import com.example.cahier.ui.brushgraph.model.TutorialStep
+import com.example.cahier.developer.brushgraph.model.NodeData
+import com.example.cahier.developer.brushgraph.model.TutorialAction
+import com.example.cahier.developer.brushgraph.model.TutorialAnchor
+import com.example.cahier.developer.brushgraph.model.TutorialStep
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

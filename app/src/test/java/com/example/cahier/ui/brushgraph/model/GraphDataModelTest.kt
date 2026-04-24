@@ -1,8 +1,8 @@
-package com.example.cahier.ui.brushgraph.model
+package com.example.cahier.developer.brushgraph.model
 
-import com.example.cahier.ui.brushgraph.model.GraphPoint
-import com.example.cahier.ui.brushgraph.model.Port
-import com.example.cahier.ui.brushgraph.model.PortSide
+import com.example.cahier.developer.brushgraph.model.GraphPoint
+import com.example.cahier.developer.brushgraph.model.Port
+import com.example.cahier.developer.brushgraph.model.PortSide
 import com.example.cahier.R
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import org.junit.Assert.assertEquals

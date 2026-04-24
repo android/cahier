@@ -91,7 +91,7 @@ fun CahierNavHost(
             )
         }
         composable(route = BrushGraphDestination.route) {
-            com.example.cahier.ui.brushgraph.ui.BrushGraphScreen(
+            com.example.cahier.developer.brushgraph.ui.BrushGraphScreen(
                 onNavigateUp = { navController.navigateUp() }
             )
         }

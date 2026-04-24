@@ -1,14 +1,14 @@
-package com.example.cahier.ui.brushgraph.converters
+package com.example.cahier.developer.brushgraph.converters
 
-import com.example.cahier.ui.brushgraph.model.BrushGraph
-import com.example.cahier.ui.brushgraph.model.GraphEdge
-import com.example.cahier.ui.brushgraph.model.GraphNode
-import com.example.cahier.ui.brushgraph.model.GraphPoint
-import com.example.cahier.ui.brushgraph.model.NodeData
-import com.example.cahier.ui.brushgraph.model.Port
-import com.example.cahier.ui.brushgraph.model.PortSide
-import com.example.cahier.ui.brushgraph.model.ValidationSeverity
-import com.example.cahier.ui.brushgraph.converters.GraphValidator
+import com.example.cahier.developer.brushgraph.model.BrushGraph
+import com.example.cahier.developer.brushgraph.model.GraphEdge
+import com.example.cahier.developer.brushgraph.model.GraphNode
+import com.example.cahier.developer.brushgraph.model.GraphPoint
+import com.example.cahier.developer.brushgraph.model.NodeData
+import com.example.cahier.developer.brushgraph.model.Port
+import com.example.cahier.developer.brushgraph.model.PortSide
+import com.example.cahier.developer.brushgraph.model.ValidationSeverity
+import com.example.cahier.developer.brushgraph.converters.GraphValidator
 import ink.proto.BrushBehavior
 import ink.proto.BrushTip
 import ink.proto.BrushPaint
@@ -380,9 +380,9 @@ class BrushFamilyConverterTest {
         val issues = GraphValidator.validateAll(graph)
         
         // Tip output should be reported as not used because Coat is disabled.
-        assertTrue(issues.any { it.nodeId == "tip" && it.displayMessage is com.example.cahier.ui.brushgraph.model.DisplayText.Resource && (it.displayMessage as com.example.cahier.ui.brushgraph.model.DisplayText.Resource).resId == R.string.bg_err_unused_output })
+        assertTrue(issues.any { it.nodeId == "tip" && it.displayMessage is com.example.cahier.developer.brushgraph.model.DisplayText.Resource && (it.displayMessage as com.example.cahier.developer.brushgraph.model.DisplayText.Resource).resId == R.string.bg_err_unused_output })
         // Paint output should be reported as not used because Coat is disabled.
-        assertTrue(issues.any { it.nodeId == "paint" && it.displayMessage is com.example.cahier.ui.brushgraph.model.DisplayText.Resource && (it.displayMessage as com.example.cahier.ui.brushgraph.model.DisplayText.Resource).resId == R.string.bg_err_unused_output })
+        assertTrue(issues.any { it.nodeId == "paint" && it.displayMessage is com.example.cahier.developer.brushgraph.model.DisplayText.Resource && (it.displayMessage as com.example.cahier.developer.brushgraph.model.DisplayText.Resource).resId == R.string.bg_err_unused_output })
     }
 
     @Test
@@ -484,7 +484,7 @@ class BrushFamilyConverterTest {
         
         val brushFamily = try {
             BrushFamilyConverter.convertIntoProto(graph)
-        } catch (e: com.example.cahier.ui.brushgraph.model.GraphValidationException) {
+        } catch (e: com.example.cahier.developer.brushgraph.model.GraphValidationException) {
             println("Validation failed: ${e.message}")
             throw e
         }

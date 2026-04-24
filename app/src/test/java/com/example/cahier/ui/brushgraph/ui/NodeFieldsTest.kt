@@ -1,22 +1,22 @@
-package com.example.cahier.ui.brushgraph.ui
+package com.example.cahier.developer.brushgraph.ui
 
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertFalse
 import org.junit.Test
-import com.example.cahier.ui.brushgraph.ui.fields.SOURCES_INPUT
-import com.example.cahier.ui.brushgraph.ui.fields.SOURCES_MOVEMENT
-import com.example.cahier.ui.brushgraph.ui.fields.SOURCES_DISTANCE
-import com.example.cahier.ui.brushgraph.ui.fields.SOURCES_TIME
-import com.example.cahier.ui.brushgraph.ui.fields.SOURCES_ACCELERATION
-import com.example.cahier.ui.brushgraph.ui.fields.TARGETS_SIZE_SHAPE
-import com.example.cahier.ui.brushgraph.ui.fields.TARGETS_POSITION
-import com.example.cahier.ui.brushgraph.ui.fields.TARGETS_COLOR_OPACITY
-import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_START
-import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_OPERATOR
-import com.example.cahier.ui.brushgraph.ui.fields.NODE_TYPES_TERMINAL
-import com.example.cahier.ui.brushgraph.ui.fields.isAngle
+import com.example.cahier.developer.brushgraph.ui.fields.SOURCES_INPUT
+import com.example.cahier.developer.brushgraph.ui.fields.SOURCES_MOVEMENT
+import com.example.cahier.developer.brushgraph.ui.fields.SOURCES_DISTANCE
+import com.example.cahier.developer.brushgraph.ui.fields.SOURCES_TIME
+import com.example.cahier.developer.brushgraph.ui.fields.SOURCES_ACCELERATION
+import com.example.cahier.developer.brushgraph.ui.fields.TARGETS_SIZE_SHAPE
+import com.example.cahier.developer.brushgraph.ui.fields.TARGETS_POSITION
+import com.example.cahier.developer.brushgraph.ui.fields.TARGETS_COLOR_OPACITY
+import com.example.cahier.developer.brushgraph.ui.fields.NODE_TYPES_START
+import com.example.cahier.developer.brushgraph.ui.fields.NODE_TYPES_OPERATOR
+import com.example.cahier.developer.brushgraph.ui.fields.NODE_TYPES_TERMINAL
+import com.example.cahier.developer.brushgraph.ui.fields.isAngle
 
 class NodeFieldsTest {
 
