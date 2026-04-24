@@ -35,9 +35,9 @@ import com.example.cahier.ui.brushgraph.model.TutorialAction
 fun TutorialOverlay(
     step: TutorialStep,
     onNext: () -> Unit,
-    onBack: (() -> Unit)? = null,
     onClose: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
 ) {
     Box(
         modifier = modifier

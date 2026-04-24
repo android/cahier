@@ -132,32 +132,6 @@ fun ProtoBrushBehavior.Interpolation.displayStringRId(): Int =
     else -> R.string.bg_node_unknown
   }
 
-
-fun EasingFunction.displayString(): DisplayText =
-  when (this) {
-    is EasingFunction.CubicBezier -> DisplayText.Resource(R.string.bg_easing_cubic, listOf(this.x1, this.y1, this.x2, this.y2))
-    is EasingFunction.Steps -> DisplayText.Resource(R.string.bg_easing_steps_parametric, listOf(this.stepCount, DisplayText.Resource(this.stepPosition.displayStringRId())))
-    is EasingFunction.Linear ->
-      DisplayText.Resource(R.string.bg_easing_linear_parametric, listOf(this.points.joinToString { "(${it.x}, ${it.y})" }))
-    EasingFunction.Predefined.LINEAR -> DisplayText.Resource(R.string.bg_easing_linear)
-    EasingFunction.Predefined.EASE -> DisplayText.Resource(R.string.bg_easing_ease)
-    EasingFunction.Predefined.EASE_IN -> DisplayText.Resource(R.string.bg_easing_ease_in)
-    EasingFunction.Predefined.EASE_OUT -> DisplayText.Resource(R.string.bg_easing_ease_out)
-    EasingFunction.Predefined.EASE_IN_OUT -> DisplayText.Resource(R.string.bg_easing_ease_in_out)
-    EasingFunction.Predefined.STEP_START -> DisplayText.Resource(R.string.bg_easing_step_start)
-    EasingFunction.Predefined.STEP_END -> DisplayText.Resource(R.string.bg_easing_step_end)
-    else -> DisplayText.Literal(this.toString())
-  }
-
-fun EasingFunction.StepPosition.displayStringRId(): Int =
-  when (this) {
-    EasingFunction.StepPosition.JUMP_START -> R.string.bg_step_position_jump_start
-    EasingFunction.StepPosition.JUMP_END -> R.string.bg_step_position_jump_end
-    EasingFunction.StepPosition.JUMP_BOTH -> R.string.bg_step_position_jump_both
-    EasingFunction.StepPosition.JUMP_NONE -> R.string.bg_step_position_jump_none
-    else -> R.string.bg_node_unknown
-  }
-
 fun ink.proto.StepPosition.displayStringRId(): Int =
   when (this) {
     ink.proto.StepPosition.STEP_POSITION_JUMP_START -> R.string.bg_step_position_jump_start

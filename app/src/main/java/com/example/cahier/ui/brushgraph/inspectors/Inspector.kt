@@ -49,12 +49,12 @@ fun EdgeInspector(
   edge: GraphEdge,
   fromNode: GraphNode,
   toNode: GraphNode,
-  inputLabel: DisplayText? = null,
   onNodeFocus: (String) -> Unit,
   onDisableChange: (Boolean) -> Unit,
   onDelete: () -> Unit,
   onAddNodeBetween: () -> Unit,
   modifier: Modifier = Modifier,
+  inputLabel: DisplayText? = null,
 ) {
   var showDeleteConfirmation by remember { mutableStateOf(false) }
 
@@ -182,9 +182,9 @@ fun NodeInspector(
   strokeRenderer: CanvasStrokeRenderer,
   textFieldsLocked: Boolean,
   onDelete: () -> Unit,
+  modifier: Modifier = Modifier,
   onFieldEditComplete: () -> Unit = {},
   onDropdownEditComplete: () -> Unit = {},
-  modifier: Modifier = Modifier,
 ) {
   var showDeleteConfirmation by remember { mutableStateOf(false) }
 

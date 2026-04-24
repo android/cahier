@@ -38,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -642,7 +643,7 @@ fun BoxScope.NodePortDots(
   onReorderPorts: (String, Int, Int) -> Unit,
 ) {
   var activeReorderPortIndex by remember { mutableStateOf<Int?>(null) }
-  var cumulativeDeltaY by remember { mutableStateOf(0f) }
+  var cumulativeDeltaY by remember { mutableFloatStateOf(0f) }
   val hasAddPort = visiblePorts.any { it.isAddPort }
 
   for ((index, port) in visiblePorts.withIndex()) {

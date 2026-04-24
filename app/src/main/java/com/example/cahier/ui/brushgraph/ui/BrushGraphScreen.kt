@@ -45,8 +45,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
@@ -79,11 +77,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -102,7 +98,6 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
-import androidx.ink.brush.StockTextureBitmapStore
 import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.storage.AndroidBrushFamilySerialization
@@ -135,7 +130,6 @@ import com.example.cahier.ui.brushgraph.model.TutorialAction
 import com.example.cahier.ui.theme.CahierAppTheme
 import com.example.cahier.ui.theme.extendedColorScheme
 import kotlinx.coroutines.launch
-
 import com.example.cahier.ui.CahierTextureBitmapStore
 import com.example.cahier.ui.CustomBrushes
 import androidx.ink.brush.StockBrushes

@@ -34,6 +34,7 @@ import androidx.ink.brush.BrushCoat
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.BrushPaint
 import androidx.ink.brush.BrushTip
+import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.InputToolType
 import androidx.ink.brush.compose.createWithComposeColor
 import com.example.cahier.ui.brushgraph.model.toBrushFamily
@@ -44,22 +45,11 @@ import android.graphics.Matrix
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.MutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
+import androidx.ink.strokes.InProgressStroke
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.BrushPaint as ProtoBrushPaint
-
-fun ProtoBrushTip.toBrushTip(): BrushTip? {
-  val familyProto = ProtoBrushFamily.newBuilder()
-    .addCoats(ProtoBrushCoat.newBuilder().setTip(this).build())
-    .build()
-  return runCatching { familyProto.toBrushFamily() }.getOrNull()?.coats?.firstOrNull()?.tip
-}
-
-fun ProtoBrushCoat.toBrushCoat(): BrushCoat? {
-  val familyProto = ProtoBrushFamily.newBuilder().addCoats(this).build()
-  return runCatching { familyProto.toBrushFamily() }.getOrNull()?.coats?.firstOrNull()
-}
 
 @Composable
 fun SineWavePreview(
@@ -91,7 +81,11 @@ fun SineWavePreview(
           val y = midY + amplitude * kotlin.math.sin(frequency * xOffset)
           inputs.add(type = InputToolType.STYLUS, x = x, y = y, elapsedTimeMillis = i.toLong() * 10)
         }
-        Stroke(brush, inputs.toImmutable())
+        val inProgressStroke = InProgressStroke()
+        inProgressStroke.start(brush)
+        inProgressStroke.enqueueInputs(inputs, MutableStrokeInputBatch())
+        inProgressStroke.updateShape(numPoints.toLong() * 10)
+        inProgressStroke.toImmutable()
       }
 
     val surface = MaterialTheme.colorScheme.surface
@@ -126,9 +120,10 @@ fun SineWavePreview(
 
 @Composable
 fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer) {
-  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = brushCoat) {
+  val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = brushCoat) {
     value = withContext(Dispatchers.IO) {
-      brushCoat.toBrushCoat()?.let { BrushFamily(coats = listOf(it)) } ?: BrushFamily()
+      val familyProto = ink.proto.BrushFamily.newBuilder().addCoats(brushCoat).build()
+      runCatching { familyProto.toBrushFamily() }.getOrDefault(StockBrushes.marker())
     }
   }
   StrokePreviewWidget(
@@ -141,9 +136,12 @@ fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer)
 
 @Composable
 fun TipPreviewWidget(brushTip: ProtoBrushTip, renderer: CanvasStrokeRenderer) {
-  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = brushTip) {
+  val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = brushTip) {
     value = withContext(Dispatchers.IO) {
-      brushTip.toBrushTip()?.let { BrushFamily(coats = listOf(BrushCoat(it))) } ?: BrushFamily()
+      val familyProto = ink.proto.BrushFamily.newBuilder()
+        .addCoats(ink.proto.BrushCoat.newBuilder().setTip(brushTip).build())
+        .build()
+      runCatching { familyProto.toBrushFamily() }.getOrDefault(StockBrushes.marker())
     }
   }
   StrokePreviewWidget(family, renderer = renderer)
@@ -154,7 +152,7 @@ fun ColorFunctionPreviewWidget(
   colorFunction: ink.proto.ColorFunction,
   renderer: CanvasStrokeRenderer,
 ) {
-  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = colorFunction) {
+  val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = colorFunction) {
     value = withContext(Dispatchers.IO) {
       runCatching {
         ProtoBrushFamily.newBuilder()
@@ -166,7 +164,7 @@ fun ColorFunctionPreviewWidget(
           )
           .build()
           .toBrushFamily()
-      }.getOrDefault(BrushFamily())
+      }.getOrDefault(StockBrushes.marker())
     }
   }
   StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
@@ -177,7 +175,7 @@ fun TextureLayerPreviewWidget(
   textureLayer: ProtoBrushPaint.TextureLayer,
   renderer: CanvasStrokeRenderer,
 ) {
-  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = textureLayer) {
+  val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = textureLayer) {
     value = withContext(Dispatchers.IO) {
       runCatching {
         ProtoBrushFamily.newBuilder()
@@ -189,7 +187,7 @@ fun TextureLayerPreviewWidget(
           )
           .build()
           .toBrushFamily()
-      }.getOrDefault(BrushFamily())
+      }.getOrDefault(StockBrushes.marker())
     }
   }
   StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
@@ -202,7 +200,7 @@ fun TextureWrapPreviewWidget(
   renderer: CanvasStrokeRenderer,
   clientTextureId: String = "",
 ) {
-  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = Triple(wrapX, wrapY, clientTextureId)) {
+  val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = Triple(wrapX, wrapY, clientTextureId)) {
     value = withContext(Dispatchers.IO) {
       val textureLayer =
         ProtoBrushPaint.TextureLayer.newBuilder()
@@ -225,7 +223,7 @@ fun TextureWrapPreviewWidget(
           )
           .build()
           .toBrushFamily()
-      }.getOrDefault(BrushFamily())
+      }.getOrDefault(StockBrushes.marker())
     }
   }
   StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
@@ -237,7 +235,7 @@ fun BlendModePreviewWidget(
   renderer: CanvasStrokeRenderer,
   clientTextureId: String = "",
 ) {
-  val family by produceState<BrushFamily>(initialValue = BrushFamily(), key1 = Pair(blendMode, clientTextureId)) {
+  val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = Pair(blendMode, clientTextureId)) {
     value = withContext(Dispatchers.IO) {
       val topLayer =
         ProtoBrushPaint.TextureLayer.newBuilder()
@@ -271,7 +269,7 @@ fun BlendModePreviewWidget(
           )
           .build()
           .toBrushFamily()
-      }.getOrDefault(BrushFamily())
+      }.getOrDefault(StockBrushes.marker())
     }
   }
   StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
@@ -295,27 +293,36 @@ fun StrokePreviewWidget(
     )
 
   // The two [StrokeInputBatch]s for the preview widget.
-  val zigzagInput =
-    MutableStrokeInputBatch()
+  val zigzagStroke = remember(brush) {
+    val mutable = MutableStrokeInputBatch()
       .add(type = InputToolType.STYLUS, x = -30f, y = -24f, elapsedTimeMillis = 0L)
       .add(type = InputToolType.STYLUS, x = 15f, y = -30f, elapsedTimeMillis = 100L)
       .add(type = InputToolType.STYLUS, x = -24f, y = 24f, elapsedTimeMillis = 200L)
       .add(type = InputToolType.STYLUS, x = 30f, y = 6f, elapsedTimeMillis = 300L)
-      .toImmutable()
-  val singleDotInput =
-    MutableStrokeInputBatch()
-      .add(type = InputToolType.STYLUS, x = 0f, y = 0f, elapsedTimeMillis = 0L)
-      .toImmutable()
+    val inProgress = InProgressStroke()
+    inProgress.start(brush)
+    inProgress.enqueueInputs(mutable, MutableStrokeInputBatch())
+    inProgress.updateShape(300L)
+    inProgress.toImmutable()
+  }
 
-  var zigzag by remember { mutableStateOf(Stroke(brush, zigzagInput)) }
-  var singleDot by remember { mutableStateOf(Stroke(brush, singleDotInput)) }
+  val dotStroke = remember(brush) {
+    val mutable = MutableStrokeInputBatch()
+      .add(type = InputToolType.STYLUS, x = 0f, y = 0f, elapsedTimeMillis = 0L)
+    val inProgress = InProgressStroke()
+    inProgress.start(brush)
+    inProgress.enqueueInputs(mutable, MutableStrokeInputBatch())
+    inProgress.updateShape(0L)
+    inProgress.toImmutable()
+  }
+
+  var zigzag by remember(brush) { mutableStateOf(zigzagStroke) }
+  var singleDot by remember(brush) { mutableStateOf(dotStroke) }
 
   // maxTipWidth is 4x the Brush.size. BrushTip.scale and BrushTip.slant each can double the width.
   val maxTipWidth = with(LocalDensity.current) { (4f * brush.size).toDp() }
   val maxStrokeWidth = with(LocalDensity.current) { (3f * 4f * brush.size).toDp() }
   val canvasSize = if (showSingleInput) maxTipWidth else maxStrokeWidth
-  zigzag = Stroke(brush, zigzag.inputs)
-  singleDot = Stroke(brush, singleDotInput)
   Canvas(
     modifier =
       Modifier.height(canvasSize)
