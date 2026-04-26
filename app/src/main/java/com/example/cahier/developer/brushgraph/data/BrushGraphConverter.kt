@@ -55,6 +55,11 @@ object BrushGraphConverter {
     val familyNodeX = 1600f
     nodes.add(GraphNode(id = familyNodeId, data = familyData, position = GraphPoint(familyNodeX, 0f)))
 
+    val behaviorDeduplicationMap = mutableMapOf<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>()
+    val assignedNodeIds = mutableSetOf<String>()
+    val textureDeduplicationMap = mutableMapOf<ProtoBrushPaint.TextureLayer, String>()
+    val colorDeduplicationMap = mutableMapOf<ProtoColorFunction, String>()
+
     for (index in 0 until family.coatsCount) {
       val coat = family.getCoats(index)
       val coatId = UUID.randomUUID().toString()
@@ -73,7 +78,7 @@ object BrushGraphConverter {
       )
 
       val tipX = coatX - NodeData.Tip(coat.tip).width() - HORIZONTAL_GAP
-      val (tipId, tipOutputPortId, tipSubtreeMaxY) = convertTip(coat.tip, nodes, edges, tipX, coatY)
+      val (tipId, tipOutputPortId, tipSubtreeMaxY) = convertTip(coat.tip, nodes, edges, tipX, coatY, behaviorDeduplicationMap, assignedNodeIds)
       edges.add(
         GraphEdge(
           fromNodeId = tipId,
@@ -88,7 +93,7 @@ object BrushGraphConverter {
       for (paint in coat.paintPreferencesList) {
         val paintData = NodeData.Paint(paint)
         val paintX = coatX - paintData.width() - HORIZONTAL_GAP
-        val (paintId, paintOutputPortId, paintSubtreeMaxY) = convertPaint(paint, nodes, edges, paintX, currentPaintY)
+        val (paintId, paintOutputPortId, paintSubtreeMaxY) = convertPaint(paint, nodes, edges, paintX, currentPaintY, textureDeduplicationMap, colorDeduplicationMap)
         edges.add(
           GraphEdge(
             fromNodeId = paintId,
@@ -104,7 +109,8 @@ object BrushGraphConverter {
       nextY = maxOf(coatY + coatHeight, maxPaintSubtreeY) + VERTICAL_GAP * 4
     }
 
-    return BrushGraph(nodes = nodes, edges = edges)
+    val initialGraph = BrushGraph(nodes = nodes, edges = edges)
+    return deduplicateDownstream(initialGraph)
   }
 
   private fun convertTip(
@@ -113,31 +119,40 @@ object BrushGraphConverter {
     edges: MutableList<GraphEdge>,
     x: Float,
     y: Float,
+    deduplicationMap: MutableMap<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>,
+    assignedNodeIds: MutableSet<String>,
   ): Triple<String, String, Float> {
     val tipId = UUID.randomUUID().toString()
-    val behaviorPortIds = (0 until tip.behaviorsCount).map { UUID.randomUUID().toString() }
-    val tipData = NodeData.Tip(tip, behaviorPortIds = behaviorPortIds)
-    nodes.add(GraphNode(id = tipId, data = tipData, position = GraphPoint(x, y)))
+    val tempBehaviorPortIds = (0 until tip.behaviorsCount).map { UUID.randomUUID().toString() }
+    val usedPortIds = mutableListOf<String>()
 
     var currentY = y
     var behaviorIndex = 0
     for (behavior in tip.behaviorsList) {
       // Reconstruct the graph from the post-order list of nodes.
-      val (terminalNodes, behaviorMaxY) = convertBehaviorGraph(behavior, nodes, edges, x, currentY)
+      val (terminalNodes, behaviorMaxY) = convertBehaviorGraph(behavior, nodes, edges, x, currentY, deduplicationMap, assignedNodeIds)
       for ((terminalId, _) in terminalNodes) {
-        edges.add(
-          GraphEdge(
-            fromNodeId = terminalId,
-            toNodeId = tipId,
-            toPortId = behaviorPortIds[behaviorIndex]
+        val alreadyConnected = edges.any { it.toNodeId == tipId && it.fromNodeId == terminalId }
+        if (!alreadyConnected) {
+          val portId = tempBehaviorPortIds[behaviorIndex]
+          edges.add(
+            GraphEdge(
+              fromNodeId = terminalId,
+              toNodeId = tipId,
+              toPortId = portId
+            )
           )
-        )
+          usedPortIds.add(portId)
+        }
       }
       behaviorIndex++
       currentY = behaviorMaxY + VERTICAL_GAP
     }
 
-    return Triple(tipId, "output", maxOf(y + tipData.height(tip.behaviorsCount + 1), currentY - VERTICAL_GAP))
+    val tipData = NodeData.Tip(tip, behaviorPortIds = usedPortIds)
+    nodes.add(GraphNode(id = tipId, data = tipData, position = GraphPoint(x, y)))
+
+    return Triple(tipId, "output", maxOf(y + tipData.height(usedPortIds.size + 1), currentY - VERTICAL_GAP))
   }
 
   private fun convertPaint(
@@ -146,6 +161,8 @@ object BrushGraphConverter {
     edges: MutableList<GraphEdge>,
     x: Float,
     y: Float,
+    textureDeduplicationMap: MutableMap<ProtoBrushPaint.TextureLayer, String>,
+    colorDeduplicationMap: MutableMap<ProtoColorFunction, String>,
   ): Triple<String, String, Float> {
     val paintId = UUID.randomUUID().toString()
     val texturePortIds = (0 until paint.textureLayersCount).map { UUID.randomUUID().toString() }
@@ -153,50 +170,81 @@ object BrushGraphConverter {
     val paintData = NodeData.Paint(paint, texturePortIds = texturePortIds, colorPortIds = colorPortIds)
     nodes.add(GraphNode(id = paintId, data = paintData, position = GraphPoint(x, y)))
 
+    val tempTexturePortIds = texturePortIds
+    val tempColorPortIds = colorPortIds
+    val usedTexturePortIds = mutableListOf<String>()
+    val usedColorPortIds = mutableListOf<String>()
+
     var currentY = y
     var layerIndex = 0
     for (layer in paint.textureLayersList) {
-      val layerId = UUID.randomUUID().toString()
+      val isNew = !textureDeduplicationMap.containsKey(layer)
+      val layerId = textureDeduplicationMap.getOrPut(layer) { UUID.randomUUID().toString() }
       val layerData = NodeData.TextureLayer(layer)
-      nodes.add(
-        GraphNode(
-          id = layerId,
-          data = layerData,
-          position = GraphPoint(x - layerData.width() - HORIZONTAL_GAP, currentY),
-        )
-      )
-      edges.add(
-        GraphEdge(
-          fromNodeId = layerId,
-          toNodeId = paintId,
-          toPortId = texturePortIds[layerIndex++]
-        )
-      )
-      currentY += layerData.height() + VERTICAL_GAP
+      
+      val alreadyConnected = edges.any { it.toNodeId == paintId && it.fromNodeId == layerId }
+      if (!alreadyConnected) {
+          val portId = tempTexturePortIds[layerIndex]
+          edges.add(
+            GraphEdge(
+              fromNodeId = layerId,
+              toNodeId = paintId,
+              toPortId = portId
+            )
+          )
+          usedTexturePortIds.add(portId)
+      }
+      
+      if (isNew) {
+          nodes.add(
+            GraphNode(
+              id = layerId,
+              data = layerData,
+              position = GraphPoint(x - layerData.width() - HORIZONTAL_GAP, currentY),
+            )
+          )
+          currentY += layerData.height() + VERTICAL_GAP
+      }
+      layerIndex++
     }
 
     var colorIndex = 0
     for (cf in paint.colorFunctionsList) {
-      val cfId = UUID.randomUUID().toString()
+      val isNew = !colorDeduplicationMap.containsKey(cf)
+      val cfId = colorDeduplicationMap.getOrPut(cf) { UUID.randomUUID().toString() }
       val cfData = NodeData.ColorFunction(cf)
-      nodes.add(
-        GraphNode(
-          id = cfId,
-          data = cfData,
-          position = GraphPoint(x - cfData.width() - HORIZONTAL_GAP, currentY),
-        )
-      )
-      edges.add(
-        GraphEdge(
-          fromNodeId = cfId,
-          toNodeId = paintId,
-          toPortId = colorPortIds[colorIndex++]
-        )
-      )
-      currentY += cfData.height() + VERTICAL_GAP
+      
+      val alreadyConnected = edges.any { it.toNodeId == paintId && it.fromNodeId == cfId }
+      if (!alreadyConnected) {
+          val portId = tempColorPortIds[colorIndex]
+          edges.add(
+            GraphEdge(
+              fromNodeId = cfId,
+              toNodeId = paintId,
+              toPortId = portId
+            )
+          )
+          usedColorPortIds.add(portId)
+      }
+      
+      if (isNew) {
+          nodes.add(
+            GraphNode(
+              id = cfId,
+              data = cfData,
+              position = GraphPoint(x - cfData.width() - HORIZONTAL_GAP, currentY),
+            )
+          )
+          currentY += cfData.height() + VERTICAL_GAP
+      }
+      colorIndex++
     }
 
-    val paintHeight = paintData.height(paint.textureLayersCount + 1 + paint.colorFunctionsCount + 1)
+    val finalPaintData = NodeData.Paint(paint, texturePortIds = usedTexturePortIds, colorPortIds = usedColorPortIds)
+    nodes.removeIf { it.id == paintId }
+    nodes.add(GraphNode(id = paintId, data = finalPaintData, position = GraphPoint(x, y)))
+
+    val paintHeight = finalPaintData.height(usedTexturePortIds.size + 1 + usedColorPortIds.size + 1)
     return Triple(paintId, "output", maxOf(y + paintHeight, currentY - VERTICAL_GAP))
   }
 
@@ -206,13 +254,14 @@ object BrushGraphConverter {
     edges: MutableList<GraphEdge>,
     tipX: Float,
     startY: Float,
+    deduplicationMap: MutableMap<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>,
+    assignedNodeIds: MutableSet<String>,
   ): Pair<List<Pair<String, String>>, Float> {
     val behaviorId = UUID.randomUUID().toString()
     val nodeStack = mutableListOf<InternalNodeInfo>()
     val behaviorNodes = mutableListOf<InternalNodeInfo>()
 
     for (protoNode in behavior.nodesList) {
-      val nodeId = UUID.randomUUID().toString()
       // Temporary NodeData to get inputCount
       val tempNodeData = NodeData.Behavior(
         node = protoNode,
@@ -228,6 +277,20 @@ object BrushGraphConverter {
         }
       }
       
+      val childrenIds = children.map { it.id }
+      val key = Pair(protoNode, childrenIds)
+            
+      val existingInfo = deduplicationMap[key]
+      if (existingInfo != null) {
+          behaviorNodes.add(existingInfo)
+          if (protoNode.nodeCase != ProtoBrushBehavior.Node.NodeCase.TARGET_NODE &&
+              protoNode.nodeCase != ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+            nodeStack.add(existingInfo)
+          }
+          continue
+      }
+      
+      val nodeId = UUID.randomUUID().toString()
       val inputPortIds = (0 until children.size).map { UUID.randomUUID().toString() }
       val nodeData = NodeData.Behavior(
         node = protoNode,
@@ -239,6 +302,8 @@ object BrushGraphConverter {
       val info = InternalNodeInfo(nodeId, nodeData, children)
       behaviorNodes.add(info)
       
+      deduplicationMap[key] = info
+      
       if (protoNode.nodeCase != ProtoBrushBehavior.Node.NodeCase.TARGET_NODE &&
           protoNode.nodeCase != ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
         nodeStack.add(info)
@@ -248,12 +313,11 @@ object BrushGraphConverter {
     val terminalNodeInfos = listOfNotNull(behaviorNodes.lastOrNull())
     
     var currentY = startY
-    val assignedNodes = mutableSetOf<String>()
     var maxYReached = startY
     val maxYPerDepth = mutableMapOf<Int, Float>()
 
     fun layoutNode(info: InternalNodeInfo, depth: Int): Float {
-        if (assignedNodes.contains(info.id)) {
+        if (assignedNodeIds.contains(info.id)) {
             // Find existing position if already assigned
             return nodes.find { it.id == info.id }?.position?.y?.plus(info.data.height() / 2f) ?: 0f
         }
@@ -301,7 +365,7 @@ object BrushGraphConverter {
               )
             )
         }
-        assignedNodes.add(info.id)
+        assignedNodeIds.add(info.id)
         return finalY + nodeHeight / 2f
     }
 
@@ -310,6 +374,112 @@ object BrushGraphConverter {
     }
     
     return terminalNodeInfos.map { it.id to "output" } to maxYReached
+  }
+
+  /**
+   * Performs a top-down deduplication pass on behavior nodes.
+   * 
+   * NOTE: This method assumes that the `nodes` list is ordered bottom-up (sources first, 
+   * then operators, then targets) as a result of the post-order traversal during construction. 
+   * By processing the reversed list, we achieve top-down processing in a single pass. 
+   * If the graph construction order changes in the future, this may need to be updated 
+   * to perform a full topological sort first.
+   */
+  private fun deduplicateDownstream(graph: BrushGraph): BrushGraph {
+      val nodes = graph.nodes.toMutableList()
+      val edges = graph.edges.toMutableList()
+      
+      // Filter and reverse behavior nodes to process top-down
+      val behaviorNodes = nodes.filter { it.data is NodeData.Behavior }.reversed()
+      
+      val removedNodeIds = mutableSetOf<String>()
+      
+      for (node in behaviorNodes) {
+          if (removedNodeIds.contains(node.id)) continue
+          
+          val nodeData = node.data as NodeData.Behavior
+          val isInterpolation = nodeData.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE
+          val isBinaryOp = nodeData.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE
+          if (isInterpolation || isBinaryOp) continue
+          
+          val nodeOutputSet = edges.filter { it.fromNodeId == node.id && !it.isDisabled }
+                                   .map { it.toNodeId }
+                                   .sorted()
+                                   
+          if (nodeOutputSet.isEmpty()) continue
+          
+          // Find another node to merge with
+          val otherNode = nodes.find { other ->
+              if (other.id == node.id || removedNodeIds.contains(other.id)) return@find false
+              val otherData = other.data as? NodeData.Behavior ?: return@find false
+              if (otherData.node != nodeData.node) return@find false
+              
+              val otherOutputSet = edges.filter { it.fromNodeId == other.id && !it.isDisabled }
+                                       .map { it.toNodeId }
+                                       .sorted()
+              otherOutputSet == nodeOutputSet
+          }
+          
+          if (otherNode != null) {
+              val keptNode = otherNode
+              val nodeToRemove = node
+              
+              val keptData = keptNode.data as NodeData.Behavior
+              val dataToRemove = nodeToRemove.data as NodeData.Behavior
+              val newData = keptData.copy(inputPortIds = keptData.inputPortIds + dataToRemove.inputPortIds)
+              
+              nodes.remove(keptNode)
+              val updatedKeptNode = keptNode.copy(data = newData)
+              nodes.add(updatedKeptNode)
+              
+              // Redirect incoming edges
+              val incomingEdges = edges.filter { it.toNodeId == nodeToRemove.id }
+              for (edge in incomingEdges) {
+                  edges.remove(edge)
+                  edges.add(edge.copy(toNodeId = keptNode.id))
+              }
+              
+              // Remove outgoing edges of removed node and cleanup ports!
+              val outgoingEdges = edges.filter { it.fromNodeId == nodeToRemove.id }
+              for (edge in outgoingEdges) {
+                  val parentNode = nodes.find { it.id == edge.toNodeId }
+                  if (parentNode != null) {
+                      val updatedParent = removePortFromNode(parentNode, edge.toPortId)
+                      nodes.remove(parentNode)
+                      nodes.add(updatedParent)
+                  }
+              }
+              edges.removeAll(outgoingEdges)
+              
+              // Remove node from list
+              nodes.remove(nodeToRemove)
+              removedNodeIds.add(nodeToRemove.id)
+          }
+      }
+      
+
+      
+      return BrushGraph(nodes = nodes, edges = edges)
+  }
+
+  private fun removePortFromNode(node: GraphNode, portId: String): GraphNode {
+      val data = node.data
+      val newData = when (data) {
+          is NodeData.Behavior -> {
+              data.copy(inputPortIds = data.inputPortIds.filter { it != portId })
+          }
+          is NodeData.Tip -> {
+              data.copy(behaviorPortIds = data.behaviorPortIds.filter { it != portId })
+          }
+          is NodeData.Paint -> {
+              data.copy(
+                  texturePortIds = data.texturePortIds.filter { it != portId },
+                  colorPortIds = data.colorPortIds.filter { it != portId }
+              )
+          }
+          else -> data
+      }
+      return node.copy(data = newData)
   }
 
   private data class InternalNodeInfo(

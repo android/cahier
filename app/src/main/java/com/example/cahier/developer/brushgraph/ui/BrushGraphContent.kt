@@ -46,7 +46,7 @@ fun BrushGraphContent(
   BoxWithConstraints(modifier = modifier.fillMaxSize()) {
     val currentIsLandscape = maxWidth > maxHeight
 
-    val isSidePaneOpen = currentIsLandscape && (isNodeSelected || isErrorPaneOpen)
+    val isSidePaneOpen = currentIsLandscape && (isNodeSelected || isEdgeSelected || isErrorPaneOpen)
     val indicatorPaddingEnd by animateDpAsState(
       targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
       label = "indicatorPaddingEnd",

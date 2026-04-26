@@ -1,8 +1,14 @@
 package com.example.cahier.developer.brushgraph.model
 
-import com.example.cahier.developer.brushgraph.model.GraphPoint
-import com.example.cahier.developer.brushgraph.model.Port
-import com.example.cahier.developer.brushgraph.model.PortSide
+import com.example.cahier.developer.brushgraph.data.GraphPoint
+import com.example.cahier.developer.brushgraph.data.Port
+import com.example.cahier.developer.brushgraph.data.PortSide
+import com.example.cahier.developer.brushgraph.data.GraphNode
+import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.BrushGraph
+import com.example.cahier.developer.brushgraph.data.DisplayText
+import com.example.cahier.developer.brushgraph.data.GraphEdge
+import com.example.cahier.developer.brushgraph.data.getVisiblePorts
 import com.example.cahier.R
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import org.junit.Assert.assertEquals
@@ -171,7 +177,7 @@ class GraphDataModelTest {
             position = GraphPoint(0f, 0f)
         )
         val textureNode = GraphNode(id = "2", data = NodeData.TextureLayer(layer = ink.proto.BrushPaint.TextureLayer.getDefaultInstance()), position = GraphPoint(0f, 0f))
-        val colorNode = GraphNode(id = "3", data = NodeData.ColorFunc(function = ink.proto.ColorFunction.getDefaultInstance()), position = GraphPoint(0f, 0f))
+        val colorNode = GraphNode(id = "3", data = NodeData.ColorFunction(function = ink.proto.ColorFunction.getDefaultInstance()), position = GraphPoint(0f, 0f))
         
         val edge1 = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "texture_0")
         val edge2 = GraphEdge(fromNodeId = "3", toNodeId = "1", toPortId = "color_0")

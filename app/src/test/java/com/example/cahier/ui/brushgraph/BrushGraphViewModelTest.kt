@@ -1,8 +1,8 @@
 package com.example.cahier.developer.brushgraph
 
-import com.example.cahier.developer.brushgraph.model.GraphEdge
-import com.example.cahier.developer.brushgraph.model.NodeData
-import com.example.cahier.developer.brushgraph.model.preserveEdgesOnTypeChange
+import com.example.cahier.developer.brushgraph.data.GraphEdge
+import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.preserveEdgesOnTypeChange
 import ink.proto.BrushBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Test

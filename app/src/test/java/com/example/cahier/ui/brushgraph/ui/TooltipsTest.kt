@@ -1,6 +1,6 @@
 package com.example.cahier.developer.brushgraph.ui
 
-import com.example.cahier.developer.brushgraph.model.NodeData
+import com.example.cahier.developer.brushgraph.data.NodeData
 import ink.proto.BrushBehavior
 import ink.proto.BrushPaint
 import ink.proto.PredefinedEasingFunction
@@ -18,7 +18,7 @@ class TooltipsTest {
             NodeData.Tip(ink.proto.BrushTip.getDefaultInstance()),
             NodeData.Paint(ink.proto.BrushPaint.getDefaultInstance()),
             NodeData.TextureLayer(ink.proto.BrushPaint.TextureLayer.getDefaultInstance()),
-            NodeData.ColorFunc(ink.proto.ColorFunction.getDefaultInstance()),
+            NodeData.ColorFunction(ink.proto.ColorFunction.getDefaultInstance()),
             NodeData.Coat(),
             NodeData.Family(),
             
