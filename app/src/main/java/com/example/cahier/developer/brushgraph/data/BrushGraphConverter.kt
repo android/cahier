@@ -23,8 +23,7 @@ import ink.proto.ColorFunction as ProtoColorFunction
 /** Utility to convert a functional [BrushFamily] into a [BrushGraph] data model. */
 object BrushGraphConverter {
 
-  private const val HORIZONTAL_GAP = 100f
-  private const val VERTICAL_GAP = 40f
+
 
   /** Converts a [BrushFamily] into a [BrushGraph]. */
   fun fromBrushFamily(family: BrushFamily): BrushGraph {
@@ -41,9 +40,7 @@ object BrushGraphConverter {
     val nodes = mutableListOf<GraphNode>()
     val edges = mutableListOf<GraphEdge>()
 
-    var nextY = 0f
     val familyNodeId = UUID.randomUUID().toString()
-
     val coatPortIds = (0 until family.coatsCount).map { UUID.randomUUID().toString() }
     val familyData =
       NodeData.Family(
@@ -52,8 +49,7 @@ object BrushGraphConverter {
         inputModel = family.inputModel,
         coatPortIds = coatPortIds,
       )
-    val familyNodeX = 1600f
-    nodes.add(GraphNode(id = familyNodeId, data = familyData, position = GraphPoint(familyNodeX, 0f)))
+    nodes.add(GraphNode(id = familyNodeId, data = familyData))
 
     val behaviorDeduplicationMap = mutableMapOf<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>()
     val assignedNodeIds = mutableSetOf<String>()
@@ -65,9 +61,7 @@ object BrushGraphConverter {
       val coatId = UUID.randomUUID().toString()
       val paintPortIds = (0 until coat.paintPreferencesCount).map { UUID.randomUUID().toString() }
       val coatData = NodeData.Coat(paintPortIds = paintPortIds)
-      val coatX = familyNodeX - coatData.width() - HORIZONTAL_GAP
-      val coatY = nextY
-      val coatNode = GraphNode(id = coatId, data = coatData, position = GraphPoint(coatX, coatY))
+      val coatNode = GraphNode(id = coatId, data = coatData)
       nodes.add(coatNode)
       edges.add(
         GraphEdge(
@@ -77,8 +71,7 @@ object BrushGraphConverter {
         )
       )
 
-      val tipX = coatX - NodeData.Tip(coat.tip).width() - HORIZONTAL_GAP
-      val (tipId, tipOutputPortId, tipSubtreeMaxY) = convertTip(coat.tip, nodes, edges, tipX, coatY, behaviorDeduplicationMap, assignedNodeIds)
+      val (tipId, tipOutputPortId) = convertTip(coat.tip, nodes, edges, behaviorDeduplicationMap, assignedNodeIds)
       edges.add(
         GraphEdge(
           fromNodeId = tipId,
@@ -88,12 +81,9 @@ object BrushGraphConverter {
       )
 
       var paintIndex = 0
-      var currentPaintY = tipSubtreeMaxY + VERTICAL_GAP
-      var maxPaintSubtreeY = currentPaintY
       for (paint in coat.paintPreferencesList) {
         val paintData = NodeData.Paint(paint)
-        val paintX = coatX - paintData.width() - HORIZONTAL_GAP
-        val (paintId, paintOutputPortId, paintSubtreeMaxY) = convertPaint(paint, nodes, edges, paintX, currentPaintY, textureDeduplicationMap, colorDeduplicationMap)
+        val (paintId, paintOutputPortId) = convertPaint(paint, nodes, edges, textureDeduplicationMap, colorDeduplicationMap)
         edges.add(
           GraphEdge(
             fromNodeId = paintId,
@@ -101,12 +91,7 @@ object BrushGraphConverter {
             toPortId = paintPortIds[paintIndex++]
           )
         )
-        currentPaintY = paintSubtreeMaxY + VERTICAL_GAP
-        maxPaintSubtreeY = maxOf(maxPaintSubtreeY, paintSubtreeMaxY)
       }
-
-      val coatHeight = coatData.height(coat.paintPreferencesCount + 2)
-      nextY = maxOf(coatY + coatHeight, maxPaintSubtreeY) + VERTICAL_GAP * 4
     }
 
     val initialGraph = BrushGraph(nodes = nodes, edges = edges)
@@ -117,20 +102,16 @@ object BrushGraphConverter {
     tip: ProtoBrushTip,
     nodes: MutableList<GraphNode>,
     edges: MutableList<GraphEdge>,
-    x: Float,
-    y: Float,
     deduplicationMap: MutableMap<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>,
     assignedNodeIds: MutableSet<String>,
-  ): Triple<String, String, Float> {
+  ): Pair<String, String> {
     val tipId = UUID.randomUUID().toString()
     val tempBehaviorPortIds = (0 until tip.behaviorsCount).map { UUID.randomUUID().toString() }
     val usedPortIds = mutableListOf<String>()
 
-    var currentY = y
     var behaviorIndex = 0
     for (behavior in tip.behaviorsList) {
-      // Reconstruct the graph from the post-order list of nodes.
-      val (terminalNodes, behaviorMaxY) = convertBehaviorGraph(behavior, nodes, edges, x, currentY, deduplicationMap, assignedNodeIds)
+      val terminalNodes = convertBehaviorGraph(behavior, nodes, edges, deduplicationMap, assignedNodeIds)
       for ((terminalId, _) in terminalNodes) {
         val alreadyConnected = edges.any { it.toNodeId == tipId && it.fromNodeId == terminalId }
         if (!alreadyConnected) {
@@ -146,36 +127,32 @@ object BrushGraphConverter {
         }
       }
       behaviorIndex++
-      currentY = behaviorMaxY + VERTICAL_GAP
     }
 
     val tipData = NodeData.Tip(tip, behaviorPortIds = usedPortIds)
-    nodes.add(GraphNode(id = tipId, data = tipData, position = GraphPoint(x, y)))
+    nodes.add(GraphNode(id = tipId, data = tipData))
 
-    return Triple(tipId, "output", maxOf(y + tipData.height(usedPortIds.size + 1), currentY - VERTICAL_GAP))
+    return Pair(tipId, "output")
   }
 
   private fun convertPaint(
     paint: ProtoBrushPaint,
     nodes: MutableList<GraphNode>,
     edges: MutableList<GraphEdge>,
-    x: Float,
-    y: Float,
     textureDeduplicationMap: MutableMap<ProtoBrushPaint.TextureLayer, String>,
     colorDeduplicationMap: MutableMap<ProtoColorFunction, String>,
-  ): Triple<String, String, Float> {
+  ): Pair<String, String> {
     val paintId = UUID.randomUUID().toString()
     val texturePortIds = (0 until paint.textureLayersCount).map { UUID.randomUUID().toString() }
     val colorPortIds = (0 until paint.colorFunctionsCount).map { UUID.randomUUID().toString() }
     val paintData = NodeData.Paint(paint, texturePortIds = texturePortIds, colorPortIds = colorPortIds)
-    nodes.add(GraphNode(id = paintId, data = paintData, position = GraphPoint(x, y)))
+    nodes.add(GraphNode(id = paintId, data = paintData))
 
     val tempTexturePortIds = texturePortIds
     val tempColorPortIds = colorPortIds
     val usedTexturePortIds = mutableListOf<String>()
     val usedColorPortIds = mutableListOf<String>()
 
-    var currentY = y
     var layerIndex = 0
     for (layer in paint.textureLayersList) {
       val isNew = !textureDeduplicationMap.containsKey(layer)
@@ -199,11 +176,9 @@ object BrushGraphConverter {
           nodes.add(
             GraphNode(
               id = layerId,
-              data = layerData,
-              position = GraphPoint(x - layerData.width() - HORIZONTAL_GAP, currentY),
+              data = layerData
             )
           )
-          currentY += layerData.height() + VERTICAL_GAP
       }
       layerIndex++
     }
@@ -231,38 +206,32 @@ object BrushGraphConverter {
           nodes.add(
             GraphNode(
               id = cfId,
-              data = cfData,
-              position = GraphPoint(x - cfData.width() - HORIZONTAL_GAP, currentY),
+              data = cfData
             )
           )
-          currentY += cfData.height() + VERTICAL_GAP
       }
       colorIndex++
     }
 
     val finalPaintData = NodeData.Paint(paint, texturePortIds = usedTexturePortIds, colorPortIds = usedColorPortIds)
     nodes.removeIf { it.id == paintId }
-    nodes.add(GraphNode(id = paintId, data = finalPaintData, position = GraphPoint(x, y)))
+    nodes.add(GraphNode(id = paintId, data = finalPaintData))
 
-    val paintHeight = finalPaintData.height(usedTexturePortIds.size + 1 + usedColorPortIds.size + 1)
-    return Triple(paintId, "output", maxOf(y + paintHeight, currentY - VERTICAL_GAP))
+    return Pair(paintId, "output")
   }
 
   private fun convertBehaviorGraph(
     behavior: ProtoBrushBehavior,
     nodes: MutableList<GraphNode>,
     edges: MutableList<GraphEdge>,
-    tipX: Float,
-    startY: Float,
     deduplicationMap: MutableMap<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>,
     assignedNodeIds: MutableSet<String>,
-  ): Pair<List<Pair<String, String>>, Float> {
+  ): List<Pair<String, String>> {
     val behaviorId = UUID.randomUUID().toString()
     val nodeStack = mutableListOf<InternalNodeInfo>()
     val behaviorNodes = mutableListOf<InternalNodeInfo>()
 
     for (protoNode in behavior.nodesList) {
-      // Temporary NodeData to get inputCount
       val tempNodeData = NodeData.Behavior(
         node = protoNode,
         developerComment = behavior.developerComment,
@@ -312,49 +281,12 @@ object BrushGraphConverter {
 
     val terminalNodeInfos = listOfNotNull(behaviorNodes.lastOrNull())
     
-    var currentY = startY
-    var maxYReached = startY
-    val maxYPerDepth = mutableMapOf<Int, Float>()
-
-    fun layoutNode(info: InternalNodeInfo, depth: Int): Float {
+    fun buildGraphNode(info: InternalNodeInfo, depth: Int) {
         if (assignedNodeIds.contains(info.id)) {
-            // Find existing position if already assigned
-            return nodes.find { it.id == info.id }?.position?.y?.plus(info.data.height() / 2f) ?: 0f
+            return
         }
         
-        val x = tipX - (depth + 1) * (info.data.width() + HORIZONTAL_GAP)
-        val portCount = when (info.data.node.nodeCase) {
-            ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> info.children.size + 1
-            ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
-                val numSets = maxOf(1, info.children.size / 2)
-                numSets * 2 + 1
-            }
-            else -> {
-                val labels = info.data.inputLabels()
-                if (labels.size == 1) {
-                    maxOf(1, info.children.size) + 1
-                } else {
-                    labels.size
-                }
-            }
-        }
-        val nodeHeight = info.data.height(portCount)
-        
-        val centerY = if (info.children.isEmpty()) {
-            val y = currentY + nodeHeight / 2f
-            currentY += nodeHeight + VERTICAL_GAP
-            y
-        } else {
-            val childYCenters = info.children.map { layoutNode(it, depth + 1) }
-            childYCenters.average().toFloat()
-        }
-        
-        val minY = maxYPerDepth[depth] ?: startY
-        val finalY = maxOf(centerY - nodeHeight / 2f, minY)
-        maxYPerDepth[depth] = finalY + nodeHeight + VERTICAL_GAP
-        
-        nodes.add(GraphNode(id = info.id, data = info.data, position = GraphPoint(x, finalY)))
-        maxYReached = maxOf(maxYReached, finalY + nodeHeight)
+        nodes.add(GraphNode(id = info.id, data = info.data))
         
         info.children.forEachIndexed { index, child ->
             edges.add(
@@ -366,14 +298,15 @@ object BrushGraphConverter {
             )
         }
         assignedNodeIds.add(info.id)
-        return finalY + nodeHeight / 2f
+        
+        info.children.forEach { buildGraphNode(it, depth + 1) }
     }
 
     for (root in terminalNodeInfos) {
-        layoutNode(root, 0)
+        buildGraphNode(root, 0)
     }
     
-    return terminalNodeInfos.map { it.id to "output" } to maxYReached
+    return terminalNodeInfos.map { it.id to "output" }
   }
 
   /**

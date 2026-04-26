@@ -24,8 +24,7 @@ class GraphDataModelTest {
                 node = ProtoBrushBehavior.Node.newBuilder()
                     .setResponseNode(ProtoBrushBehavior.ResponseNode.getDefaultInstance())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         val graph = BrushGraph(nodes = listOf(node))
         val ports = node.getVisiblePorts(graph)
@@ -44,10 +43,9 @@ class GraphDataModelTest {
                     .setResponseNode(ProtoBrushBehavior.ResponseNode.getDefaultInstance())
                     .build(),
                 inputPortIds = listOf("Input")
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
-        val sourceNode = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()), position = GraphPoint(0f, 0f))
+        val sourceNode = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()))
         val edge = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "Input")
         val graph = BrushGraph(nodes = listOf(node, sourceNode), edges = listOf(edge))
         val ports = node.getVisiblePorts(graph)
@@ -68,8 +66,7 @@ class GraphDataModelTest {
                 node = ProtoBrushBehavior.Node.newBuilder()
                     .setBinaryOpNode(ProtoBrushBehavior.BinaryOpNode.newBuilder().setOperation(ProtoBrushBehavior.BinaryOp.BINARY_OP_SUM))
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         val graph = BrushGraph(nodes = listOf(node))
         val ports = node.getVisiblePorts(graph)
@@ -88,10 +85,9 @@ class GraphDataModelTest {
                     .setBinaryOpNode(ProtoBrushBehavior.BinaryOpNode.newBuilder().setOperation(ProtoBrushBehavior.BinaryOp.BINARY_OP_SUM))
                     .build(),
                 inputPortIds = listOf("input_0", "input_1")
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
-        val sourceNode = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()), position = GraphPoint(0f, 0f))
+        val sourceNode = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()))
         val edge = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "input_0")
         val graph = BrushGraph(nodes = listOf(node, sourceNode), edges = listOf(edge))
         val ports = node.getVisiblePorts(graph)
@@ -113,8 +109,7 @@ class GraphDataModelTest {
                 node = ProtoBrushBehavior.Node.newBuilder()
                     .setPolarTargetNode(ProtoBrushBehavior.PolarTargetNode.getDefaultInstance())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         val graph = BrushGraph(nodes = listOf(node))
         val ports = node.getVisiblePorts(graph)
@@ -133,11 +128,10 @@ class GraphDataModelTest {
                     .setPolarTargetNode(ProtoBrushBehavior.PolarTargetNode.getDefaultInstance())
                     .build(),
                 inputPortIds = listOf("angle_0", "mag_0")
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
-        val sourceNode1 = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()), position = GraphPoint(0f, 0f))
-        val sourceNode2 = GraphNode(id = "3", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()), position = GraphPoint(0f, 0f))
+        val sourceNode1 = GraphNode(id = "2", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()))
+        val sourceNode2 = GraphNode(id = "3", data = NodeData.Behavior(node = ProtoBrushBehavior.Node.getDefaultInstance()))
         val edge1 = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "angle_0")
         val edge2 = GraphEdge(fromNodeId = "3", toNodeId = "1", toPortId = "mag_0")
         val graph = BrushGraph(nodes = listOf(node, sourceNode1, sourceNode2), edges = listOf(edge1, edge2))
@@ -154,7 +148,7 @@ class GraphDataModelTest {
 
     @Test
     fun testGetVisiblePorts_Paint_NoConnections() {
-        val node = GraphNode(id = "1", data = NodeData.Paint(paint = ink.proto.BrushPaint.getDefaultInstance()), position = GraphPoint(0f, 0f))
+        val node = GraphNode(id = "1", data = NodeData.Paint(paint = ink.proto.BrushPaint.getDefaultInstance()))
         val graph = BrushGraph(nodes = listOf(node))
         val ports = node.getVisiblePorts(graph)
         
@@ -173,11 +167,10 @@ class GraphDataModelTest {
                 paint = ink.proto.BrushPaint.getDefaultInstance(),
                 texturePortIds = listOf("texture_0"),
                 colorPortIds = listOf("color_0")
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
-        val textureNode = GraphNode(id = "2", data = NodeData.TextureLayer(layer = ink.proto.BrushPaint.TextureLayer.getDefaultInstance()), position = GraphPoint(0f, 0f))
-        val colorNode = GraphNode(id = "3", data = NodeData.ColorFunction(function = ink.proto.ColorFunction.getDefaultInstance()), position = GraphPoint(0f, 0f))
+        val textureNode = GraphNode(id = "2", data = NodeData.TextureLayer(layer = ink.proto.BrushPaint.TextureLayer.getDefaultInstance()))
+        val colorNode = GraphNode(id = "3", data = NodeData.ColorFunction(function = ink.proto.ColorFunction.getDefaultInstance()))
         
         val edge1 = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "texture_0")
         val edge2 = GraphEdge(fromNodeId = "3", toNodeId = "1", toPortId = "color_0")

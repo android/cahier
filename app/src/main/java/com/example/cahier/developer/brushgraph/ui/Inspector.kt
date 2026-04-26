@@ -26,8 +26,6 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.NodeData
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.developer.brushgraph.ui.fields.NodeFields
 import com.example.cahier.developer.brushgraph.ui.TooltipDialog
 import com.example.cahier.developer.brushgraph.ui.getTooltip

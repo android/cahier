@@ -82,7 +82,6 @@ fun GraphCanvas(
   offset: Offset,
   onZoomChange: (Float) -> Unit,
   onOffsetChange: (Offset) -> Unit,
-  onNodeMove: (String, Offset) -> Unit,
   onNodeClick: (String, Offset) -> Unit,
   onNodeDelete: (String) -> Unit,
   onAddEdge: (String, String, String) -> Unit,
@@ -212,12 +211,16 @@ fun GraphCanvas(
             key(node.id) {
               NodeWidget(
                 node = node,
+                position = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero,
                 graph = graph,
                 isActiveSource = node.id == activeSourcePort?.nodeId,
                 isSelected = node.id == selectedNodeId,
                 zoom = zoom,
-                onMove = { delta -> onNodeMove(node.id, Offset(node.position.x, node.position.y) + delta) },
-                onClick = { onNodeClick(node.id, Offset(node.position.x, node.position.y)) },
+                onMove = { delta ->
+                  val currentPos = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero
+                  nodeRegistry.updateNodePosition(node.id, currentPos + delta)
+                },
+                onClick = { onNodeClick(node.id, nodeRegistry.getNodePosition(node.id) ?: Offset.Zero) },
                 onUpdate = { onNodeDataUpdate(node.id, it) },
                 onPortClick = onPortClick,
                 onReorderPorts = onReorderPorts,
@@ -226,7 +229,8 @@ fun GraphCanvas(
                 isInSelectedSet = selectedNodeIds.contains(node.id),
                 onLongPress = { onNodeLongPress(node.id) },
                 onDrag = { change ->
-                  val nodePosInParent = Offset(node.position.x * zoom, node.position.y * zoom) + offset
+                  val nodePos = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero
+                  val nodePosInParent = Offset(nodePos.x * zoom, nodePos.y * zoom) + offset
                   draggingPointerPos = nodePosInParent + change.position * zoom
                 },
                 onDragEnd = {
@@ -308,7 +312,6 @@ fun GraphCanvas(
                 getPortPosition = { portId, fallback -> nodeRegistry.getPortPosition(node.id, portId, graph, fallback) },
                 onPortPositioned = { portId, pos -> nodeRegistry.updatePort(node.id, portId, pos) },
                 onClearNodeCache = { nodeRegistry.clearNode(node.id) },
-                onUpdateNodeSize = { size -> nodeRegistry.updateNodeSize(node.id, size) },
                 canvasCoordinates = canvasCoordinates,
                 onChooseColor = onChooseColor,
                 allTextureIds = allTextureIds,

@@ -31,6 +31,7 @@ import com.example.cahier.developer.brushgraph.ui.ColorFunctionPreviewWidget
 import com.example.cahier.developer.brushgraph.ui.TextureLayerPreviewWidget
 import com.example.cahier.developer.brushgraph.ui.TipPreviewWidget
 import com.example.cahier.developer.brushgraph.ui.asString
+import com.example.cahier.developer.brushgraph.ui.titleHeight
 import ink.proto.BrushCoat as ProtoBrushCoat
 
 @Composable

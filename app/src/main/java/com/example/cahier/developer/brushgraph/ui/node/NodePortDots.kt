@@ -16,8 +16,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.LayoutCoordinates
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
-import com.example.cahier.developer.brushgraph.data.INPUT_ROW_HEIGHT
-import com.example.cahier.developer.brushgraph.data.NODE_PADDING_VERTICAL
+import com.example.cahier.developer.brushgraph.ui.INPUT_ROW_HEIGHT
+import com.example.cahier.developer.brushgraph.ui.NODE_PADDING_VERTICAL
+import com.example.cahier.developer.brushgraph.ui.titleHeight
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.Port
 import com.example.cahier.developer.brushgraph.data.PortSide
@@ -27,6 +28,7 @@ import kotlin.math.roundToInt
 @Composable
 fun BoxScope.NodePortDots(
   node: GraphNode,
+  position: Offset,
   graph: BrushGraph,
   visiblePorts: List<Port>,
   zoom: Float,
@@ -56,7 +58,7 @@ fun BoxScope.NodePortDots(
         onDragEnd = onPortDragEnd,
         onPortPositioned = { pos -> onPortPositioned(port.id, pos) },
         canvasCoordinates = canvasCoordinates,
-        portPosition = getPortPosition(port.id, true) - Offset(node.position.x, node.position.y),
+        portPosition = getPortPosition(port.id, true) - position,
         isReorderable = node.data.isPortReorderable(port, index, hasAddPort),
         isLargeHandle = node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && index % 2 == 0,
         onReorderUpdate = { deltaY ->
@@ -66,7 +68,7 @@ fun BoxScope.NodePortDots(
           }
           cumulativeDeltaY += deltaY
           
-          val originalY = getPortPosition(port.id, true).y - node.position.y
+          val originalY = getPortPosition(port.id, true).y - position.y
           var maxValidIndex = visiblePorts.size - 2 // Exclude add port
           var minValidIndex = if (node.data is NodeData.Coat) 1 else 0
           
@@ -136,7 +138,7 @@ fun BoxScope.NodePortDots(
       onDragEnd = onPortDragEnd,
       onPortPositioned = { pos -> onPortPositioned("output", pos) },
       canvasCoordinates = canvasCoordinates,
-      portPosition = getPortPosition("output", true) - Offset(node.position.x, node.position.y),
+      portPosition = getPortPosition("output", true) - position,
     )
   }
 }

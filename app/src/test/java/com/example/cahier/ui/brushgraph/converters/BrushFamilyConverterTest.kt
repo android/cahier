@@ -31,32 +31,27 @@ class BrushFamilyConverterTest {
                     .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
             ),
-            position = GraphPoint(0f, 0f),
             isDisabled = true
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -89,8 +84,7 @@ class BrushFamilyConverterTest {
                         .setSourceValueRangeEnd(1f)
                         .build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val dampingNode = GraphNode(
@@ -100,7 +94,6 @@ class BrushFamilyConverterTest {
                     .setDampingNode(BrushBehavior.DampingNode.newBuilder().build())
                     .build()
             ),
-            position = GraphPoint(0f, 0f),
             isDisabled = true
         )
         
@@ -110,32 +103,27 @@ class BrushFamilyConverterTest {
                 BrushBehavior.Node.newBuilder()
                     .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -170,8 +158,7 @@ class BrushFamilyConverterTest {
                         .setSourceValueRangeEnd(1f)
                         .build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val binaryOpNode = GraphNode(
@@ -181,7 +168,6 @@ class BrushFamilyConverterTest {
                     .setBinaryOpNode(BrushBehavior.BinaryOpNode.newBuilder().build())
                     .build()
             ),
-            position = GraphPoint(0f, 0f),
             isDisabled = true
         )
         
@@ -191,32 +177,27 @@ class BrushFamilyConverterTest {
                 BrushBehavior.Node.newBuilder()
                     .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -250,8 +231,7 @@ class BrushFamilyConverterTest {
                         .setSourceValueRangeEnd(1f)
                         .build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val binaryOpNode = GraphNode(
@@ -261,7 +241,6 @@ class BrushFamilyConverterTest {
                     .setBinaryOpNode(BrushBehavior.BinaryOpNode.newBuilder().build())
                     .build()
             ),
-            position = GraphPoint(0f, 0f),
             isDisabled = true
         )
         
@@ -271,32 +250,27 @@ class BrushFamilyConverterTest {
                 BrushBehavior.Node.newBuilder()
                     .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -328,8 +302,7 @@ class BrushFamilyConverterTest {
                 BrushBehavior.Node.newBuilder()
                     .setSourceNode(BrushBehavior.SourceNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val targetNode = GraphNode(
@@ -338,33 +311,28 @@ class BrushFamilyConverterTest {
                 BrushBehavior.Node.newBuilder()
                     .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
             data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f),
             isDisabled = true // Disable Coat!
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -400,8 +368,7 @@ class BrushFamilyConverterTest {
                         .setSourceValueRangeEnd(1f)
                         .build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val dampingNodeA = GraphNode(
@@ -410,8 +377,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setDampingNode(ink.proto.BrushBehavior.DampingNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val dampingNodeB = GraphNode(
@@ -420,8 +386,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setDampingNode(ink.proto.BrushBehavior.DampingNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val binaryOpNode = GraphNode(
@@ -430,8 +395,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setBinaryOpNode(ink.proto.BrushBehavior.BinaryOpNode.newBuilder().setOperation(ink.proto.BrushBehavior.BinaryOp.BINARY_OP_SUM))
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val targetNode = GraphNode(
@@ -440,32 +404,27 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -508,8 +467,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val startNode = GraphNode(
@@ -518,8 +476,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setConstantNode(ink.proto.BrushBehavior.ConstantNode.newBuilder().setValue(0f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val endNode = GraphNode(
@@ -528,8 +485,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setConstantNode(ink.proto.BrushBehavior.ConstantNode.newBuilder().setValue(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val lerpNode = GraphNode(
@@ -539,8 +495,7 @@ class BrushFamilyConverterTest {
                     .setInterpolationNode(ink.proto.BrushBehavior.InterpolationNode.newBuilder().setInterpolation(ink.proto.BrushBehavior.Interpolation.INTERPOLATION_LERP).build())
                     .build(),
                 inputPortIds = listOf("Value", "Start", "End")
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val targetNode = GraphNode(
@@ -549,32 +504,27 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -612,8 +562,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val targetNode = GraphNode(
@@ -622,38 +571,32 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
         )
         
         val paintNode1 = GraphNode(
             id = "paint1",
-            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build())
         )
         
         val paintNode2 = GraphNode(
             id = "paint2",
-            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0", "paint_1")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0", "paint_1"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -684,8 +627,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val targetNode1 = GraphNode(
@@ -694,8 +636,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val valueNode2 = GraphNode(
@@ -704,8 +645,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_TILT_IN_RADIANS).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val targetNode2 = GraphNode(
@@ -714,32 +654,27 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("0", "1")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("0", "1"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -771,8 +706,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val sourceNode2 = GraphNode(
@@ -781,8 +715,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val sourceNode3 = GraphNode(
@@ -791,8 +724,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val binaryOpNode = GraphNode(
@@ -802,8 +734,7 @@ class BrushFamilyConverterTest {
                     .setBinaryOpNode(ink.proto.BrushBehavior.BinaryOpNode.newBuilder().build())
                     .build(),
                 inputPortIds = listOf("input_0", "input_1", "input_2")
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val targetNode = GraphNode(
@@ -812,32 +743,27 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("Input")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("Input"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(
@@ -881,8 +807,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val source2 = GraphNode(
@@ -891,8 +816,7 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val disabledResponse = GraphNode(
@@ -902,7 +826,6 @@ class BrushFamilyConverterTest {
                     .setBinaryOpNode(ink.proto.BrushBehavior.BinaryOpNode.newBuilder().build())
                     .build()
             ),
-            position = GraphPoint(0f, 0f),
             isDisabled = true
         )
         
@@ -912,32 +835,27 @@ class BrushFamilyConverterTest {
                 ink.proto.BrushBehavior.Node.newBuilder()
                     .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
                     .build()
-            ),
-            position = GraphPoint(0f, 0f)
+            )
         )
         
         val tipNode = GraphNode(
             id = "tip",
-            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("Input")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("Input"))
         )
         
         val paintNode = GraphNode(
             id = "paint",
-            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build()),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build())
         )
         
         val coatNode = GraphNode(
             id = "coat",
-            data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
         )
         
         val familyNode = GraphNode(
             id = "family",
-            data = NodeData.Family(coatPortIds = listOf("coat_0")),
-            position = GraphPoint(0f, 0f)
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
         )
         
         val edges = listOf(

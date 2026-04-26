@@ -58,10 +58,12 @@ import com.example.cahier.developer.brushgraph.ui.SineWavePreview
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.DisplayText
 import com.example.cahier.developer.brushgraph.data.GraphNode
-import com.example.cahier.developer.brushgraph.data.INPUT_ROW_HEIGHT
-import com.example.cahier.developer.brushgraph.data.NODE_PADDING_BOTTOM
-import com.example.cahier.developer.brushgraph.data.NODE_PADDING_VERTICAL
-import com.example.cahier.developer.brushgraph.data.NODE_WIDTH
+import com.example.cahier.developer.brushgraph.ui.INPUT_ROW_HEIGHT
+import com.example.cahier.developer.brushgraph.ui.NODE_PADDING_BOTTOM
+import com.example.cahier.developer.brushgraph.ui.NODE_PADDING_VERTICAL
+import com.example.cahier.developer.brushgraph.ui.NODE_WIDTH
+import com.example.cahier.developer.brushgraph.ui.width
+import com.example.cahier.developer.brushgraph.ui.height
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.Port
 import com.example.cahier.developer.brushgraph.data.PortSide
@@ -74,6 +76,7 @@ import kotlin.math.roundToInt
 @Composable
 fun NodeWidget(
   node: GraphNode,
+  position: Offset,
   graph: BrushGraph,
   isActiveSource: Boolean,
   zoom: Float,
@@ -91,7 +94,6 @@ fun NodeWidget(
   getPortPosition: (String, Boolean) -> Offset,
   onPortPositioned: (String, Offset) -> Unit,
   onClearNodeCache: () -> Unit,
-  onUpdateNodeSize: (androidx.compose.ui.geometry.Size) -> Unit,
   canvasCoordinates: LayoutCoordinates? = null,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   allTextureIds: Set<String>,
@@ -126,24 +128,7 @@ fun NodeWidget(
   Box(
     modifier =
       Modifier.zIndex(if (isSelected) 1f else 0f)
-        .offset { IntOffset(node.position.x.roundToInt(), node.position.y.roundToInt()) }
-        .onGloballyPositioned { coordinates ->
-          if (canvasCoordinates != null && coordinates.isAttached) {
-            val size = coordinates.size
-            val topLeft = canvasCoordinates.localPositionOf(coordinates, Offset.Zero)
-            val bottomRight =
-              canvasCoordinates.localPositionOf(
-                coordinates,
-                Offset(size.width.toFloat(), size.height.toFloat()),
-              )
-            onUpdateNodeSize(
-              androidx.compose.ui.geometry.Size(
-                bottomRight.x - topLeft.x,
-                bottomRight.y - topLeft.y,
-              )
-            )
-          }
-        }
+        .offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }
         .pointerInput(node.id, isSelected, isSelectionMode) {
           detectTapGestures(
             onPress = {
@@ -254,6 +239,7 @@ fun NodeWidget(
 
         NodePortDots(
           node = node,
+          position = position,
           graph = graph,
           visiblePorts = visiblePorts,
           zoom = zoom,

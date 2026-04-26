@@ -32,8 +32,6 @@ import androidx.compose.ui.zIndex
 import com.example.cahier.developer.brushgraph.viewmodel.BrushGraphViewModel
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import android.util.Log
 

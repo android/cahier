@@ -94,19 +94,19 @@ import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.GraphPoint
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
+import com.example.cahier.developer.brushgraph.ui.INSPECTOR_HEIGHT_PORTRAIT
+import com.example.cahier.developer.brushgraph.ui.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.getVisiblePorts
 import com.example.cahier.developer.brushgraph.ui.getTooltip
 import com.example.cahier.developer.brushgraph.data.inferNodeData
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_COLLAPSED
+import com.example.cahier.developer.brushgraph.ui.PREVIEW_HEIGHT_COLLAPSED
 import kotlinx.coroutines.launch
 import com.example.cahier.core.ui.theme.CahierAppTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.animation.core.VectorConverter
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_EXPANDED
+import com.example.cahier.developer.brushgraph.ui.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.developer.brushgraph.data.TutorialAction
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.core.ui.CahierTextureBitmapStore
@@ -297,6 +297,18 @@ fun BrushGraphScreen(
       val nodeRegistry = remember { NodeRegistry() }
       val issues = uiState.graphIssues
 
+      LaunchedEffect(uiState.graph) {
+        val missingNodes = uiState.graph.nodes.filter { nodeRegistry.getNodePosition(it.id) == null }
+        if (missingNodes.isNotEmpty()) {
+          val layout = GraphLayout.calculateLayout(uiState.graph)
+          layout.forEach { (id, pos) ->
+            if (nodeRegistry.getNodePosition(id) == null) {
+              nodeRegistry.updateNodePosition(id, pos)
+            }
+          }
+        }
+      }
+
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         BrushGraphContent(
           isLandscape = isLandscape,
@@ -313,7 +325,6 @@ fun BrushGraphScreen(
               offset = Offset(uiState.offset.x, uiState.offset.y),
               onZoomChange = { viewModel.updateZoom(it) },
               onOffsetChange = { viewModel.updateOffset(GraphPoint(it.x, it.y)) },
-              onNodeMove = { id, pos -> viewModel.moveNode(id, GraphPoint(pos.x, pos.y)) },
               onNodeMoveFinished = { viewModel.advanceTutorial(TutorialAction.MOVE_NODE) },
               onNodeClick = { id, _ ->
                 if (uiState.isSelectionMode) {
@@ -341,9 +352,11 @@ fun BrushGraphScreen(
                 val nodeData = node?.let { port.inferNodeData(it) }
                 if (nodeData != null) {
                   val portPos = nodeRegistry.getPortPosition(nodeId, port.id, uiState.graph)
-                  val newX = node.position.x - nodeData.width() - 100f
+                  val nodePos = nodeRegistry.getNodePosition(nodeId) ?: Offset.Zero
+                  val newX = nodePos.x - nodeData.width() - 100f
                   val newY = portPos.y - nodeData.height() / 2f
-                  viewModel.addNodeAndConnect(nodeData, GraphPoint(newX, newY), nodeId, port.id)
+                  val newNodeId = viewModel.addNodeAndConnect(nodeData, nodeId, port.id)
+                  nodeRegistry.updateNodePosition(newNodeId, Offset(newX, newY))
                 }
               },
               onReorderPorts = { nodeId, fromIndex, toIndex -> viewModel.reorderPorts(nodeId, fromIndex, toIndex) },
@@ -422,7 +435,15 @@ fun BrushGraphScreen(
                       onNodeFocus = { nodeId: String -> viewModel.centerNode(nodeId) },
                       onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
                       onDelete = { viewModel.deleteEdge(selectedEdge) },
-                      onAddNodeBetween = { viewModel.addNodeBetween(selectedEdge) },
+                      onAddNodeBetween = {
+                        val fromNodePos = nodeRegistry.getNodePosition(selectedEdge.fromNodeId) ?: Offset.Zero
+                        val toNodePos = nodeRegistry.getNodePosition(selectedEdge.toNodeId) ?: Offset.Zero
+                        val midpoint = (fromNodePos + toNodePos) / 2f
+                        val newNodeId = viewModel.addNodeBetween(selectedEdge)
+                        if (newNodeId != null) {
+                          nodeRegistry.updateNodePosition(newNodeId, midpoint)
+                        }
+                      },
                     )
                   }
                 }
@@ -508,8 +529,7 @@ fun BrushGraphScreen(
               }
 
             val visibleCenter = Offset(visibleWidth / 2f, visibleHeight / 2f)
-            val centerInCanvasOffset = (visibleCenter - Offset(uiState.offset.x, uiState.offset.y)) / uiState.zoom
-            val centerInCanvas = GraphPoint(centerInCanvasOffset.x, centerInCanvasOffset.y)
+            val centerInCanvas = (visibleCenter - Offset(uiState.offset.x, uiState.offset.y)) / uiState.zoom
 
             CreateNodeSpeedDial(
               isLandscape = isLandscape,
@@ -526,12 +546,30 @@ fun BrushGraphScreen(
 
                 val actions = remember(centerInCanvas) {
                   listOf(
-                    SpeedDialAction(R.string.bg_coat, Icons.Default.Layers) { viewModel.addCoatNode(centerInCanvas) },
-                    SpeedDialAction(R.string.bg_paint, Icons.Default.Palette) { viewModel.addPaintNode(centerInCanvas) },
-                    SpeedDialAction(R.string.bg_tip, Icons.Default.ShapeLine) { viewModel.addTipNode(centerInCanvas) },
-                    SpeedDialAction(R.string.bg_behavior, Icons.Default.Psychology) { viewModel.addBehaviorNode(centerInCanvas) },
-                    SpeedDialAction(R.string.bg_color_function, Icons.Default.Palette) { viewModel.addColorFunctionNode(centerInCanvas) },
-                    SpeedDialAction(R.string.bg_texture_layer, Icons.Default.Layers) { viewModel.addTextureLayerNode(centerInCanvas) },
+                    SpeedDialAction(R.string.bg_coat, Icons.Default.Layers) { 
+                      val id = viewModel.addCoatNode()
+                      nodeRegistry.updateNodePosition(id, centerInCanvas)
+                    },
+                    SpeedDialAction(R.string.bg_paint, Icons.Default.Palette) { 
+                      val id = viewModel.addPaintNode()
+                      nodeRegistry.updateNodePosition(id, centerInCanvas)
+                    },
+                    SpeedDialAction(R.string.bg_tip, Icons.Default.ShapeLine) { 
+                      val id = viewModel.addTipNode()
+                      nodeRegistry.updateNodePosition(id, centerInCanvas)
+                    },
+                    SpeedDialAction(R.string.bg_behavior, Icons.Default.Psychology) { 
+                      val id = viewModel.addBehaviorNode()
+                      nodeRegistry.updateNodePosition(id, centerInCanvas)
+                    },
+                    SpeedDialAction(R.string.bg_color_function, Icons.Default.Palette) { 
+                      val id = viewModel.addColorFunctionNode()
+                      nodeRegistry.updateNodePosition(id, centerInCanvas)
+                    },
+                    SpeedDialAction(R.string.bg_texture_layer, Icons.Default.Layers) { 
+                      val id = viewModel.addTextureLayerNode()
+                      nodeRegistry.updateNodePosition(id, centerInCanvas)
+                    },
                   )
                 }
 
@@ -562,7 +600,8 @@ fun BrushGraphScreen(
               isPreviewExpanded = uiState.isPreviewExpanded,
               onAdvanceTutorial = { viewModel.advanceTutorial(it) },
               onRegressTutorial = { viewModel.regressTutorial() },
-              onCloseTutorial = { showTutorialFinishDialog = true }
+              onCloseTutorial = { showTutorialFinishDialog = true },
+              nodeRegistry = nodeRegistry
             )
           },
           dialogSlot = {
@@ -594,7 +633,8 @@ fun BrushGraphScreen(
         viewportSize = viewportSize,
         context = context,
         isLandscape = isLandscape,
-        maxWidthDp = maxWidth
+        maxWidthDp = maxWidth,
+        nodeRegistry = nodeRegistry
       )
     }
   }

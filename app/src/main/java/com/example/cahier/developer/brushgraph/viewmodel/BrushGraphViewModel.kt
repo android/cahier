@@ -216,9 +216,9 @@ class BrushGraphViewModel @Inject constructor(
     repository.postDebug(text)
   }
 
-  fun addNode(data: NodeData, position: GraphPoint) {
+  fun addNode(data: NodeData): String {
     dismissPanes()
-    val newNodeId = repository.addNode(data, position)
+    val newNodeId = repository.addNode(data)
     _uiState.update { it.copy(selectedNodeId = newNodeId) }
     validate()
     
@@ -227,34 +227,35 @@ class BrushGraphViewModel @Inject constructor(
     } else if (data is NodeData.ColorFunction) {
       advanceTutorial(TutorialAction.ADD_COLOR)
     }
+    return newNodeId
   }
 
-  fun addFamilyNode(position: GraphPoint) {
-    addNode(NodeData.Family(), position)
+  fun addFamilyNode(): String {
+    return addNode(NodeData.Family())
   }
 
-  fun addCoatNode(position: GraphPoint) {
-    addNode(NodeData.Coat(), position)
+  fun addCoatNode(): String {
+    return addNode(NodeData.Coat())
   }
 
-  fun addPaintNode(position: GraphPoint) {
-    addNode(NodeData.Paint(ProtoBrushPaint.getDefaultInstance()), position)
+  fun addPaintNode(): String {
+    return addNode(NodeData.Paint(ProtoBrushPaint.getDefaultInstance()))
   }
 
-  fun addTipNode(position: GraphPoint) {
-    addNode(NodeData.Tip(ProtoBrushTip.getDefaultInstance()), position)
+  fun addTipNode(): String {
+    return addNode(NodeData.Tip(ProtoBrushTip.getDefaultInstance()))
   }
 
-  fun addColorFunctionNode(position: GraphPoint) {
-    addNode(NodeData.ColorFunction(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()), position)
+  fun addColorFunctionNode(): String {
+    return addNode(NodeData.ColorFunction(ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()))
   }
 
-  fun addTextureLayerNode(position: GraphPoint) {
-    addNode(NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()), position)
+  fun addTextureLayerNode(): String {
+    return addNode(NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()))
   }
 
-  fun addBehaviorNode(position: GraphPoint) {
-    addNode(
+  fun addBehaviorNode(): String {
+    return addNode(
       NodeData.Behavior(
         ProtoBrushBehavior.Node.newBuilder()
           .setTargetNode(
@@ -264,22 +265,8 @@ class BrushGraphViewModel @Inject constructor(
               .setTargetModifierRangeEnd(1f)
           )
           .build()
-      ),
-      position,
+      )
     )
-  }
-
-  fun moveNode(nodeId: String, newPosition: GraphPoint) {
-    val node = uiState.value.graph.nodes.find { it.id == nodeId } ?: return
-    
-    if (uiState.value.isSelectionMode && uiState.value.selectedNodeIds.contains(nodeId)) {
-      val deltaX = newPosition.x - node.position.x
-      val deltaY = newPosition.y - node.position.y
-      repository.moveNodes(uiState.value.selectedNodeIds, deltaX, deltaY)
-    } else {
-      repository.moveNode(nodeId, newPosition)
-    }
-    
   }
 
   fun enterSelectionMode(initialNodeId: String? = null) {
@@ -428,8 +415,8 @@ class BrushGraphViewModel @Inject constructor(
     _uiState.update { it.copy(isDarkCanvas = !it.isDarkCanvas) }
   }
 
-  fun addNodeAndConnect(nodeData: NodeData, position: GraphPoint, targetNodeId: String, targetPortId: String) {
-    val newNodeId = repository.addNode(nodeData, position)
+  fun addNodeAndConnect(nodeData: NodeData, targetNodeId: String, targetPortId: String): String {
+    val newNodeId = repository.addNode(nodeData)
     
     addEdge(newNodeId, targetNodeId, targetPortId)
 
@@ -438,6 +425,7 @@ class BrushGraphViewModel @Inject constructor(
     } else if (nodeData is NodeData.ColorFunction) {
       advanceTutorial(TutorialAction.ADD_COLOR)
     }
+    return newNodeId
   }
 
   /** Adds a new edge between two nodes. */
@@ -492,7 +480,7 @@ class BrushGraphViewModel @Inject constructor(
     val modifiedNodeIds = repository.deleteEdge(edge)
   }
 
-  fun addNodeBetween(edge: GraphEdge) {
+  fun addNodeBetween(edge: GraphEdge): String? {
     dismissPanes()
     val newNodeId = repository.addNodeBetween(edge)
     if (newNodeId != null) {
@@ -500,6 +488,7 @@ class BrushGraphViewModel @Inject constructor(
     }
     
     advanceTutorial(TutorialAction.ADD_NODE_BETWEEN)
+    return newNodeId
   }
 
   fun clearGraph() {

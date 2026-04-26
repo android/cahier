@@ -133,29 +133,11 @@ class BrushGraphRepository @Inject constructor(
     }
   }
 
-  fun addNode(data: NodeData, position: GraphPoint): String {
-    val newNode = GraphNode(id = UUID.randomUUID().toString(), data = data, position = position)
+  fun addNode(data: NodeData): String {
+    val newNode = GraphNode(id = UUID.randomUUID().toString(), data = data)
     _graph.update { it.copy(nodes = it.nodes + newNode) }
     validate()
     return newNode.id
-  }
-
-  fun moveNode(nodeId: String, newPosition: GraphPoint) {
-    _graph.update { currentGraph ->
-      currentGraph.copy(
-        nodes = currentGraph.nodes.map { if (it.id == nodeId) it.copy(position = newPosition) else it }
-      )
-    }
-  }
-
-  fun moveNodes(nodeIds: Set<String>, deltaX: Float, deltaY: Float) {
-    _graph.update { currentGraph ->
-      currentGraph.copy(
-        nodes = currentGraph.nodes.map {
-          if (nodeIds.contains(it.id)) it.copy(position = GraphPoint(it.position.x + deltaX, it.position.y + deltaY)) else it
-        }
-      )
-    }
   }
 
   fun addEdge(fromNodeId: String, toNodeId: String, initialToPortId: String) {
@@ -515,10 +497,6 @@ class BrushGraphRepository @Inject constructor(
             )
             .build(),
           inputPortIds = listOf(newPortId)
-        ),
-        position = GraphPoint(
-          (fromNode.position.x + toNode.position.x) / 2f,
-          (fromNode.position.y + toNode.position.y) / 2f
         )
       )
       
@@ -582,8 +560,7 @@ class BrushGraphRepository @Inject constructor(
       
       val newNodes = nodesToDuplicate.map { node ->
         node.copy(
-          id = idMap[node.id]!!,
-          position = GraphPoint(node.position.x + 50f, node.position.y + 50f)
+          id = idMap[node.id]!!
         )
       }
       

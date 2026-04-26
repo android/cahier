@@ -31,28 +31,12 @@ fun ProtoBrushFamily.toBrushFamily(): BrushFamily {
   }
 }
 
-const val PORT_TEXT_SIZE_SP = 14
-
-const val NODE_WIDTH = 300f
-const val NODE_PADDING_VERTICAL = 8f
-const val NODE_PADDING_BOTTOM = 12f
-const val TITLE_AREA_HEIGHT = 64f
-const val SUBTITLE_LINE_HEIGHT = 32f
-const val PREVIEW_AREA_HEIGHT = 64f
-const val INPUT_ROW_HEIGHT = 60f
-
-const val INSPECTOR_WIDTH_LANDSCAPE = 320f
-const val INSPECTOR_HEIGHT_PORTRAIT = 400f
-const val PREVIEW_HEIGHT_EXPANDED = 200f
-const val PREVIEW_HEIGHT_COLLAPSED = 40f
-
 data class GraphPoint(val x: Float, val y: Float)
 
 /** Representation of a single node in the brush behavior graph. */
 data class GraphNode(
   val id: String = UUID.randomUUID().toString(),
   val data: NodeData,
-  val position: GraphPoint,
   val isExpanded: Boolean = false,
   val hasError: Boolean = false,
   val hasWarning: Boolean = false,
@@ -75,39 +59,6 @@ sealed interface NodeData {
 
   /** Subtitle for additional context, if any. */
   fun subtitles(): List<DisplayText> = emptyList()
-
-  /**
-   * Total estimated width of the node on the canvas. The actual width may differ slightly due to
-   * padding.
-   */
-  fun width(): Float = NODE_WIDTH
-
-  /**
-   * Total estimated height of the node on the canvas. The actual height may differ slightly due to
-   * padding.
-   */
-  fun height(portCount: Int = inputLabels().size): Float {
-    val previewH = if (this is NodeData.ColorFunction || this is NodeData.TextureLayer) PREVIEW_AREA_HEIGHT else 0f
-    return NODE_PADDING_VERTICAL +
-      titleHeight() +
-      previewH +
-      maxOf(portCount, 1) * INPUT_ROW_HEIGHT +
-      NODE_PADDING_BOTTOM
-  }
-
-  fun titleHeight(): Float {
-    val subs = subtitles()
-    val subtitleHeight = subs.size * SUBTITLE_LINE_HEIGHT
-    if (subtitleHeight > 0f) {
-      return TITLE_AREA_HEIGHT + subtitleHeight
-    }
-    if (this is NodeData.Tip || this is NodeData.Coat) {
-      return TITLE_AREA_HEIGHT + PREVIEW_AREA_HEIGHT
-    }
-    return TITLE_AREA_HEIGHT
-  }
-
-
 
   /** Wraps a [ProtoBrushTip]. */
   data class Tip(
@@ -387,8 +338,6 @@ sealed interface NodeData {
 
     override fun subtitles() = listOf(DisplayText.Literal(clientBrushFamilyId))
 
-    override fun width() = 3 * NODE_WIDTH
-
     override fun hasOutput() = false
 
     override fun getVisiblePorts(nodeId: String, graph: BrushGraph): List<Port> {
@@ -408,25 +357,6 @@ enum class PortSide {
   OUTPUT,
 }
 
-/** The severity of a validation issue. */
-enum class ValidationSeverity {
-  ERROR,
-  WARNING,
-  DEBUG,
-}
-
-/** Exception thrown when the brush graph fails validation. */
-data class GraphValidationException(
-  val displayMessage: DisplayText,
-  val nodeId: String? = null,
-  val severity: ValidationSeverity = ValidationSeverity.ERROR,
-) : IllegalStateException(
-    when (displayMessage) {
-        is DisplayText.Literal -> displayMessage.text
-        is DisplayText.Resource -> "Resource ${displayMessage.resId}"
-    }
-)
-
 /** Represents a connection between two nodes. */
 data class GraphEdge(
     val fromNodeId: String,
@@ -439,115 +369,7 @@ data class GraphEdge(
 data class BrushGraph(
   val nodes: List<GraphNode> = emptyList(),
   val edges: List<GraphEdge> = emptyList(),
-) {
-  companion object {
-    /** Returns a failure message when a connection from [from] to [to] at [toPortId] is invalid. */
-    fun isValidConnection(from: GraphNode, to: GraphNode, toPortId: String, graph: BrushGraph = BrushGraph()): DisplayText? {
-      val fromData = from.data
-      val toData = to.data
-      val fromIsStructural =
-        fromData is NodeData.Tip ||
-          fromData is NodeData.Coat ||
-          fromData is NodeData.Paint ||
-          fromData is NodeData.TextureLayer ||
-          fromData is NodeData.ColorFunction ||
-          fromData is NodeData.Family
-      val toIsStructural =
-        toData is NodeData.Tip ||
-          toData is NodeData.Coat ||
-          toData is NodeData.Paint ||
-          toData is NodeData.TextureLayer ||
-          toData is NodeData.ColorFunction ||
-          toData is NodeData.Family
-
-      val toPort = to.getVisiblePorts(graph).find { it.id == toPortId }
-
-      return when (toData) {
-        is NodeData.Coat -> {
-          val coatData = toData
-          if (toPortId == coatData.tipPortId) {
-            if (fromData is NodeData.Tip) {
-              null
-            } else {
-              DisplayText.Resource(R.string.bg_err_coat_only_accepts_tip)
-            }
-          } else if (coatData.paintPortIds.contains(toPortId) || toPort is Port.AddPaint) {
-            if (fromData is NodeData.Paint) {
-              null
-            } else {
-              DisplayText.Resource(R.string.bg_err_coat_only_accepts_paint)
-            }
-          } else {
-            DisplayText.Resource(R.string.bg_err_invalid_port_coat)
-          }
-        }
-        is NodeData.Family -> {
-          val familyData = toData
-          if (familyData.coatPortIds.contains(toPortId) || toPort is Port.AddCoat) {
-            if (fromData is NodeData.Coat) {
-              null
-            } else {
-              DisplayText.Resource(R.string.bg_err_family_only_accepts_coat)
-            }
-          } else {
-            DisplayText.Resource(R.string.bg_err_invalid_port_family)
-          }
-        }
-        is NodeData.Tip -> {
-          if (
-            !(fromData is NodeData.Behavior) ||
-              (fromData.node.nodeCase != ProtoBrushBehavior.Node.NodeCase.TARGET_NODE &&
-                fromData.node.nodeCase != ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE)
-          ) {
-            DisplayText.Resource(R.string.bg_err_tip_only_accepts_target)
-          } else {
-            null
-          }
-        }
-        is NodeData.Paint -> {
-            if (toData.texturePortIds.contains(toPortId) || toPort is Port.AddTexture) {
-                if (fromData is NodeData.TextureLayer) {
-                  null
-                } else {
-                  DisplayText.Resource(R.string.bg_err_paint_only_accepts_texture)
-                }
-            } else if (toData.colorPortIds.contains(toPortId) || toPort is Port.AddColor) {
-                if (fromData is NodeData.ColorFunction) {
-                  null
-                } else {
-                  DisplayText.Resource(R.string.bg_err_paint_only_accepts_color)
-                }
-            } else {
-                DisplayText.Resource(R.string.bg_err_invalid_port_paint)
-            }
-        }
-        is NodeData.TextureLayer -> DisplayText.Resource(R.string.bg_err_texture_cannot_accept_inputs)
-        is NodeData.ColorFunction -> DisplayText.Resource(R.string.bg_err_color_cannot_accept_inputs)
-        else -> {
-          // 'to' is a behavior node.
-          if (
-            fromData is NodeData.Behavior &&
-              (fromData.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.TARGET_NODE ||
-                fromData.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE)
-          ) {
-            // Targets can only connect to Tip.
-            DisplayText.Resource(
-              R.string.bg_err_behavior_cannot_accept,
-              listOf(DisplayText.Resource(toData.title()), DisplayText.Resource(fromData.title()))
-            )
-          } else if (!fromIsStructural && !toIsStructural) {
-            null
-          } else {
-            DisplayText.Resource(
-              R.string.bg_err_behavior_cannot_accept_structural,
-              listOf(DisplayText.Resource(toData.title()), DisplayText.Resource(fromData.title()))
-            )
-          }
-        }
-      }
-    }
-  }
-}
+)
 
 sealed class Port(
     val nodeId: String,
@@ -754,5 +576,3 @@ fun NodeData.isPortReorderable(port: Port, index: Int, hasAddPort: Boolean): Boo
     else -> true
   }
 }
-
-

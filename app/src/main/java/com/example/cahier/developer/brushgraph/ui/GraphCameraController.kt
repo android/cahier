@@ -14,12 +14,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Dp
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_COLLAPSED
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.developer.brushgraph.data.TutorialAnchor
 import com.example.cahier.developer.brushgraph.data.TutorialStep
+import com.example.cahier.developer.brushgraph.ui.node.NodeRegistry
 
 @Composable
 fun GraphCameraController(
@@ -34,7 +31,8 @@ fun GraphCameraController(
   viewportSize: Size,
   context: Context,
   isLandscape: Boolean,
-  maxWidthDp: Dp
+  maxWidthDp: Dp,
+  nodeRegistry: NodeRegistry
 ) {
   val animatableOffset = remember { Animatable(offset, Offset.VectorConverter) }
 
@@ -50,6 +48,7 @@ fun GraphCameraController(
         
         val newOffset = calculateFocusOffset(
           node = node,
+          position = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero,
           zoom = zoom,
           targetScreenPos = Offset(targetX, targetY)
         )
@@ -71,6 +70,7 @@ fun GraphCameraController(
           val density = context.resources.displayMetrics.density
           val newOffset = calculateFocusOffset(
             node = node,
+            position = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero,
             zoom = zoom,
             viewportSize = viewportSize,
             density = density,
@@ -89,6 +89,7 @@ fun GraphCameraController(
 
 private fun calculateFocusOffset(
   node: GraphNode,
+  position: Offset,
   zoom: Float,
   viewportSize: Size = Size.Zero,
   density: Float = 1f,
@@ -96,8 +97,8 @@ private fun calculateFocusOffset(
   isPreviewExpanded: Boolean = false,
   targetScreenPos: Offset? = null
 ): Offset {
-  val nodeCenterX = node.position.x + node.data.width() / 2f
-  val nodeCenterY = node.position.y + node.data.height() / 2f
+  val nodeCenterX = position.x + node.data.width() / 2f
+  val nodeCenterY = position.y + node.data.height() / 2f
 
   val targetPos = if (targetScreenPos != null) {
     Pair(targetScreenPos.x, targetScreenPos.y)

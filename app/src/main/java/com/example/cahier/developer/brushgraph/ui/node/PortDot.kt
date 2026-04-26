@@ -39,6 +39,7 @@ import androidx.compose.ui.zIndex
 import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.Port
 import com.example.cahier.developer.brushgraph.data.PortSide
+import com.example.cahier.developer.brushgraph.ui.INPUT_ROW_HEIGHT
 import kotlin.math.roundToInt
 
 @Composable
@@ -141,7 +142,7 @@ fun PortDot(
 
       // Reorder Handle (Right Half)
       if (isReorderable) {
-        val handleHeight = if (isLargeHandle) with(density) { (com.example.cahier.developer.brushgraph.data.INPUT_ROW_HEIGHT * 2).toDp() } else 32.dp
+        val handleHeight = if (isLargeHandle) with(density) { (INPUT_ROW_HEIGHT * 2).toDp() } else 32.dp
         Box(
           modifier = Modifier
             .align(Alignment.CenterEnd)

@@ -50,8 +50,6 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.developer.brushgraph.viewmodel.BrushGraphViewModel
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_COLLAPSED
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.developer.brushgraph.data.TutorialAction
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R

@@ -9,18 +9,28 @@ import com.example.cahier.developer.brushgraph.data.PortSide
 import com.example.cahier.developer.brushgraph.data.Port
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.getVisiblePorts
-import com.example.cahier.developer.brushgraph.data.NODE_PADDING_VERTICAL
-import com.example.cahier.developer.brushgraph.data.INPUT_ROW_HEIGHT
+import com.example.cahier.developer.brushgraph.ui.NODE_PADDING_VERTICAL
+import com.example.cahier.developer.brushgraph.ui.INPUT_ROW_HEIGHT
+import com.example.cahier.developer.brushgraph.ui.width
+import com.example.cahier.developer.brushgraph.ui.titleHeight
 
 /** Registry to track the actual position of ports and sizes of nodes on the screen. */
 data class PortKey(val nodeId: String, val portId: String)
 
 class NodeRegistry {
   private val portPositions = mutableStateMapOf<PortKey, Offset>()
-  private val nodeSizes = mutableStateMapOf<String, Size>()
+  private val nodePositions = mutableStateMapOf<String, Offset>()
 
   fun updatePort(nodeId: String, portId: String, position: Offset) {
     portPositions[PortKey(nodeId, portId)] = position
+  }
+
+  fun updateNodePosition(nodeId: String, position: Offset) {
+    nodePositions[nodeId] = position
+  }
+
+  fun getNodePosition(nodeId: String): Offset? {
+    return nodePositions[nodeId]
   }
 
   fun getPortPosition(nodeId: String, portId: String, graph: BrushGraph, useFallbackOnly: Boolean = false): Offset {
@@ -30,10 +40,11 @@ class NodeRegistry {
     val node = graph.nodes.find { it.id == nodeId } ?: return Offset.Zero
     
     // Special handling for output port which is not in visiblePorts
+    val nodePos = nodePositions[nodeId] ?: Offset.Zero
     if (portId == "output") {
       val w = node.data.width()
       val yOffset = NODE_PADDING_VERTICAL + node.data.titleHeight() + 0.5f * INPUT_ROW_HEIGHT
-      return Offset(node.position.x + w, node.position.y + yOffset)
+      return Offset(nodePos.x + w, nodePos.y + yOffset)
     }
     
     val visiblePorts = node.getVisiblePorts(graph)
@@ -51,16 +62,8 @@ class NodeRegistry {
         PortSide.OUTPUT -> Offset(w, yOffset)
     }
     
-    val nodeOffset = Offset(node.position.x, node.position.y)
+    val nodeOffset = nodePos
     return nodeOffset + relativeOffset
-  }
-
-  fun updateNodeSize(nodeId: String, size: Size) {
-    nodeSizes[nodeId] = size
-  }
-
-  fun getNodeSize(nodeId: String): Size? {
-    return nodeSizes[nodeId]
   }
 
   fun findNearestPort(pos: Offset, fromNodeId: String, graph: BrushGraph): Port? {
@@ -101,11 +104,11 @@ class NodeRegistry {
   fun clearNode(nodeId: String) {
     val keysToRemove = portPositions.keys.filter { it.nodeId == nodeId }
     keysToRemove.forEach { portPositions.remove(it) }
-    nodeSizes.remove(nodeId)
+    nodePositions.remove(nodeId)
   }
 
   fun clear() {
     portPositions.clear()
-    nodeSizes.clear()
+    nodePositions.clear()
   }
 }

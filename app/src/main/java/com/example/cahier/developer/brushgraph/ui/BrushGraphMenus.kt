@@ -69,10 +69,6 @@ import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.features.drawing.CustomBrushes
 import com.example.cahier.developer.brushgraph.viewmodel.BrushGraphViewModel
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_COLLAPSED
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_EXPANDED
 
 @Composable
 fun MoreOptionsMenu(

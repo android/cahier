@@ -20,13 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphEdge
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_COLLAPSED
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.developer.brushgraph.data.TutorialAction
 import com.example.cahier.developer.brushgraph.data.TutorialAnchor
 import com.example.cahier.developer.brushgraph.data.TutorialStep
+import com.example.cahier.developer.brushgraph.ui.node.NodeRegistry
 
 @Composable
 fun BoxScope.TutorialOverlayHost(
@@ -43,6 +40,7 @@ fun BoxScope.TutorialOverlayHost(
   onAdvanceTutorial: (TutorialAction) -> Unit,
   onRegressTutorial: () -> Unit,
   onCloseTutorial: () -> Unit,
+  nodeRegistry: NodeRegistry,
   modifier: Modifier = Modifier
 ) {
   tutorialStep?.let { step ->
@@ -68,8 +66,9 @@ fun BoxScope.TutorialOverlayHost(
       TutorialAnchor.NODE_CANVAS -> {
         val node = step.getTargetNode(graph)
         if (node != null) {
-          val nodeCenterX = node.position.x + node.data.width() / 2f
-          val nodeTopY = node.position.y
+          val nodePos = nodeRegistry.getNodePosition(node.id) ?: androidx.compose.ui.geometry.Offset.Zero
+          val nodeCenterX = nodePos.x + node.data.width() / 2f
+          val nodeTopY = nodePos.y
           
           val screenX = nodeCenterX * zoom + offset.x
           val screenY = nodeTopY * zoom + offset.y

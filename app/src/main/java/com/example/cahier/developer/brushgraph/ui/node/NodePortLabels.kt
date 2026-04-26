@@ -30,7 +30,7 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.ui.asString
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
-import com.example.cahier.developer.brushgraph.data.INPUT_ROW_HEIGHT
+import com.example.cahier.developer.brushgraph.ui.INPUT_ROW_HEIGHT
 import com.example.cahier.developer.brushgraph.data.Port
 
 @Composable

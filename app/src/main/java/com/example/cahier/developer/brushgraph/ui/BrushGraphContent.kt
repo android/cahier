@@ -16,10 +16,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_HEIGHT_PORTRAIT
-import com.example.cahier.developer.brushgraph.data.INSPECTOR_WIDTH_LANDSCAPE
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_COLLAPSED
-import com.example.cahier.developer.brushgraph.data.PREVIEW_HEIGHT_EXPANDED
 
 @Composable
 fun BrushGraphContent(

@@ -3,13 +3,30 @@ package com.example.cahier.developer.brushgraph.data
 import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
-import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.DisplayText
-import com.example.cahier.developer.brushgraph.data.ValidationSeverity
 import com.example.cahier.developer.brushgraph.data.getVisiblePorts
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushPaint as ProtoBrushPaint
+
+/** The severity of a validation issue. */
+enum class ValidationSeverity {
+  ERROR,
+  WARNING,
+  DEBUG,
+}
+
+/** Exception thrown when the brush graph fails validation. */
+data class GraphValidationException(
+  val displayMessage: DisplayText,
+  val nodeId: String? = null,
+  val severity: ValidationSeverity = ValidationSeverity.ERROR,
+) : IllegalStateException(
+    when (displayMessage) {
+        is DisplayText.Literal -> displayMessage.text
+        is DisplayText.Resource -> "Resource ${displayMessage.resId}"
+    }
+)
 
 /** Utility to validate a [BrushGraph] for correctness. */
 object GraphValidator {
@@ -148,7 +165,7 @@ object GraphValidator {
             )
           } else {
             for (actualSourceNode in actualSources) {
-              BrushGraph.isValidConnection(actualSourceNode, node, edge.toPortId, graph)?.let { displayText ->
+              isValidConnection(actualSourceNode, node, edge.toPortId, graph)?.let { displayText ->
                 issues.add(
                   GraphValidationException(
                     displayMessage = DisplayText.Resource(R.string.bg_err_invalid_connection_detail, listOf(DisplayText.Resource(actualSourceNode.data.title()), DisplayText.Resource(node.data.title()), edge.toPortId, displayText)),
@@ -261,6 +278,112 @@ object GraphValidator {
     }
 
     return issues.distinctBy { (it.message ?: "") + (it.nodeId ?: "") + it.severity.name }
+  }
+
+  /** Returns a failure message when a connection from [from] to [to] at [toPortId] is invalid. */
+  fun isValidConnection(from: GraphNode, to: GraphNode, toPortId: String, graph: BrushGraph = BrushGraph()): DisplayText? {
+    val fromData = from.data
+    val toData = to.data
+    val fromIsStructural =
+      fromData is NodeData.Tip ||
+        fromData is NodeData.Coat ||
+        fromData is NodeData.Paint ||
+        fromData is NodeData.TextureLayer ||
+        fromData is NodeData.ColorFunction ||
+        fromData is NodeData.Family
+    val toIsStructural =
+      toData is NodeData.Tip ||
+        toData is NodeData.Coat ||
+        toData is NodeData.Paint ||
+        toData is NodeData.TextureLayer ||
+        toData is NodeData.ColorFunction ||
+        toData is NodeData.Family
+
+    val toPort = to.getVisiblePorts(graph).find { it.id == toPortId }
+
+    return when (toData) {
+      is NodeData.Coat -> {
+        val coatData = toData
+        if (toPortId == coatData.tipPortId) {
+          if (fromData is NodeData.Tip) {
+            null
+          } else {
+            DisplayText.Resource(R.string.bg_err_coat_only_accepts_tip)
+          }
+        } else if (coatData.paintPortIds.contains(toPortId) || toPort is Port.AddPaint) {
+          if (fromData is NodeData.Paint) {
+            null
+          } else {
+            DisplayText.Resource(R.string.bg_err_coat_only_accepts_paint)
+          }
+        } else {
+          DisplayText.Resource(R.string.bg_err_invalid_port_coat)
+        }
+      }
+      is NodeData.Family -> {
+        val familyData = toData
+        if (familyData.coatPortIds.contains(toPortId) || toPort is Port.AddCoat) {
+          if (fromData is NodeData.Coat) {
+            null
+          } else {
+            DisplayText.Resource(R.string.bg_err_family_only_accepts_coat)
+          }
+        } else {
+          DisplayText.Resource(R.string.bg_err_invalid_port_family)
+        }
+      }
+      is NodeData.Tip -> {
+        if (
+          !(fromData is NodeData.Behavior) ||
+            (fromData.node.nodeCase != ProtoBrushBehavior.Node.NodeCase.TARGET_NODE &&
+              fromData.node.nodeCase != ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE)
+        ) {
+          DisplayText.Resource(R.string.bg_err_tip_only_accepts_target)
+        } else {
+          null
+        }
+      }
+      is NodeData.Paint -> {
+          if (toData.texturePortIds.contains(toPortId) || toPort is Port.AddTexture) {
+              if (fromData is NodeData.TextureLayer) {
+                null
+              } else {
+                DisplayText.Resource(R.string.bg_err_paint_only_accepts_texture)
+              }
+          } else if (toData.colorPortIds.contains(toPortId) || toPort is Port.AddColor) {
+              if (fromData is NodeData.ColorFunction) {
+                null
+              } else {
+                DisplayText.Resource(R.string.bg_err_paint_only_accepts_color)
+              }
+          } else {
+              DisplayText.Resource(R.string.bg_err_invalid_port_paint)
+          }
+      }
+      is NodeData.TextureLayer -> DisplayText.Resource(R.string.bg_err_texture_cannot_accept_inputs)
+      is NodeData.ColorFunction -> DisplayText.Resource(R.string.bg_err_color_cannot_accept_inputs)
+      else -> {
+        // 'to' is a behavior node.
+        if (
+          fromData is NodeData.Behavior &&
+            (fromData.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.TARGET_NODE ||
+              fromData.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE)
+        ) {
+          // Targets can only connect to Tip.
+          DisplayText.Resource(
+            R.string.bg_err_behavior_cannot_accept,
+            listOf(DisplayText.Resource(toData.title()), DisplayText.Resource(fromData.title()))
+          )
+        } else if (!fromIsStructural && !toIsStructural) {
+          null
+        } else {
+          DisplayText.Resource(
+            R.string.bg_err_behavior_cannot_accept_structural,
+            listOf(DisplayText.Resource(toData.title()), DisplayText.Resource(fromData.title()))
+          )
+        }
+      }
+    }
   }
 
   private fun findActiveNodes(graph: BrushGraph): Set<String> {
