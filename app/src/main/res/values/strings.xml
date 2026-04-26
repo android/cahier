@@ -93,7 +93,7 @@
     <string name="brush_designer_import">Import</string>
     <string name="brush_designer_export">Export</string>
     <string name="brush_designer_more_options">More options</string>
-    <string name="brush_designer_save_dialog_title">Save to Cahier Palette</string>
+    <string name="brush_designer_save_dialog_title">Save to Palette</string>
     <string name="brush_designer_save_dialog_info">• This brush will appear in the main Cahier toolbox.\n• Large textures are stored in RAM. Avoid saving many texture-heavy brushes to prevent performance lag or memory issues.</string>
     <string name="brush_designer_brush_name">Brush Name</string>
     <string name="brush_designer_tab_tip_shape">Tip Shape</string>
@@ -280,7 +280,7 @@
     <string name="bg_menu_feedback">Feedback</string>
     <string name="bg_lock_text_fields">Lock text fields</string>
     <string name="bg_reorganize_graph">Reorganize Graph</string>
-    <string name="bg_reorganize_graph_confirmation">Are you sure you want to reorganize the graph? This will reset all node positions and expansion states. This action cannot be undone.</string>
+    <string name="bg_reorganize_graph_confirmation">Are you sure you want to reorganize the graph? This will reset all node positions, expansion states, and de-duplicate nodes. This action cannot be undone.</string>
     <string name="bg_select">Select</string>
     <string name="bg_export">Export</string>
     <string name="bg_import">Import</string>
