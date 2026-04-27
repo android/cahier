@@ -20,6 +20,7 @@ import android.util.Log
 import com.example.cahier.R
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
+import com.example.cahier.developer.brushdesigner.data.AUTOSAVE_KEY
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.BrushFamily
 import androidx.ink.storage.AndroidBrushFamilySerialization
@@ -30,6 +31,8 @@ import java.util.UUID
 import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.example.cahier.core.di.ApplicationScope
+import kotlinx.coroutines.CoroutineScope
 import kotlin.OptIn
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,12 +48,11 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
 class BrushGraphRepository @Inject constructor(
   private val customBrushDao: CustomBrushDao,
-  val textureStore: CahierTextureBitmapStore
+  val textureStore: CahierTextureBitmapStore,
+  @ApplicationScope private val scope: CoroutineScope
 ) {
   private val _graph = MutableStateFlow(createDefaultGraph())
   val graph: StateFlow<BrushGraph> = _graph.asStateFlow()
-
-  private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO)
   init {
     scope.launch {
       graph
@@ -61,7 +63,7 @@ class BrushGraphRepository @Inject constructor(
             val family = BrushFamilyConverter.convert(graph)
             val baos = ByteArrayOutputStream()
             AndroidBrushFamilySerialization.encode(family, baos, textureStore)
-            customBrushDao.saveCustomBrush(com.example.cahier.developer.brushdesigner.data.CustomBrushEntity("__autosave__", baos.toByteArray()))
+            customBrushDao.saveCustomBrush(com.example.cahier.developer.brushdesigner.data.CustomBrushEntity(AUTOSAVE_KEY, baos.toByteArray()))
           } catch (e: Exception) {
             android.util.Log.e("BrushGraphRepository", "Failed to auto-save brush", e)
           }
