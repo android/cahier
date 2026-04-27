@@ -42,7 +42,9 @@ import androidx.ink.geometry.MutableParallelogram
 import androidx.ink.geometry.MutableSegment
 import androidx.ink.geometry.MutableVec
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
+import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.decode
+import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -454,6 +456,28 @@ class DrawingCanvasViewModel @Inject constructor(
 
     fun getCurrentBrush(): Brush {
         return _selectedBrush.value
+    }
+
+    @OptIn(ExperimentalInkCustomBrushApi::class)
+    suspend fun saveCurrentBrushToAutosave() {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val stream = java.io.ByteArrayOutputStream()
+                val textureStore = CahierTextureBitmapStore(context)
+                AndroidBrushFamilySerialization.encode(
+                    _selectedBrush.value.family,
+                    stream,
+                    textureStore
+                )
+                val encodedBrushFamily = stream.toByteArray()
+                customBrushDao.saveCustomBrush(
+                    com.example.cahier.developer.brushdesigner.data.CustomBrushEntity("__autosave__", encodedBrushFamily)
+                )
+                Log.d(TAG, "Auto saved brush to database successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error auto saving brush to database", e)
+            }
+        }
     }
 
     @OptIn(ExperimentalInkCustomBrushApi::class)

@@ -58,6 +58,9 @@ fun CahierNavHost(
                 navigateToBrushDesigner = {
                     navController.navigate(BrushDesignerDestination.route)
                 },
+                navigateToBrushGraph = {
+                    navController.navigate(BrushGraphDestination.route)
+                },
 
                 )
         }
@@ -79,10 +82,16 @@ fun CahierNavHost(
         ) { navBackStackEntry ->
             DrawingCanvas(
                 navigateUp = { navController.navigateUp() },
+                navigateToBrushGraph = { navController.navigate(BrushGraphDestination.route) }
             )
         }
         composable(route = BrushDesignerDestination.route) {
             BrushDesignerScreen(
+                onNavigateUp = { navController.navigateUp() },
+            )
+        }
+        composable(route = BrushGraphDestination.route) {
+            com.example.cahier.developer.brushgraph.ui.BrushGraphScreen(
                 onNavigateUp = { navController.navigateUp() }
             )
         }
@@ -105,4 +114,8 @@ object DrawingCanvasDestination : NavigationDestination {
 
 object BrushDesignerDestination : NavigationDestination {
     override val route = "brush_designer"
+}
+
+object BrushGraphDestination : NavigationDestination {
+    override val route = "brush_graph"
 }

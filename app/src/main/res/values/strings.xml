@@ -89,11 +89,11 @@
     <string name="brush_designer_stock_brushes">Stock Brushes</string>
     <string name="brush_designer_my_palette">My Palette</string>
     <string name="brush_designer_no_saved_brushes">No saved brushes yet</string>
-    <string name="brush_designer_save_to_palette">Save to Palette</string>
+    <string name="brush_designer_save_to_palette">Save to Cahier Palette</string>
     <string name="brush_designer_import">Import</string>
     <string name="brush_designer_export">Export</string>
     <string name="brush_designer_more_options">More options</string>
-    <string name="brush_designer_save_dialog_title">Save to Cahier Palette</string>
+    <string name="brush_designer_save_dialog_title">Save to Palette</string>
     <string name="brush_designer_save_dialog_info">• This brush will appear in the main Cahier toolbox.\n• Large textures are stored in RAM. Avoid saving many texture-heavy brushes to prevent performance lag or memory issues.</string>
     <string name="brush_designer_brush_name">Brush Name</string>
     <string name="brush_designer_tab_tip_shape">Tip Shape</string>
@@ -1041,4 +1041,4 @@
     <!-- NodeFields Strings -->
     <string name="bg_label_window_size">Window Size (ms)</string>
     <string name="bg_label_upsampling_frequency">Upsampling Frequency (Hz)</string>
-    </resources>
+</resources>

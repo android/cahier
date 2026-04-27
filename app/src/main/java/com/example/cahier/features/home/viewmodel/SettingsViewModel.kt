@@ -48,6 +48,13 @@ class SettingsViewModel @Inject constructor(
     private val _isRoleHeld = MutableStateFlow(false)
     val isRoleHeld: StateFlow<Boolean> = _isRoleHeld.asStateFlow()
 
+    private val _isUsingGraphUi = MutableStateFlow(true)
+    val isUsingGraphUi: StateFlow<Boolean> = _isUsingGraphUi.asStateFlow()
+
+    fun setUsingGraphUi(isDefault: Boolean) {
+        _isUsingGraphUi.value = isDefault
+    }
+
     private val roleManager: RoleManager? by lazy {
         context.getSystemService(RoleManager::class.java)
     }
