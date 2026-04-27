@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
 
 package com.example.cahier.developer.brushgraph.data
@@ -15,7 +30,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import com.example.cahier.R
-import ink.proto.Color
+import ink.proto.Color as ProtoColor
 
 /**
  * Converts a [ProtoBrushFamily] into a functional [BrushFamily] object.
@@ -138,6 +153,7 @@ sealed interface NodeData {
       )
   }
 
+  /** Wraps a [ProtoBrushBehavior.Node] */
   data class Behavior(
     val node: ProtoBrushBehavior.Node,
     val developerComment: String = "",
@@ -284,7 +300,7 @@ sealed interface NodeData {
     }
   }
 
-  /** Represents a Brush Coat (structural). */
+  /** Represents a [ProtoBrushCoat]. */
   data class Coat(
     val tipPortId: String = "tip",
     val paintPortIds: List<String> = emptyList()
@@ -311,7 +327,7 @@ sealed interface NodeData {
     }
   }
 
-  /** Represents the Brush Family root (structural). */
+  /** Represents the [ProtoBrushFamily] root. */
   data class Family(
     val clientBrushFamilyId: String = "",
     val developerComment: String = "",
@@ -423,7 +439,6 @@ sealed class Port(
         Port(nodeId, id, label, isAddPort = true) {
         override val side = PortSide.INPUT
     }
-
 }
 
 fun GraphNode.getVisiblePorts(graph: BrushGraph): List<Port> {
@@ -496,6 +511,7 @@ fun preserveEdgesOnTypeChange(
     return Pair(finalNewData, finalEdges)
 }
 
+/** Based on [Port] subtype, create default [NodeData] to populate it. */
 fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
     is Port.AddCoat -> NodeData.Coat()
     is Port.AddTip -> NodeData.Tip(ProtoBrushTip.getDefaultInstance())
@@ -503,7 +519,7 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
     is Port.AddTexture -> NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance())
     is Port.AddColor -> NodeData.ColorFunction(ProtoColorFunction.newBuilder()
             .setReplaceColor(
-                    Color.newBuilder()
+                    ProtoColor.newBuilder()
                       .setRed(0f)
                       .setGreen(0f)
                       .setBlue(0f)
@@ -563,6 +579,7 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
     else -> null
 }
 
+/** Determines if a given [Port] can be reordered with drag handles in the UI. */
 fun NodeData.isPortReorderable(port: Port, index: Int, hasAddPort: Boolean): Boolean {
   return !port.isAddPort && hasAddPort && when (this) {
     is NodeData.Coat -> index != 0

@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 package com.example.cahier.developer.brushgraph.data
 
 import com.example.cahier.developer.brushgraph.data.BrushGraph
@@ -23,7 +38,7 @@ import org.junit.Test
 class BrushFamilyConverterTest {
 
     @Test
-    fun validateAll_ignoresDisabledNonOperatorNodes() {
+    fun validateAll_disabledNonOperatorNode_isIgnored() {
         val disabledNode = GraphNode(
             id = "target_node",
             data = NodeData.Behavior(
@@ -74,7 +89,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun validateAll_passThroughOperatorNode() {
+    fun validateAll_disabledOperatorNodeActsAsPassThrough_succeeds() {
         val sourceNode = GraphNode(
             id = "source",
             data = NodeData.Behavior(
@@ -148,7 +163,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun validateAll_passThroughMultiInputOperator_firstInput() {
+    fun validateAll_disabledMultiInputOperatorFirstInput_succeeds() {
         val sourceNode = GraphNode(
             id = "source",
             data = NodeData.Behavior(
@@ -221,7 +236,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun validateAll_passThroughMultiInputOperator_secondInputRespected() {
+    fun validateAll_disabledMultiInputOperatorSecondInput_noMissingSourceError() {
         val sourceNode = GraphNode(
             id = "source",
             data = NodeData.Behavior(
@@ -294,7 +309,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun testUnusedOutputWarningWhenDownstreamNodeIsDisabled() {
+    fun validateAll_downstreamNodeDisabled_reportsUnusedOutput() {
         val sourceNode = GraphNode(
             id = "source",
             data = NodeData.Behavior(
@@ -326,7 +341,7 @@ class BrushFamilyConverterTest {
         val coatNode = GraphNode(
             id = "coat",
             data = NodeData.Coat(paintPortIds = listOf("paint_0")),
-            isDisabled = true // Disable Coat!
+            isDisabled = true
         )
         
         val familyNode = GraphNode(
@@ -349,12 +364,12 @@ class BrushFamilyConverterTest {
 
         val issues = GraphValidator.validateAll(graph)
         
-        assertTrue(issues.any { it.nodeId == "tip" && it.displayMessage is com.example.cahier.developer.brushgraph.data.DisplayText.Resource && (it.displayMessage as com.example.cahier.developer.brushgraph.data.DisplayText.Resource).resId == R.string.bg_err_unused_output })
-        assertTrue(issues.any { it.nodeId == "paint" && it.displayMessage is com.example.cahier.developer.brushgraph.data.DisplayText.Resource && (it.displayMessage as com.example.cahier.developer.brushgraph.data.DisplayText.Resource).resId == R.string.bg_err_unused_output })
+        assertTrue(issues.any { it.nodeId == "tip" && it.displayMessage is DisplayText.Resource && (it.displayMessage as DisplayText.Resource).resId == R.string.bg_err_unused_output })
+        assertTrue(issues.any { it.nodeId == "paint" && it.displayMessage is DisplayText.Resource && (it.displayMessage as DisplayText.Resource).resId == R.string.bg_err_unused_output })
     }
 
     @Test
-    fun testStartNodeDuplication_WhenReachedMultipleTimes() {
+    fun convertIntoProto_startNodeReachedMultipleTimes_duplicatesSourceNode() {
         val sourceNode = GraphNode(
             id = "source",
             data = NodeData.Behavior(
@@ -443,7 +458,7 @@ class BrushFamilyConverterTest {
         
         val brushFamily = try {
             BrushFamilyConverter.convertIntoProto(graph)
-        } catch (e: com.example.cahier.developer.brushgraph.data.GraphValidationException) {
+        } catch (e: GraphValidationException) {
             println("Validation failed: ${e.message}")
             throw e
         }
@@ -457,7 +472,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun testInterpolationNode_CreatesFullSetOfInputs() {
+    fun convertIntoProto_interpolationNodeWithFullSetOfInputs_createsInterpolationNode() {
         val valueNode = GraphNode(
             id = "value",
             data = NodeData.Behavior(
@@ -550,7 +565,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun testCoatNode_SupportsMultiplePaints() {
+    fun convertIntoProto_coatWithMultiplePaints_createsMultiplePaints() {
         val valueNode = GraphNode(
             id = "value",
             data = NodeData.Behavior(
@@ -615,7 +630,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun testTipNode_SupportsMultipleBehaviors() {
+    fun convertIntoProto_tipWithMultipleBehaviors_createsMultipleBehaviors() {
         val valueNode1 = GraphNode(
             id = "value1",
             data = NodeData.Behavior(
@@ -694,7 +709,7 @@ class BrushFamilyConverterTest {
     }
 
     @Test
-    fun testBinaryOpNode_ChainsInputs() {
+    fun convertIntoProto_binaryOpWithMultipleInputs_chainsInputs() {
         val sourceNode1 = GraphNode(
             id = "source1",
             data = NodeData.Behavior(
@@ -795,7 +810,7 @@ class BrushFamilyConverterTest {
     }
     
     @Test
-    fun testPassThroughNode_PropagatesMultipleInputs() {
+    fun convertIntoProto_passThroughWithMultipleInputs_propagatesInputs() {
         val source1 = GraphNode(
             id = "source1",
             data = NodeData.Behavior(

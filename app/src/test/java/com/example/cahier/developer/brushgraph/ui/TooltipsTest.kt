@@ -1,18 +1,35 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 package com.example.cahier.developer.brushgraph.ui
 
 import com.example.cahier.developer.brushgraph.data.NodeData
 import ink.proto.BrushBehavior
 import ink.proto.BrushPaint
-import ink.proto.PredefinedEasingFunction
-import ink.proto.StepPosition
+import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
+import ink.proto.StepPosition as ProtoStepPosition
 import com.example.cahier.R
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TooltipsTest {
 
+    /** Set of tests that simply verifies that all the values for various types have tooltips written for them. */
+
     @Test
-    fun testNodeDataTooltipsAreUnique() {
+    fun nodeDataTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         val nodes = listOf(
             NodeData.Tip(ink.proto.BrushTip.getDefaultInstance()),
@@ -44,7 +61,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testSourceEnumsTooltipsAreUnique() {
+    fun sourceEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.Source.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -54,7 +71,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testTargetEnumsTooltipsAreUnique() {
+    fun targetEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.Target.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -64,7 +81,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testWrapEnumsTooltipsAreUnique() {
+    fun wrapEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushPaint.TextureLayer.Wrap.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -74,7 +91,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testSizeUnitEnumsTooltipsAreUnique() {
+    fun sizeUnitEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushPaint.TextureLayer.SizeUnit.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -84,7 +101,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testOriginEnumsTooltipsAreUnique() {
+    fun originEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushPaint.TextureLayer.Origin.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -94,7 +111,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testMappingEnumsTooltipsAreUnique() {
+    fun mappingEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushPaint.TextureLayer.Mapping.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -104,7 +121,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testBlendModeEnumsTooltipsAreUnique() {
+    fun blendModeEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushPaint.TextureLayer.BlendMode.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -114,7 +131,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testSelfOverlapEnumsTooltipsAreUnique() {
+    fun selfOverlapEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushPaint.SelfOverlap.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -124,7 +141,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testPolarTargetEnumsTooltipsAreUnique() {
+    fun polarTargetEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.PolarTarget.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -134,7 +151,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testOutOfRangeEnumsTooltipsAreUnique() {
+    fun outOfRangeEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.OutOfRange.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -144,7 +161,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testOptionalInputPropertyEnumsTooltipsAreUnique() {
+    fun optionalInputPropertyEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.OptionalInputProperty.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -154,7 +171,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testBinaryOpEnumsTooltipsAreUnique() {
+    fun binaryOpEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.BinaryOp.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -164,7 +181,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testProgressDomainEnumsTooltipsAreUnique() {
+    fun progressDomainEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.ProgressDomain.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -174,7 +191,7 @@ class TooltipsTest {
     }
 
     @Test
-    fun testInterpolationEnumsTooltipsAreUnique() {
+    fun interpolationEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.Interpolation.values()) {
             if (value.name == "UNRECOGNIZED") continue
@@ -184,27 +201,27 @@ class TooltipsTest {
     }
 
     @Test
-    fun testPredefinedEasingFunctionEnumsTooltipsAreUnique() {
+    fun predefinedEasingFunctionEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in PredefinedEasingFunction.values()) {
+        for (value in ProtoPredefinedEasingFunction.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for PredefinedEasingFunction.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue("Tooltip should be unique for ProtoPredefinedEasingFunction.$value: $tooltip", tooltips.add(tooltip))
         }
     }
 
     @Test
-    fun testStepPositionEnumsTooltipsAreUnique() {
+    fun stepPositionEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in StepPosition.values()) {
+        for (value in ProtoStepPosition.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for StepPosition.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue("Tooltip should be unique for ProtoStepPosition.$value: $tooltip", tooltips.add(tooltip))
         }
     }
 
     @Test
-    fun testInputModelTooltipsAreUnique() {
+    fun inputModelTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         val models = arrayOf(
             R.string.bg_model_sliding_window,
@@ -217,7 +234,7 @@ class TooltipsTest {
         }
     }
     @Test
-    fun testColorFunctionTooltipsAreUnique() {
+    fun colorFunctionTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         val options = arrayOf(
             R.string.bg_opacity_multiplier,

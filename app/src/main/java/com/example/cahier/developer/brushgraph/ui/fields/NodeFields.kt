@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 @file:OptIn(
   androidx.ink.brush.ExperimentalInkCustomBrushApi::class,
   androidx.compose.material3.ExperimentalMaterial3Api::class
@@ -43,6 +58,7 @@ import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.ColorFunction as ProtoColorFunction
+import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 import androidx.ink.brush.InputToolType
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -130,9 +146,6 @@ fun NodeFields(
   }
 }
 
-
-
-
 internal fun createDefaultNode(nodeCase: ProtoBrushBehavior.Node.NodeCase): NodeData {
   return when (nodeCase) {
     ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE ->
@@ -188,7 +201,7 @@ internal fun createDefaultNode(nodeCase: ProtoBrushBehavior.Node.NodeCase): Node
         ProtoBrushBehavior.Node.newBuilder()
           .setResponseNode(
             ProtoBrushBehavior.ResponseNode.newBuilder()
-              .setPredefinedResponseCurve(ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR)
+              .setPredefinedResponseCurve(ProtoPredefinedEasingFunction.PREDEFINED_EASING_LINEAR)
           )
           .build()
       )
@@ -249,8 +262,3 @@ internal fun createDefaultNode(nodeCase: ProtoBrushBehavior.Node.NodeCase): Node
     else -> throw IllegalArgumentException("Unsupported node case: $nodeCase")
   }
 }
-
-
-
-
-

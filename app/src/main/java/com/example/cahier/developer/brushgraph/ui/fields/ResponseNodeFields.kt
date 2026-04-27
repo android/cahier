@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.example.cahier.developer.brushgraph.ui.fields
@@ -21,8 +36,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import ink.proto.PredefinedEasingFunction
-import ink.proto.StepPosition
+import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
+import ink.proto.StepPosition as ProtoStepPosition
 import ink.proto.LinearEasingFunction
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -150,15 +165,15 @@ fun CurvePreviewWidget(
         ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE -> {
           val func = responseNode.predefinedResponseCurve
           when (func) {
-            PredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> {
+            ProtoPredefinedEasingFunction.PREDEFINED_EASING_LINEAR -> {
               path.moveTo(0f, centerY)
               path.lineTo(widthPx, centerY - scaleY)
             }
-            PredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> {
+            ProtoPredefinedEasingFunction.PREDEFINED_EASING_STEP_START -> {
               path.moveTo(0f, centerY - scaleY)
               path.lineTo(widthPx, centerY - scaleY)
             }
-            PredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> {
+            ProtoPredefinedEasingFunction.PREDEFINED_EASING_STEP_END -> {
               path.moveTo(0f, centerY)
               path.lineTo(widthPx, centerY)
               path.lineTo(widthPx, centerY - scaleY)
@@ -166,13 +181,13 @@ fun CurvePreviewWidget(
             else -> {
               val (x1, y1, x2, y2) =
                 when (func) {
-                  PredefinedEasingFunction.PREDEFINED_EASING_EASE ->
+                  ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE ->
                     listOf(0.25f, 0.1f, 0.25f, 1f)
-                  PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN ->
+                  ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_IN ->
                     listOf(0.42f, 0f, 1f, 1f)
-                  PredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT ->
+                  ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT ->
                     listOf(0f, 0f, 0.58f, 1f)
-                  PredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT ->
+                  ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT ->
                     listOf(0.42f, 0f, 0.58f, 1f)
                   else -> listOf(0f, 0f, 1f, 1f)
                 }
@@ -202,16 +217,16 @@ fun CurvePreviewWidget(
   }
 }
 
-private fun evaluateSteps(x: Float, n: Int, position: StepPosition): Float {
+private fun evaluateSteps(x: Float, n: Int, position: ProtoStepPosition): Float {
   val xClamped = x.coerceIn(0f, 1f)
   return when (position) {
-    StepPosition.STEP_POSITION_JUMP_START -> {
+    ProtoStepPosition.STEP_POSITION_JUMP_START -> {
       ceil(xClamped * n).coerceAtLeast(1f) / n
     }
-    StepPosition.STEP_POSITION_JUMP_BOTH -> {
+    ProtoStepPosition.STEP_POSITION_JUMP_BOTH -> {
       floor(xClamped * (n + 1) + 1f) / (n + 1)
     }
-    StepPosition.STEP_POSITION_JUMP_NONE -> {
+    ProtoStepPosition.STEP_POSITION_JUMP_NONE -> {
       if (n <= 1) xClamped else floor(xClamped * (n - 1)) / (n - 1)
     }
     else -> {
@@ -247,7 +262,7 @@ fun ResponseCurveWidget(
               when (case) {
                 ProtoBrushBehavior.ResponseNode.ResponseCurveCase.PREDEFINED_RESPONSE_CURVE ->
                   builder.setPredefinedResponseCurve(
-                    PredefinedEasingFunction.PREDEFINED_EASING_LINEAR
+                    ProtoPredefinedEasingFunction.PREDEFINED_EASING_LINEAR
                   )
                 ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE ->
                   builder.setCubicBezierResponseCurve(
@@ -262,7 +277,7 @@ fun ResponseCurveWidget(
                   builder.setStepsResponseCurve(
                     ProtoSteps.newBuilder()
                       .setStepCount(3)
-                      .setStepPosition(StepPosition.STEP_POSITION_JUMP_START)
+                      .setStepPosition(ProtoStepPosition.STEP_POSITION_JUMP_START)
                       .build()
                   )
                 ProtoBrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE ->
@@ -401,8 +416,8 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
     EnumDropdown(
       label = stringResource(R.string.bg_step_position),
       currentValue = curve.stepPosition,
-      values = StepPosition.values().filter {
-        it != StepPosition.STEP_POSITION_UNSPECIFIED && it.ordinal >= 0
+      values = ProtoStepPosition.values().filter {
+        it != ProtoStepPosition.STEP_POSITION_UNSPECIFIED && it.ordinal >= 0
       }.toList(),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { position ->
@@ -414,14 +429,14 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
 
 @Composable
 fun PredefinedFunctionWidget(
-  current: PredefinedEasingFunction,
-  onChanged: (PredefinedEasingFunction) -> Unit,
+  current: ProtoPredefinedEasingFunction,
+  onChanged: (ProtoPredefinedEasingFunction) -> Unit,
 ) {
   EnumDropdown(
     label = stringResource(R.string.bg_predefined_function),
     currentValue = current,
-    values = PredefinedEasingFunction.values().filter {
-      it != PredefinedEasingFunction.PREDEFINED_EASING_UNSPECIFIED && it.ordinal >= 0
+    values = ProtoPredefinedEasingFunction.values().filter {
+      it != ProtoPredefinedEasingFunction.PREDEFINED_EASING_UNSPECIFIED && it.ordinal >= 0
     }.toList(),
     modifier = Modifier.padding(8.dp),
     displayName = { stringResource(it.displayStringRId()) },

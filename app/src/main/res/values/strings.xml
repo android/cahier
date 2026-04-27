@@ -89,7 +89,7 @@
     <string name="brush_designer_stock_brushes">Stock Brushes</string>
     <string name="brush_designer_my_palette">My Palette</string>
     <string name="brush_designer_no_saved_brushes">No saved brushes yet</string>
-    <string name="brush_designer_save_to_palette">Save to Palette</string>
+    <string name="brush_designer_save_to_palette">Save to Cahier Palette</string>
     <string name="brush_designer_import">Import</string>
     <string name="brush_designer_export">Export</string>
     <string name="brush_designer_more_options">More options</string>
@@ -266,7 +266,7 @@
     <!-- Brush Graph -->
     <string name="bg_name_texture">Name Texture</string>
     <string name="bg_texture_id">Texture ID</string>
-    <string name="bg_save_to_palette">Save to Cahier Palette</string>
+    <string name="bg_save_to_palette">Save to Palette</string>
     <string name="bg_brush_name">Brush Name</string>
     <string name="bg_clear_graph">Clear Graph</string>
     <string name="bg_clear_graph_confirmation">Are you sure you want to clear the entire brush graph? This action cannot be undone.</string>
@@ -442,6 +442,17 @@
     <string name="bg_err_paint_node_not_found">Paint node %1$s not found</string>
     <string name="bg_err_expected_node_type">Expected %1$s node, found %2$s</string>
     <string name="bg_err_internal_conversion">Internal error during conversion: %1$s</string>
+    <string name="bg_err_unsupported_behavior_node_type">Unsupported behavior node type: %1$s</string>
+    <string name="bg_err_load_brush_legacy_unsupported">Failed to load brush: Legacy format not supported yet.</string>
+    <string name="bg_msg_brush_loaded_success">Brush loaded successfully</string>
+    <string name="bg_err_load_brush_failed_with_msg">Failed to load brush: %1$s</string>
+    <string name="bg_msg_brush_exported_success">Brush exported successfully</string>
+    <string name="bg_err_export_brush_failed_with_msg">Failed to export brush: %1$s</string>
+    <string name="bg_msg_graph_cleared">Graph cleared</string>
+    <string name="bg_msg_graph_reorganized_success">Graph reorganized successfully</string>
+    <string name="bg_err_reorganization_failed">Reorganization failed</string>
+    <string name="bg_err_load_brush_failed">Failed to load brush</string>
+    <string name="bg_err_cannot_delete_family_node">Cannot delete Family node</string>
     <string name="bg_err_behavior_cannot_accept">Behavior node %1$s cannot accept input from %2$s</string>
     <string name="bg_err_behavior_cannot_accept_structural">Behavior node %1$s cannot accept input from structural node %2$s</string>
     <string name="bg_err_coat_only_accepts_tip">Coat can only accept input from Tip at the tip port</string>

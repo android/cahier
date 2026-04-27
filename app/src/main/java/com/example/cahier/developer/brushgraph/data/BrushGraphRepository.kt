@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 package com.example.cahier.developer.brushgraph.data
 
 import android.graphics.Bitmap
@@ -12,6 +27,7 @@ import androidx.ink.storage.BrushFamilyDecodeCallback
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.UUID
+import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.OptIn
@@ -63,11 +79,11 @@ class BrushGraphRepository @Inject constructor(
   fun clearGraph() {
     _graph.update { createDefaultGraph() }
     validate()
-    postDebug("Graph cleared")
+    postDebug(DisplayText.Resource(R.string.bg_msg_graph_cleared))
   }
 
-  fun postDebug(text: String) {
-    val newIssue = GraphValidationException(displayMessage = DisplayText.Literal(text), severity = ValidationSeverity.DEBUG)
+  fun postDebug(displayText: DisplayText) {
+    val newIssue = GraphValidationException(displayMessage = displayText, severity = ValidationSeverity.DEBUG)
     _graphIssues.update { (it + newIssue).distinctBy { issue -> Triple(issue.displayMessage, issue.nodeId, issue.severity) } }
   }
 
@@ -493,7 +509,7 @@ class BrushGraphRepository @Inject constructor(
           node = ink.proto.BrushBehavior.Node.newBuilder()
             .setResponseNode(
               ink.proto.BrushBehavior.ResponseNode.newBuilder()
-                .setPredefinedResponseCurve(ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_LINEAR)
+                .setPredefinedResponseCurve(ProtoPredefinedEasingFunction.PREDEFINED_EASING_LINEAR)
             )
             .build(),
           inputPortIds = listOf(newPortId)
@@ -531,9 +547,9 @@ class BrushGraphRepository @Inject constructor(
     }
     validate()
     if (success) {
-      postDebug("Graph reorganized successfully")
+      postDebug(DisplayText.Resource(R.string.bg_msg_graph_reorganized_success))
     } else {
-      postDebug("Reorganization failed")
+      postDebug(DisplayText.Resource(R.string.bg_err_reorganization_failed))
     }
     return family
   }
@@ -542,11 +558,11 @@ class BrushGraphRepository @Inject constructor(
     return try {
       _graph.update { BrushGraphConverter.fromBrushFamily(family) }
       validate()
-      postDebug("Brush loaded successfully")
+      postDebug(DisplayText.Resource(R.string.bg_msg_brush_loaded_success))
       true
     } catch (e: Exception) {
       Log.e("BrushGraph", "Failed to load brush", e)
-      postDebug("Failed to load brush")
+      postDebug(DisplayText.Resource(R.string.bg_err_load_brush_failed))
       false
     }
   }
@@ -588,7 +604,7 @@ class BrushGraphRepository @Inject constructor(
     val modifiedNodeIds = mutableSetOf<String>()
     val node = _graph.value.nodes.find { it.id == nodeId } ?: return modifiedNodeIds
     if (node.data is NodeData.Family) {
-      postDebug("Cannot delete Family node")
+      postDebug(DisplayText.Resource(R.string.bg_err_cannot_delete_family_node))
       return modifiedNodeIds
     }
 

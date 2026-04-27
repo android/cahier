@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
 
 package com.example.cahier.developer.brushgraph.ui
@@ -5,51 +20,30 @@ package com.example.cahier.developer.brushgraph.ui
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.unit.Dp
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.ShapeLine
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -58,7 +52,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,12 +63,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
@@ -96,6 +86,7 @@ import com.example.cahier.developer.brushgraph.data.GraphPoint
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.ui.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.developer.brushgraph.ui.INSPECTOR_WIDTH_LANDSCAPE
+import com.example.cahier.developer.brushgraph.data.DisplayText
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.getVisiblePorts
 import com.example.cahier.developer.brushgraph.ui.getTooltip
@@ -103,14 +94,9 @@ import com.example.cahier.developer.brushgraph.data.inferNodeData
 import com.example.cahier.developer.brushgraph.ui.PREVIEW_HEIGHT_COLLAPSED
 import kotlinx.coroutines.launch
 import com.example.cahier.core.ui.theme.CahierAppTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.animation.core.VectorConverter
-import com.example.cahier.developer.brushgraph.data.ValidationSeverity
 import com.example.cahier.developer.brushgraph.ui.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.developer.brushgraph.data.TutorialAction
-import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.core.ui.CahierTextureBitmapStore
-import androidx.compose.ui.res.painterResource
 
 /** The main UI for the Brush Graph studio. */
 @Composable
@@ -210,14 +196,14 @@ fun BrushGraphScreen(
 
           if (family == null) {
             Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, and legacy fallback is disabled.")
-            viewModel.postDebug("Failed to load brush: Legacy format not supported yet.")
+            viewModel.postDebug(DisplayText.Resource(R.string.bg_err_load_brush_legacy_unsupported))
           } else {
             viewModel.loadBrushFamily(family)
-            viewModel.postDebug("Brush loaded successfully")
+            viewModel.postDebug(DisplayText.Resource(R.string.bg_msg_brush_loaded_success))
           }
         } catch (e: Exception) {
           android.util.Log.e("BrushGraphWidget", "Failed to load brush", e)
-          viewModel.postDebug("Failed to load brush: ${e.message}")
+          viewModel.postDebug(DisplayText.Resource(R.string.bg_err_load_brush_failed_with_msg, listOf(e.message ?: "")))
         }
       }
     }
@@ -236,10 +222,10 @@ fun BrushGraphScreen(
               textureStore
             )
           }
-          viewModel.postDebug("Brush exported successfully")
+          viewModel.postDebug(DisplayText.Resource(R.string.bg_msg_brush_exported_success))
         } catch (e: Exception) {
           android.util.Log.e("BrushGraphWidget", "Failed to export brush", e)
-          viewModel.postDebug("Failed to export brush: ${e.message}")
+          viewModel.postDebug(DisplayText.Resource(R.string.bg_err_export_brush_failed_with_msg, listOf(e.message ?: "")))
         }
       }
     }

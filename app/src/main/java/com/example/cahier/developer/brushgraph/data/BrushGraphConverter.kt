@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 @file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
 
 package com.example.cahier.developer.brushgraph.data
@@ -7,7 +22,6 @@ import androidx.ink.storage.encode
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.GraphNode
-import com.example.cahier.developer.brushgraph.data.GraphPoint
 import com.example.cahier.developer.brushgraph.data.NodeData
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -22,8 +36,6 @@ import ink.proto.ColorFunction as ProtoColorFunction
 
 /** Utility to convert a functional [BrushFamily] into a [BrushGraph] data model. */
 object BrushGraphConverter {
-
-
 
   /** Converts a [BrushFamily] into a [BrushGraph]. */
   fun fromBrushFamily(family: BrushFamily): BrushGraph {
@@ -106,16 +118,14 @@ object BrushGraphConverter {
     assignedNodeIds: MutableSet<String>,
   ): Pair<String, String> {
     val tipId = UUID.randomUUID().toString()
-    val tempBehaviorPortIds = (0 until tip.behaviorsCount).map { UUID.randomUUID().toString() }
     val usedPortIds = mutableListOf<String>()
 
-    var behaviorIndex = 0
     for (behavior in tip.behaviorsList) {
       val terminalNodes = convertBehaviorGraph(behavior, nodes, edges, deduplicationMap, assignedNodeIds)
       for ((terminalId, _) in terminalNodes) {
         val alreadyConnected = edges.any { it.toNodeId == tipId && it.fromNodeId == terminalId }
         if (!alreadyConnected) {
-          val portId = tempBehaviorPortIds[behaviorIndex]
+          val portId = UUID.randomUUID().toString()
           edges.add(
             GraphEdge(
               fromNodeId = terminalId,
@@ -126,7 +136,6 @@ object BrushGraphConverter {
           usedPortIds.add(portId)
         }
       }
-      behaviorIndex++
     }
 
     val tipData = NodeData.Tip(tip, behaviorPortIds = usedPortIds)
@@ -279,7 +288,8 @@ object BrushGraphConverter {
       }
     }
 
-    val terminalNodeInfos = listOfNotNull(behaviorNodes.lastOrNull())
+    val childIds = behaviorNodes.flatMap { it.children.map { child -> child.id } }.toSet()
+    val terminalNodeInfos = behaviorNodes.filter { it.id !in childIds }
     
     fun buildGraphNode(info: InternalNodeInfo, depth: Int) {
         if (assignedNodeIds.contains(info.id)) {
@@ -389,9 +399,6 @@ object BrushGraphConverter {
               removedNodeIds.add(nodeToRemove.id)
           }
       }
-      
-
-      
       return BrushGraph(nodes = nodes, edges = edges)
   }
 

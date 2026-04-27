@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 package com.example.cahier.developer.brushgraph.data
 
 import com.example.cahier.R
@@ -9,7 +24,13 @@ import com.example.cahier.developer.brushgraph.data.getVisiblePorts
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushPaint as ProtoBrushPaint
 
-/** The severity of a validation issue. */
+/** The severity of a validation issue. Errors and Warnings are generally associated
+ *  with specific issues with nodes, and link to them, while Debug messages are general
+ *  information. Errors represent blocking issues which cause the [BrushGraph] to fail
+ *  validation, while Warnings are non-blocking, but should be fixed, and can help diagnose
+ *  issues with the [BrushGraph]. Errors are downgraded to Warnings when the affected node
+ *  is orphaned from the graph, so a node not included in the graph doesn't block validation.
+ */
 enum class ValidationSeverity {
   ERROR,
   WARNING,
@@ -386,6 +407,7 @@ object GraphValidator {
     }
   }
 
+  /** Returns the set of node IDs for active (not disabled) nodes in the [BrushGraph] */
   private fun findActiveNodes(graph: BrushGraph): Set<String> {
     val familyNode = graph.nodes.find { it.data is NodeData.Family } ?: return emptySet()
     if (familyNode.isDisabled) return emptySet()
@@ -417,6 +439,9 @@ object GraphValidator {
     return active
   }
 
+  /** Returns input nodes to disabled node, or returns the node itself. This logic enables data
+   *  incoming to disabled nodes to "pass through" to where the disabled node is going.
+   */
   fun findActualSourceNode(graph: BrushGraph, nodeId: String): List<GraphNode> {
     val node = graph.nodes.find { it.id == nodeId } ?: return emptyList()
     if (!node.isDisabled) return listOf(node)

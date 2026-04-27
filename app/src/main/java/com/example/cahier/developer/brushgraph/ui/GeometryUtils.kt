@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 package com.example.cahier.developer.brushgraph.ui
 
 import androidx.compose.ui.geometry.Offset
@@ -8,6 +23,7 @@ import kotlin.math.abs
 
 internal const val SPLINE_HIT_SEGMENTS = 50
 
+/** Calculates the shortest distance from point [p] to the line segment from [a] to [b] using vector projection. */
 internal fun distanceToSegment(p: Offset, a: Offset, b: Offset): Float {
   val l2 = (b - a).getDistanceSquared()
   if (l2 == 0f) return (p - a).getDistance()
@@ -16,6 +32,7 @@ internal fun distanceToSegment(p: Offset, a: Offset, b: Offset): Float {
   return (p - (a + (b - a) * t)).getDistance()
 }
 
+/** Creates a cubic Bezier curve [Path] between [start] and [end] with horizontal control points for an S-curve. */
 internal fun createSplinePath(start: Offset, end: Offset): Path {
   val horizontalOffset = maxOf(50f, abs(end.x - start.x) / 2f).coerceAtMost(200f)
   return Path().apply {
@@ -24,6 +41,7 @@ internal fun createSplinePath(start: Offset, end: Offset): Path {
   }
 }
 
+/** Approximates the shortest distance from point [p] to the spline by dividing it into [SPLINE_HIT_SEGMENTS] linear segments. */
 internal fun distanceToSpline(p: Offset, start: Offset, end: Offset): Float {
   val horizontalOffset = maxOf(50f, abs(end.x - start.x) / 2f).coerceAtMost(200f)
   val cp1 = Offset(start.x + horizontalOffset, start.y)
@@ -40,6 +58,7 @@ internal fun distanceToSpline(p: Offset, start: Offset, end: Offset): Float {
   return minDistance
 }
 
+/** Evaluates a point on a cubic Bezier curve at time [t] (0.0 to 1.0) using the standard polynomial formula. */
 internal fun cubicBezier(t: Float, p0: Offset, p1: Offset, p2: Offset, p3: Offset): Offset {
   val u = 1 - t
   val tt = t * t

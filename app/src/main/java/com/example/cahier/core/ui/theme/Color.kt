@@ -29,16 +29,16 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 // Warning Colors - Light Mode
-val LightWarning = Color(0xFFF57C00) // Orange 700
+val LightWarning = Color(0xFFF57C00)
 val LightOnWarning = Color(0xFFFFFFFF)
-val LightWarningContainer = Color(0xFFFFF3E0) // Orange 50
-val LightOnWarningContainer = Color(0xFFE65100) // Orange 900
+val LightWarningContainer = Color(0xFFFFF3E0)
+val LightOnWarningContainer = Color(0xFFE65100)
 
 // Warning Colors - Dark Mode
-val DarkWarning = Color(0xFFFFB74D) // Orange 300
-val DarkOnWarning = Color(0xFF4E342E) // Dark brown/orange
-val DarkWarningContainer = Color(0xFFE65100) // Orange 900
-val DarkOnWarningContainer = Color(0xFFFFCC80) // Orange 200
+val DarkWarning = Color(0xFFFFB74D)
+val DarkOnWarning = Color(0xFF4E342E)
+val DarkWarningContainer = Color(0xFFE65100)
+val DarkOnWarningContainer = Color(0xFFFFCC80)
 
 // Brush Designer: color picker presets
 val BrushBlack = Color(0xFF000000)

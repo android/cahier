@@ -49,6 +49,7 @@ import com.example.cahier.R
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.ColorFunction as ProtoColorFunction
+import ink.proto.Color as ProtoColor
 
 /**
  * Tab 1: Paint & texture controls — multi-layer textures, multi-function colors,
@@ -438,7 +439,7 @@ private fun ColorFunctionEditor(
                 1 -> onFunctionChanged(
                     ProtoColorFunction.newBuilder()
                         .setReplaceColor(
-                            ink.proto.Color.getDefaultInstance()
+                            ProtoColor.getDefaultInstance()
                         )
                         .build()
                 )

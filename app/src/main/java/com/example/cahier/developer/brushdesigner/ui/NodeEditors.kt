@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import ink.proto.BrushBehavior
+import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 
 /**
  * Dispatches to the correct editor based on the [BrushBehavior.Node.NodeCase].
@@ -174,7 +175,7 @@ internal fun ResponseNodeEditor(
                 when (selected) {
                     ResponseCurveType.Predefined ->
                         newResponseBuilder.setPredefinedResponseCurve(
-                            ink.proto.PredefinedEasingFunction.PREDEFINED_EASING_EASE
+                            ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE
                         )
                     ResponseCurveType.CubicBezier ->
                         newResponseBuilder.setCubicBezierResponseCurve(
@@ -258,7 +259,7 @@ internal fun ResponseNodeEditor(
                 EnumDropdown(
                     label = stringResource(R.string.brush_designer_node_predefined_curve),
                     currentValue = response.predefinedResponseCurve,
-                    values = ink.proto.PredefinedEasingFunction.entries.toList(),
+                    values = ProtoPredefinedEasingFunction.entries.toList(),
                     displayName = {
                         it.name.replace("PREDEFINED_EASING_FUNCTION_", "")
                     },

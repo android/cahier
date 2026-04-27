@@ -1,3 +1,18 @@
+/*
+ *  * Copyright 2026 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ */
 package com.example.cahier.developer.brushgraph.ui
 
 import androidx.compose.animation.AnimatedVisibility
@@ -9,11 +24,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,11 +36,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.ShapeLine
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -48,18 +57,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -68,7 +74,6 @@ import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.features.drawing.CustomBrushes
-import com.example.cahier.developer.brushgraph.viewmodel.BrushGraphViewModel
 
 @Composable
 fun MoreOptionsMenu(
@@ -121,34 +126,20 @@ fun MoreOptionsMenu(
                 onDismissRequest = { onShowTemplatesMenuChange(false) },
                 offset = DpOffset(x = 127.dp, y = (-56).dp)
             ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.bg_pressure_pen)) },
-                    onClick = {
-                        onTemplateSelect(StockBrushes.pressurePen())
-                        onShowTemplatesMenuChange(false)
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.marker)) },
-                    onClick = {
-                        onTemplateSelect(StockBrushes.marker())
-                        onShowTemplatesMenuChange(false)
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.highlighter)) },
-                    onClick = {
-                        onTemplateSelect(StockBrushes.highlighter())
-                        onShowTemplatesMenuChange(false)
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.dashed_line)) },
-                    onClick = {
-                        onTemplateSelect(StockBrushes.dashedLine())
-                        onShowTemplatesMenuChange(false)
-                    }
-                )
+                listOf(
+                  R.string.bg_pressure_pen to StockBrushes.pressurePen(),
+                  R.string.marker to StockBrushes.marker(),
+                  R.string.highlighter to StockBrushes.highlighter(),
+                  R.string.dashed_line to StockBrushes.dashedLine()
+                ).forEach { (title, brush) ->
+                  DropdownMenuItem(
+                      text = { Text(stringResource(title)) },
+                      onClick = {
+                          onTemplateSelect(brush)
+                          onShowTemplatesMenuChange(false)
+                      }
+                  )
+                }
                 
                 if (customBrushes.isNotEmpty()) {
                     HorizontalDivider()
