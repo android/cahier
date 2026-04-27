@@ -1,9 +1,8 @@
-package com.example.cahier.developer.brushgraph.converters
+package com.example.cahier.developer.brushgraph.data
 
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.GraphNode
-import com.example.cahier.developer.brushgraph.data.GraphPoint
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.Port
 import com.example.cahier.developer.brushgraph.data.PortSide
@@ -12,6 +11,7 @@ import com.example.cahier.developer.brushgraph.data.GraphValidator
 import com.example.cahier.developer.brushgraph.data.DisplayText
 import com.example.cahier.developer.brushgraph.data.BrushFamilyConverter
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
+import com.example.cahier.developer.brushgraph.data.getVisiblePorts
 import ink.proto.BrushBehavior
 import ink.proto.BrushTip
 import ink.proto.BrushPaint
@@ -290,7 +290,6 @@ class BrushFamilyConverterTest {
         val issues = GraphValidator.validateAll(graph)
         println("Test 4 issues: $issues")
         
-        // Should NOT fail because BinaryOp now passes through ALL inputs!
         org.junit.Assert.assertFalse(issues.any { it.message?.contains("Missing source for pass-through connection") == true })
     }
 
@@ -350,9 +349,7 @@ class BrushFamilyConverterTest {
 
         val issues = GraphValidator.validateAll(graph)
         
-        // Tip output should be reported as not used because Coat is disabled.
         assertTrue(issues.any { it.nodeId == "tip" && it.displayMessage is com.example.cahier.developer.brushgraph.data.DisplayText.Resource && (it.displayMessage as com.example.cahier.developer.brushgraph.data.DisplayText.Resource).resId == R.string.bg_err_unused_output })
-        // Paint output should be reported as not used because Coat is disabled.
         assertTrue(issues.any { it.nodeId == "paint" && it.displayMessage is com.example.cahier.developer.brushgraph.data.DisplayText.Resource && (it.displayMessage as com.example.cahier.developer.brushgraph.data.DisplayText.Resource).resId == R.string.bg_err_unused_output })
     }
 
@@ -502,7 +499,7 @@ class BrushFamilyConverterTest {
             id = "target",
             data = NodeData.Behavior(
                 ink.proto.BrushBehavior.Node.newBuilder()
-                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
             )
         )
@@ -548,8 +545,6 @@ class BrushFamilyConverterTest {
         val tip = brushFamily.getCoats(0).tip
         val behavior = tip.getBehaviors(0)
         
-        // The nodes list should contain: [Value, Start, End, Lerp, Target]
-        // All connected! So 5 nodes!
         org.junit.Assert.assertEquals(5, behavior.nodesCount)
         org.junit.Assert.assertTrue(behavior.getNodes(3).hasInterpolationNode())
     }
@@ -569,7 +564,7 @@ class BrushFamilyConverterTest {
             id = "target",
             data = NodeData.Behavior(
                 ink.proto.BrushBehavior.Node.newBuilder()
-                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
             )
         )
@@ -634,7 +629,7 @@ class BrushFamilyConverterTest {
             id = "target1",
             data = NodeData.Behavior(
                 ink.proto.BrushBehavior.Node.newBuilder()
-                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
             )
         )
@@ -652,7 +647,7 @@ class BrushFamilyConverterTest {
             id = "target2",
             data = NodeData.Behavior(
                 ink.proto.BrushBehavior.Node.newBuilder()
-                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
             )
         )
@@ -741,7 +736,7 @@ class BrushFamilyConverterTest {
             id = "target",
             data = NodeData.Behavior(
                 ink.proto.BrushBehavior.Node.newBuilder()
-                    .setTargetNode(ink.proto.BrushBehavior.TargetNode.newBuilder().build())
+                    .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
                     .build()
             )
         )
@@ -878,13 +873,11 @@ class BrushFamilyConverterTest {
         val coat = brushFamily.getCoats(0)
         val tip = coat.tip
         
-        // Should produce 2 behaviors!
         org.junit.Assert.assertEquals(2, tip.behaviorsCount)
         
         val behavior1 = tip.getBehaviors(0)
         val behavior2 = tip.getBehaviors(1)
         
-        // Each behavior should have 2 nodes (Source and Target)
         org.junit.Assert.assertEquals(2, behavior1.nodesCount)
         org.junit.Assert.assertEquals(2, behavior2.nodesCount)
         

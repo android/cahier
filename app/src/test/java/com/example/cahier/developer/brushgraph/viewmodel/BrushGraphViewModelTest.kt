@@ -1,4 +1,4 @@
-package com.example.cahier.developer.brushgraph
+package com.example.cahier.developer.brushgraph.viewmodel
 
 import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.NodeData

@@ -1,11 +1,10 @@
-package com.example.cahier.developer.brushgraph.converters
+package com.example.cahier.developer.brushgraph.data
 
 import com.example.cahier.developer.brushgraph.data.BrushGraphConverter
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.NodeData
-import com.example.cahier.developer.brushgraph.data.GraphPoint
 import ink.proto.BrushBehavior
 import ink.proto.BrushTip
 import ink.proto.BrushPaint
@@ -19,7 +18,6 @@ class BrushGraphConverterTest {
 
     @Test
     fun testDeduplication() {
-        // Construct a proto with duplicate nodes
         val behaviorProto = BrushBehavior.newBuilder()
             .addNodes(BrushBehavior.Node.newBuilder().setSourceNode(BrushBehavior.SourceNode.newBuilder().setSource(BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).build()).build())
             .addNodes(BrushBehavior.Node.newBuilder().setTargetNode(BrushBehavior.TargetNode.newBuilder().build()).build())
@@ -37,13 +35,11 @@ class BrushGraphConverterTest {
             
         val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
         
-        // We expect only 2 behavior nodes in the graph instead of 4!
         val behaviorNodes = graph.nodes.filter { it.data is NodeData.Behavior }
         assertEquals(2, behaviorNodes.size)
     }
     @Test
     fun testCrossBehaviorDeduplication() {
-        // Construct a proto with two identical behaviors
         val behaviorProto1 = BrushBehavior.newBuilder()
             .addNodes(BrushBehavior.Node.newBuilder().setSourceNode(BrushBehavior.SourceNode.newBuilder().setSource(BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).build()).build())
             .addNodes(BrushBehavior.Node.newBuilder().setTargetNode(BrushBehavior.TargetNode.newBuilder().build()).build())
@@ -65,14 +61,9 @@ class BrushGraphConverterTest {
             
         val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
         
-        // Each behavior has 2 nodes. Total 4 nodes in proto.
-        // They are identical across behaviors.
-        // So we expect only 2 behavior nodes in the graph!
-        
         val behaviorNodes = graph.nodes.filter { it.data is NodeData.Behavior }
         assertEquals(2, behaviorNodes.size)
         
-        // And we expect only ONE edge from the terminal node to the tip!
         val tipNode = graph.nodes.find { it.data is NodeData.Tip }!!
         val edgesToTip = graph.edges.filter { it.toNodeId == tipNode.id }
         assertEquals(1, edgesToTip.size)

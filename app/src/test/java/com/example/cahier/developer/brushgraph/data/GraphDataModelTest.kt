@@ -1,6 +1,5 @@
-package com.example.cahier.developer.brushgraph.model
+package com.example.cahier.developer.brushgraph.data
 
-import com.example.cahier.developer.brushgraph.data.GraphPoint
 import com.example.cahier.developer.brushgraph.data.Port
 import com.example.cahier.developer.brushgraph.data.PortSide
 import com.example.cahier.developer.brushgraph.data.GraphNode
