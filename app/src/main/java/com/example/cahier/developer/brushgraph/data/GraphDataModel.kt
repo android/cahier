@@ -207,7 +207,7 @@ sealed interface NodeData {
     override fun subtitles(): List<DisplayText> {
       val s = when (node.nodeCase) {
         ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> DisplayText.Resource(node.sourceNode.source.displayStringRId())
-        ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> DisplayText.Literal("%.2f".format(node.constantNode.value))
+        ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> DisplayText.Literal("%.2f".format(java.util.Locale.US, node.constantNode.value))
         ProtoBrushBehavior.Node.NodeCase.NOISE_NODE ->
           return listOf(
             DisplayText.Resource(node.noiseNode.varyOver.displayStringRId()),
