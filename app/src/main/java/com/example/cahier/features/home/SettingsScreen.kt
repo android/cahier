@@ -59,11 +59,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     navigateToBrushDesigner: () -> Unit,
+    navigateToBrushGraph: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val isRoleAvailable by viewModel.isRoleAvailable.collectAsStateWithLifecycle()
     val isRoleHeld by viewModel.isRoleHeld.collectAsStateWithLifecycle()
+    val isUsingGraphUi by viewModel.isUsingGraphUi.collectAsStateWithLifecycle()
     LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -196,7 +198,13 @@ fun SettingsScreen(
                             }
 
                             FilledTonalButton(
-                                onClick = { navigateToBrushDesigner() }
+                                onClick = {
+                                    if (isUsingGraphUi) {
+                                        navigateToBrushGraph()
+                                    } else {
+                                        navigateToBrushDesigner()
+                                    }
+                                }
                             ) {
                                 Text(stringResource(R.string.settings_launch))
                             }
@@ -219,9 +227,9 @@ fun SettingsScreen(
                                 )
                             }
                             Switch(
-                                checked = false,
-                                onCheckedChange = null,
-                                enabled = false
+                                checked = isUsingGraphUi,
+                                onCheckedChange = { viewModel.setUsingGraphUi(it) },
+                                enabled = true
                             )
                         }
                     }

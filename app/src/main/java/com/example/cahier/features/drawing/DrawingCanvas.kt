@@ -93,6 +93,7 @@ import com.example.cahier.features.drawing.viewmodel.DrawingCanvasViewModel
 @Composable
 fun DrawingCanvas(
     navigateUp: () -> Unit,
+    navigateToBrushGraph: () -> Unit,
     modifier: Modifier = Modifier,
     drawingCanvasViewModel: DrawingCanvasViewModel = hiltViewModel()
 ) {
@@ -140,7 +141,8 @@ fun DrawingCanvas(
         DrawingCanvasContent(
             drawingCanvasViewModel = drawingCanvasViewModel,
             imagePickerLauncher = imagePickerLauncher,
-            onNavigateUp = navigateUp
+            onNavigateUp = navigateUp,
+            navigateToBrushGraph = navigateToBrushGraph
         )
     }
 }
@@ -198,6 +200,7 @@ private fun DrawingCanvasContent(
     drawingCanvasViewModel: DrawingCanvasViewModel,
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
     onNavigateUp: () -> Unit,
+    navigateToBrushGraph: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val activity = LocalActivity.current as ComponentActivity
@@ -237,6 +240,7 @@ private fun DrawingCanvasContent(
             onUndo = drawingCanvasViewModel::undo,
             onRedo = drawingCanvasViewModel::redo,
             onExit = onNavigateUp,
+            onEditActiveBrush = navigateToBrushGraph,
             onColorPickerClick = { showColorPicker = true },
         )
 
