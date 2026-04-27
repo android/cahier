@@ -359,4 +359,23 @@ class GraphDataModelTest {
         
         assertEquals(2, behaviorData.inputPortIds.size)
     }
+
+    @Test
+    fun subtitles_constantNode_formatsWithDotSeparator() {
+        val node = GraphNode(
+            id = "1",
+            data = NodeData.Behavior(
+                node = ProtoBrushBehavior.Node.newBuilder()
+                    .setConstantNode(ProtoBrushBehavior.ConstantNode.newBuilder().setValue(1.5f).build())
+                    .build()
+            )
+        )
+        
+        val subtitles = node.data.subtitles()
+        
+        assertEquals(1, subtitles.size)
+        val subtitle = subtitles[0]
+        assert(subtitle is DisplayText.Literal)
+        assertEquals("1.50", (subtitle as DisplayText.Literal).text)
+    }
 }
