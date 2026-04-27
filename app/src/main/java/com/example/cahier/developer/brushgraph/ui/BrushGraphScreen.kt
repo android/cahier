@@ -84,7 +84,7 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.cahier.core.ui.ClassicColorPickerDialog
+import com.example.cahier.developer.brushdesigner.ui.CustomColorPickerDialog
 import com.example.cahier.developer.brushgraph.viewmodel.BrushGraphViewModel
 import com.example.cahier.developer.brushgraph.ui.EdgeInspector
 import com.example.cahier.developer.brushgraph.ui.NodeInspector
@@ -139,7 +139,7 @@ fun BrushGraphScreen(
   var colorPickerOnColorSelected by remember { mutableStateOf({ _: Color -> }) }
 
   if (showColorPicker) {
-    ClassicColorPickerDialog(
+    CustomColorPickerDialog(
       initialColor = colorPickerInitialColor,
       onColorSelected = colorPickerOnColorSelected,
       onDismissRequest = { showColorPicker = false }

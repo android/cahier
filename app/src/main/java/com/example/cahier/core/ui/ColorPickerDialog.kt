@@ -55,58 +55,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.cahier.R
-import com.godaddy.android.colorpicker.ClassicColorPicker
-import com.godaddy.android.colorpicker.HsvColor
-
-@Composable
-fun ClassicColorPickerDialog(
-    initialColor: Color,
-    onColorSelected: (Color) -> Unit,
-    onDismissRequest: () -> Unit
-) {
-    var currentColor by remember { mutableStateOf(HsvColor.from(initialColor)) }
-
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = { Text("Pick a color") },
-        text = {
-            Column(horizontalAlignment = Alignment.End) {
-                ClassicColorPicker(
-                    color = currentColor,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp),
-                    onColorChanged = { hsvColor: HsvColor ->
-                        currentColor = hsvColor
-                    }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                val hexString = String.format("#%08X", currentColor.toColor().toArgb())
-                Text(
-                    text = hexString,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onColorSelected(currentColor.toColor())
-                    onDismissRequest()
-                }
-            ) {
-                Text("Select")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismissRequest) {
-                Text("Cancel")
-            }
-        }
-    )
-}
 
 @Composable
 fun ColorPickerDialog(
