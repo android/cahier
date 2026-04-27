@@ -127,8 +127,8 @@ object GraphValidator {
 
           if (nodeCase == ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
             val labels = listOf(R.string.bg_port_value, R.string.bg_port_start, R.string.bg_port_end)
-            for (i in ids.indices) {
-              if (i < 3 && !connectedPortIds.contains(ids[i])) {
+            for (i in 0 until minOf(ids.size, labels.size)) {
+              if (!connectedPortIds.contains(ids[i])) {
                 issues.add(GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_interp_missing_input, listOf(DisplayText.Resource(labels[i]))), nodeId = node.id, severity = if (active) ValidationSeverity.ERROR else ValidationSeverity.WARNING))
               }
             }
@@ -275,7 +275,7 @@ object GraphValidator {
           if (sourceNode.sourceValueRangeStart == sourceNode.sourceValueRangeEnd) {
             issues.add(
               GraphValidationException(
-                displayMessage = DisplayText.Resource(R.string.bg_err_source_range_equal, listOf(node.data.subtitles())),
+                displayMessage = DisplayText.Resource(R.string.bg_err_source_range_equal, node.data.subtitles()),
                 nodeId = node.id,
                 severity = if (isActive) ValidationSeverity.ERROR else ValidationSeverity.WARNING,
               )
@@ -298,7 +298,7 @@ object GraphValidator {
       }
     }
 
-    return issues.distinctBy { (it.message ?: "") + (it.nodeId ?: "") + it.severity.name }
+    return issues.distinct()
   }
 
   /** Returns a failure message when a connection from [from] to [to] at [toPortId] is invalid. */
