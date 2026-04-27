@@ -331,18 +331,20 @@ object BrushGraphConverter {
   private fun deduplicateDownstream(graph: BrushGraph): BrushGraph {
       val nodes = graph.nodes.toMutableList()
       val edges = graph.edges.toMutableList()
+      val nodesById = nodes.associateBy { it.id }.toMutableMap()
       
       // Filter and reverse behavior nodes to process top-down
       val behaviorNodes = nodes.filter { it.data is NodeData.Behavior }.reversed()
       
       val removedNodeIds = mutableSetOf<String>()
+      val processedNodes = mutableMapOf<Pair<ProtoBrushBehavior.Node, List<String>>, GraphNode>()
       
       for (node in behaviorNodes) {
           if (removedNodeIds.contains(node.id)) continue
           
           val nodeData = node.data as NodeData.Behavior
-          val isInterpolation = nodeData.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE
-          val isBinaryOp = nodeData.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE
+          val isInterpolation = nodeData.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE
+          val isBinaryOp = nodeData.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE
           if (isInterpolation || isBinaryOp) continue
           
           val nodeOutputSet = edges.filter { it.fromNodeId == node.id && !it.isDisabled }
@@ -351,29 +353,22 @@ object BrushGraphConverter {
                                    
           if (nodeOutputSet.isEmpty()) continue
           
-          // Find another node to merge with
-          val otherNode = nodes.find { other ->
-              if (other.id == node.id || removedNodeIds.contains(other.id)) return@find false
-              val otherData = other.data as? NodeData.Behavior ?: return@find false
-              if (otherData.node != nodeData.node) return@find false
-              
-              val otherOutputSet = edges.filter { it.fromNodeId == other.id && !it.isDisabled }
-                                       .map { it.toNodeId }
-                                       .sorted()
-              otherOutputSet == nodeOutputSet
-          }
+          val key = Pair(nodeData.node, nodeOutputSet)
+          val existingNode = processedNodes[key]
           
-          if (otherNode != null) {
-              val keptNode = otherNode
+          if (existingNode != null) {
+              val keptNode = existingNode
               val nodeToRemove = node
               
               val keptData = keptNode.data as NodeData.Behavior
-              val dataToRemove = nodeToRemove.data as NodeData.Behavior
-              val newData = keptData.copy(inputPortIds = keptData.inputPortIds + dataToRemove.inputPortIds)
+              val newData = keptData.copy(inputPortIds = keptData.inputPortIds + nodeData.inputPortIds)
               
               nodes.remove(keptNode)
               val updatedKeptNode = keptNode.copy(data = newData)
               nodes.add(updatedKeptNode)
+              nodesById[keptNode.id] = updatedKeptNode
+              
+              processedNodes[key] = updatedKeptNode
               
               // Redirect incoming edges
               val incomingEdges = edges.filter { it.toNodeId == nodeToRemove.id }
@@ -385,18 +380,21 @@ object BrushGraphConverter {
               // Remove outgoing edges of removed node and cleanup ports!
               val outgoingEdges = edges.filter { it.fromNodeId == nodeToRemove.id }
               for (edge in outgoingEdges) {
-                  val parentNode = nodes.find { it.id == edge.toNodeId }
+                  val parentNode = nodesById[edge.toNodeId]
                   if (parentNode != null) {
                       val updatedParent = removePortFromNode(parentNode, edge.toPortId)
                       nodes.remove(parentNode)
                       nodes.add(updatedParent)
+                      nodesById[parentNode.id] = updatedParent
                   }
               }
               edges.removeAll(outgoingEdges)
               
-              // Remove node from list
               nodes.remove(nodeToRemove)
+              nodesById.remove(nodeToRemove.id)
               removedNodeIds.add(nodeToRemove.id)
+          } else {
+              processedNodes[key] = node
           }
       }
       return BrushGraph(nodes = nodes, edges = edges)

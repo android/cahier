@@ -34,6 +34,13 @@ import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.ColorFunction as ProtoColorFunction
 
+private class ConversionContext(
+    val graph: BrushGraph,
+    val nodesById: Map<String, GraphNode>,
+    val edgesByToNode: Map<String, List<GraphEdge>>,
+    val behaviorCache: MutableMap<String, List<List<ink.proto.BrushBehavior.Node>>> = mutableMapOf()
+)
+
 /** Utility to convert a [BrushGraph] data model into a functional [BrushFamily] object. */
 object BrushFamilyConverter {
 
@@ -54,10 +61,14 @@ object BrushFamilyConverter {
       throw criticalErrors.first()
     }
 
+    val nodesById = graph.nodes.associateBy { it.id }
+    val edgesByToNode = graph.edges.filter { !it.isDisabled }.groupBy { it.toNodeId }
+    val context = ConversionContext(graph, nodesById, edgesByToNode)
+
     val familyNode = graph.nodes.first { it.data is NodeData.Family }
     val familyData = familyNode.data as NodeData.Family
 
-    val coatEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == familyNode.id }
+    val coatEdges = context.edgesByToNode[familyNode.id] ?: emptyList()
     val sortedCoatEdges = familyData.coatPortIds.mapNotNull { portId ->
         coatEdges.find { it.toPortId == portId }
     }
@@ -68,13 +79,11 @@ object BrushFamilyConverter {
       )
     }
 
-    val behaviorCache = mutableMapOf<String, List<List<ink.proto.BrushBehavior.Node>>>()
     val coats = sortedCoatEdges.mapNotNull { edge ->
-      val coatNode =
-        graph.nodes.find { it.id == edge.fromNodeId }
+      val coatNode = context.nodesById[edge.fromNodeId]
           ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_coat_node_not_found, listOf(edge.fromNodeId)))
       if (coatNode.isDisabled) null
-      else createCoat(coatNode, graph, behaviorCache)
+      else createCoat(coatNode, context)
     }
 
     return ProtoBrushFamily.newBuilder()
@@ -85,12 +94,11 @@ object BrushFamilyConverter {
       .build()
   }
 
-  fun createCoat(
+  private fun createCoat(
     coatNode: GraphNode,
-    graph: BrushGraph,
-    behaviorCache: MutableMap<String, List<List<ink.proto.BrushBehavior.Node>>>,
+    context: ConversionContext
   ): ProtoBrushCoat {
-    val inputs = graph.edges.filter { !it.isDisabled && it.toNodeId == coatNode.id }
+    val inputs = context.edgesByToNode[coatNode.id] ?: emptyList()
     val coatData = coatNode.data as NodeData.Coat
     
     val tipEdge =
@@ -110,13 +118,13 @@ object BrushFamilyConverter {
         )
     }
 
-    val tip = createTip(tipEdge.fromNodeId, graph, behaviorCache, mutableSetOf())
+    val tip = createTip(tipEdge.fromNodeId, context, mutableSetOf())
     
     val builder = ProtoBrushCoat.newBuilder()
       .setTip(tip)
       
     for (edge in paintEdges) {
-        val paint = createPaint(edge.fromNodeId, graph)
+        val paint = createPaint(edge.fromNodeId, context)
         builder.addPaintPreferences(paint)
     }
 
@@ -125,12 +133,10 @@ object BrushFamilyConverter {
 
   private fun createTip(
     nodeId: String,
-    graph: BrushGraph,
-    behaviorCache: MutableMap<String, List<List<ProtoBrushBehavior.Node>>>,
+    context: ConversionContext,
     path: MutableSet<String>,
   ): ProtoBrushTip {
-    val graphNode =
-      graph.nodes.find { it.id == nodeId }
+    val graphNode = context.nodesById[nodeId]
         ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
       graphNode.data as? NodeData.Tip
@@ -143,12 +149,12 @@ object BrushFamilyConverter {
     builder.clearBehaviors()
 
     val behaviorEdges = data.behaviorPortIds.mapNotNull { portId ->
-        graph.edges.find { !it.isDisabled && it.toNodeId == nodeId && it.toPortId == portId }
+        context.edgesByToNode[nodeId]?.find { it.toPortId == portId }
     }
     for (edge in behaviorEdges) {
-      val actualSources = GraphValidator.findActualSourceNode(graph, edge.fromNodeId)
+      val actualSources = GraphValidator.findActualSourceNode(context.graph, edge.fromNodeId)
       for (actualSourceNode in actualSources) {
-        val behaviorLists = collectBehaviorNodes(actualSourceNode.id, graph, behaviorCache, path)
+        val behaviorLists = collectBehaviorNodes(actualSourceNode.id, context, path)
         for (nodeList in behaviorLists) {
             val comment = (actualSourceNode.data as? NodeData.Behavior)?.developerComment ?: ""
             builder.addBehaviors(
@@ -166,18 +172,17 @@ object BrushFamilyConverter {
 
   private fun collectBehaviorNodes(
     nodeId: String,
-    graph: BrushGraph,
-    cache: MutableMap<String, List<List<ProtoBrushBehavior.Node>>>,
+    context: ConversionContext,
     path: MutableSet<String>,
   ): List<List<ProtoBrushBehavior.Node>> {
     if (path.contains(nodeId)) {
       throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_cycle_detected, listOf(nodeId)), nodeId = nodeId)
     }
-    cache[nodeId]?.let { return it }
+    context.behaviorCache[nodeId]?.let { return it }
 
-    val graphNode = graph.nodes.find { it.id == nodeId } ?: return emptyList()
+    val graphNode = context.nodesById[nodeId] ?: return emptyList()
     val data = graphNode.data as? NodeData.Behavior ?: return emptyList()
-    val inputEdges = graph.edges.filter { !it.isDisabled && it.toNodeId == nodeId }
+    val inputEdges = context.edgesByToNode[nodeId] ?: emptyList()
 
     path.add(nodeId)
     val resultLists = mutableListOf<List<ProtoBrushBehavior.Node>>()
@@ -208,13 +213,13 @@ object BrushFamilyConverter {
         val setLists = mutableListOf<List<List<ProtoBrushBehavior.Node>>>()
         
         for (edge in sortedEdges) {
-            val sources = edge?.let { GraphValidator.findActualSourceNode(graph, it.fromNodeId) } ?: emptyList()
+            val sources = edge?.let { GraphValidator.findActualSourceNode(context.graph, it.fromNodeId) } ?: emptyList()
             val lists = mutableListOf<List<ProtoBrushBehavior.Node>>()
             if (sources.isEmpty()) {
                 lists.add(listOf(createDefaultNode()))
             } else {
                 for (source in sources) {
-                    lists.addAll(collectBehaviorNodes(source.id, graph, cache, path))
+                    lists.addAll(collectBehaviorNodes(source.id, context, path))
                 }
             }
             setLists.add(lists)
@@ -253,13 +258,13 @@ object BrushFamilyConverter {
         for (set in chunkedEdges) {
             val setLists = mutableListOf<List<List<ProtoBrushBehavior.Node>>>()
             for (edge in set) {
-                val sources = edge?.let { GraphValidator.findActualSourceNode(graph, it.fromNodeId) } ?: emptyList()
+                val sources = edge?.let { GraphValidator.findActualSourceNode(context.graph, it.fromNodeId) } ?: emptyList()
                 val lists = mutableListOf<List<ProtoBrushBehavior.Node>>()
                 if (sources.isEmpty()) {
                     lists.add(listOf(createDefaultNode()))
                 } else {
                     for (src in sources) {
-                        lists.addAll(collectBehaviorNodes(src.id, graph, cache, path))
+                        lists.addAll(collectBehaviorNodes(src.id, context, path))
                     }
                 }
                 setLists.add(lists)
@@ -284,10 +289,10 @@ object BrushFamilyConverter {
             resultLists.add(listOf(data.node))
         } else {
             for (edge in sortedEdges) {
-                val sources = edge?.let { GraphValidator.findActualSourceNode(graph, it.fromNodeId) } ?: emptyList()
+                val sources = edge?.let { GraphValidator.findActualSourceNode(context.graph, it.fromNodeId) } ?: emptyList()
                 if (sources.isNotEmpty()) {
                     for (source in sources) {
-                        val childLists = collectBehaviorNodes(source.id, graph, cache, path)
+                        val childLists = collectBehaviorNodes(source.id, context, path)
                         for (childList in childLists) {
                             val newList = mutableListOf<ProtoBrushBehavior.Node>()
                             newList.addAll(childList)
@@ -304,13 +309,12 @@ object BrushFamilyConverter {
     }
 
     path.remove(nodeId)
-    cache[nodeId] = resultLists
+    context.behaviorCache[nodeId] = resultLists
     return resultLists
   }
 
-  private fun createPaint(nodeId: String, graph: BrushGraph): ProtoBrushPaint {
-    val graphNode =
-      graph.nodes.find { it.id == nodeId }
+  private fun createPaint(nodeId: String, context: ConversionContext): ProtoBrushPaint {
+    val graphNode = context.nodesById[nodeId]
         ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
       graphNode.data as? NodeData.Paint
@@ -320,17 +324,17 @@ object BrushFamilyConverter {
         )
 
     val textureEdges = data.texturePortIds.mapNotNull { portId ->
-        graph.edges.find { edge ->
-            if (edge.isDisabled || edge.toNodeId != nodeId || edge.toPortId != portId) return@find false
-            val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+        context.edgesByToNode[nodeId]?.find { edge ->
+            if (edge.toPortId != portId) return@find false
+            val fromNode = context.nodesById[edge.fromNodeId]
             fromNode != null && !fromNode.isDisabled && fromNode.data is NodeData.TextureLayer
         }
     }
 
     val colorEdges = data.colorPortIds.mapNotNull { portId ->
-        graph.edges.find { edge ->
-            if (edge.isDisabled || edge.toNodeId != nodeId || edge.toPortId != portId) return@find false
-            val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
+        context.edgesByToNode[nodeId]?.find { edge ->
+            if (edge.toPortId != portId) return@find false
+            val fromNode = context.nodesById[edge.fromNodeId]
             fromNode != null && !fromNode.isDisabled && fromNode.data is NodeData.ColorFunction
         }
     }
@@ -340,18 +344,17 @@ object BrushFamilyConverter {
     builder.clearColorFunctions()
 
     for (edge in textureEdges) {
-      builder.addTextureLayers(createTextureLayer(edge.fromNodeId, graph))
+      builder.addTextureLayers(createTextureLayer(edge.fromNodeId, context))
     }
     for (edge in colorEdges) {
-      builder.addColorFunctions(createColorFunction(edge.fromNodeId, graph))
+      builder.addColorFunctions(createColorFunction(edge.fromNodeId, context))
     }
 
     return builder.build()
   }
 
-  private fun createTextureLayer(nodeId: String, graph: BrushGraph): ProtoBrushPaint.TextureLayer {
-    val graphNode =
-      graph.nodes.find { it.id == nodeId }
+  private fun createTextureLayer(nodeId: String, context: ConversionContext): ProtoBrushPaint.TextureLayer {
+    val graphNode = context.nodesById[nodeId]
         ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
       graphNode.data as? NodeData.TextureLayer
@@ -362,9 +365,8 @@ object BrushFamilyConverter {
     return data.layer
   }
 
-  private fun createColorFunction(nodeId: String, graph: BrushGraph): ProtoColorFunction {
-    val graphNode =
-      graph.nodes.find { it.id == nodeId }
+  private fun createColorFunction(nodeId: String, context: ConversionContext): ProtoColorFunction {
+    val graphNode = context.nodesById[nodeId]
         ?: throw GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_node_not_found, listOf(nodeId)))
     val data =
       graphNode.data as? NodeData.ColorFunction
