@@ -59,6 +59,23 @@ fun BoxScope.NodePortDots(
   var cumulativeDeltaY by remember { mutableFloatStateOf(0f) }
   val hasAddPort = visiblePorts.any { it.isAddPort }
 
+  val portCounts = remember(graph.edges, graph.nodes, node.id) {
+    if (node.data is NodeData.Paint) {
+      val nodesById = graph.nodes.associateBy { it.id }
+      val textureCount = graph.edges.count { edge ->
+        edge.toNodeId == node.id && nodesById[edge.fromNodeId]?.data is NodeData.TextureLayer
+      }
+      val colorCount = graph.edges.count { edge ->
+        edge.toNodeId == node.id && nodesById[edge.fromNodeId]?.data is NodeData.ColorFunction
+      }
+      Pair(textureCount, colorCount)
+    } else {
+      Pair(0, 0)
+    }
+  }
+  val T = portCounts.first
+  val C = portCounts.second
+
   for ((index, port) in visiblePorts.withIndex()) {
     val edge = graph.edges.find { it.toNodeId == node.id && it.toPortId == port.id }
     val portKey = edge?.let { "${it.fromNodeId}_${port.id}" } ?: "port_${port.id}"
@@ -88,18 +105,6 @@ fun BoxScope.NodePortDots(
           var minValidIndex = if (node.data is NodeData.Coat) 1 else 0
           
           if (node.data is NodeData.Paint) {
-              val textureEdges = graph.edges.filter { edge ->
-                  val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
-                  fromNode?.data is NodeData.TextureLayer && edge.toNodeId == node.id
-              }
-              val T = textureEdges.size
-              
-              val colorEdges = graph.edges.filter { edge ->
-                  val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
-                  fromNode?.data is NodeData.ColorFunction && edge.toNodeId == node.id
-              }
-              val C = colorEdges.size
-              
               if (index in 0 until T) {
                   minValidIndex = 0
                   maxValidIndex = T - 1

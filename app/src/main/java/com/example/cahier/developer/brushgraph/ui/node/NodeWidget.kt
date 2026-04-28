@@ -103,7 +103,6 @@ fun NodeWidget(
   onLongPress: () -> Unit = {},
 ) {
   var isPressed by remember { mutableStateOf(false) }
-  var boxCoordinates by remember { mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(null) }
   val density = LocalDensity.current
   val visiblePorts = remember(node.data, graph) { node.getVisiblePorts(graph) }
 
