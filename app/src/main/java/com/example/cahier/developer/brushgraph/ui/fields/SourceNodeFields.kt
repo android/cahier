@@ -116,8 +116,7 @@ fun SourceNodeFields(
                 val newProtoStart = if (source.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
                 val newProtoEnd = if (source.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
 
-                val needsClamp = source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
-                                source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
+                val needsClamp = source.isTimeSince()
                 val newOor = if (needsClamp) ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP else sourceNode.sourceOutOfRangeBehavior
                 
                 onUpdate(
@@ -160,13 +159,7 @@ fun SourceNodeFields(
       onDismiss = { showSourceTooltip = false }
     )
   }
-  val isAngleSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TILT_IN_RADIANS ||
-                      sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS ||
-                      sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS ||
-                      sourceNode.source == ProtoBrushBehavior.Source.SOURCE_DIRECTION_IN_RADIANS ||
-                      sourceNode.source == ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS ||
-                      sourceNode.source == ProtoBrushBehavior.Source.SOURCE_DIRECTION_ABOUT_ZERO_IN_RADIANS ||
-                      sourceNode.source == ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS
+  val isAngleSource = sourceNode.source.isAngle()
 
   val displayValueStart = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
   val displayValueEnd = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
@@ -191,8 +184,7 @@ fun SourceNodeFields(
     },
     onValueChangeFinished = onFieldEditComplete
   )
-  val isTimeSinceSource = sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
-                          sourceNode.source == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
+  val isTimeSinceSource = sourceNode.source.isTimeSince()
   FieldWithTooltip(
     tooltipTitle = stringResource(R.string.bg_title_out_of_range_behavior_format, stringResource(sourceNode.sourceOutOfRangeBehavior.displayStringRId())),
     tooltipText = stringResource(sourceNode.sourceOutOfRangeBehavior.getTooltip())
@@ -220,4 +212,9 @@ fun SourceNodeFields(
       modifier = Modifier.padding(top = 4.dp)
     )
   }
+}
+
+private fun ProtoBrushBehavior.Source.isTimeSince(): Boolean {
+  return this == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
+         this == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
 }
