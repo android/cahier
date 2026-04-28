@@ -137,6 +137,7 @@ internal fun NumericField(
     title: String,
     value: Float,
     limits: NumericLimits,
+    onValueChangeFinished: (() -> Unit)? = null,
     onValueChanged: (Float) -> Unit
 ) {
     val displayValue = limits.fromRealValue(value)
@@ -200,7 +201,8 @@ internal fun NumericField(
                 value = displayValue.coerceIn(limits.min, limits.max),
                 onValueChange = { onValueChanged(limits.toRealValue(it)) },
                 valueRange = limits.min..limits.max,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onValueChangeFinished = onValueChangeFinished
             )
 
             IconButton(onClick = {

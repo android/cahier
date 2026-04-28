@@ -28,6 +28,18 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
+// Warning Colors - Light Mode
+val LightWarning = Color(0xFFF57C00)
+val LightOnWarning = Color(0xFFFFFFFF)
+val LightWarningContainer = Color(0xFFFFF3E0)
+val LightOnWarningContainer = Color(0xFFE65100)
+
+// Warning Colors - Dark Mode
+val DarkWarning = Color(0xFFFFB74D)
+val DarkOnWarning = Color(0xFF4E342E)
+val DarkWarningContainer = Color(0xFFE65100)
+val DarkOnWarningContainer = Color(0xFFFFCC80)
+
 // Brush Designer: color picker presets
 val BrushBlack = Color(0xFF000000)
 val BrushRed = Color(0xFFFF0000)

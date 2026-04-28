@@ -27,10 +27,50 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+
+@Immutable
+data class ExtendedColorScheme(
+    val warning: Color,
+    val onWarning: Color,
+    val warningContainer: Color,
+    val onWarningContainer: Color,
+)
+
+val LocalExtendedColorScheme = staticCompositionLocalOf {
+    ExtendedColorScheme(
+        warning = Color.Unspecified,
+        onWarning = Color.Unspecified,
+        warningContainer = Color.Unspecified,
+        onWarningContainer = Color.Unspecified,
+    )
+}
+
+val MaterialTheme.extendedColorScheme: ExtendedColorScheme
+    @Composable get() = LocalExtendedColorScheme.current
+
+private val LightExtendedColorScheme =
+    ExtendedColorScheme(
+        warning = LightWarning,
+        onWarning = LightOnWarning,
+        warningContainer = LightWarningContainer,
+        onWarningContainer = LightOnWarningContainer,
+    )
+
+private val DarkExtendedColorScheme =
+    ExtendedColorScheme(
+        warning = DarkWarning,
+        onWarning = DarkOnWarning,
+        warningContainer = DarkWarningContainer,
+        onWarningContainer = DarkOnWarningContainer,
+    )
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -59,6 +99,9 @@ fun CahierAppTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
+
+    val extendedColorScheme = if (darkTheme) DarkExtendedColorScheme else LightExtendedColorScheme
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -67,9 +110,11 @@ fun CahierAppTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalExtendedColorScheme provides extendedColorScheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }

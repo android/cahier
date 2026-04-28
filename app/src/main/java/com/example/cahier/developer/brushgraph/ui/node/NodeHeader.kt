@@ -93,7 +93,7 @@ fun NodeHeader(
         }
       } else if (data is NodeData.Coat) {
         val coat = try {
-            com.example.cahier.developer.brushgraph.data.BrushFamilyConverter.createCoat(node, graph, mutableMapOf())
+            com.example.cahier.developer.brushgraph.data.BrushFamilyConverter.createCoat(node, graph)
         } catch (e: Exception) {
             ProtoBrushCoat.getDefaultInstance()
         }

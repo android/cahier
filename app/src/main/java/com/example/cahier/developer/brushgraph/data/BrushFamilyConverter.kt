@@ -94,6 +94,17 @@ object BrushFamilyConverter {
       .build()
   }
 
+  fun createCoat(
+    coatNode: GraphNode,
+    graph: BrushGraph,
+    behaviorCache: MutableMap<String, List<List<ink.proto.BrushBehavior.Node>>> = mutableMapOf()
+  ): ProtoBrushCoat {
+    val nodesById = graph.nodes.associateBy { it.id }
+    val edgesByToNode = graph.edges.filter { !it.isDisabled }.groupBy { it.toNodeId }
+    val context = ConversionContext(graph, nodesById, edgesByToNode, behaviorCache)
+    return createCoat(coatNode, context)
+  }
+
   private fun createCoat(
     coatNode: GraphNode,
     context: ConversionContext

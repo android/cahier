@@ -49,6 +49,7 @@ import com.example.cahier.R
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.ColorFunction as ProtoColorFunction
+import ink.proto.Color as ProtoColor
 
 /**
  * Tab 1: Paint & texture controls — multi-layer textures, multi-function colors,
@@ -438,7 +439,7 @@ private fun ColorFunctionEditor(
                 1 -> onFunctionChanged(
                     ProtoColorFunction.newBuilder()
                         .setReplaceColor(
-                            ink.proto.Color.getDefaultInstance()
+                            ProtoColor.getDefaultInstance()
                         )
                         .build()
                 )
@@ -477,52 +478,7 @@ private fun ColorFunctionEditor(
     }
 }
 
-/**
- * A generic [ExposedDropdownMenuBox] for selecting from enum-like value lists.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-internal fun <T> EnumDropdown(
-    label: String,
-    currentValue: T,
-    values: List<T>,
-    displayName: (T) -> String,
-    onSelected: (T) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
-        OutlinedTextField(
-            value = displayName(currentValue),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            values.forEach { value ->
-                DropdownMenuItem(
-                    text = { Text(displayName(value)) },
-                    onClick = {
-                        onSelected(value)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
