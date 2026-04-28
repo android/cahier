@@ -179,18 +179,43 @@ fun CurvePreviewWidget(
               path.lineTo(widthPx, centerY - scaleY)
             }
             else -> {
-              val (x1, y1, x2, y2) =
-                when (func) {
-                  ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE ->
-                    listOf(0.25f, 0.1f, 0.25f, 1f)
-                  ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_IN ->
-                    listOf(0.42f, 0f, 1f, 1f)
-                  ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT ->
-                    listOf(0f, 0f, 0.58f, 1f)
-                  ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT ->
-                    listOf(0.42f, 0f, 0.58f, 1f)
-                  else -> listOf(0f, 0f, 1f, 1f)
+              var x1 = 0f
+              var y1 = 0f
+              var x2 = 1f
+              var y2 = 1f
+              
+              when (func) {
+                ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE -> {
+                  x1 = 0.25f
+                  y1 = 0.1f
+                  x2 = 0.25f
+                  y2 = 1f
                 }
+                ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_IN -> {
+                  x1 = 0.42f
+                  y1 = 0f
+                  x2 = 1f
+                  y2 = 1f
+                }
+                ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_OUT -> {
+                  x1 = 0f
+                  y1 = 0f
+                  x2 = 0.58f
+                  y2 = 1f
+                }
+                ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE_IN_OUT -> {
+                  x1 = 0.42f
+                  y1 = 0f
+                  x2 = 0.58f
+                  y2 = 1f
+                }
+                else -> {
+                  x1 = 0f
+                  y1 = 0f
+                  x2 = 1f
+                  y2 = 1f
+                }
+              }
               path.moveTo(0f, centerY)
               path.cubicTo(
                 x1 * widthPx,
