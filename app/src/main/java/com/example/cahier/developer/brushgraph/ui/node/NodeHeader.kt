@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -92,10 +93,12 @@ fun NodeHeader(
           TipPreviewWidget(data.tip, strokeRenderer)
         }
       } else if (data is NodeData.Coat) {
-        val coat = try {
+        val coat = remember(node, graph) {
+          try {
             com.example.cahier.developer.brushgraph.data.BrushFamilyConverter.createCoat(node, graph)
-        } catch (e: Exception) {
+          } catch (e: Exception) {
             ProtoBrushCoat.getDefaultInstance()
+          }
         }
 
         Box(modifier = Modifier.size(60.dp).padding(4.dp)) {

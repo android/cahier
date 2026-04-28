@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -58,11 +59,14 @@ fun NodePortLabels(
   modifier: Modifier = Modifier,
 ) {
   val density = LocalDensity.current
+  val occupiedPortIds = remember(node.id, graph.edges) {
+    graph.edges.filter { it.toNodeId == node.id }.map { it.toPortId }.toSet()
+  }
   Box(modifier = modifier.fillMaxWidth()) {
     Column {
       for ((index, port) in visiblePorts.withIndex()) {
         with(density) {
-          val isPortEmpty = graph.edges.none { it.toNodeId == node.id && it.toPortId == port.id }
+          val isPortEmpty = port.id !in occupiedPortIds
           Box(
             modifier =
               Modifier.height(INPUT_ROW_HEIGHT.toDp())
