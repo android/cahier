@@ -170,7 +170,7 @@ fun GraphCanvas(
                     val toNode = currentGraph.nodes.find { it.id == edge.toNodeId }
                     
                     val start = if (fromNode != null) {
-                        nodeRegistry.getPortPosition(edge.fromNodeId, "output", currentGraph)
+                        nodeRegistry.getPortPosition(edge.fromNodeId, Port.OUTPUT_PORT_ID, currentGraph)
                     } else Offset.Zero
                     val end = if (toNode != null) {
                         nodeRegistry.getPortPosition(edge.toNodeId, edge.toPortId, currentGraph)
@@ -263,7 +263,7 @@ fun GraphCanvas(
                         val edge = graph.edges.find { it.toNodeId == node.id && it.toPortId == portId && !it.isDisabled }
 
                         if (edge != null) {
-                          activeSourcePort = Port.Output(edge.fromNodeId, "output")
+                          activeSourcePort = Port.Output(edge.fromNodeId)
                           onEdgeDetach(edge)
                         }
                       }
@@ -435,7 +435,7 @@ fun EdgeRenderer(
       val toNode = graph.nodes.find { it.id == edge.toNodeId }
       
       val start = if (fromNode != null) {
-          nodeRegistry.getPortPosition(edge.fromNodeId, "output", graph)
+          nodeRegistry.getPortPosition(edge.fromNodeId, Port.OUTPUT_PORT_ID, graph)
       } else Offset.Zero
       val end = if (toNode != null) {
           nodeRegistry.getPortPosition(edge.toNodeId, edge.toPortId, graph)

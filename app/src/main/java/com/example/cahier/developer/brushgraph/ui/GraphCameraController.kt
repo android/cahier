@@ -33,6 +33,8 @@ import com.example.cahier.developer.brushgraph.data.TutorialAnchor
 import com.example.cahier.developer.brushgraph.data.TutorialStep
 import com.example.cahier.developer.brushgraph.ui.node.NodeRegistry
 
+private const val TUTORIAL_TARGET_Y = 280f
+
 @Composable
 fun GraphCameraController(
   offset: Offset,
@@ -58,7 +60,7 @@ fun GraphCameraController(
       val node = step.getTargetNode(graph)
       if (node != null) {
         val density = context.resources.displayMetrics.density
-        val targetY = 280f * density
+        val targetY = TUTORIAL_TARGET_Y * density
         val targetX = maxWidthDp.value * density / 2f
         
         val newOffset = calculateFocusOffset(

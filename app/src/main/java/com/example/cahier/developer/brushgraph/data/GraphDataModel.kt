@@ -395,7 +395,11 @@ sealed class Port(
 ) {
     abstract val side: PortSide
 
-    class Output(nodeId: String, id: String = "output", label: DisplayText? = null) : 
+    companion object {
+        const val OUTPUT_PORT_ID = "output"
+    }
+
+    class Output(nodeId: String, id: String = OUTPUT_PORT_ID, label: DisplayText? = null) : 
         Port(nodeId, id, label, isAddPort = false) {
         override val side = PortSide.OUTPUT
     }

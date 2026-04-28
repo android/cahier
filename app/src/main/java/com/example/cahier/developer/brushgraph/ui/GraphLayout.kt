@@ -20,7 +20,6 @@ import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.Port
-import java.util.UUID
 
 const val NODE_WIDTH = 300f
 const val NODE_PADDING_VERTICAL = 8f
@@ -180,6 +179,7 @@ object GraphLayout {
     nodeSubtreeMaxY: MutableMap<String, Float>
   ): Float {
     val node = graph.nodes.find { it.id == nodeId } ?: return desiredY
+    if (depth > 100) return desiredY // Prevent stack overflow on extremely deep graphs
     val data = node.data as? NodeData.Behavior ?: return desiredY
     
     if (assignedNodeIds.contains(nodeId)) {
