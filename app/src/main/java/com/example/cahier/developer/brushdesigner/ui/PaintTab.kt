@@ -19,15 +19,12 @@ package com.example.cahier.developer.brushdesigner.ui
 import android.graphics.Bitmap
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -48,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
+import ink.proto.Color as ProtoColor
 import ink.proto.ColorFunction as ProtoColorFunction
 
 /**
@@ -68,7 +66,7 @@ internal fun PaintTabContent(
     onUpdateSelfOverlap: (ProtoBrushPaint.SelfOverlap) -> Unit,
     texturePickerLauncher: androidx.activity.result.ActivityResultLauncher<
             androidx.activity.result.PickVisualMediaRequest>,
-    getTextureBitmap: (String) -> Bitmap?
+    getTextureBitmap: (String) -> Bitmap?,
 ) {
     val paintPrefs =
         activeProto.coatsList.getOrNull(selectedCoatIndex)?.paintPreferencesList
@@ -135,7 +133,7 @@ private fun PaintPreferenceEditor(
     paint: ProtoBrushPaint,
     availableTextures: List<String>,
     onPaintChanged: (ProtoBrushPaint) -> Unit,
-    getTextureBitmap: (String) -> Bitmap?
+    getTextureBitmap: (String) -> Bitmap?,
 ) {
     EditableListWidget(
         title = stringResource(R.string.brush_designer_texture_layers),
@@ -226,7 +224,7 @@ private fun TextureLayerEditor(
     layer: ProtoBrushPaint.TextureLayer,
     availableTextures: List<String>,
     onLayerChanged: (ProtoBrushPaint.TextureLayer) -> Unit,
-    getTextureBitmap: (String) -> Bitmap?
+    getTextureBitmap: (String) -> Bitmap?,
 ) {
     val bitmap = if (layer.clientTextureId.isNotEmpty()) {
         getTextureBitmap(layer.clientTextureId)
@@ -355,7 +353,7 @@ private fun TextureLayerEditor(
 @Composable
 private fun ColorFunctionEditor(
     colorFunction: ProtoColorFunction,
-    onFunctionChanged: (ProtoColorFunction) -> Unit
+    onFunctionChanged: (ProtoColorFunction) -> Unit,
 ) {
     val functionTypes = listOf(
         stringResource(R.string.brush_designer_opacity_multiplier_label),
@@ -380,7 +378,7 @@ private fun ColorFunctionEditor(
                 1 -> onFunctionChanged(
                     ProtoColorFunction.newBuilder()
                         .setReplaceColor(
-                            ink.proto.Color.getDefaultInstance()
+                            ProtoColor.getDefaultInstance()
                         )
                         .build()
                 )
@@ -419,60 +417,13 @@ private fun ColorFunctionEditor(
     }
 }
 
-/**
- * A generic [ExposedDropdownMenuBox] for selecting from enum-like value lists.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-internal fun <T> EnumDropdown(
-    label: String,
-    currentValue: T,
-    values: List<T>,
-    displayName: (T) -> String,
-    onSelected: (T) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
-        OutlinedTextField(
-            value = displayName(currentValue),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            values.forEach { value ->
-                DropdownMenuItem(
-                    text = { Text(displayName(value)) },
-                    onClick = {
-                        onSelected(value)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TextureIdSelector(
     currentId: String,
     availableTextures: List<String>,
-    onTextureSelected: (String) -> Unit
+    onTextureSelected: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -513,7 +464,7 @@ private fun TextureIdSelector(
 @Composable
 private fun SelfOverlapSelector(
     currentPaint: ProtoBrushPaint,
-    onOverlapSelected: (ProtoBrushPaint.SelfOverlap) -> Unit
+    onOverlapSelected: (ProtoBrushPaint.SelfOverlap) -> Unit,
 ) {
     var overlapExpanded by remember { mutableStateOf(false) }
 
@@ -556,7 +507,7 @@ private fun SelfOverlapSelector(
 private fun TextureImportSection(
     textureCount: Int,
     texturePickerLauncher: androidx.activity.result.ActivityResultLauncher<
-            androidx.activity.result.PickVisualMediaRequest>
+            androidx.activity.result.PickVisualMediaRequest>,
 ) {
     Text(
         text = stringResource(R.string.brush_designer_textures),
