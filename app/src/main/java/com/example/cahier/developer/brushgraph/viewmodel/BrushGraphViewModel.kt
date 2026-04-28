@@ -80,7 +80,7 @@ import java.io.ByteArrayInputStream
 @HiltViewModel
 class BrushGraphViewModel @Inject constructor(
   private val customBrushDao: CustomBrushDao,
-  private val textureStore: CahierTextureBitmapStore,
+  public val textureStore: CahierTextureBitmapStore,
   private val repository: BrushGraphRepository
 ) : ViewModel() {
 

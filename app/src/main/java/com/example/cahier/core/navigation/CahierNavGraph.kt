@@ -29,6 +29,7 @@ import com.example.cahier.features.drawing.DrawingCanvas
 import com.example.cahier.features.home.HomeDestination
 import com.example.cahier.features.home.HomePane
 import com.example.cahier.features.text.TextNoteCanvasScreen
+import com.example.cahier.developer.brushgraph.ui.BrushGraphScreen
 
 
 @OptIn(ExperimentalComposeApi::class)
@@ -89,7 +90,7 @@ fun CahierNavHost(
             )
         }
         composable(route = BrushGraphDestination.route) {
-            com.example.cahier.developer.brushgraph.ui.BrushGraphScreen(
+            BrushGraphScreen(
                 onNavigateUp = { navController.navigateUp() }
             )
         }

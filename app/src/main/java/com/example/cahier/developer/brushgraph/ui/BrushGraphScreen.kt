@@ -156,8 +156,10 @@ fun BrushGraphScreen(
         val uri = pendingTextureUri!!
         val name = textureNameInput
         scope.launch {
-          val bitmap = context.contentResolver.openInputStream(uri)?.use { 
+          val bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            context.contentResolver.openInputStream(uri)?.use { 
               BitmapFactory.decodeStream(it)
+            }
           }
           if (bitmap != null) {
             textureStore.loadTexture(name, bitmap)
@@ -176,21 +178,23 @@ fun BrushGraphScreen(
     uri?.let {
       scope.launch {
         try {
-          val family = context.contentResolver.openInputStream(it)?.use { stream ->
-            try {
-              AndroidBrushFamilySerialization.decode(
-                stream,
-                BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
-                  if (bitmap != null) {
-                    textureStore.loadTexture(id, bitmap)
-                    viewModel.updateAllTextureIds()
+          val family = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            context.contentResolver.openInputStream(it)?.use { stream ->
+              try {
+                AndroidBrushFamilySerialization.decode(
+                  stream,
+                  BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
+                    if (bitmap != null) {
+                      textureStore.loadTexture(id, bitmap)
+                      viewModel.updateAllTextureIds()
+                    }
+                    id
                   }
-                  id
-                }
-              )
-            } catch (e: Exception) {
-              Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, trying legacy fallback")
-              null
+                )
+              } catch (e: Exception) {
+                Log.d("BrushGraphWidget", "Failed to decode with AndroidBrushFamilySerialization, trying legacy fallback")
+                null
+              }
             }
           }
 
@@ -242,7 +246,7 @@ fun BrushGraphScreen(
     onPaletteBrushNameInputChange = { paletteBrushNameInput = it },
     onConfirm = {
       if (paletteBrushNameInput.isNotBlank()) {
-        viewModel.saveToPalette(paletteBrushNameInput, textureStore)
+        viewModel.saveToPalette(paletteBrushNameInput)
         showSavePaletteDialog = false
         paletteBrushNameInput = ""
       }
@@ -297,7 +301,6 @@ fun BrushGraphScreen(
 
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         BrushGraphContent(
-          isLandscape = isLandscape,
           isNodeSelected = isNodeSelected,
           isEdgeSelected = isEdgeSelected,
           isErrorPaneOpen = isErrorPaneOpen,
@@ -484,7 +487,7 @@ fun BrushGraphScreen(
               isTutorialSandboxMode = viewModel.isTutorialSandboxMode,
               onEnterSelectionMode = { viewModel.enterSelectionMode(null) },
               onLoadBrushFamily = { viewModel.loadBrushFamily(it) },
-              onLoadFromPalette = { viewModel.loadFromPalette(it, textureStore) },
+              onLoadFromPalette = { viewModel.loadFromPalette(it) },
               onDeleteFromPalette = { viewModel.deleteFromPalette(it) },
               onStartTutorialSandbox = { viewModel.startTutorialSandbox() },
               textFieldsLocked = uiState.textFieldsLocked,
