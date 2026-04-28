@@ -28,6 +28,8 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
 import com.example.cahier.developer.brushgraph.data.ProgressDomainContext
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
 import com.example.cahier.developer.brushgraph.ui.getTooltip
@@ -43,14 +45,22 @@ fun NoiseNodeFields(
   onFieldEditComplete: () -> Unit,
   onDropdownEditComplete: () -> Unit,
   textFieldsLocked: Boolean,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val limits = noiseNode.varyOver.getNumericLimits(ProgressDomainContext.NOISE)
   
-  NumericField(
-    title = stringResource(R.string.bg_label_seed),
+  val isSeedStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.NOISE_SEED))
+  
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.NOISE_SEED,
     value = noiseNode.seed.toFloat(),
     limits = NumericLimits.standard(0f, 100f, 1f),
+    isStarred = isSeedStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.NOISE_SEED) },
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(
@@ -93,10 +103,15 @@ fun NoiseNodeFields(
     )
   }
   
-  NumericField(
-    title = stringResource(R.string.bg_label_base_period),
+  val isBasePeriodStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.NOISE_BASE_PERIOD))
+
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.NOISE_BASE_PERIOD,
     value = noiseNode.basePeriod,
     limits = limits,
+    isStarred = isBasePeriodStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.NOISE_BASE_PERIOD) },
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(

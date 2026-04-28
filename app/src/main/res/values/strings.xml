@@ -398,6 +398,11 @@
     <string name="bg_cd_upload_texture">Upload Texture</string>
     <string name="bg_cd_help">Help</string>
     <string name="bg_cd_show_notifications">Show Notifications</string>
+    <string name="bg_cd_star">Star Field</string>
+    <string name="bg_cd_unstar">Unstar Field</string>
+    <string name="bg_cd_show_starred_fields">Show Starred Fields</string>
+    <string name="bg_no_starred_fields">No starred fields yet. Tap the star icon next to a numeric field to add it here.</string>
+    <string name="bg_starred_fields">Starred Fields</string>
     <string name="bg_node_source">Source</string>
     <string name="bg_node_constant">Constant</string>
     <string name="bg_node_noise">Noise</string>

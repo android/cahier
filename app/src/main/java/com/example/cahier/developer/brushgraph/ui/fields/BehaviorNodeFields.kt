@@ -39,6 +39,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.fields.NODE_TYPES_START
 import com.example.cahier.developer.brushgraph.ui.fields.NODE_TYPES_OPERATOR
@@ -52,6 +54,9 @@ fun BehaviorNodeFields(
   onDropdownEditComplete: () -> Unit,
   onFieldEditComplete: () -> Unit,
   textFieldsLocked: Boolean,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val behaviorNode = data.node
@@ -141,7 +146,10 @@ fun BehaviorNodeFields(
           onUpdate = onUpdate,
           onDropdownEditComplete = onDropdownEditComplete,
           onFieldEditComplete = onFieldEditComplete,
-          textFieldsLocked = textFieldsLocked
+          textFieldsLocked = textFieldsLocked,
+          nodeId = nodeId,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> {
@@ -159,7 +167,10 @@ fun BehaviorNodeFields(
           onUpdate = onUpdate,
           onFieldEditComplete = onFieldEditComplete,
           onDropdownEditComplete = onDropdownEditComplete,
-          textFieldsLocked = textFieldsLocked
+          textFieldsLocked = textFieldsLocked,
+          nodeId = nodeId,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {

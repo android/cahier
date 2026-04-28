@@ -62,6 +62,8 @@ import com.example.cahier.developer.brushgraph.data.getVisiblePorts
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
 import androidx.compose.runtime.snapshotFlow
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushCoat as ProtoBrushCoat
@@ -95,7 +97,9 @@ data class BrushGraphUiState(
   val isPreviewExpanded: Boolean = true,
   val isDarkCanvas: Boolean = false,
   val graphIssues: List<GraphValidationException> = emptyList(),
-  val allTextureIds: Set<String> = emptySet()
+  val allTextureIds: Set<String> = emptySet(),
+  val starredFields: Set<StarredField> = emptySet(),
+  val isStarredInspectorOpen: Boolean = false
 )
 
 /** ViewModel to manage the state of the brush graph. */
@@ -360,7 +364,7 @@ class BrushGraphViewModel @Inject constructor(
   }
 
   fun onNodeClick(nodeId: String) {
-    _uiState.update { state -> state.copy(selectedNodeId = if (state.selectedNodeId == nodeId) null else nodeId, selectedEdge = null, isErrorPaneOpen = false) }
+    _uiState.update { state -> state.copy(selectedNodeId = if (state.selectedNodeId == nodeId) null else nodeId, selectedEdge = null, isErrorPaneOpen = false, isStarredInspectorOpen = false) }
     
     advanceTutorial(TutorialAction.SELECT_NODE)
   }
@@ -383,7 +387,7 @@ class BrushGraphViewModel @Inject constructor(
     _uiState.update { state ->
       val newEdge = if (state.selectedEdge?.fromNodeId == edge.fromNodeId && 
                          state.selectedEdge?.toNodeId == edge.toNodeId && state.selectedEdge?.toPortId == edge.toPortId) null else edge
-      state.copy(selectedEdge = newEdge, isErrorPaneOpen = false, selectedNodeId = null)
+      state.copy(selectedEdge = newEdge, isErrorPaneOpen = false, selectedNodeId = null, isStarredInspectorOpen = false)
     }
     
     advanceTutorial(TutorialAction.SELECT_EDGE)
@@ -409,7 +413,30 @@ class BrushGraphViewModel @Inject constructor(
 
   fun dismissPanes() {
     clearSelectedNode()
-    _uiState.update { it.copy(selectedEdge = null, isErrorPaneOpen = false, activeEdgeSourceId = null) }
+    _uiState.update { it.copy(selectedEdge = null, isErrorPaneOpen = false, activeEdgeSourceId = null, isStarredInspectorOpen = false) }
+  }
+
+  fun toggleStarredField(nodeId: String, fieldType: StarredFieldType) {
+    _uiState.update { state ->
+      val field = StarredField(nodeId, fieldType)
+      val newStarred = if (state.starredFields.contains(field)) {
+        state.starredFields - field
+      } else {
+        state.starredFields + field
+      }
+      state.copy(starredFields = newStarred)
+    }
+  }
+
+  fun setStarredInspectorOpen(isOpen: Boolean) {
+    _uiState.update { state -> 
+      state.copy(
+        isStarredInspectorOpen = isOpen,
+        selectedNodeId = if (isOpen) null else state.selectedNodeId,
+        selectedEdge = if (isOpen) null else state.selectedEdge,
+        isErrorPaneOpen = if (isOpen) false else state.isErrorPaneOpen
+      )
+    }
   }
 
   fun onIssueClick(issue: GraphValidationException, isLandscape: Boolean, density: Float) {

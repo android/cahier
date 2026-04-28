@@ -38,9 +38,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
+import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
+import com.example.cahier.developer.brushgraph.data.getNumericFieldValue
+import com.example.cahier.developer.brushgraph.data.getNumericFieldLimits
+import com.example.cahier.developer.brushgraph.data.updateWithNumericFieldValue
+import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import com.example.cahier.developer.brushgraph.ui.fields.NodeFields
 import com.example.cahier.developer.brushgraph.ui.TooltipDialog
 import com.example.cahier.developer.brushgraph.ui.getTooltip
@@ -190,6 +199,8 @@ fun NodeInspector(
   modifier: Modifier = Modifier,
   onFieldEditComplete: () -> Unit = {},
   onDropdownEditComplete: () -> Unit = {},
+  starredFields: Set<StarredField> = emptySet(),
+  onToggleStar: (String, StarredFieldType) -> Unit = { _, _ -> },
 ) {
   var showDeleteConfirmation by remember { mutableStateOf(false) }
 
@@ -226,6 +237,8 @@ fun NodeInspector(
         textFieldsLocked = textFieldsLocked,
         onFieldEditComplete = onFieldEditComplete,
         onDropdownEditComplete = onDropdownEditComplete,
+        starredFields = starredFields,
+        onToggleStar = onToggleStar,
       )
     }
 
@@ -260,6 +273,72 @@ fun NodeInspector(
       }
     }
   }
+}
+
+/** Renders the content of the starred field inspector. */
+@Composable
+fun StarredFieldInspector(
+    starredFields: Set<StarredField>,
+    graph: BrushGraph,
+    onUpdateNodeData: (String, NodeData) -> Unit,
+    onToggleStar: (String, StarredFieldType) -> Unit,
+    onNodeFocus: (String) -> Unit,
+    onFieldEditComplete: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val groupedFields = starredFields.groupBy { it.nodeId }
+        .toSortedMap() // Sort by node ID
+
+    Column(modifier = modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
+        if (starredFields.isEmpty()) {
+            Text(
+                text = stringResource(R.string.bg_no_starred_fields),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            groupedFields.forEach { (nodeId, fields) ->
+                val node = graph.nodes.find { it.id == nodeId }
+                if (node != null) {
+                    val sortedFields = fields.sortedBy { it.fieldType.id }
+                    
+                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                        // Subheading
+                        Text(
+                            text = stringResource(node.data.title()),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNodeFocus(nodeId) }
+                                .padding(vertical = 4.dp)
+                        )
+                        
+                        sortedFields.forEach { field ->
+                            val value = node.data.getNumericFieldValue(field.fieldType)
+                            val limits = node.data.getNumericFieldLimits(field.fieldType)
+                            
+                            StarrableNumericField(
+                                nodeId = nodeId,
+                                fieldType = field.fieldType,
+                                value = value,
+                                limits = limits,
+                                isStarred = true,
+                                onToggleStar = { onToggleStar(nodeId, field.fieldType) },
+                                onValueChanged = { newValue ->
+                                    val updatedData = node.data.updateWithNumericFieldValue(field.fieldType, newValue)
+                                    onUpdateNodeData(nodeId, updatedData)
+                                },
+                                onValueChangeFinished = onFieldEditComplete
+                            )
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

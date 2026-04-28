@@ -46,6 +46,8 @@ import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
 import com.example.cahier.developer.brushgraph.ui.getTooltip
 import com.example.cahier.developer.brushgraph.ui.TooltipDialog
@@ -60,6 +62,9 @@ fun SourceNodeFields(
   onDropdownEditComplete: () -> Unit,
   onFieldEditComplete: () -> Unit,
   textFieldsLocked: Boolean,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val limits = sourceNode.source.getNumericLimits()
@@ -159,28 +164,30 @@ fun SourceNodeFields(
       onDismiss = { showSourceTooltip = false }
     )
   }
-  val isAngleSource = sourceNode.source.isAngle()
+  val isRangeStartStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.SOURCE_RANGE_START))
+  val isRangeEndStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.SOURCE_RANGE_END))
 
-  val displayValueStart = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
-  val displayValueEnd = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
-
-  NumericField(
-    title = stringResource(R.string.bg_label_range_start),
-    value = displayValueStart,
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.SOURCE_RANGE_START,
+    value = sourceNode.sourceValueRangeStart,
     limits = limits,
+    isStarred = isRangeStartStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.SOURCE_RANGE_START) },
     onValueChanged = {
-      val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
-      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeStart(newValue).build()).build()))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeStart(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_range_end),
-    value = displayValueEnd,
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.SOURCE_RANGE_END,
+    value = sourceNode.sourceValueRangeEnd,
     limits = limits,
+    isStarred = isRangeEndStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.SOURCE_RANGE_END) },
     onValueChanged = {
-      val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
-      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeEnd(newValue).build()).build()))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeEnd(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )

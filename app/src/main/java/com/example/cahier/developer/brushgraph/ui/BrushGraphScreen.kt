@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Psychology
@@ -259,7 +260,7 @@ fun BrushGraphScreen(
       var viewportSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
       var showTutorialFinishDialog by remember { mutableStateOf(false) }
 
-      val isSidePaneOpen = isLandscape && (uiState.selectedNodeId != null || uiState.isErrorPaneOpen)
+      val isSidePaneOpen = isLandscape && (uiState.selectedNodeId != null || uiState.isErrorPaneOpen || uiState.isStarredInspectorOpen)
       val indicatorPaddingEnd by animateDpAsState(
         targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
         label = "indicatorPaddingEnd",
@@ -272,7 +273,7 @@ fun BrushGraphScreen(
       val isNodeSelected = uiState.selectedNodeId != null
       val isEdgeSelected = uiState.selectedEdge != null
       val isErrorPaneOpen = uiState.isErrorPaneOpen
-      val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
+      val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen || uiState.isStarredInspectorOpen
 
       val trashPaddingBottom by animateDpAsState(
         targetValue =
@@ -372,69 +373,87 @@ fun BrushGraphScreen(
           inspectorSlot = {
             val selectedNode = uiState.graph.nodes.find { it.id == uiState.selectedNodeId }
             val selectedEdge = uiState.selectedEdge
-            val selectionName = if (selectedNode != null) {
-                stringResource(selectedNode.data.title())
-            } else {
-                stringResource(R.string.bg_label_edge)
+            val isStarredOpen = uiState.isStarredInspectorOpen
+            
+            val titleText = when {
+                selectedNode != null -> stringResource(R.string.bg_title_inspector_with_name, stringResource(selectedNode.data.title()))
+                selectedEdge != null -> stringResource(R.string.bg_title_inspector_with_name, stringResource(R.string.bg_label_edge))
+                isStarredOpen -> stringResource(R.string.bg_starred_fields)
+                else -> ""
             }
-            val titleText = stringResource(R.string.bg_title_inspector_with_name, selectionName)
             val selectionTooltip = selectedNode?.data?.getTooltip()?.let { stringResource(it) }
 
             AdaptiveInspectorPane(
               isLandscape = isLandscape,
-              visible = selectedNode != null || selectedEdge != null,
+              visible = selectedNode != null || selectedEdge != null || isStarredOpen,
               title = titleText,
               tooltipText = selectionTooltip,
               onClose = {
                 viewModel.clearSelectedNode()
                 viewModel.clearSelectedEdge()
+                viewModel.setStarredInspectorOpen(false)
               },
               modifier = Modifier.align(if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter),
             ) {
-                if (selectedNode != null) {
-                  NodeInspector(
-                    node = selectedNode,
-                    onUpdate = { viewModel.updateNodeData(selectedNode.id, it) },
-                    onDisableChange = { viewModel.setNodeDisabled(selectedNode.id, it) },
-                    onChooseColor = { initialColor, onColorSelected ->
-                      colorPickerInitialColor = initialColor
-                      colorPickerOnColorSelected = onColorSelected
-                      showColorPicker = true
-                    },
-                    allTextureIds = uiState.allTextureIds,
-                    onLoadTexture = { texturePickerLauncher.launch(arrayOf("image/*")) },
-                    strokeRenderer = renderer,
-                    textFieldsLocked = uiState.textFieldsLocked,
-                    onDelete = { viewModel.deleteNode(selectedNode.id) },
-                    onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) },
-                    onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
-                  )
-                } else if (selectedEdge != null) {
-                  val fromNode = uiState.graph.nodes.find { it.id == selectedEdge.fromNodeId }
-                  val toNode = uiState.graph.nodes.find { it.id == selectedEdge.toNodeId }
-                  if (fromNode != null && toNode != null) {
-                    val visiblePorts = toNode.getVisiblePorts(uiState.graph)
-                    val port = visiblePorts.find { it.id == selectedEdge.toPortId }
-                    val inputLabel = port?.label
-                    EdgeInspector(
-                      edge = selectedEdge,
-                      fromNode = fromNode,
-                      toNode = toNode,
-                      inputLabel = inputLabel,
-                      onNodeFocus = { nodeId: String -> viewModel.centerNode(nodeId) },
-                      onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
-                      onDelete = { viewModel.deleteEdge(selectedEdge) },
-                      onAddNodeBetween = {
-                        val fromNodePos = nodeRegistry.getNodePosition(selectedEdge.fromNodeId) ?: Offset.Zero
-                        val toNodePos = nodeRegistry.getNodePosition(selectedEdge.toNodeId) ?: Offset.Zero
-                        val midpoint = (fromNodePos + toNodePos) / 2f
-                        val newNodeId = viewModel.addNodeBetween(selectedEdge)
-                        if (newNodeId != null) {
-                          nodeRegistry.updateNodePosition(newNodeId, midpoint)
-                        }
-                      },
-                    )
-                  }
+                when {
+                    selectedNode != null -> {
+                      NodeInspector(
+                        node = selectedNode,
+                        onUpdate = { viewModel.updateNodeData(selectedNode.id, it) },
+                        onDisableChange = { viewModel.setNodeDisabled(selectedNode.id, it) },
+                        onChooseColor = { initialColor, onColorSelected ->
+                          colorPickerInitialColor = initialColor
+                          colorPickerOnColorSelected = onColorSelected
+                          showColorPicker = true
+                        },
+                        allTextureIds = uiState.allTextureIds,
+                        onLoadTexture = { texturePickerLauncher.launch(arrayOf("image/*")) },
+                        strokeRenderer = renderer,
+                        textFieldsLocked = uiState.textFieldsLocked,
+                        onDelete = { viewModel.deleteNode(selectedNode.id) },
+                        onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) },
+                        onDropdownEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_DROPDOWN) },
+                        starredFields = uiState.starredFields,
+                        onToggleStar = { nodeId, fieldType -> viewModel.toggleStarredField(nodeId, fieldType) },
+                      )
+                    }
+                    selectedEdge != null -> {
+                      val fromNode = uiState.graph.nodes.find { it.id == selectedEdge.fromNodeId }
+                      val toNode = uiState.graph.nodes.find { it.id == selectedEdge.toNodeId }
+                      if (fromNode != null && toNode != null) {
+                        val visiblePorts = toNode.getVisiblePorts(uiState.graph)
+                        val port = visiblePorts.find { it.id == selectedEdge.toPortId }
+                        val inputLabel = port?.label
+                        EdgeInspector(
+                          edge = selectedEdge,
+                          fromNode = fromNode,
+                          toNode = toNode,
+                          inputLabel = inputLabel,
+                          onNodeFocus = { nodeId: String -> viewModel.centerNode(nodeId) },
+                          onDisableChange = { viewModel.setEdgeDisabled(selectedEdge, it) },
+                          onDelete = { viewModel.deleteEdge(selectedEdge) },
+                          onAddNodeBetween = {
+                            val fromNodePos = nodeRegistry.getNodePosition(selectedEdge.fromNodeId) ?: Offset.Zero
+                            val toNodePos = nodeRegistry.getNodePosition(selectedEdge.toNodeId) ?: Offset.Zero
+                            val midpoint = (fromNodePos + toNodePos) / 2f
+                            val newNodeId = viewModel.addNodeBetween(selectedEdge)
+                            if (newNodeId != null) {
+                              nodeRegistry.updateNodePosition(newNodeId, midpoint)
+                            }
+                          },
+                        )
+                      }
+                    }
+                    isStarredOpen -> {
+                      StarredFieldInspector(
+                        starredFields = uiState.starredFields,
+                        graph = uiState.graph,
+                        onUpdateNodeData = { nodeId, data -> viewModel.updateNodeData(nodeId, data) },
+                        onToggleStar = { nodeId, fieldType -> viewModel.toggleStarredField(nodeId, fieldType) },
+                        onNodeFocus = { nodeId -> viewModel.centerNode(nodeId) },
+                        onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) }
+                      )
+                    }
                 }
             }
           },
@@ -446,12 +465,35 @@ fun BrushGraphScreen(
             )
           },
           notificationIconSlot = { padding ->
-            NotificationIcon(
-              issues = issues,
-              indicatorPaddingEnd = padding,
-              onToggleErrorPane = { viewModel.toggleErrorPane() },
-              modifier = Modifier.align(Alignment.TopEnd)
-            )
+            Row(
+              modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(end = padding)
+                .zIndex(2f),
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              if (uiState.starredFields.isNotEmpty()) {
+                IconButton(
+                  onClick = { viewModel.setStarredInspectorOpen(!uiState.isStarredInspectorOpen) },
+                  modifier = Modifier.padding(top = 16.dp),
+                  colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = if (uiState.isStarredInspectorOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                    contentColor = if (uiState.isStarredInspectorOpen) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
+                  )
+                ) {
+                  Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = stringResource(R.string.bg_cd_show_starred_fields)
+                  )
+                }
+                Spacer(Modifier.width(8.dp))
+              }
+              NotificationIcon(
+                issues = issues,
+                indicatorPaddingEnd = 0.dp,
+                onToggleErrorPane = { viewModel.toggleErrorPane() }
+              )
+            }
           },
           previewSlot = {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {

@@ -83,6 +83,8 @@ fun NodeFields(
   strokeRenderer: CanvasStrokeRenderer,
   onFieldEditComplete: () -> Unit = {},
   onDropdownEditComplete: () -> Unit = {},
+  starredFields: Set<StarredField> = emptySet(),
+  onToggleStar: (String, StarredFieldType) -> Unit = { _, _ -> },
 ) {
   Column(
     modifier =
@@ -95,7 +97,10 @@ fun NodeFields(
           onUpdate = onUpdate,
           onDropdownEditComplete = onDropdownEditComplete,
           onFieldEditComplete = onFieldEditComplete,
-          textFieldsLocked = textFieldsLocked
+          textFieldsLocked = textFieldsLocked,
+          nodeId = node.id,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar,
         )
       }
       is NodeData.ColorFunction -> {
