@@ -62,7 +62,6 @@ import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
 import androidx.compose.runtime.snapshotFlow
-import com.example.cahier.developer.brushgraph.ui.node.NodeRegistry
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushFamily as ProtoBrushFamily
