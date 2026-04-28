@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.toSize
 
 @Composable
 fun BrushGraphContent(
-  isLandscape: Boolean,
   isNodeSelected: Boolean,
   isEdgeSelected: Boolean,
   isErrorPaneOpen: Boolean,

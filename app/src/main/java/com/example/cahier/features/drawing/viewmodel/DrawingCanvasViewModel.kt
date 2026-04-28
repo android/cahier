@@ -463,7 +463,6 @@ class DrawingCanvasViewModel @Inject constructor(
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val stream = java.io.ByteArrayOutputStream()
-                val textureStore = CahierTextureBitmapStore(context)
                 AndroidBrushFamilySerialization.encode(
                     _selectedBrush.value.family,
                     stream,
@@ -471,7 +470,10 @@ class DrawingCanvasViewModel @Inject constructor(
                 )
                 val encodedBrushFamily = stream.toByteArray()
                 customBrushDao.saveCustomBrush(
-                    com.example.cahier.developer.brushdesigner.data.CustomBrushEntity("__autosave__", encodedBrushFamily)
+                    com.example.cahier.developer.brushdesigner.data.CustomBrushEntity(
+                        com.example.cahier.developer.brushdesigner.data.AUTOSAVE_KEY, 
+                        encodedBrushFamily
+                    )
                 )
                 Log.d(TAG, "Auto saved brush to database successfully")
             } catch (e: Exception) {
