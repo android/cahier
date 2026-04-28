@@ -48,6 +48,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.distinctUntilChanged
 import com.example.cahier.developer.brushgraph.data.BrushFamilyConverter
 import com.example.cahier.developer.brushgraph.data.BrushGraphConverter
 import com.example.cahier.developer.brushgraph.data.DisplayText
@@ -101,9 +102,8 @@ data class BrushGraphUiState(
 @HiltViewModel
 class BrushGraphViewModel @Inject constructor(
   private val customBrushDao: CustomBrushDao,
-  val textureStore: CahierTextureBitmapStore,
-  private val repository: BrushGraphRepository,
-  private val savedStateHandle: androidx.lifecycle.SavedStateHandle
+  private val textureStore: CahierTextureBitmapStore,
+  private val repository: BrushGraphRepository
 ) : ViewModel() {
 
   /** Saved brushes in the palette. */
@@ -118,29 +118,32 @@ class BrushGraphViewModel @Inject constructor(
   private val _uiState = MutableStateFlow(BrushGraphUiState())
   val uiState: StateFlow<BrushGraphUiState> = _uiState.asStateFlow()
 
-  val brush: StateFlow<androidx.ink.brush.Brush> = uiState.map { state ->
-    val family = try {
-      BrushFamilyConverter.convert(state.graph)
-    } catch (e: Exception) {
-      null
-    }
-    val color = state.testBrushColor ?: 0
-    val size = state.testBrushSize
-    if (family != null) {
-      Brush.createWithColorIntArgb(family, color, size, 0.1f)
-    } else {
-      Brush.createWithColorIntArgb(StockBrushes.marker(), color, size, 0.1f)
-    }
-  }.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.Eagerly,
-    initialValue = Brush.createWithColorIntArgb(
-      StockBrushes.marker(),
-      0, // Transparent until initialized by UI
-      size = 20f,
-      epsilon = 0.1f,
+  val brush: StateFlow<androidx.ink.brush.Brush> = uiState
+    .map { Triple(it.graph, it.testBrushColor, it.testBrushSize) }
+    .distinctUntilChanged()
+    .map { (graph, testBrushColor, testBrushSize) ->
+      val family = try {
+        BrushFamilyConverter.convert(graph)
+      } catch (e: Exception) {
+        null
+      }
+      val color = testBrushColor ?: 0
+      val size = testBrushSize
+      if (family != null) {
+        Brush.createWithColorIntArgb(family, color, size, 0.1f)
+      } else {
+        Brush.createWithColorIntArgb(StockBrushes.marker(), color, size, 0.1f)
+      }
+    }.stateIn(
+      scope = viewModelScope,
+      started = SharingStarted.Eagerly,
+      initialValue = Brush.createWithColorIntArgb(
+        StockBrushes.marker(),
+        0,
+        size = 20f,
+        epsilon = 0.1f,
+      )
     )
-  )
 
   /** The list of strokes drawn in the preview area. */
   val strokeList = mutableStateListOf<androidx.ink.strokes.Stroke>()
@@ -560,7 +563,7 @@ class BrushGraphViewModel @Inject constructor(
     _uiState.update { state -> state.copy(textFieldsLocked = !state.textFieldsLocked) }
   }
 
-  fun saveToPalette(brushName: String, textureStore: TextureBitmapStore) {
+  fun saveToPalette(brushName: String) {
     viewModelScope.launch(Dispatchers.IO) {
       try {
         val baos = ByteArrayOutputStream()
@@ -571,7 +574,7 @@ class BrushGraphViewModel @Inject constructor(
           CustomBrushEntity(name = brushName, brushBytes = finalCompressedBytes)
         )
       } catch (e: Exception) {
-        println("Failed to save brush to palette: $e")
+        postDebug(DisplayText.Resource(com.example.cahier.R.string.bg_err_save_palette, listOf(e.message ?: e.javaClass.simpleName)))
       }
     }
   }
@@ -582,13 +585,13 @@ class BrushGraphViewModel @Inject constructor(
     }
   }
 
-  fun loadFromPalette(entity: CustomBrushEntity, textureStore: TextureBitmapStore) {
+  fun loadFromPalette(entity: CustomBrushEntity) {
     viewModelScope.launch(Dispatchers.IO) {
       try {
         val family = AndroidBrushFamilySerialization.decode(
           ByteArrayInputStream(entity.brushBytes),
           BrushFamilyDecodeCallback { id, bitmap ->
-            if (bitmap != null && textureStore is CahierTextureBitmapStore) {
+            if (bitmap != null) {
               textureStore.loadTexture(id, bitmap)
             }
             id
@@ -598,7 +601,7 @@ class BrushGraphViewModel @Inject constructor(
            loadBrushFamily(family)
         }
       } catch (e: Exception) {
-        println("Failed to load brush from palette: $e")
+        postDebug(DisplayText.Resource(com.example.cahier.R.string.bg_err_load_palette, listOf(e.message ?: e.javaClass.simpleName)))
       }
     }
   }

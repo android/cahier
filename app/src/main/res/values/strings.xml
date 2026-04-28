@@ -453,6 +453,8 @@
     <string name="bg_err_reorganization_failed">Reorganization failed</string>
     <string name="bg_err_load_brush_failed">Failed to load brush</string>
     <string name="bg_err_cannot_delete_family_node">Cannot delete Family node</string>
+    <string name="bg_err_save_palette">Failed to save brush to palette: %1$s</string>
+    <string name="bg_err_load_palette">Failed to load brush from palette: %1$s</string>
     <string name="bg_err_behavior_cannot_accept">Behavior node %1$s cannot accept input from %2$s</string>
     <string name="bg_err_behavior_cannot_accept_structural">Behavior node %1$s cannot accept input from structural node %2$s</string>
     <string name="bg_err_coat_only_accepts_tip">Coat can only accept input from Tip at the tip port</string>
