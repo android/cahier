@@ -24,6 +24,9 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
+import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
@@ -32,12 +35,20 @@ fun ConstantNodeFields(
   behaviorNode: ProtoBrushBehavior.Node,
   onUpdate: (NodeData) -> Unit,
   onFieldEditComplete: () -> Unit,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
-  NumericField(
-    title = stringResource(R.string.bg_port_value),
+  val isValueStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.CONSTANT_VALUE))
+  
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.CONSTANT_VALUE,
     value = constantNode.value,
     limits = NumericLimits.standard(-100f, 100f, 0.01f),
+    isStarred = isValueStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.CONSTANT_VALUE) },
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(behaviorNode.toBuilder().setConstantNode(constantNode.toBuilder().setValue(it).build()).build())

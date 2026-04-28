@@ -22,6 +22,8 @@ import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
 import com.example.cahier.developer.brushgraph.ui.TipPreviewWidget
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import ink.proto.BrushTip as ProtoBrushTip
@@ -32,64 +34,99 @@ fun TipNodeFields(
   onUpdate: (NodeData) -> Unit,
   onFieldEditComplete: () -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val tip = data.tip
   TipPreviewWidget(tip, strokeRenderer)
 
-  NumericField(
-    title = stringResource(R.string.bg_label_scale_x),
+  val isScaleXStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TIP_SCALE_X))
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TIP_SCALE_X,
     value = tip.scaleX,
     limits = NumericLimits.standard(0f, 2f, 0.01f),
+    isStarred = isScaleXStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TIP_SCALE_X) },
     onValueChanged = { onUpdate(NodeData.Tip(tip.toBuilder().setScaleX(it).build(), behaviorPortIds = data.behaviorPortIds)) },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_scale_y),
+  val isScaleYStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TIP_SCALE_Y))
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TIP_SCALE_Y,
     value = tip.scaleY,
     limits = NumericLimits.standard(0f, 2f, 0.01f),
+    isStarred = isScaleYStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TIP_SCALE_Y) },
     onValueChanged = { onUpdate(NodeData.Tip(tip.toBuilder().setScaleY(it).build(), behaviorPortIds = data.behaviorPortIds)) },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_corner_rounding),
+  val isCornerStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TIP_CORNER_ROUNDING))
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TIP_CORNER_ROUNDING,
     value = tip.cornerRounding,
     limits = NumericLimits.standard(0f, 1f, 0.01f),
+    isStarred = isCornerStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TIP_CORNER_ROUNDING) },
     onValueChanged = { onUpdate(NodeData.Tip(tip.toBuilder().setCornerRounding(it).build(), behaviorPortIds = data.behaviorPortIds)) },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_slant_degrees),
+  val isSlantStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TIP_SLANT))
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TIP_SLANT,
     value = tip.slantRadians,
     limits = NumericLimits.radiansShownAsDegrees(-90f, 90f),
+    isStarred = isSlantStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TIP_SLANT) },
     onValueChanged = { onUpdate(NodeData.Tip(tip.toBuilder().setSlantRadians(it).build(), behaviorPortIds = data.behaviorPortIds)) },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_pinch),
+  val isPinchStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TIP_PINCH))
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TIP_PINCH,
     value = tip.pinch,
     limits = NumericLimits.standard(0f, 1f, 0.01f),
+    isStarred = isPinchStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TIP_PINCH) },
     onValueChanged = { onUpdate(NodeData.Tip(tip.toBuilder().setPinch(it).build(), behaviorPortIds = data.behaviorPortIds)) },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_rotation_degrees),
+  val isRotationStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TIP_ROTATION))
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TIP_ROTATION,
     value = tip.rotationRadians,
     limits = NumericLimits.radiansShownAsDegrees(0f, 360f),
+    isStarred = isRotationStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TIP_ROTATION) },
     onValueChanged = { onUpdate(NodeData.Tip(tip.toBuilder().setRotationRadians(it).build(), behaviorPortIds = data.behaviorPortIds)) },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_particle_gap_distance_scale),
+  val isGapDistStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TIP_GAP_DISTANCE))
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TIP_GAP_DISTANCE,
     value = tip.particleGapDistanceScale,
     limits = NumericLimits.standard(0f, 5f, 0.01f),
+    isStarred = isGapDistStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TIP_GAP_DISTANCE) },
     onValueChanged = { onUpdate(NodeData.Tip(tip.toBuilder().setParticleGapDistanceScale(it).build(), behaviorPortIds = data.behaviorPortIds)) },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_particle_gap_duration_ms),
+  val isGapDurStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TIP_GAP_DURATION))
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TIP_GAP_DURATION,
     value = tip.particleGapDurationSeconds,
     limits = NumericLimits(0f, 1000f, 1f, "ms", unitScale = 1000f),
+    isStarred = isGapDurStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TIP_GAP_DURATION) },
     onValueChanged = { onUpdate(NodeData.Tip(tip.toBuilder().setParticleGapDurationSeconds(it).build(), behaviorPortIds = data.behaviorPortIds)) },
     onValueChangeFinished = onFieldEditComplete
   )

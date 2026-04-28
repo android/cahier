@@ -45,6 +45,9 @@ import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
+import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
 import com.example.cahier.developer.brushgraph.ui.getTooltip
 import com.example.cahier.developer.brushgraph.ui.TooltipDialog
 import com.example.cahier.developer.brushgraph.data.displayStringRId
@@ -57,6 +60,9 @@ fun TargetNodeFields(
   onUpdate: (NodeData) -> Unit,
   onFieldEditComplete: () -> Unit,
   onDropdownEditComplete: () -> Unit,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val limits = targetNode.target.getNumericLimits()
@@ -149,10 +155,15 @@ fun TargetNodeFields(
       onDismiss = { showTargetTooltip = false }
     )
   }
-  NumericField(
-    title = stringResource(R.string.bg_label_range_start),
+  val isRangeStartStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TARGET_RANGE_START))
+  
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TARGET_RANGE_START,
     value = targetNode.targetModifierRangeStart,
     limits = limits,
+    isStarred = isRangeStartStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TARGET_RANGE_START) },
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(
@@ -164,10 +175,15 @@ fun TargetNodeFields(
     },
     onValueChangeFinished = onFieldEditComplete
   )
-  NumericField(
-    title = stringResource(R.string.bg_label_range_end),
+  val isRangeEndStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TARGET_RANGE_END))
+
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.TARGET_RANGE_END,
     value = targetNode.targetModifierRangeEnd,
     limits = limits,
+    isStarred = isRangeEndStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.TARGET_RANGE_END) },
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(

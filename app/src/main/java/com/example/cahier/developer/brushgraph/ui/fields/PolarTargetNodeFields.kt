@@ -26,6 +26,9 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
+import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
 import com.example.cahier.developer.brushgraph.ui.getTooltip
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
@@ -40,6 +43,9 @@ fun PolarTargetNodeFields(
   onUpdate: (NodeData) -> Unit,
   onFieldEditComplete: () -> Unit,
   onDropdownEditComplete: () -> Unit,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   FieldWithTooltip(
@@ -75,20 +81,30 @@ fun PolarTargetNodeFields(
     )
   }
   
-  NumericField(
-    title = stringResource(R.string.bg_label_angle_start),
+  val isAngleStartStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.POLAR_ANGLE_START))
+  
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.POLAR_ANGLE_START,
     value = polarNode.angleRangeStart,
     limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
+    isStarred = isAngleStartStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.POLAR_ANGLE_START) },
     onValueChanged = {
       onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setAngleRangeStart(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
   
-  NumericField(
-    title = stringResource(R.string.bg_label_angle_end),
+  val isAngleEndStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.POLAR_ANGLE_END))
+
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.POLAR_ANGLE_END,
     value = polarNode.angleRangeEnd,
     limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
+    isStarred = isAngleEndStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.POLAR_ANGLE_END) },
     onValueChanged = {
       onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setAngleRangeEnd(it).build()).build()))
     },
@@ -97,20 +113,30 @@ fun PolarTargetNodeFields(
   
   val magLimits = NumericLimits.standard(-10.0f, 10.0f, 0.01f)
   
-  NumericField(
-    title = stringResource(R.string.bg_label_mag_start),
+  val isMagStartStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.POLAR_MAG_START))
+
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.POLAR_MAG_START,
     value = polarNode.magnitudeRangeStart,
     limits = magLimits,
+    isStarred = isMagStartStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.POLAR_MAG_START) },
     onValueChanged = {
       onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setMagnitudeRangeStart(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
   
-  NumericField(
-    title = stringResource(R.string.bg_label_mag_end),
+  val isMagEndStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.POLAR_MAG_END))
+
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.POLAR_MAG_END,
     value = polarNode.magnitudeRangeEnd,
     limits = magLimits,
+    isStarred = isMagEndStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.POLAR_MAG_END) },
     onValueChanged = {
       onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setMagnitudeRangeEnd(it).build()).build()))
     },

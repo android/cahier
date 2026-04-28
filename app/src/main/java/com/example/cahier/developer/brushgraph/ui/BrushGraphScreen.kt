@@ -451,6 +451,7 @@ fun BrushGraphScreen(
                         onUpdateNodeData = { nodeId, data -> viewModel.updateNodeData(nodeId, data) },
                         onToggleStar = { nodeId, fieldType -> viewModel.toggleStarredField(nodeId, fieldType) },
                         onNodeFocus = { nodeId -> viewModel.centerNode(nodeId) },
+                        strokeRenderer = renderer,
                         onFieldEditComplete = { viewModel.advanceTutorial(TutorialAction.EDIT_FIELD) }
                       )
                     }

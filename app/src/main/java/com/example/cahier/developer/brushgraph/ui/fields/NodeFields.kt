@@ -109,7 +109,10 @@ fun NodeFields(
           onUpdate = onUpdate,
           onChooseColor = onChooseColor,
           onDropdownEditComplete = onDropdownEditComplete,
-          onFieldEditComplete = onFieldEditComplete
+          onFieldEditComplete = onFieldEditComplete,
+          nodeId = node.id,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       is NodeData.Family -> {
@@ -117,7 +120,10 @@ fun NodeFields(
           data = data,
           onUpdate = onUpdate,
           onDropdownEditComplete = onDropdownEditComplete,
-          textFieldsLocked = textFieldsLocked
+          textFieldsLocked = textFieldsLocked,
+          nodeId = node.id,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       is NodeData.Tip -> {
@@ -125,7 +131,10 @@ fun NodeFields(
           data = data,
           onUpdate = onUpdate,
           onFieldEditComplete = onFieldEditComplete,
-          strokeRenderer = strokeRenderer
+          strokeRenderer = strokeRenderer,
+          nodeId = node.id,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       is NodeData.Coat -> {
@@ -144,7 +153,10 @@ fun NodeFields(
           allTextureIds = allTextureIds,
           onLoadTexture = onLoadTexture,
           onUpdate = { onUpdate(it) },
-          strokeRenderer = strokeRenderer
+          strokeRenderer = strokeRenderer,
+          nodeId = node.id,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
     }

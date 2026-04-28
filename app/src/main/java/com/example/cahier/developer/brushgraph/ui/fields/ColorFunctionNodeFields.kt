@@ -40,6 +40,9 @@ import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
+import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushgraph.ui.getColorFunctionTooltip
 import ink.proto.ColorFunction as ProtoColorFunction
@@ -51,6 +54,9 @@ fun ColorFunctionNodeFields(
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   onDropdownEditComplete: () -> Unit,
   onFieldEditComplete: () -> Unit,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val currentTypeResId = if (function.hasOpacityMultiplier()) {
@@ -98,10 +104,15 @@ fun ColorFunctionNodeFields(
   }
   
   if (function.hasOpacityMultiplier()) {
-    NumericField(
-      title = stringResource(R.string.bg_label_opacity_multiplier),
+    val isOpacityStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.COLOR_OPACITY_MULTIPLIER))
+    
+    StarrableNumericField(
+      nodeId = nodeId,
+      fieldType = StarredFieldType.COLOR_OPACITY_MULTIPLIER,
       value = function.opacityMultiplier,
       limits = NumericLimits.standard(0f, 2f, 0.01f),
+      isStarred = isOpacityStarred,
+      onToggleStar = { onToggleStar(nodeId, StarredFieldType.COLOR_OPACITY_MULTIPLIER) },
       onValueChanged = { onUpdate(NodeData.ColorFunction(function.toBuilder().setOpacityMultiplier(it).build())) },
       onValueChangeFinished = onFieldEditComplete
     )

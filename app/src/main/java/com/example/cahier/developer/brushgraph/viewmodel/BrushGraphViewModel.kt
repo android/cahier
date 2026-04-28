@@ -348,7 +348,26 @@ class BrushGraphViewModel @Inject constructor(
   }
 
   fun updateNodeData(nodeId: String, newData: NodeData) {
+    val oldNode = uiState.value.graph.nodes.find { it.id == nodeId }
+    val oldData = oldNode?.data
+
     repository.updateNodeData(nodeId, newData)
+
+    val typeChanged = when {
+        oldData == null -> false
+        oldData.javaClass != newData.javaClass -> true
+        oldData is NodeData.Behavior && newData is NodeData.Behavior -> {
+            oldData.node.nodeCase != newData.node.nodeCase
+        }
+        else -> false
+    }
+
+    if (typeChanged) {
+        _uiState.update { state ->
+            val newStarred = state.starredFields.filter { it.nodeId != nodeId }.toSet()
+            state.copy(starredFields = newStarred)
+        }
+    }
 
     validate()
   }

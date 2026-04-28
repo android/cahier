@@ -157,7 +157,10 @@ fun BehaviorNodeFields(
           constantNode = behaviorNode.constantNode,
           behaviorNode = behaviorNode,
           onUpdate = onUpdate,
-          onFieldEditComplete = onFieldEditComplete
+          onFieldEditComplete = onFieldEditComplete,
+          nodeId = nodeId,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       ProtoBrushBehavior.Node.NodeCase.NOISE_NODE -> {
@@ -186,7 +189,10 @@ fun BehaviorNodeFields(
           behaviorNode = behaviorNode,
           onUpdate = onUpdate,
           onFieldEditComplete = onFieldEditComplete,
-          onDropdownEditComplete = onDropdownEditComplete
+          onDropdownEditComplete = onDropdownEditComplete,
+          nodeId = nodeId,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> {
@@ -202,7 +208,10 @@ fun BehaviorNodeFields(
           behaviorNode = behaviorNode,
           onUpdate = onUpdate,
           onFieldEditComplete = onFieldEditComplete,
-          onDropdownEditComplete = onDropdownEditComplete
+          onDropdownEditComplete = onDropdownEditComplete,
+          nodeId = nodeId,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
@@ -226,7 +235,10 @@ fun BehaviorNodeFields(
           behaviorNode = behaviorNode,
           onUpdate = onUpdate,
           onFieldEditComplete = onFieldEditComplete,
-          onDropdownEditComplete = onDropdownEditComplete
+          onDropdownEditComplete = onDropdownEditComplete,
+          nodeId = nodeId,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
@@ -235,7 +247,10 @@ fun BehaviorNodeFields(
           behaviorNode = behaviorNode,
           onUpdate = onUpdate,
           onFieldEditComplete = onFieldEditComplete,
-          onDropdownEditComplete = onDropdownEditComplete
+          onDropdownEditComplete = onDropdownEditComplete,
+          nodeId = nodeId,
+          starredFields = starredFields,
+          onToggleStar = onToggleStar
         )
       }
       else -> {

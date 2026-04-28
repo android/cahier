@@ -32,6 +32,9 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
+import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.getInputModelTooltip
@@ -43,6 +46,9 @@ fun FamilyNodeFields(
   onUpdate: (NodeData) -> Unit,
   onDropdownEditComplete: () -> Unit,
   textFieldsLocked: Boolean,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   
@@ -115,10 +121,15 @@ fun FamilyNodeFields(
 
     Spacer(Modifier.height(16.dp))
     
-    NumericField(
-      title = stringResource(R.string.brush_designer_window_size_ms),
+    val isWindowSizeStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.FAMILY_WINDOW_SIZE))
+    
+    StarrableNumericField(
+      nodeId = nodeId,
+      fieldType = StarredFieldType.FAMILY_WINDOW_SIZE,
       value = windowMs.toFloat(),
       limits = NumericLimits.standard(1f, 100f, 1f),
+      isStarred = isWindowSizeStarred,
+      onToggleStar = { onToggleStar(nodeId, StarredFieldType.FAMILY_WINDOW_SIZE) },
       onValueChanged = { newValue ->
         val newModel = inputModel.toBuilder()
           .setSlidingWindowModel(
@@ -130,10 +141,15 @@ fun FamilyNodeFields(
       }
     )
     
-    NumericField(
-      title = stringResource(R.string.brush_designer_upsampling_frequency_hz),
+    val isUpsamplingStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.FAMILY_UPSAMPLING_FREQ))
+
+    StarrableNumericField(
+      nodeId = nodeId,
+      fieldType = StarredFieldType.FAMILY_UPSAMPLING_FREQ,
       value = upsamplingHz.toFloat(),
       limits = NumericLimits.standard(0f, 500f, 1f),
+      isStarred = isUpsamplingStarred,
+      onToggleStar = { onToggleStar(nodeId, StarredFieldType.FAMILY_UPSAMPLING_FREQ) },
       onValueChanged = { newValue ->
         val newPeriod = if (newValue == 0f) Float.POSITIVE_INFINITY else 1f / newValue
         val newModel = inputModel.toBuilder()

@@ -29,6 +29,9 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
+import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
 import com.example.cahier.developer.brushgraph.data.ProgressDomainContext
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
 
@@ -44,6 +47,9 @@ fun IntegralNodeFields(
   onUpdate: (NodeData) -> Unit,
   onFieldEditComplete: () -> Unit,
   onDropdownEditComplete: () -> Unit,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val limits = integralNode.integrateOver.getNumericLimits(ProgressDomainContext.INTEGRAL)
@@ -77,34 +83,46 @@ fun IntegralNodeFields(
     )
   }
   
-  NumericField(
-    title = stringResource(R.string.bg_label_range_start),
+  val isRangeStartStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.INTEGRAL_RANGE_START))
+  
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.INTEGRAL_RANGE_START,
     value = integralNode.integralValueRangeStart,
     limits = limits,
-    onValueChangeFinished = onFieldEditComplete
-  ) {
-    onUpdate(
-      NodeData.Behavior(
-        behaviorNode.toBuilder()
-          .setIntegralNode(integralNode.toBuilder().setIntegralValueRangeStart(it).build())
-          .build()
+    isStarred = isRangeStartStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.INTEGRAL_RANGE_START) },
+    onValueChanged = {
+      onUpdate(
+        NodeData.Behavior(
+          behaviorNode.toBuilder()
+            .setIntegralNode(integralNode.toBuilder().setIntegralValueRangeStart(it).build())
+            .build()
+        )
       )
-    )
-  }
-  NumericField(
-    title = stringResource(R.string.bg_label_range_end),
+    },
+    onValueChangeFinished = onFieldEditComplete
+  )
+  val isRangeEndStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.INTEGRAL_RANGE_END))
+
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.INTEGRAL_RANGE_END,
     value = integralNode.integralValueRangeEnd,
     limits = limits,
-    onValueChangeFinished = onFieldEditComplete
-  ) {
-    onUpdate(
-      NodeData.Behavior(
-        behaviorNode.toBuilder()
-          .setIntegralNode(integralNode.toBuilder().setIntegralValueRangeEnd(it).build())
-          .build()
+    isStarred = isRangeEndStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.INTEGRAL_RANGE_END) },
+    onValueChanged = {
+      onUpdate(
+        NodeData.Behavior(
+          behaviorNode.toBuilder()
+            .setIntegralNode(integralNode.toBuilder().setIntegralValueRangeEnd(it).build())
+            .build()
+        )
       )
-    )
-  }
+    },
+    onValueChangeFinished = onFieldEditComplete
+  )
   
   Row(modifier = Modifier.fillMaxWidth()) {
     EnumDropdown(

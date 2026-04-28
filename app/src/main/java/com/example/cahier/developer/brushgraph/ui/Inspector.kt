@@ -50,6 +50,7 @@ import com.example.cahier.developer.brushgraph.data.updateWithNumericFieldValue
 import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import ink.proto.BrushPaint as ProtoBrushPaint
 import com.example.cahier.developer.brushgraph.ui.fields.NodeFields
 import com.example.cahier.developer.brushgraph.ui.TooltipDialog
 import com.example.cahier.developer.brushgraph.ui.getTooltip
@@ -283,6 +284,7 @@ fun StarredFieldInspector(
     onUpdateNodeData: (String, NodeData) -> Unit,
     onToggleStar: (String, StarredFieldType) -> Unit,
     onNodeFocus: (String) -> Unit,
+    strokeRenderer: CanvasStrokeRenderer,
     onFieldEditComplete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -315,23 +317,53 @@ fun StarredFieldInspector(
                                 .padding(vertical = 4.dp)
                         )
                         
+                        if (node.data is NodeData.Tip) {
+                            TipPreviewWidget(brushTip = node.data.tip, renderer = strokeRenderer)
+                            Spacer(Modifier.height(8.dp))
+                        }
+                        
                         sortedFields.forEach { field ->
                             val value = node.data.getNumericFieldValue(field.fieldType)
                             val limits = node.data.getNumericFieldLimits(field.fieldType)
                             
-                            StarrableNumericField(
-                                nodeId = nodeId,
-                                fieldType = field.fieldType,
-                                value = value,
-                                limits = limits,
-                                isStarred = true,
-                                onToggleStar = { onToggleStar(nodeId, field.fieldType) },
-                                onValueChanged = { newValue ->
-                                    val updatedData = node.data.updateWithNumericFieldValue(field.fieldType, newValue)
-                                    onUpdateNodeData(nodeId, updatedData)
-                                },
-                                onValueChangeFinished = onFieldEditComplete
-                            )
+                            val isVisible = when (node.data) {
+                                is NodeData.TextureLayer -> {
+                                    val layer = node.data.layer
+                                    when (field.fieldType) {
+                                        StarredFieldType.TEXTURE_SIZE_X, StarredFieldType.TEXTURE_SIZE_Y -> 
+                                            layer.mapping == ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING
+                                        StarredFieldType.TEXTURE_ANIM_ROWS, StarredFieldType.TEXTURE_ANIM_COLS, 
+                                        StarredFieldType.TEXTURE_ANIM_FRAMES, StarredFieldType.TEXTURE_ANIM_DURATION -> 
+                                            layer.mapping == ProtoBrushPaint.TextureLayer.Mapping.MAPPING_STAMPING
+                                        else -> true
+                                    }
+                                }
+                                is NodeData.Family -> {
+                                    val inputModel = node.data.inputModel
+                                    when (field.fieldType) {
+                                        StarredFieldType.FAMILY_WINDOW_SIZE, StarredFieldType.FAMILY_UPSAMPLING_FREQ -> 
+                                            inputModel.hasSlidingWindowModel() || (!inputModel.hasSpringModel() && !inputModel.hasExperimentalNaiveModel())
+                                        else -> true
+                                    }
+                                }
+                                else -> true
+                            }
+                            
+                            if (isVisible) {
+                                StarrableNumericField(
+                                    nodeId = nodeId,
+                                    fieldType = field.fieldType,
+                                    value = value,
+                                    limits = limits,
+                                    isStarred = true,
+                                    onToggleStar = { onToggleStar(nodeId, field.fieldType) },
+                                    onValueChanged = { newValue ->
+                                        val updatedData = node.data.updateWithNumericFieldValue(field.fieldType, newValue)
+                                        onUpdateNodeData(nodeId, updatedData)
+                                    },
+                                    onValueChangeFinished = onFieldEditComplete
+                                )
+                            }
                         }
                         HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
                     }

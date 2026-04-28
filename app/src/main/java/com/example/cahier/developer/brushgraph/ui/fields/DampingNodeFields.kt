@@ -28,6 +28,9 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
+import com.example.cahier.developer.brushgraph.ui.fields.StarrableNumericField
 import com.example.cahier.developer.brushgraph.data.ProgressDomainContext
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
 import com.example.cahier.developer.brushgraph.ui.getTooltip
@@ -42,6 +45,9 @@ fun DampingNodeFields(
   onUpdate: (NodeData) -> Unit,
   onFieldEditComplete: () -> Unit,
   onDropdownEditComplete: () -> Unit,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
@@ -76,10 +82,15 @@ fun DampingNodeFields(
     )
   }
   
-  NumericField(
-    title = stringResource(R.string.bg_label_damping_gap),
+  val isGapStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.DAMPING_GAP))
+  
+  StarrableNumericField(
+    nodeId = nodeId,
+    fieldType = StarredFieldType.DAMPING_GAP,
     value = dampingNode.dampingGap,
     limits = limits,
+    isStarred = isGapStarred,
+    onToggleStar = { onToggleStar(nodeId, StarredFieldType.DAMPING_GAP) },
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(

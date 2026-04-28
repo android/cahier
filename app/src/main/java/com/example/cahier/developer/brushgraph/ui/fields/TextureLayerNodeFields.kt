@@ -49,6 +49,8 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.StarredField
+import com.example.cahier.developer.brushgraph.data.StarredFieldType
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushgraph.ui.getTooltip
@@ -64,6 +66,9 @@ fun TextureLayerNodeFields(
   onLoadTexture: () -> Unit,
   onUpdate: (NodeData.TextureLayer) -> Unit,
   strokeRenderer: CanvasStrokeRenderer,
+  nodeId: String,
+  starredFields: Set<StarredField>,
+  onToggleStar: (String, StarredFieldType) -> Unit,
   modifier: Modifier = Modifier
 ) {
   Column(modifier = modifier) {
@@ -107,16 +112,24 @@ fun TextureLayerNodeFields(
     }
 
     if (layer.mapping == ProtoBrushPaint.TextureLayer.Mapping.MAPPING_TILING) {
-      NumericField(
-        title = stringResource(R.string.bg_label_size_x),
+      val isSizeXStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_SIZE_X))
+      StarrableNumericField(
+        nodeId = nodeId,
+        fieldType = StarredFieldType.TEXTURE_SIZE_X,
         value = layer.sizeX,
         limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
+        isStarred = isSizeXStarred,
+        onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_SIZE_X) },
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setSizeX(it).build())) }
       )
-      NumericField(
-        title = stringResource(R.string.bg_label_size_y),
+      val isSizeYStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_SIZE_Y))
+      StarrableNumericField(
+        nodeId = nodeId,
+        fieldType = StarredFieldType.TEXTURE_SIZE_Y,
         value = layer.sizeY,
         limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
+        isStarred = isSizeYStarred,
+        onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_SIZE_Y) },
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setSizeY(it).build())) }
       )
       FieldWithTooltip(
@@ -139,28 +152,44 @@ fun TextureLayerNodeFields(
       }
     } else {
       // Stamping mapping
-      NumericField(
-        title = stringResource(R.string.bg_label_animation_rows),
+      val isAnimRowsStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_ANIM_ROWS))
+      StarrableNumericField(
+        nodeId = nodeId,
+        fieldType = StarredFieldType.TEXTURE_ANIM_ROWS,
         value = layer.animationRows.toFloat(),
         limits = NumericLimits.standard(1f, 100f, 1f),
+        isStarred = isAnimRowsStarred,
+        onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_ANIM_ROWS) },
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationRows(it.toInt()).build())) }
       )
-      NumericField(
-        title = stringResource(R.string.bg_label_animation_columns),
+      val isAnimColsStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_ANIM_COLS))
+      StarrableNumericField(
+        nodeId = nodeId,
+        fieldType = StarredFieldType.TEXTURE_ANIM_COLS,
         value = layer.animationColumns.toFloat(),
         limits = NumericLimits.standard(1f, 100f, 1f),
+        isStarred = isAnimColsStarred,
+        onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_ANIM_COLS) },
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationColumns(it.toInt()).build())) }
       )
-      NumericField(
-        title = stringResource(R.string.bg_label_animation_frames),
+      val isAnimFramesStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_ANIM_FRAMES))
+      StarrableNumericField(
+        nodeId = nodeId,
+        fieldType = StarredFieldType.TEXTURE_ANIM_FRAMES,
         value = layer.animationFrames.toFloat(),
         limits = NumericLimits.standard(1f, 100f, 1f),
+        isStarred = isAnimFramesStarred,
+        onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_ANIM_FRAMES) },
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationFrames(it.toInt()).build())) }
       )
-      NumericField(
-        title = stringResource(R.string.bg_label_animation_duration_ms),
+      val isAnimDurationStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_ANIM_DURATION))
+      StarrableNumericField(
+        nodeId = nodeId,
+        fieldType = StarredFieldType.TEXTURE_ANIM_DURATION,
         value = layer.animationDurationSeconds,
         limits = NumericLimits(1f, 10000f, 1f, "ms", unitScale = 1000f),
+        isStarred = isAnimDurationStarred,
+        onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_ANIM_DURATION) },
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationDurationSeconds(it).build())) }
       )
     }
@@ -186,22 +215,34 @@ fun TextureLayerNodeFields(
         }
       )
     }
-    NumericField(
-      title = stringResource(R.string.bg_label_offset_x),
+    val isOffsetXStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_OFFSET_X))
+    StarrableNumericField(
+      nodeId = nodeId,
+      fieldType = StarredFieldType.TEXTURE_OFFSET_X,
       value = layer.offsetX,
       limits = NumericLimits.standard(-1f, 1f, 0.01f),
+      isStarred = isOffsetXStarred,
+      onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_OFFSET_X) },
       onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setOffsetX(it).build())) }
     )
-    NumericField(
-      title = stringResource(R.string.bg_label_offset_y),
+    val isOffsetYStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_OFFSET_Y))
+    StarrableNumericField(
+      nodeId = nodeId,
+      fieldType = StarredFieldType.TEXTURE_OFFSET_Y,
       value = layer.offsetY,
       limits = NumericLimits.standard(-1f, 1f, 0.01f),
+      isStarred = isOffsetYStarred,
+      onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_OFFSET_Y) },
       onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setOffsetY(it).build())) }
     )
-    NumericField(
-      title = stringResource(R.string.bg_label_rotation_degrees),
+    val isRotationStarred = starredFields.contains(StarredField(nodeId, StarredFieldType.TEXTURE_ROTATION))
+    StarrableNumericField(
+      nodeId = nodeId,
+      fieldType = StarredFieldType.TEXTURE_ROTATION,
       value = layer.rotationInRadians,
       limits = NumericLimits.radiansShownAsDegrees(0f, 360f),
+      isStarred = isRotationStarred,
+      onToggleStar = { onToggleStar(nodeId, StarredFieldType.TEXTURE_ROTATION) },
       onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setRotationInRadians(it).build())) }
     )
 
