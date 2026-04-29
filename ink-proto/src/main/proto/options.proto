@@ -1,0 +1,20 @@
+edition = "2023";
+
+package ink.proto;
+
+import "google/protobuf/descriptor.proto";
+
+option java_package = "com.google.ink.proto";
+option java_outer_classname = "OptionsProto";
+
+// Extend FieldOptions, MessageOptions, EnumOptions, and EnumValueOptions to
+// include Version.
+extend google.protobuf.FieldOptions {
+  int32 field_min_version = 525000068;
+}
+extend google.protobuf.MessageOptions {
+  int32 message_min_version = 525000037;
+}
+extend google.protobuf.EnumValueOptions {
+  int32 enum_value_min_version = 525000143;
+}
