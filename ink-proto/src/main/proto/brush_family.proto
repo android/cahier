@@ -231,8 +231,6 @@ message BrushPaint {
   message TextureLayer {
     option (ink.proto.message_min_version) = 0;
 
-    // LINT.IfChange(texture_wrap)
-
     // Texture wrapping modes for specifying `TextureLayer::wrap_x` and
     // `wrap_y`.
     enum Wrap {
@@ -251,9 +249,6 @@ message BrushPaint {
       // solid color.
       WRAP_CLAMP = 3 [(ink.proto.enum_value_min_version) = 0];
     }
-    // LINT.ThenChange(../../brush/brush_paint.h:texture_wrap)
-
-    // LINT.IfChange(texture_size_unit)
 
     // Units for specifying `TextureLayer::size`.
     enum SizeUnit {
@@ -267,9 +262,6 @@ message BrushPaint {
 
       reserved 3;
     }
-    // LINT.ThenChange(../../brush/brush_paint.h:texture_size_unit)
-
-    // LINT.IfChange(texture_origin)
 
     // Specification of the origin point to use for the texture.
     enum Origin {
@@ -287,9 +279,6 @@ message BrushPaint {
       // for an in-progress stroke will move as more inputs are added.
       ORIGIN_LAST_STROKE_INPUT = 3 [(ink.proto.enum_value_min_version) = 0];
     }
-    // LINT.ThenChange(../../brush/brush_paint.h:texture_origin)
-
-    // LINT.IfChange(texture_mapping)
 
     // Specification of how the texture should be applied to the stroke.
     enum Mapping {
@@ -306,9 +295,6 @@ message BrushPaint {
       // stroke, scaled or rotated appropriately to cover the whole particle.
       MAPPING_STAMPING = 2 [(ink.proto.enum_value_min_version) = 0];
     }
-    // LINT.ThenChange(../../brush/brush_paint.h:texture_mapping)
-
-    // LINT.IfChange(blend_mode)
 
     // Setting for how an incoming ("source" / "src") color should be combined
     // with the already present ("destination" / "dst") color at a given pixel.
@@ -414,7 +400,6 @@ message BrushPaint {
       // Color = (1 - Alpha_dst) * Color_src + (1 - Alpha_src) * Color_dst
       BLEND_MODE_XOR = 12 [(ink.proto.enum_value_min_version) = 0];
     }
-    // LINT.ThenChange(../../brush/brush_paint.h:blend_mode)
 
     // String id that will be used by renderers to retrieve the color texture.
     optional string client_texture_id = 1 [(ink.proto.field_min_version) = 0];
@@ -490,14 +475,12 @@ message BrushPaint {
   // opacity variations (e.g. with
   // `BrushBehavior::Target::HUE_OFFSET_IN_RADIANS`), or complex textures (e.g.
   // with `TextureMapping::kStamping`).
-  // LINT.IfChange(self_overlap)
   enum SelfOverlap {
     SELF_OVERLAP_UNSPECIFIED = 0 [(ink.proto.enum_value_min_version) = 0];
     SELF_OVERLAP_ANY = 1 [(ink.proto.enum_value_min_version) = 0];
     SELF_OVERLAP_ACCUMULATE = 2 [(ink.proto.enum_value_min_version) = 0];
     SELF_OVERLAP_DISCARD = 3 [(ink.proto.enum_value_min_version) = 0];
   }
-  // LINT.ThenChange(../../brush/brush_paint.h:self_overlap)
 
   // Zero or more textures to blend together to affect this coat's appearance.
   // Each layer is blended into the next one, and finally into the color of the
@@ -589,8 +572,6 @@ message BrushPaint {
 // distance traveled from one input to the next.
 message BrushBehavior {
   option (ink.proto.message_min_version) = 0;
-
-  // LINT.IfChange(source)
 
   // A stroke input property, along with its units, that can act as a source for
   // a `BrushBehavior.SourceNode`.
@@ -828,9 +809,6 @@ message BrushBehavior {
     SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS = 41
         [(ink.proto.enum_value_min_version) = 2147483647];
   }
-  // LINT.ThenChange(../../brush/brush_behavior.h:source)
-
-  // LINT.IfChange(target)
 
   // `BrushTip` properties that can be modified by a `BrushBehavior`.
   enum Target {
@@ -935,9 +913,6 @@ message BrushBehavior {
     reserved 16;
     reserved 17;
   }
-  // LINT.ThenChange(../../brush/brush_behavior.h:target)
-
-  // LINT.IfChange(polar_target)
 
   // Like `Target`, but for vector values.
   enum PolarTarget {
@@ -964,9 +939,6 @@ message BrushBehavior {
     POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE = 2
         [(ink.proto.enum_value_min_version) = 0];
   }
-  // LINT.ThenChange(../../brush/brush_behavior.h:polar_target)
-
-  // LINT.IfChange(out_of_range)
 
   // The desired behavior when an input value is outside the bounds of
   // `source_value_range`.
@@ -991,9 +963,6 @@ message BrushBehavior {
     // `OUT_OF_RANGE_REPEAT`.
     OUT_OF_RANGE_MIRROR = 3 [(ink.proto.enum_value_min_version) = 0];
   }
-  // LINT.ThenChange(../../brush/brush_behavior.h:out_of_range)
-
-  // LINT.IfChange(binary_op)
 
   // A binary operation for combining two values in a `BinaryOpNode`.
   enum BinaryOp {
@@ -1020,9 +989,6 @@ message BrushBehavior {
     // A if B is null, or B if A is null, or null if neither is null
     BINARY_OP_XOR_ELSE = 7 [(ink.proto.enum_value_min_version) = 1];
   }
-  // LINT.ThenChange(../../brush/brush_behavior.h:binary_op)
-
-  // LINT.IfChange(progress_domain)
 
   // Dimensions and units for measuring distance/time along the length/duration
   // of a stroke.
@@ -1047,9 +1013,6 @@ message BrushBehavior {
     PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE = 3
         [(ink.proto.enum_value_min_version) = 0];
   }
-  // LINT.ThenChange(../../brush/brush_behavior.h:progress_domain)
-
-  // LINT.IfChange(interpolation)
 
   // An interpolation function for combining three values in an
   // `InterpolationNode`.
@@ -1064,7 +1027,6 @@ message BrushBehavior {
     // interpolating linearly in between. Outputs null if B=C.
     INTERPOLATION_INVERSE_LERP = 2 [(ink.proto.enum_value_min_version) = 0];
   }
-  // LINT.ThenChange(../../brush/brush_behavior.h:interpolation)
 
   // A single node in a behavior's graph. Each node type is either a "value
   // node" which consumes zero or more input values and produces a single output
@@ -1392,8 +1354,6 @@ message ColorFunction {
   }
 }
 
-// LINT.IfChange(predefined)
-
 // Specifies a predefined easing function.
 enum PredefinedEasingFunction {
   PREDEFINED_EASING_UNSPECIFIED = 0 [(ink.proto.enum_value_min_version) = 0];
@@ -1429,7 +1389,6 @@ enum PredefinedEasingFunction {
   // https://www.w3.org/TR/css-easing-1/#step-easing-functions
   PREDEFINED_EASING_STEP_END = 7 [(ink.proto.enum_value_min_version) = 0];
 }
-// LINT.ThenChange(../../brush/easing_function.h:predefined)
 
 // Parameters for a custom cubic Bezier easing function.
 //
@@ -1484,8 +1443,6 @@ message LinearEasingFunction {
   repeated float y = 2 [packed = true, (ink.proto.field_min_version) = 0];
 }
 
-// LINT.IfChange(step_position)
-
 // Setting to determine the desired output value of the first and last
 // step of [0, 1) for the Steps EasingFunction. See below for more context.
 enum StepPosition {
@@ -1511,7 +1468,6 @@ enum StepPosition {
   //   * for x in [1 - 1/step_count, 1)  =>     y = 1 - 1/(step_count + 1)
   STEP_POSITION_JUMP_BOTH = 4 [(ink.proto.enum_value_min_version) = 0];
 }
-// LINT.ThenChange(../../brush/easing_function.h:step_position)
 
 // Parameters for a custom step easing function.
 //
