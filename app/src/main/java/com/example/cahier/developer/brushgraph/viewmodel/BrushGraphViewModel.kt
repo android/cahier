@@ -335,12 +335,13 @@ class BrushGraphViewModel @Inject constructor(
     exitSelectionMode()
   }
 
-  fun duplicateSelectedNodes() {
-    val newNodeIds = repository.duplicateSelectedNodes(uiState.value.selectedNodeIds)
+  fun duplicateSelectedNodes(): Map<String, String> {
+    val newNodeIdsMap = repository.duplicateSelectedNodes(uiState.value.selectedNodeIds)
     
-    _uiState.update { it.copy(selectedNodeIds = newNodeIds) }
+    _uiState.update { it.copy(selectedNodeIds = newNodeIdsMap.values.toSet()) }
     
     advanceTutorial(TutorialAction.DUPLICATE_NODES)
+    return newNodeIdsMap
   }
 
   fun updateNodeData(nodeId: String, newData: NodeData) {
