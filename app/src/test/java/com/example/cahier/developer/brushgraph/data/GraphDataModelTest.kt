@@ -45,7 +45,7 @@ class GraphDataModelTest {
         
         assertEquals(1, ports.size)
         assertEquals("add_input", ports[0].id)
-        assertEquals(DisplayText.Resource(R.string.bg_add_input), ports[0].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_input), ports[0].label)
     }
 
     @Test
@@ -68,7 +68,7 @@ class GraphDataModelTest {
         assertEquals(DisplayText.Resource(R.string.bg_port_input), ports[0].label)
         assertEquals(false, ports[0].isAddPort)
         
-        assertEquals(DisplayText.Resource(R.string.bg_add_input), ports[1].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_input), ports[1].label)
         assertEquals(true, ports[1].isAddPort)
     }
 
@@ -87,7 +87,7 @@ class GraphDataModelTest {
         
         assertEquals(1, ports.size)
         assertEquals("add_input", ports[0].id)
-        assertEquals(DisplayText.Resource(R.string.bg_add_input), ports[0].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_input), ports[0].label)
     }
 
     @Test
@@ -112,7 +112,7 @@ class GraphDataModelTest {
         assertEquals("input_1", ports[1].id)
         assertEquals(DisplayText.Literal("B"), ports[1].label)
         assertEquals("add_input", ports[2].id)
-        assertEquals(DisplayText.Resource(R.string.bg_add_input), ports[2].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_input), ports[2].label)
     }
 
     @Test
@@ -130,7 +130,7 @@ class GraphDataModelTest {
         
         assertEquals(1, ports.size)
         assertEquals("add_input", ports[0].id)
-        assertEquals(DisplayText.Resource(R.string.bg_add_input), ports[0].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_input), ports[0].label)
     }
 
     @Test
@@ -157,7 +157,7 @@ class GraphDataModelTest {
         assertEquals("mag_0", ports[1].id)
         assertEquals(DisplayText.Resource(R.string.bg_port_mag), ports[1].label)
         assertEquals("add_input", ports[2].id)
-        assertEquals(DisplayText.Resource(R.string.bg_add_input), ports[2].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_input), ports[2].label)
     }
 
     @Test
@@ -168,9 +168,9 @@ class GraphDataModelTest {
         
         assertEquals(2, ports.size)
         assertEquals("add_texture", ports[0].id)
-        assertEquals(DisplayText.Resource(R.string.bg_add_texture), ports[0].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_texture), ports[0].label)
         assertEquals("add_color", ports[1].id)
-        assertEquals(DisplayText.Resource(R.string.bg_add_color), ports[1].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_color), ports[1].label)
     }
 
     @Test
@@ -194,9 +194,9 @@ class GraphDataModelTest {
 
         assertEquals(4, ports.size)
         assertEquals(DisplayText.Resource(R.string.bg_port_texture), ports[0].label)
-        assertEquals(DisplayText.Resource(R.string.bg_add_texture), ports[1].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_texture), ports[1].label)
         assertEquals(DisplayText.Resource(R.string.bg_port_color), ports[2].label)
-        assertEquals(DisplayText.Resource(R.string.bg_add_color), ports[3].label)
+        assertEquals(DisplayText.Resource(R.string.bg_port_color), ports[3].label)
     }
 
     @Test

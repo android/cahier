@@ -89,7 +89,7 @@ sealed interface NodeData {
         for (portId in behaviorPortIds) {
             ports.add(Port.Input(nodeId, portId, label = DisplayText.Resource(R.string.bg_port_behavior)))
         }
-        ports.add(Port.AddBehavior(nodeId, "add_behavior", label = DisplayText.Resource(R.string.bg_add_behavior)))
+        ports.add(Port.AddBehavior(nodeId, "add_behavior", label = DisplayText.Resource(R.string.bg_behavior)))
         return ports
     }
   }
@@ -103,9 +103,9 @@ sealed interface NodeData {
     override fun inputLabels(): List<Int> {
       val labels = mutableListOf<Int>()
       for (i in texturePortIds.indices) labels.add(R.string.bg_port_texture)
-      labels.add(R.string.bg_add_texture)
+      labels.add(R.string.bg_port_texture)
       for (i in colorPortIds.indices) labels.add(R.string.bg_port_color)
-      labels.add(R.string.bg_add_color)
+      labels.add(R.string.bg_port_color)
       return labels
     }
 
@@ -118,12 +118,12 @@ sealed interface NodeData {
         for (portId in texturePortIds) {
             ports.add(Port.Input(nodeId, portId, label = DisplayText.Resource(R.string.bg_port_texture)))
         }
-        ports.add(Port.AddTexture(nodeId, "add_texture", label = DisplayText.Resource(R.string.bg_add_texture)))
+        ports.add(Port.AddTexture(nodeId, "add_texture", label = DisplayText.Resource(R.string.bg_port_texture)))
 
         for (portId in colorPortIds) {
             ports.add(Port.Input(nodeId, portId, label = DisplayText.Resource(R.string.bg_port_color)))
         }
-        ports.add(Port.AddColor(nodeId, "add_color", label = DisplayText.Resource(R.string.bg_add_color)))
+        ports.add(Port.AddColor(nodeId, "add_color", label = DisplayText.Resource(R.string.bg_port_color)))
         return ports
     }
   }
@@ -271,7 +271,7 @@ sealed interface NodeData {
                     ports.add(Port.Input(nodeId, portId, label = DisplayText.Literal(label)))
                     nextIndex++
                 }
-                ports.add(Port.AddInput(nodeId, "add_input", label = DisplayText.Resource(R.string.bg_add_input)))
+                ports.add(Port.AddInput(nodeId, "add_input", label = DisplayText.Resource(R.string.bg_port_input)))
             }
             ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
                 val labels = inputLabels()
@@ -279,7 +279,7 @@ sealed interface NodeData {
                     val label = labels[i % labels.size]
                     ports.add(Port.Input(nodeId, inputPortIds[i], label = DisplayText.Resource(label)))
                 }
-                ports.add(Port.AddInput(nodeId, "add_input", label = DisplayText.Resource(R.string.bg_add_input)))
+                ports.add(Port.AddInput(nodeId, "add_input", label = DisplayText.Resource(R.string.bg_port_input)))
             }
             else -> {
                 val labels = inputLabels()
@@ -287,7 +287,7 @@ sealed interface NodeData {
                     for (portId in inputPortIds) {
                         ports.add(Port.Input(nodeId, portId, label = DisplayText.Resource(labels[0])))
                     }
-                    ports.add(Port.AddInput(nodeId, "add_input", label = DisplayText.Resource(R.string.bg_add_input)))
+                    ports.add(Port.AddInput(nodeId, "add_input", label = DisplayText.Resource(R.string.bg_port_input)))
                 } else {
                     for (i in labels.indices) {
                         val portId = inputPortIds.getOrElse(i) { "invalid_port_$i" }
@@ -310,7 +310,7 @@ sealed interface NodeData {
       for (i in paintPortIds.indices) {
         labels.add(R.string.bg_port_paint)
       }
-      labels.add(R.string.bg_add_paint)
+      labels.add(R.string.bg_port_paint)
       return labels
     }
 
@@ -322,7 +322,7 @@ sealed interface NodeData {
         for (portId in paintPortIds) {
             ports.add(Port.Input(nodeId, portId, label = DisplayText.Resource(R.string.bg_port_paint)))
         }
-        ports.add(Port.AddPaint(nodeId, "add_paint", label = DisplayText.Resource(R.string.bg_add_paint)))
+        ports.add(Port.AddPaint(nodeId, "add_paint", label = DisplayText.Resource(R.string.bg_port_paint)))
         return ports
     }
   }
@@ -346,7 +346,7 @@ sealed interface NodeData {
       for (i in coatPortIds.indices) {
         labels.add(R.string.bg_port_coat)
       }
-      labels.add(R.string.bg_add_coat)
+      labels.add(R.string.bg_coat)
       return labels
     }
 
@@ -361,7 +361,7 @@ sealed interface NodeData {
         for (i in coatPortIds.indices) {
             ports.add(Port.Input(nodeId, coatPortIds[i], label = DisplayText.Resource(R.string.bg_port_coat, listOf(i))))
         }
-        ports.add(Port.AddCoat(nodeId, "add_coat", label = DisplayText.Resource(R.string.bg_add_coat)))
+        ports.add(Port.AddCoat(nodeId, "add_coat", label = DisplayText.Resource(R.string.bg_coat)))
         return ports
     }
   }
