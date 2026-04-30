@@ -564,6 +564,7 @@ class BrushGraphRepository @Inject constructor(
       _graph.update { BrushGraphConverter.fromBrushFamily(family) }
       validate()
       postDebug(DisplayText.Resource(R.string.bg_msg_brush_loaded_success))
+      _lastValidBrushFamily = family
       true
     } catch (e: Exception) {
       Log.e("BrushGraph", "Failed to load brush", e)
@@ -572,12 +573,11 @@ class BrushGraphRepository @Inject constructor(
     }
   }
 
-  fun duplicateSelectedNodes(selectedNodeIds: Set<String>): Set<String> {
-    var newIds = emptySet<String>()
+  fun duplicateSelectedNodes(selectedNodeIds: Set<String>): Map<String, String> {
+    var idMap = emptyMap<String, String>()
     _graph.update { currentGraph ->
       val nodesToDuplicate = currentGraph.nodes.filter { selectedNodeIds.contains(it.id) }
-      val idMap = nodesToDuplicate.associate { it.id to UUID.randomUUID().toString() }
-      newIds = idMap.values.toSet()
+      idMap = nodesToDuplicate.associate { it.id to UUID.randomUUID().toString() }
       
       val newNodes = nodesToDuplicate.map { node ->
         node.copy(
@@ -602,7 +602,7 @@ class BrushGraphRepository @Inject constructor(
       )
     }
     validate()
-    return newIds
+    return idMap
   }
 
   fun deleteNode(nodeId: String): Set<String> {
