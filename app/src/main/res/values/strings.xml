@@ -281,7 +281,7 @@
     <string name="bg_menu_feedback">Feedback</string>
     <string name="bg_lock_text_fields">Lock text fields</string>
     <string name="bg_reorganize_graph">Reorganize Graph</string>
-    <string name="bg_reorganize_graph_confirmation">Are you sure you want to reorganize the graph? This will reset all node positions, expansion states, and de-duplicate nodes. This action cannot be undone.</string>
+    <string name="bg_reorganize_graph_confirmation">Are you sure you want to reorganize the graph? This will reset all node positions and expansion states. This action cannot be undone.</string>
     <string name="bg_select">Select</string>
     <string name="bg_export">Export</string>
     <string name="bg_import">Import</string>
@@ -346,7 +346,7 @@
     <string name="bg_blend_mode_modulate">modulate</string>
     <string name="bg_blend_mode_xor">xor</string>
     <string name="bg_unknown_behavior_node_type">Unknown Behavior Node Type</string>
-    <string name="bg_coat_node_description">Coat Node: Connect Tip and Paint to this node.</string>
+    <string name="bg_coat_node_description">Connect Tip and Paint Preference(s) to this node. Only one Paint Preference is rendered. The system renderer will use the first compatible Paint Preference.</string>
     <string name="bg_self_overlap">Self Overlap</string>
     <string name="bg_function_type">Function Type</string>
     <string name="bg_color_label">Color: </string>
@@ -481,12 +481,6 @@
     <string name="bg_port_angle">Angle</string>
     <string name="bg_port_mag">Mag</string>
     
-    <string name="bg_add_behavior">Add behavior...</string>
-    <string name="bg_add_texture">Add Texture...</string>
-    <string name="bg_add_color">Add Color...</string>
-    <string name="bg_add_input">Add input...</string>
-    <string name="bg_add_inputs">Add inputs...</string>
-    
     <string name="bg_opacity_multiplier">opacity multiplier</string>
     <string name="bg_replace_color">replace color</string>
     
@@ -576,10 +570,8 @@
     <string name="bg_interpolation_inverse_lerp">inverse lerp</string>
     <string name="bg_port_coat">Coat %1$d</string>
     <string name="bg_port_tip">Tip</string>
-    <string name="bg_port_paint">Paint</string>
-    <string name="bg_add_paint">Add Paint…</string>
+    <string name="bg_port_paint">Paint Preference</string>
     <string name="bg_port_behavior">Behavior</string>
-    <string name="bg_add_coat">Add Coat…</string>
     <string name="bg_family">Family</string>
     <string name="bg_start">Start</string>
     <string name="bg_reorganize">Reorganize</string>
@@ -869,7 +861,7 @@
     <string name="bg_tutorial_brush_behaviors_title">Brush Behaviors</string>
     <string name="bg_tutorial_brush_behaviors_message">In addition to defining a shape, a Tip contains behaviors. In a behavior, a \'Source\' collects data from the input (e.g., pressure, speed), normalizes it, and passes it to a \'Target\' which uses that data to modify a value that affect the appearance of the stroke (e.g., color, size).</string>
     <string name="bg_tutorial_add_behavior_title">Add Behavior</string>
-    <string name="bg_tutorial_add_behavior_message">\'Add...\' buttons, will add a default node that produces an output compatible as input for the other node. Begin by adding a new behavior to the tip by clicking \'Add behavior...\'. </string>
+    <string name="bg_tutorial_add_behavior_message">The \'+...\' buttons on nodes will add a default node that produces an output compatible as input for the other node, and connect the two. Begin by adding a new behavior to the tip by clicking \'+ Behavior\'. </string>
     <string name="bg_tutorial_error_title">Error!</string>
     <string name="bg_tutorial_error_message">Uh-oh, this causes an error! Click the error icon in the upper right corner to take a closer look.</string>
     <string name="bg_tutorial_notification_pane_title">Notification Pane</string>
@@ -877,13 +869,13 @@
     <string name="bg_tutorial_navigate_to_nodes_with_issues_title">Navigate to Nodes with Issues</string>
     <string name="bg_tutorial_navigate_to_nodes_with_issues_message">In most cases, the error or warning message will link to the node causing it. Click the error to navigate directly to the node with the issue.</string>
     <string name="bg_tutorial_add_input_title">Add Input</string>
-    <string name="bg_tutorial_add_input_message">To fix the missing input issue, let\'s add an input to this target. We could click \'Add input...\', but let\'s try another way: click the floating action button (+) and select \'behavior\'.</string>
+    <string name="bg_tutorial_add_input_message">To fix the missing input issue, let\'s add an input to this target. We could click \'+ Input\', but let\'s try another way: click the floating action button (+) and select \'behavior\'.</string>
     <string name="bg_tutorial_change_node_type_title">Change Node Type</string>
     <string name="bg_tutorial_change_node_type_message">This will make a \'Target\' node by default, and automatically open the inspector. Change the Node Type to \'Source\' in the inspector.</string>
     <string name="bg_tutorial_move_node_title">Move Node</string>
     <string name="bg_tutorial_move_node_message">Move the node to the left of the existing \'Target\' by dragging it.</string>
     <string name="bg_tutorial_connect_nodes_title">Connect Nodes</string>
-    <string name="bg_tutorial_connect_nodes_message">Create a connection between the two nodes by dragging from the output port (gray dot to the right of the Source node, labelled \'Out\') to the input port (gray dot to the left of the Target, labelled \'Add input...\').</string>
+    <string name="bg_tutorial_connect_nodes_message">Create a connection between the two nodes by dragging from the output port (gray dot to the right of the Source node, labelled \'Out\') to the input port (gray dot to the left of the Target, labelled \'+ Input\').</string>
     <string name="bg_tutorial_edit_target_title">Edit Target</string>
     <string name="bg_tutorial_edit_target_message">The validation error should now be fixed. You may already notice your stroke changing with this new behavior! Let\'s configure it futher: tap the Target node to open the inspector.</string>
     <string name="bg_tutorial_set_target_title">Set Target</string>
@@ -933,7 +925,7 @@
     <string name="bg_tutorial_binary_op_title">Binary Op</string>
     <string name="bg_tutorial_binary_op_message">Binary Ops combine two values according to a function (e.g., sum, product). Notice there is an error since a Binary Op needs at least two values. In brush graph, a Binary Op can have more than two values; this is a UI convenience to make it easy to chain many Binary Ops together.</string>
     <string name="bg_tutorial_add_input_to_binary_op_title">Add Input to Binary Op</string>
-    <string name="bg_tutorial_add_input_to_binary_op_message">Resolve the error by clicking \'Add input...\' on the Binary Op.</string>
+    <string name="bg_tutorial_add_input_to_binary_op_message">Resolve the error by clicking \'+ Input\' on the Binary Op.</string>
     <string name="bg_tutorial_configure_new_node_title">Configure New Node</string>
     <string name="bg_tutorial_configure_new_node_message">Click the new Source node added to open it in the inspector.</string>
     <string name="bg_tutorial_other_origins_of_values_title">Other Origins of Values</string>
@@ -969,13 +961,13 @@
     <string name="bg_tutorial_warning_title">Warning!</string>
     <string name="bg_tutorial_warning_message">Notice a warning appears since the output of all these nodes we copied is unused.</string>
     <string name="bg_tutorial_connect_to_family_title">Connect to Family</string>
-    <string name="bg_tutorial_connect_to_family_message">Draw an edge from the \'Out\' port of the new coat to the \'Add coat...\' port on the Family node.</string>
+    <string name="bg_tutorial_connect_to_family_message">Draw an edge from the \'Out\' port of the new coat to the \'+ Coat\' port on the Family node.</string>
     <string name="bg_tutorial_modify_second_coat_title">Modify Second Coat</string>
     <string name="bg_tutorial_modify_second_coat_message">Open the Tip of the second Coat.</string>
     <string name="bg_tutorial_create_border_effect_title">Create Border Effect</string>
     <string name="bg_tutorial_create_border_effect_message">Increase scale x and y to make it wider and taller.</string>
     <string name="bg_tutorial_add_color_function_title">Add Color Function</string>
-    <string name="bg_tutorial_add_color_function_message">When you\'re done with the Tip, go to the Paint node of the second Coat, and click \'Add color...\' to add a Color Function.</string>
+    <string name="bg_tutorial_add_color_function_message">When you\'re done with the Tip, go to the Paint node of the second Coat, and click \'+ Color\' to add a Color Function.</string>
     <string name="bg_tutorial_coat_order_significance_title">Coat Order Significance</string>
     <string name="bg_tutorial_coat_order_significance_message">By default this should make a \'Replace Color\' function. You may see the whole stroke change color. If so, this is because of the order of the coats. Coats earlier in the order are drawn first, with later coats drawn on top.</string>
     <string name="bg_tutorial_swap_coat_order_title">Swap Coat Order</string>
@@ -1001,7 +993,7 @@
     <string name="bg_tutorial_delete_duplicated_nodes_title">Delete Duplicated Nodes</string>
     <string name="bg_tutorial_delete_duplicated_nodes_message">Click \'Delete\' to get rid of them.</string>
     <string name="bg_tutorial_reuse_behavior_title">Reuse Behavior</string>
-    <string name="bg_tutorial_reuse_behavior_message">Drag a new edge from the \'Out\' port of the Target on the inner Coat to the \'Add behavior...\' port of the Tip on the outer Coat.</string>
+    <string name="bg_tutorial_reuse_behavior_message">Drag a new edge from the \'Out\' port of the Target on the inner Coat to the \'+ Behavior\' port of the Tip on the outer Coat.</string>
     <string name="bg_tutorial_multiple_outputs_title">Multiple Outputs</string>
     <string name="bg_tutorial_multiple_outputs_message">Notice that now, the behavior is applied to both Tips on both Coats! The \'Out\' port on nodes can connect with multiple inputs, enabling complex graphs to use fewer nodes and be easier to design.</string>
     <string name="bg_tutorial_complete_title">Tutorial Complete!</string>
