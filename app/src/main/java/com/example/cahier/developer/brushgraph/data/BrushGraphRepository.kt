@@ -71,6 +71,7 @@ class BrushGraphRepository @Inject constructor(
     }
   }
 
+  private var _lastValidBrushFamily: BrushFamily? = null
   private val _graphIssues = MutableStateFlow<List<GraphValidationException>>(emptyList())
   val graphIssues: StateFlow<List<GraphValidationException>> = _graphIssues.asStateFlow()
 
@@ -138,16 +139,18 @@ class BrushGraphRepository @Inject constructor(
     }
   }
 
-  fun getBrushFamily(): androidx.ink.brush.BrushFamily? {
-    if (!validate()) return null
+  fun getBrushFamily(): BrushFamily? {
+    if (!validate()) return _lastValidBrushFamily
     return try {
-      BrushFamilyConverter.convert(_graph.value)
+      val family = BrushFamilyConverter.convert(_graph.value)
+      _lastValidBrushFamily = family
+      family
     } catch (e: Exception) {
       val internalError = GraphValidationException(displayMessage = DisplayText.Resource(R.string.bg_err_internal_conversion, listOf(e.message ?: e.javaClass.simpleName)))
       _graphIssues.update { currentIssues ->
         (currentIssues + internalError).distinctBy { issue -> Triple(issue.displayMessage, issue.nodeId, issue.severity) }
       }
-      null
+      _lastValidBrushFamily
     }
   }
 

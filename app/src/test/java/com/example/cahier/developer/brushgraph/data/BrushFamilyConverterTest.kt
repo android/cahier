@@ -364,8 +364,8 @@ class BrushFamilyConverterTest {
 
         val issues = GraphValidator.validateAll(graph)
         
-        assertTrue(issues.any { it.nodeId == "tip" && it.displayMessage is DisplayText.Resource && (it.displayMessage as DisplayText.Resource).resId == R.string.bg_err_unused_output })
-        assertTrue(issues.any { it.nodeId == "paint" && it.displayMessage is DisplayText.Resource && (it.displayMessage as DisplayText.Resource).resId == R.string.bg_err_unused_output })
+        assertTrue(issues.any { it.nodeId == "tip" && it.displayMessage is DisplayText.Resource && it.displayMessage.resId == R.string.bg_err_unused_output })
+        assertTrue(issues.any { it.nodeId == "paint" && it.displayMessage is DisplayText.Resource && it.displayMessage.resId == R.string.bg_err_unused_output })
     }
 
     @Test
