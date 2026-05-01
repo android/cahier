@@ -384,7 +384,9 @@
     <string name="bg_cd_close_pane">Close Pane</string>
     <string name="bg_notifications_count">Notifications (%1$d)</string>
     <string name="bg_errors">Errors</string>
+    <string name="bg_error">Error: %1$s</string>
     <string name="bg_warnings">Warnings</string>
+    <string name="bg_warning">Warning: %1$s</string>
     <string name="bg_debug">Debug</string>
     <string name="bg_cd_add_point">Add Point</string>
     <string name="bg_cd_remove_point">Remove Point</string>

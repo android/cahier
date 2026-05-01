@@ -28,14 +28,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,18 +68,22 @@ import androidx.ink.strokes.Stroke
 import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.developer.brushgraph.viewmodel.BrushGraphViewModel
 import com.example.cahier.developer.brushgraph.data.TutorialAction
+import com.example.cahier.developer.brushgraph.data.GraphValidationException
+import com.example.cahier.developer.brushgraph.data.ValidationSeverity
+import com.example.cahier.core.ui.theme.extendedColorScheme
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
 
 @Composable
 fun TestCanvas(
-  viewModel: BrushGraphViewModel,
+  isInvertedCanvas: Boolean,
   strokeList: List<Stroke>,
   strokeRenderer: CanvasStrokeRenderer,
   textureStore: TextureBitmapStore,
   brush: Brush,
+  modifier: Modifier = Modifier,
+  onGetNextBrush: () -> Brush,
   onStrokesAdded: (List<Stroke>) -> Unit,
-  isDark: Boolean = false,
 ) {
   Box(modifier = Modifier.fillMaxSize()) {
     Text(
@@ -82,7 +91,7 @@ fun TestCanvas(
       modifier = Modifier.align(Alignment.Center),
       style = MaterialTheme.typography.labelMedium,
       color =
-        if (isDark) {
+        if (isInvertedCanvas) {
           MaterialTheme.colorScheme.inverseOnSurface
         } else {
           MaterialTheme.colorScheme.onSurface
@@ -97,7 +106,7 @@ fun TestCanvas(
       onEraseStart = {},
       onEraseEnd = {},
       currentBrush = brush,
-      onGetNextBrush = { viewModel.brush.value },
+      onGetNextBrush = onGetNextBrush,
       isEraserMode = false,
       backgroundImageUri = null,
       onStartDrag = {},
@@ -108,17 +117,33 @@ fun TestCanvas(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun CollapsiblePreviewPane(
-  viewModel: BrushGraphViewModel,
+  isPreviewExpanded: Boolean,
+  isInvertedCanvas: Boolean,
+  testAutoUpdateStrokes: Boolean,
+  brushColor: Int,
+  brushSize: Float,
+  brush: Brush,
+  strokeList: List<Stroke>,
   strokeRenderer: CanvasStrokeRenderer,
   textureStore: TextureBitmapStore,
+  topIssue: GraphValidationException?,
+  modifier: Modifier = Modifier,
+  onGetNextBrush: () -> Brush,
+  onTogglePreviewExpanded: () -> Unit,
+  onClearStrokes: () -> Unit,
+  onToggleCanvasTheme: () -> Unit,
+  onSetTestAutoUpdateStrokes: (Boolean) -> Unit,
+  onUpdateTestBrushColor: (Int) -> Unit,
+  onUpdateTestBrushSize: (Float) -> Unit,
+  onStrokesAdded: (List<Stroke>) -> Unit,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
+  onToggleNotificationPane: () -> Unit,
 ) {
-  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   Column(modifier = Modifier.fillMaxWidth()) {
     // Toggle Tab (always visible)
     Surface(
       modifier =
-        Modifier.fillMaxWidth().height(40.dp).clickable { viewModel.togglePreviewExpanded() },
+        modifier.fillMaxWidth().height(40.dp).clickable { onTogglePreviewExpanded() },
       color = MaterialTheme.colorScheme.surfaceVariant,
       tonalElevation = 4.dp,
       shadowElevation = 8.dp,
@@ -132,12 +157,12 @@ fun CollapsiblePreviewPane(
           verticalAlignment = Alignment.CenterVertically,
         ) {
           Icon(
-            if (uiState.isPreviewExpanded) {
+            if (isPreviewExpanded) {
               Icons.Default.KeyboardArrowDown
             } else {
               Icons.Default.KeyboardArrowUp
             },
-            contentDescription = if (uiState.isPreviewExpanded) stringResource(R.string.bg_test_canvas_collapse) else stringResource(R.string.bg_test_canvas_expand),
+            contentDescription = if (isPreviewExpanded) stringResource(R.string.bg_test_canvas_collapse) else stringResource(R.string.bg_test_canvas_expand),
           )
           Spacer(Modifier.width(8.dp))
           Text(
@@ -145,11 +170,11 @@ fun CollapsiblePreviewPane(
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
           )
-          if (uiState.isPreviewExpanded) {
+          if (isPreviewExpanded) {
             Spacer(Modifier.width(16.dp))
             Text(
               stringResource(R.string.bg_test_canvas_reset),
-              modifier = Modifier.clickable { viewModel.clearStrokes() },
+              modifier = Modifier.clickable { onClearStrokes() },
               style = MaterialTheme.typography.labelLarge,
               color = MaterialTheme.colorScheme.primary,
               fontWeight = FontWeight.Bold,
@@ -157,7 +182,7 @@ fun CollapsiblePreviewPane(
             Spacer(Modifier.width(16.dp))
             Text(
               stringResource(R.string.bg_test_canvas_invert),
-              modifier = Modifier.clickable { viewModel.toggleCanvasTheme() },
+              modifier = Modifier.clickable { onToggleCanvasTheme() },
               style = MaterialTheme.typography.labelLarge,
               color = MaterialTheme.colorScheme.primary,
               fontWeight = FontWeight.Bold,
@@ -167,8 +192,8 @@ fun CollapsiblePreviewPane(
             // Auto-update toggle
             Row(verticalAlignment = Alignment.CenterVertically) {
               Checkbox(
-                checked = uiState.testAutoUpdateStrokes,
-                onCheckedChange = { viewModel.setTestAutoUpdateStrokes(it) }
+                checked = testAutoUpdateStrokes,
+                onCheckedChange = { onSetTestAutoUpdateStrokes(it) }
               )
               Spacer(Modifier.width(4.dp))
               Text(stringResource(R.string.bg_auto_update), style = MaterialTheme.typography.labelLarge)
@@ -179,11 +204,11 @@ fun CollapsiblePreviewPane(
             Box(
               modifier = Modifier
                 .size(20.dp)
-                .background(Color(uiState.testBrushColor ?: 0))
+                .background(Color(brushColor))
                 .border(1.dp, MaterialTheme.colorScheme.outline)
                 .clickable {
-                  onChooseColor(Color(uiState.testBrushColor ?: 0)) { newColor ->
-                    viewModel.updateTestBrushColor(newColor.toArgb())
+                  onChooseColor(Color(brushColor)) { newColor ->
+                    onUpdateTestBrushColor(newColor.toArgb())
                   }
                 }
             )
@@ -197,7 +222,7 @@ fun CollapsiblePreviewPane(
               modifier = Modifier.width(80.dp)
             ) {
               Text(
-                text = "${uiState.testBrushSize.toInt()}px",
+                text = "${brushSize.toInt()}px",
                 modifier = Modifier.menuAnchor().clickable { sizeExpanded = true },
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
@@ -207,14 +232,45 @@ fun CollapsiblePreviewPane(
                 expanded = sizeExpanded,
                 onDismissRequest = { sizeExpanded = false }
               ) {
-                for (size in 10..50 step 10) {
+                for (size in (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)) {
                   DropdownMenuItem(
                     text = { Text(stringResource(R.string.bg_size_px, size)) },
                     onClick = {
-                      viewModel.updateTestBrushSize(size.toFloat())
+                      onUpdateTestBrushSize(size.toFloat())
                       sizeExpanded = false
                     }
                   )
+                }
+              }
+            }
+
+            // Top issue, if one is present
+            if (topIssue != null) {
+              val isError = topIssue.severity == ValidationSeverity.ERROR
+              Surface(
+                color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.extendedColorScheme.warning,
+                tonalElevation = 2.dp,
+                modifier = Modifier.weight(1f).fillMaxHeight().clickable { onToggleNotificationPane() }
+              ) {
+                Box(
+                  modifier = Modifier.fillMaxSize().padding(start = 16.dp),
+                  contentAlignment = Alignment.CenterStart
+                ) {
+                  Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                      imageVector = if (isError) Icons.Default.Error else Icons.Default.Warning,
+                      contentDescription = null,
+                      tint = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
+                      modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                      text = stringResource(if (isError) R.string.bg_error else R.string.bg_warning, topIssue.displayMessage.asString()),
+                      style = MaterialTheme.typography.labelLarge,
+                      color = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
+                      fontWeight = FontWeight.Bold,
+                    )
+                  }
                 }
               }
             }
@@ -225,7 +281,7 @@ fun CollapsiblePreviewPane(
 
     // Expanding Drawer Content
     AnimatedVisibility(
-      visible = uiState.isPreviewExpanded,
+      visible = isPreviewExpanded,
       enter = expandVertically(),
       exit = shrinkVertically(),
     ) {
@@ -234,23 +290,20 @@ fun CollapsiblePreviewPane(
           Modifier.fillMaxWidth().height((PREVIEW_HEIGHT_EXPANDED - PREVIEW_HEIGHT_COLLAPSED).dp),
         tonalElevation = 8.dp,
         color =
-          if (uiState.isDarkCanvas) {
+          if (isInvertedCanvas) {
             MaterialTheme.colorScheme.inverseSurface
           } else {
             MaterialTheme.colorScheme.surface
           },
       ) {
         TestCanvas(
-          viewModel = viewModel,
-          strokeList = viewModel.strokeList,
+          strokeList = strokeList,
           strokeRenderer = strokeRenderer,
           textureStore = textureStore,
-          brush = viewModel.brush.collectAsStateWithLifecycle().value,
-          onStrokesAdded = { 
-            viewModel.strokeList.addAll(it)
-            viewModel.advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
-          },
-          isDark = uiState.isDarkCanvas,
+          brush = brush,
+          isInvertedCanvas = isInvertedCanvas,
+          onGetNextBrush = onGetNextBrush,
+          onStrokesAdded = onStrokesAdded,
         )
       }
     }
