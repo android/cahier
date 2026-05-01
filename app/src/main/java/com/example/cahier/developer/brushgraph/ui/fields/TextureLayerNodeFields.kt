@@ -137,32 +137,6 @@ fun TextureLayerNodeFields(
           }
         )
       }
-    } else {
-      // Stamping mapping
-      NumericField(
-        title = stringResource(R.string.bg_label_animation_rows),
-        value = layer.animationRows.toFloat(),
-        limits = NumericLimits.standard(1f, 100f, 1f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationRows(it.toInt()).build())) }
-      )
-      NumericField(
-        title = stringResource(R.string.bg_label_animation_columns),
-        value = layer.animationColumns.toFloat(),
-        limits = NumericLimits.standard(1f, 100f, 1f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationColumns(it.toInt()).build())) }
-      )
-      NumericField(
-        title = stringResource(R.string.bg_label_animation_frames),
-        value = layer.animationFrames.toFloat(),
-        limits = NumericLimits.standard(1f, 100f, 1f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationFrames(it.toInt()).build())) }
-      )
-      NumericField(
-        title = stringResource(R.string.bg_label_animation_duration_ms),
-        value = layer.animationDurationSeconds,
-        limits = NumericLimits(1f, 10000f, 1f, "ms", unitScale = 1000f),
-        onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setAnimationDurationSeconds(it).build())) }
-      )
     }
 
     InspectorSectionHeader(stringResource(R.string.bg_section_positioning), stringResource(R.string.bg_section_positioning_sub))

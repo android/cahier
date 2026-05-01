@@ -159,28 +159,21 @@ fun SourceNodeFields(
       onDismiss = { showSourceTooltip = false }
     )
   }
-  val isAngleSource = sourceNode.source.isAngle()
-
-  val displayValueStart = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat() else sourceNode.sourceValueRangeStart
-  val displayValueEnd = if (isAngleSource) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat() else sourceNode.sourceValueRangeEnd
-
   NumericField(
     title = stringResource(R.string.bg_label_range_start),
-    value = displayValueStart,
+    value = sourceNode.sourceValueRangeStart,
     limits = limits,
     onValueChanged = {
-      val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
-      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeStart(newValue).build()).build()))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeStart(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
   NumericField(
     title = stringResource(R.string.bg_label_range_end),
-    value = displayValueEnd,
+    value = sourceNode.sourceValueRangeEnd,
     limits = limits,
     onValueChanged = {
-      val newValue = if (isAngleSource) Math.toRadians(it.toDouble()).toFloat() else it
-      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeEnd(newValue).build()).build()))
+      onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setSourceNode(sourceNode.toBuilder().setSourceValueRangeEnd(it).build()).build()))
     },
     onValueChangeFinished = onFieldEditComplete
   )
