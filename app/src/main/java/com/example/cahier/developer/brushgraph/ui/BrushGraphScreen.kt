@@ -84,6 +84,7 @@ import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.GraphPoint
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
+import com.example.cahier.developer.brushgraph.data.ValidationSeverity
 import com.example.cahier.developer.brushgraph.ui.INSPECTOR_HEIGHT_PORTRAIT
 import com.example.cahier.developer.brushgraph.ui.INSPECTOR_WIDTH_LANDSCAPE
 import com.example.cahier.developer.brushgraph.data.DisplayText
@@ -455,15 +456,38 @@ fun BrushGraphScreen(
           },
           previewSlot = {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+              val topIssue = remember(issues) {
+                  issues.firstOrNull { it.severity == ValidationSeverity.ERROR } ?:
+                  issues.firstOrNull { it.severity == ValidationSeverity.WARNING }
+              }
               CollapsiblePreviewPane(
-                viewModel = viewModel,
-                strokeRenderer = renderer,
-                textureStore = textureStore,
-                onChooseColor = { initialColor, onColorSelected ->
-                  colorPickerInitialColor = initialColor
-                  colorPickerOnColorSelected = onColorSelected
-                  showColorPicker = true
-                },
+                  isPreviewExpanded = uiState.isPreviewExpanded,
+                  isInvertedCanvas = uiState.isDarkCanvas,
+                  testAutoUpdateStrokes = uiState.testAutoUpdateStrokes,
+                  brushColor = uiState.testBrushColor ?: 0,
+                  brushSize = uiState.testBrushSize,
+                  brush = viewModel.brush.collectAsStateWithLifecycle().value,
+                  strokeList = viewModel.strokeList,
+                  strokeRenderer = renderer,
+                  textureStore = textureStore,
+                  topIssue = topIssue,
+                  onGetNextBrush = { viewModel.brush.value },
+                  onTogglePreviewExpanded = { viewModel.togglePreviewExpanded() },
+                  onClearStrokes = { viewModel.clearStrokes() },
+                  onToggleCanvasTheme = { viewModel.toggleCanvasTheme() },
+                  onSetTestAutoUpdateStrokes = { viewModel.setTestAutoUpdateStrokes(it) },
+                  onUpdateTestBrushColor = { viewModel.updateTestBrushColor(it) },
+                  onUpdateTestBrushSize = { viewModel.updateTestBrushSize(it) },
+                  onStrokesAdded = { strokes ->
+                      viewModel.strokeList.addAll(strokes)
+                      viewModel.advanceTutorial(TutorialAction.DRAW_ON_CANVAS)
+                  },
+                  onChooseColor = { initialColor, onColorSelected ->
+                      colorPickerInitialColor = initialColor
+                      colorPickerOnColorSelected = onColorSelected
+                      showColorPicker = true
+                  },
+                  onToggleNotificationPane = { viewModel.toggleErrorPane() }
               )
             }
           },
