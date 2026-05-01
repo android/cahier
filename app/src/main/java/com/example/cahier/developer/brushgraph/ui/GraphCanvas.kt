@@ -227,8 +227,15 @@ fun GraphCanvas(
                 isSelected = node.id == selectedNodeId,
                 zoom = zoom,
                 onMove = { delta ->
-                  val currentPos = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero
-                  nodeRegistry.updateNodePosition(node.id, currentPos + delta)
+                  if (isSelectionMode && selectedNodeIds.contains(node.id)) {
+                    selectedNodeIds.forEach { selId ->
+                      val currentPos = nodeRegistry.getNodePosition(selId) ?: Offset.Zero
+                      nodeRegistry.updateNodePosition(selId, currentPos + delta)
+                    }
+                  } else {
+                    val currentPos = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero
+                    nodeRegistry.updateNodePosition(node.id, currentPos + delta)
+                  }
                 },
                 onClick = { onNodeClick(node.id, nodeRegistry.getNodePosition(node.id) ?: Offset.Zero) },
                 onUpdate = { onNodeDataUpdate(node.id, it) },
