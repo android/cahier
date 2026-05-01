@@ -328,7 +328,15 @@ fun BrushGraphScreen(
               isSelectionMode = uiState.isSelectionMode,
               selectedNodeIds = uiState.selectedNodeIds,
               onSelectAll = { viewModel.selectAllNodes() },
-              onDuplicateSelected = { viewModel.duplicateSelectedNodes() },
+              onDuplicateSelected = {
+                val idMap = viewModel.duplicateSelectedNodes()
+                idMap.forEach { (oldId, newId) ->
+                  val oldPos = nodeRegistry.getNodePosition(oldId)
+                  if (oldPos != null) {
+                    nodeRegistry.updateNodePosition(newId, oldPos + Offset(50f, 50f))
+                  }
+                }
+              },
               onDeleteSelected = { viewModel.deleteSelectedNodes() },
               onDoneSelection = { viewModel.exitSelectionMode() },
               onAddEdge = { from, to, portId -> viewModel.addEdge(from, to, portId) },
