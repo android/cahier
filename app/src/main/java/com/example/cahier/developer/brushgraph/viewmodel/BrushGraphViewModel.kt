@@ -49,8 +49,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.distinctUntilChanged
-import com.example.cahier.developer.brushgraph.data.BrushFamilyConverter
-import com.example.cahier.developer.brushgraph.data.BrushGraphConverter
 import com.example.cahier.developer.brushgraph.data.DisplayText
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphEdge
@@ -122,11 +120,7 @@ class BrushGraphViewModel @Inject constructor(
     .map { Triple(it.graph, it.testBrushColor, it.testBrushSize) }
     .distinctUntilChanged()
     .map { (graph, testBrushColor, testBrushSize) ->
-      val family = try {
-        BrushFamilyConverter.convert(graph)
-      } catch (e: Exception) {
-        null
-      }
+      val family = repository.getBrushFamily()
       val color = testBrushColor ?: 0
       val size = testBrushSize
       if (family != null) {
