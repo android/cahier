@@ -110,13 +110,13 @@ fun TextureLayerNodeFields(
       NumericField(
         title = stringResource(R.string.bg_label_size_x),
         value = layer.sizeX,
-        limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
+        limits = NumericLimits(0.1f, 1000f, 0.1f),
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setSizeX(it).build())) }
       )
       NumericField(
         title = stringResource(R.string.bg_label_size_y),
         value = layer.sizeY,
-        limits = NumericLimits.standard(0.1f, 1000f, 0.1f),
+        limits = NumericLimits(0.1f, 1000f, 0.1f),
         onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setSizeY(it).build())) }
       )
       FieldWithTooltip(
@@ -163,13 +163,13 @@ fun TextureLayerNodeFields(
     NumericField(
       title = stringResource(R.string.bg_label_offset_x),
       value = layer.offsetX,
-      limits = NumericLimits.standard(-1f, 1f, 0.01f),
+      limits = NumericLimits(-1f, 1f, 0.01f),
       onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setOffsetX(it).build())) }
     )
     NumericField(
       title = stringResource(R.string.bg_label_offset_y),
       value = layer.offsetY,
-      limits = NumericLimits.standard(-1f, 1f, 0.01f),
+      limits = NumericLimits(-1f, 1f, 0.01f),
       onValueChanged = { onUpdate(NodeData.TextureLayer(layer.toBuilder().setOffsetY(it).build())) }
     )
     NumericField(

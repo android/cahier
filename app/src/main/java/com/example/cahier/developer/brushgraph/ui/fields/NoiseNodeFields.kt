@@ -50,7 +50,7 @@ fun NoiseNodeFields(
   NumericField(
     title = stringResource(R.string.bg_label_seed),
     value = noiseNode.seed.toFloat(),
-    limits = NumericLimits.standard(0f, 100f, 1f),
+    limits = NumericLimits(0f, 100f, 1f),
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(

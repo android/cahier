@@ -101,7 +101,7 @@ fun ColorFunctionNodeFields(
     NumericField(
       title = stringResource(R.string.bg_label_opacity_multiplier),
       value = function.opacityMultiplier,
-      limits = NumericLimits.standard(0f, 2f, 0.01f),
+      limits = NumericLimits(0f, 2f, 0.01f),
       onValueChanged = { onUpdate(NodeData.ColorFunction(function.toBuilder().setOpacityMultiplier(it).build())) },
       onValueChangeFinished = onFieldEditComplete
     )

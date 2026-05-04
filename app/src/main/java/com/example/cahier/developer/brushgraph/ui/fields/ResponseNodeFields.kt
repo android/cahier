@@ -373,7 +373,7 @@ fun LinearWidget(
           NumericField(
             title = "X",
             value = curve.getX(i),
-            limits = NumericLimits.standard(0f, 1f, 0.01f),
+            limits = NumericLimits(0f, 1f, 0.01f),
             onValueChanged = { newValue ->
               val builder = curve.toBuilder()
               builder.setX(i, newValue)
@@ -386,7 +386,7 @@ fun LinearWidget(
           NumericField(
             title = "Y",
             value = curve.getY(i),
-            limits = NumericLimits.standard(-2f, 2f, 0.01f),
+            limits = NumericLimits(-2f, 2f, 0.01f),
             onValueChanged = { newValue ->
               val builder = curve.toBuilder()
               builder.setY(i, newValue)
@@ -420,10 +420,10 @@ fun LinearWidget(
 @Composable
 fun CubicBezierWidget(curve: ProtoCubicBezier, onCurveChanged: (ProtoCubicBezier) -> Unit) {
   Column(modifier = Modifier.padding(8.dp)) {
-    NumericField(title = "x1", value = curve.x1, limits = NumericLimits.standard(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setX1(it).build()) })
-    NumericField(title = "y1", value = curve.y1, limits = NumericLimits.standard(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setY1(it).build()) })
-    NumericField(title = "x2", value = curve.x2, limits = NumericLimits.standard(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setX2(it).build()) })
-    NumericField(title = "y2", value = curve.y2, limits = NumericLimits.standard(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setY2(it).build()) })
+    NumericField(title = "x1", value = curve.x1, limits = NumericLimits(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setX1(it).build()) })
+    NumericField(title = "y1", value = curve.y1, limits = NumericLimits(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setY1(it).build()) })
+    NumericField(title = "x2", value = curve.x2, limits = NumericLimits(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setX2(it).build()) })
+    NumericField(title = "y2", value = curve.y2, limits = NumericLimits(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setY2(it).build()) })
   }
 }
 
@@ -433,7 +433,7 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
     NumericField(
       title = stringResource(R.string.bg_label_step_count),
       value = curve.stepCount.toFloat(),
-      limits = NumericLimits.standard(1f, 20f, 1f),
+      limits = NumericLimits(1f, 20f, 1f),
       onValueChanged = {
         onCurveChanged(curve.toBuilder().setStepCount(it.toInt()).build())
       }

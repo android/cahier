@@ -118,7 +118,7 @@ fun FamilyNodeFields(
     NumericField(
       title = stringResource(R.string.brush_designer_window_size_ms),
       value = windowMs.toFloat(),
-      limits = NumericLimits.standard(1f, 100f, 1f),
+      limits = NumericLimits(1f, 100f, 1f),
       onValueChanged = { newValue ->
         val newModel = inputModel.toBuilder()
           .setSlidingWindowModel(
@@ -133,7 +133,7 @@ fun FamilyNodeFields(
     NumericField(
       title = stringResource(R.string.brush_designer_upsampling_frequency_hz),
       value = upsamplingHz.toFloat(),
-      limits = NumericLimits.standard(0f, 500f, 1f),
+      limits = NumericLimits(0f, 500f, 1f),
       onValueChanged = { newValue ->
         val newPeriod = if (newValue == 0f) Float.POSITIVE_INFINITY else 1f / newValue
         val newModel = inputModel.toBuilder()

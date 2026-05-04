@@ -53,7 +53,7 @@ fun PolarTargetNodeFields(
       values = ALL_POLAR_TARGETS.toList(),
       displayName = { stringResource(it.displayStringRId()) },
       onSelected = { target ->
-        val newMagLimits = NumericLimits.standard(-10.0f, 10.0f, 0.01f)
+        val newMagLimits = NumericLimits(-10.0f, 10.0f, 0.01f)
         val clampedMagStart = polarNode.magnitudeRangeStart.coerceIn(newMagLimits.min, newMagLimits.max)
         val clampedMagEnd = polarNode.magnitudeRangeEnd.coerceIn(newMagLimits.min, newMagLimits.max)
 
@@ -95,7 +95,7 @@ fun PolarTargetNodeFields(
     onValueChangeFinished = onFieldEditComplete
   )
   
-  val magLimits = NumericLimits.standard(-10.0f, 10.0f, 0.01f)
+  val magLimits = NumericLimits(-10.0f, 10.0f, 0.01f)
   
   NumericField(
     title = stringResource(R.string.bg_label_mag_start),
