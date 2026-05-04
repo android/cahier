@@ -58,14 +58,14 @@ import kotlin.math.PI
 class NumericLimits(
     val min: Float,
     val max: Float,
-    val step: Float,
+    val step: Float = 0.01f,
     val displayUnit: String = "",
     val unitScale: Float = 1.0f
 ) {
-    /** Convert a display value back to the real (proto) value. */
+    /** Convert a display value back to the real value as described by [unitScale]. */
     fun toRealValue(displayValue: Float): Float = displayValue / unitScale
 
-    /** Convert a real (proto) value to the display value. */
+    /** Convert a real value to the display value as described by [unitScale]. */
     fun fromRealValue(realValue: Float): Float = realValue * unitScale
 
     /** Format a display value with its unit suffix. */
@@ -104,32 +104,20 @@ class NumericLimits(
                 displayUnit = "°",
                 unitScale = (180f / PI.toFloat())
             )
-
-        /** Raw numeric values with a configurable step */
-        fun standard(
-            min: Float,
-            max: Float,
-            step: Float = 0.01f
-        ): NumericLimits =
-            NumericLimits(
-                min = min,
-                max = max,
-                step = step
-            )
     }
 }
 
 /**
- * A professional numeric input with a slider, ± buttons, and a long-press
+ * A professional numeric input with a slider, ± buttons, and a click-to-edit
  * dialog for exact value entry.
  *
  * Stateless: all state is passed in via [value] and changes are emitted
- * via [onValueChanged] in real (proto) units.
+ * via [onValueChanged] in real units as described by [limits].
  *
  * @param title label displayed above the slider
- * @param value current value in real (proto) units
+ * @param value current value in real units as described by [limits]
  * @param limits display range, step, and unit conversion
- * @param onValueChanged callback with the new value in real (proto) units
+ * @param onValueChanged callback with the new value in real units as described by [limits]
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -154,11 +142,14 @@ internal fun NumericField(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .combinedClickable(
-                        onLongClick = {
+                        onClick = {
                             textInputValue = displayValue.toString()
                             showTextInput = true
                         },
-                        onClick = {}
+                        onLongClick = {
+                            textInputValue = displayValue.toString()
+                            showTextInput = true
+                        }
                     )
             )
             Text(

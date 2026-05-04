@@ -1,19 +1,17 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  * Copyright 2025 Google LLC. All rights reserved.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.example.cahier.developer.brushdesigner.viewmodel
@@ -50,7 +48,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -66,7 +63,6 @@ import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
-import ink.proto.ColorFunction as ProtoColorFunction
 
 @OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
 @HiltViewModel
@@ -93,7 +89,10 @@ class BrushDesignerViewModel @Inject constructor(
                     GZIPOutputStream(baos).use { it.write(rawBytes) }
 
                     ByteArrayInputStream(baos.toByteArray()).use { inputStream ->
-                        BrushFamily.decode(inputStream)
+                        BrushFamily.decode(inputStream) { textureId, bitmap ->
+                            bitmap?.let { textureStore?.loadTexture(textureId, it) }
+                            textureId
+                        }
                     }
                 } catch (e: Exception) {
                     null
@@ -152,15 +151,6 @@ class BrushDesignerViewModel @Inject constructor(
                     }
                 }
         }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.activeBrushProto
-                .map { it.textureIdToBitmapMap }
-                .distinctUntilChanged()
-                .collect { map ->
-                    syncProtobufTexturesToStore(map)
-                }
-        }
     }
 
     val savedPaletteBrushes: StateFlow<List<CustomBrushEntity>> =
@@ -174,22 +164,6 @@ class BrushDesignerViewModel @Inject constructor(
     private val _selectedCoatIndex = MutableStateFlow(0)
     val selectedCoatIndex: StateFlow<Int> = _selectedCoatIndex.asStateFlow()
 
-    private fun syncProtobufTexturesToStore(map: Map<String, ByteString>) {
-        map.forEach { (id, byteString) ->
-            if (textureStore?.get(id) == null) {
-                try {
-                    val bytes = byteString.toByteArray()
-                    val bitmap = BitmapFactory
-                        .decodeByteArray(bytes, 0, bytes.size)
-                    if (bitmap != null) {
-                        textureStore?.loadTexture(id, bitmap)
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
 
     fun getActiveBrush(): Brush? = activeBrush.value
 
@@ -245,7 +219,7 @@ class BrushDesignerViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val baos = ByteArrayOutputStream()
-                stockBrush.encode(baos)
+                stockBrush.encode(baos, textureStore ?: CahierTextureBitmapStore(context))
 
                 val gzippedBytes = baos.toByteArray()
                 ByteArrayInputStream(gzippedBytes).use { inputStream ->
@@ -529,7 +503,18 @@ class BrushDesignerViewModel @Inject constructor(
 
     fun setTextureStore(store: CahierTextureBitmapStore) {
         this.textureStore = store
-        syncProtobufTexturesToStore(repository.activeBrushProto.value.textureIdToBitmapMap)
+        // Immediately populate the store from any textures already in the proto,
+        // since previewBrushFamily's decode callback has a 150ms debounce.
+        val bitmapMap = repository.activeBrushProto.value.textureIdToBitmapMap
+        bitmapMap.forEach { (id, byteString) ->
+            if (store.get(id) == null) {
+                try {
+                    val bytes = byteString.toByteArray()
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        ?.let { store.loadTexture(id, it) }
+                } catch (_: Exception) { /* logged during decode */ }
+            }
+        }
     }
 
     fun setSelectedCoat(index: Int) {
@@ -560,63 +545,6 @@ class BrushDesignerViewModel @Inject constructor(
         repository.updateActiveBrushProto(familyBuilder.build())
 
         _selectedCoatIndex.value = (indexToRemove - 1).coerceAtLeast(0)
-    }
-
-    /**
-     * Adds a "Smooth Dynamics" behavior:
-     * Logic: Source (Input) -> Damping (Smoothing) -> Target (Output)
-     */
-    fun addSmoothedBehavior(
-        sourceType: BrushBehavior.Source,
-        targetType: BrushBehavior.Target,
-        dampingSeconds: Float = 0.1f
-    ) {
-        val source = BrushBehavior.Node.newBuilder().setSourceNode(
-            BrushBehavior.SourceNode.newBuilder()
-                .setSource(sourceType)
-                .setSourceValueRangeStart(0f)
-                .setSourceValueRangeEnd(1f)
-                .setSourceOutOfRangeBehavior(BrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
-        ).build()
-
-        val damping = BrushBehavior.Node.newBuilder().setDampingNode(
-            BrushBehavior.DampingNode.newBuilder()
-                .setDampingSource(BrushBehavior.ProgressDomain.PROGRESS_DOMAIN_TIME_IN_SECONDS)
-                .setDampingGap(dampingSeconds)
-        ).build()
-
-        val target = BrushBehavior.Node.newBuilder().setTargetNode(
-            BrushBehavior.TargetNode.newBuilder()
-                .setTarget(targetType)
-                .setTargetModifierRangeStart(0.5f)
-                .setTargetModifierRangeEnd(1.5f)
-        ).build()
-
-        addBehavior(listOf(source, damping, target))
-    }
-
-    /**
-     * Adds a "Random Jitter" behavior:
-     * Logic: Noise (Random) -> Target (Output)
-     */
-    fun addJitterBehavior(targetType: BrushBehavior.Target) {
-        val noise = BrushBehavior.Node.newBuilder().setNoiseNode(
-            BrushBehavior.NoiseNode.newBuilder()
-                .setSeed(kotlin.random.Random.nextInt())
-                .setVaryOver(
-                    BrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_CENTIMETERS
-                )
-                .setBasePeriod(0.5f)
-        ).build()
-
-        val target = BrushBehavior.Node.newBuilder().setTargetNode(
-            BrushBehavior.TargetNode.newBuilder()
-                .setTarget(targetType)
-                .setTargetModifierRangeStart(0.8f)
-                .setTargetModifierRangeEnd(1.2f)
-        ).build()
-
-        addBehavior(listOf(noise, target))
     }
 
     fun deleteFromPalette(name: String) {

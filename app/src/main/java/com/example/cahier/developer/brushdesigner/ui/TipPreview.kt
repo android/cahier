@@ -115,8 +115,8 @@ internal fun TipPreview(
                     y = y,
                     elapsedTimeMillis = timeMs,
                     pressure = 0.5f + (index.toFloat() / points.size) * 0.3f,
-                    tiltRadians = 0.3f,
-                    orientationRadians = 0f
+                    tiltRadians = 0.2f + (index.toFloat() / points.size) * 0.4f,
+                    orientationRadians = (index.toFloat() / points.size) * 1.5f
                 )
             }
 

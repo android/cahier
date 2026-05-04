@@ -67,7 +67,7 @@ internal fun BrushDesignerTopBar(
     isCompact: Boolean,
     onNavigateUp: () -> Unit,
     savedBrushes: List<CustomBrushEntity>,
-    onLoadStockBrush: (BrushFamily) -> Unit,
+    onLoadBrush: (BrushFamily) -> Unit,
     onLoadFromPalette: (CustomBrushEntity) -> Unit,
     onDeleteFromPalette: (String) -> Unit,
     onClearCanvas: () -> Unit,
@@ -94,8 +94,7 @@ internal fun BrushDesignerTopBar(
         },
         actions = {
             BrushLibraryMenu(
-                onLoadStockBrush = onLoadStockBrush,
-                onLoadCahierBrush = onLoadStockBrush
+                onLoadBrush = onLoadBrush
             )
             PaletteMenu(
                 savedBrushes = savedBrushes,
@@ -129,12 +128,20 @@ internal fun BrushDesignerTopBar(
 
 @Composable
 private fun BrushLibraryMenu(
-    onLoadStockBrush: (BrushFamily) -> Unit,
-    onLoadCahierBrush: (BrushFamily) -> Unit
+    onLoadBrush: (BrushFamily) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val cahierBrushes = remember { CustomBrushes.getBrushes(context) }
+
+    val stockBrushes = remember {
+        listOf(
+            R.string.highlighter to StockBrushes.highlighter(),
+            R.string.marker to StockBrushes.marker(),
+            R.string.pressure_pen to StockBrushes.pressurePen(),
+            R.string.dashed_line to StockBrushes.dashedLine(),
+        )
+    }
 
     Box {
         TextButton(onClick = { expanded = true }) {
@@ -152,34 +159,15 @@ private fun BrushLibraryMenu(
                 onClick = {},
                 enabled = false
             )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.highlighter)) },
-                onClick = {
-                    onLoadStockBrush(StockBrushes.highlighter())
-                    expanded = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.marker)) },
-                onClick = {
-                    onLoadStockBrush(StockBrushes.marker())
-                    expanded = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.pressure_pen)) },
-                onClick = {
-                    onLoadStockBrush(StockBrushes.pressurePen())
-                    expanded = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.dashed_line)) },
-                onClick = {
-                    onLoadStockBrush(StockBrushes.dashedLine())
-                    expanded = false
-                }
-            )
+            stockBrushes.forEach { (nameResId, brushFamily) ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(nameResId)) },
+                    onClick = {
+                        onLoadBrush(brushFamily)
+                        expanded = false
+                    }
+                )
+            }
 
             if (cahierBrushes.isNotEmpty()) {
                 DropdownMenuItem(
@@ -197,7 +185,7 @@ private fun BrushLibraryMenu(
                     DropdownMenuItem(
                         text = { Text(customBrush.name) },
                         onClick = {
-                            onLoadCahierBrush(customBrush.brushFamily)
+                            onLoadBrush(customBrush.brushFamily)
                             expanded = false
                         }
                     )
