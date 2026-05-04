@@ -37,7 +37,7 @@ fun ConstantNodeFields(
   NumericField(
     title = stringResource(R.string.bg_port_value),
     value = constantNode.value,
-    limits = NumericLimits.standard(-100f, 100f, 0.01f),
+    limits = NumericLimits(-100f, 100f, 0.01f),
     onValueChanged = {
       onUpdate(
         NodeData.Behavior(behaviorNode.toBuilder().setConstantNode(constantNode.toBuilder().setValue(it).build()).build())
