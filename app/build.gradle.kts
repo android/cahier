@@ -66,6 +66,11 @@ android {
             isIncludeAndroidResources = true
         }
     }
+
+    sourceSets {
+        getByName("test").kotlin.srcDir("src/testShared/java")
+        getByName("androidTest").kotlin.srcDir("src/testShared/java")
+    }
 }
 
 roborazzi {

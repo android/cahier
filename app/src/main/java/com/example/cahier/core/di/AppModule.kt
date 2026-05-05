@@ -28,6 +28,8 @@ import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.data.OfflineNotesRepository
 import com.example.cahier.core.utils.FileHelper
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
+import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
+import com.example.cahier.developer.brushgraph.data.DefaultBrushGraphRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -91,5 +93,13 @@ object AppModule {
     @Singleton
     fun provideFileHelper(@ApplicationContext context: Context): FileHelper {
         return FileHelper(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBrushGraphRepository(
+        impl: DefaultBrushGraphRepository
+    ): BrushGraphRepository {
+        return impl
     }
 }
