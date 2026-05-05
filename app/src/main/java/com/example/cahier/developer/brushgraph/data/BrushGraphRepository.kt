@@ -21,7 +21,6 @@ import com.example.cahier.R
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import com.example.cahier.developer.brushdesigner.data.AUTOSAVE_KEY
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.BrushFamily
 import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
@@ -77,7 +76,7 @@ interface BrushGraphRepository {
 }
 
 @Singleton
-@OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
+@OptIn(FlowPreview::class)
 class DefaultBrushGraphRepository @Inject constructor(
   private val customBrushDao: CustomBrushDao,
   val textureStore: CahierTextureBitmapStore,

@@ -1,6 +1,5 @@
 package com.example.cahier.developer.brushgraph.data
 
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.BrushFamily
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
@@ -34,7 +33,7 @@ import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushTip as ProtoBrushTip
 
 @RunWith(RobolectricTestRunner::class)
-@OptIn(ExperimentalInkCustomBrushApi::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class BrushGraphRepositoryTest {
 
     private val testDispatcher = StandardTestDispatcher()
