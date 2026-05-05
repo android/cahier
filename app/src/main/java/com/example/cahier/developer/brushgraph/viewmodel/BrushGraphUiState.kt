@@ -1,5 +1,6 @@
 package com.example.cahier.developer.brushgraph.viewmodel
 
+import androidx.compose.ui.graphics.Color
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.GraphPoint
@@ -12,7 +13,7 @@ data class BrushGraphUiState(
   val activeEdgeSourceId: String? = null,
   val selectedEdge: GraphEdge? = null,
   val testAutoUpdateStrokes: Boolean = true,
-  val testBrushColor: Int? = null,
+  val testBrushColor: Color? = null,
   val testBrushSize: Float = 10f,
   val isErrorPaneOpen: Boolean = false,
   val zoom: Float = 1f,

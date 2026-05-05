@@ -19,14 +19,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.TextureBitmapStore
+import androidx.ink.brush.compose.composeColor
+import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.storage.BrushFamilyDecodeCallback
 import androidx.ink.strokes.Stroke
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cahier.core.ui.CahierTextureBitmapStore
@@ -92,34 +96,35 @@ class BrushGraphViewModel @Inject constructor(
   private val _uiState = MutableStateFlow(BrushGraphUiState())
   val uiState: StateFlow<BrushGraphUiState> = _uiState.asStateFlow()
 
-  val brush: StateFlow<androidx.ink.brush.Brush> = uiState
+  val brush: StateFlow<Brush> = uiState
     .map { Triple(it.graph, it.testBrushColor, it.testBrushSize) }
     .distinctUntilChanged()
     .map { (graph, testBrushColor, testBrushSize) ->
       val family = repository.getBrushFamily()
-      val color = testBrushColor ?: 0
+      val color = testBrushColor ?: Color.Black
       val size = testBrushSize
       if (family != null) {
-        Brush.createWithColorIntArgb(family, color, size, 0.1f)
+        Brush.createWithComposeColor(family, color, size, 0.1f)
       } else {
-        Brush.createWithColorIntArgb(StockBrushes.marker(), color, size, 0.1f)
+        Brush.createWithComposeColor(StockBrushes.marker(), color, size, 0.1f)
       }
     }.stateIn(
       scope = viewModelScope,
       started = SharingStarted.Eagerly,
-      initialValue = Brush.createWithColorIntArgb(
+      initialValue = Brush.createWithComposeColor(
         StockBrushes.marker(),
-        0,
+        Color.Black,
         size = 20f,
         epsilon = 0.1f,
       )
     )
 
   /** The list of strokes drawn in the preview area. */
+  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
   val strokeList = mutableStateListOf<androidx.ink.strokes.Stroke>()
 
-  fun updateTestBrushColor(colorArgb: Int) {
-    _uiState.update { it.copy(testBrushColor = colorArgb) }
+  fun updateTestBrushColor(color: Color) {
+    _uiState.update { it.copy(testBrushColor = color) }
   }
 
   fun updateTestBrushSize(size: Float) {
@@ -130,10 +135,15 @@ class BrushGraphViewModel @Inject constructor(
     _uiState.update { state -> state.copy(allTextureIds = textureStore.getAllIds()) }
   }
 
-  val tutorialManager = TutorialManager(repository)
+  private val tutorialManager = TutorialManager(repository)
 
+  // Read-only for UI
   val tutorialStep get() = tutorialManager.tutorialStep
+
+  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
   val currentStepIndex get() = tutorialManager.currentStepIndex
+
+  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
   val isTutorialSandboxMode get() = tutorialManager.isTutorialSandboxMode
 
   fun startTutorial() {
@@ -520,7 +530,7 @@ class BrushGraphViewModel @Inject constructor(
     repository.loadBrushFamily(family)
   }
 
-  fun getBrushColor(): Int = brush.value.colorIntArgb
+  fun getBrushColor(): Color = brush.value.composeColor
 
   fun updateZoom(newZoom: Float) {
     _uiState.update { state -> state.copy(zoom = newZoom) }

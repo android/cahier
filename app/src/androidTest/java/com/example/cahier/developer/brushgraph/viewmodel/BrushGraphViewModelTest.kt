@@ -225,7 +225,7 @@ class BrushGraphViewModelTest {
 
     @Test
     fun updateTestBrushColor_updatesState() = testScope.runTest {
-        val color = 0xFF00FF00.toInt()
+        val color = androidx.compose.ui.graphics.Color.Green
         viewModel.updateTestBrushColor(color)
         assertEquals(color, viewModel.uiState.first().testBrushColor)
     }
@@ -523,7 +523,7 @@ class BrushGraphViewModelTest {
 
     @Test
     fun getBrushColor_returnsColor() = testScope.runTest {
-        val color = 0xFF00FF00.toInt()
+        val color = androidx.compose.ui.graphics.Color.Green
         viewModel.updateTestBrushColor(color)
         
         testScope.advanceUntilIdle()
