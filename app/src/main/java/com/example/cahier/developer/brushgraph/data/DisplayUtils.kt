@@ -13,8 +13,6 @@
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
  */
-@file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
-
 package com.example.cahier.developer.brushgraph.data
 
 import androidx.ink.brush.InputToolType
