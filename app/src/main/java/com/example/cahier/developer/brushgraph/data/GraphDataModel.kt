@@ -29,14 +29,12 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import com.example.cahier.R
 import ink.proto.Color as ProtoColor
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 
 /**
  * Converts a [ProtoBrushFamily] into a functional [BrushFamily] object.
  *
  * This handles the necessary GZIP compression and decoding steps required by the [BrushFamily.decode] API.
  */
-@OptIn(ExperimentalInkCustomBrushApi::class)
 fun ProtoBrushFamily.toBrushFamily(): BrushFamily {
   val rawBytes = this.toByteArray()
   val baos = ByteArrayOutputStream()
