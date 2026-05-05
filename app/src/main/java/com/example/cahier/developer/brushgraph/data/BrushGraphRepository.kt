@@ -44,15 +44,47 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+interface BrushGraphRepository {
+  val graph: StateFlow<BrushGraph>
+  val graphIssues: StateFlow<List<GraphValidationException>>
+
+  fun setGraph(newGraph: BrushGraph)
+  fun clearGraph()
+  fun getBrushFamily(): BrushFamily?
+  fun reorganize(): BrushFamily?
+
+  fun postDebug(displayText: DisplayText)
+  fun validate(): Boolean
+  fun clearIssues()
+  
+  suspend fun loadAutoSaveBrush(): Boolean
+  fun loadBrushFamily(family: BrushFamily): Boolean
+
+  fun createDefaultGraph(): BrushGraph
+  fun addNode(data: NodeData): String
+  fun updateNodeData(nodeId: String, newData: NodeData)
+  fun setNodeDisabled(nodeId: String, isDisabled: Boolean)
+  fun deleteNode(nodeId: String): Set<String>
+  fun deleteSelectedNodes(selectedNodeIds: Set<String>): Set<String>
+  fun duplicateSelectedNodes(selectedNodeIds: Set<String>): Map<String, String>
+
+  fun addEdge(fromNodeId: String, toNodeId: String, initialToPortId: String)
+  fun setEdgeDisabled(edge: GraphEdge, isDisabled: Boolean): GraphEdge
+  fun deleteEdge(edge: GraphEdge): Set<String>
+  fun addNodeBetween(edge: GraphEdge): String?
+
+  fun reorderPorts(nodeId: String, fromIndex: Int, toIndex: Int)
+}
+
 @Singleton
 @OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
-class BrushGraphRepository @Inject constructor(
+class DefaultBrushGraphRepository @Inject constructor(
   private val customBrushDao: CustomBrushDao,
   val textureStore: CahierTextureBitmapStore,
   @ApplicationScope private val scope: CoroutineScope
-) {
+) : BrushGraphRepository {
   private val _graph = MutableStateFlow(createDefaultGraph())
-  val graph: StateFlow<BrushGraph> = _graph.asStateFlow()
+  override val graph: StateFlow<BrushGraph> = _graph.asStateFlow()
   init {
     scope.launch {
       graph
@@ -65,7 +97,7 @@ class BrushGraphRepository @Inject constructor(
             AndroidBrushFamilySerialization.encode(family, baos, textureStore)
             customBrushDao.saveCustomBrush(com.example.cahier.developer.brushdesigner.data.CustomBrushEntity(AUTOSAVE_KEY, baos.toByteArray()))
           } catch (e: Exception) {
-            android.util.Log.e("BrushGraphRepository", "Failed to auto-save brush", e)
+            android.util.Log.e("DefaultBrushGraphRepository", "Failed to auto-save brush", e)
           }
         }
     }
@@ -73,24 +105,24 @@ class BrushGraphRepository @Inject constructor(
 
   private var _lastValidBrushFamily: BrushFamily? = null
   private val _graphIssues = MutableStateFlow<List<GraphValidationException>>(emptyList())
-  val graphIssues: StateFlow<List<GraphValidationException>> = _graphIssues.asStateFlow()
+  override val graphIssues: StateFlow<List<GraphValidationException>> = _graphIssues.asStateFlow()
 
-  fun setGraph(newGraph: BrushGraph) {
+  override fun setGraph(newGraph: BrushGraph) {
     _graph.update { newGraph }
   }
 
-  fun clearGraph() {
+  override fun clearGraph() {
     _graph.update { createDefaultGraph() }
     validate()
     postDebug(DisplayText.Resource(R.string.bg_msg_graph_cleared))
   }
 
-  fun postDebug(displayText: DisplayText) {
+  override fun postDebug(displayText: DisplayText) {
     val newIssue = GraphValidationException(displayMessage = displayText, severity = ValidationSeverity.DEBUG)
     _graphIssues.update { (it + newIssue).distinctBy { issue -> Triple(issue.displayMessage, issue.nodeId, issue.severity) } }
   }
 
-  fun validate(): Boolean {
+  override fun validate(): Boolean {
     val issues = GraphValidator.validateAll(_graph.value).toMutableList()
 
     val errorNodeIds =
@@ -113,11 +145,11 @@ class BrushGraphRepository @Inject constructor(
     return issues.none { it.severity == ValidationSeverity.ERROR }
   }
 
-  fun clearIssues() {
+  override fun clearIssues() {
     _graphIssues.value = emptyList()
   }
 
-  suspend fun loadAutoSaveBrush(): Boolean {
+  override suspend fun loadAutoSaveBrush(): Boolean {
     val entity = customBrushDao.getAutoSaveBrush().firstOrNull() ?: return false
     val decodedBytes = entity.brushBytes
     return try {
@@ -134,12 +166,12 @@ class BrushGraphRepository @Inject constructor(
       loadBrushFamily(family)
       true
     } catch (e: Exception) {
-      android.util.Log.e("BrushGraphRepository", "Failed to decode auto saved brush family", e)
+      android.util.Log.e("DefaultBrushGraphRepository", "Failed to decode auto saved brush family", e)
       false
     }
   }
 
-  fun getBrushFamily(): BrushFamily? {
+  override fun getBrushFamily(): BrushFamily? {
     if (!validate()) return _lastValidBrushFamily
     return try {
       val family = BrushFamilyConverter.convert(_graph.value)
@@ -154,14 +186,14 @@ class BrushGraphRepository @Inject constructor(
     }
   }
 
-  fun addNode(data: NodeData): String {
+  override fun addNode(data: NodeData): String {
     val newNode = GraphNode(id = UUID.randomUUID().toString(), data = data)
     _graph.update { it.copy(nodes = it.nodes + newNode) }
     validate()
     return newNode.id
   }
 
-  fun addEdge(fromNodeId: String, toNodeId: String, initialToPortId: String) {
+  override fun addEdge(fromNodeId: String, toNodeId: String, initialToPortId: String) {
     var toPortId = initialToPortId
     if (fromNodeId == toNodeId) return
     
@@ -233,7 +265,7 @@ class BrushGraphRepository @Inject constructor(
     validate()
   }
 
-  fun setEdgeDisabled(edge: GraphEdge, isDisabled: Boolean): GraphEdge {
+  override fun setEdgeDisabled(edge: GraphEdge, isDisabled: Boolean): GraphEdge {
     val updatedEdge = edge.copy(isDisabled = isDisabled)
     _graph.update { currentGraph ->
       currentGraph.copy(
@@ -247,7 +279,7 @@ class BrushGraphRepository @Inject constructor(
     return updatedEdge
   }
 
-  fun deleteEdge(edge: GraphEdge): Set<String> {
+  override fun deleteEdge(edge: GraphEdge): Set<String> {
     var modifiedNodeIds = emptySet<String>()
     _graph.update { currentGraph ->
       val (newGraph, ids) = calculateDeleteEdge(currentGraph, edge)
@@ -353,7 +385,7 @@ class BrushGraphRepository @Inject constructor(
     return Pair(currentGraph, emptySet())
   }
 
-  fun deleteSelectedNodes(selectedNodeIds: Set<String>): Set<String> {
+  override fun deleteSelectedNodes(selectedNodeIds: Set<String>): Set<String> {
     val modifiedNodeIds = mutableSetOf<String>()
     _graph.update { currentGraph ->
       var g = currentGraph
@@ -376,7 +408,7 @@ class BrushGraphRepository @Inject constructor(
     return modifiedNodeIds + selectedNodeIds
   }
 
-  fun updateNodeData(nodeId: String, newData: NodeData) {
+  override fun updateNodeData(nodeId: String, newData: NodeData) {
     _graph.update { currentGraph ->
       val oldNode = currentGraph.nodes.find { it.id == nodeId }
       val oldData = oldNode?.data
@@ -407,7 +439,7 @@ class BrushGraphRepository @Inject constructor(
     validate()
   }
 
-  fun setNodeDisabled(nodeId: String, isDisabled: Boolean) {
+  override fun setNodeDisabled(nodeId: String, isDisabled: Boolean) {
     _graph.update { currentGraph ->
       currentGraph.copy(
         nodes = currentGraph.nodes.map { if (it.id == nodeId) it.copy(isDisabled = isDisabled) else it }
@@ -416,7 +448,7 @@ class BrushGraphRepository @Inject constructor(
     validate()
   }
 
-  fun reorderPorts(nodeId: String, fromIndex: Int, toIndex: Int) {
+  override fun reorderPorts(nodeId: String, fromIndex: Int, toIndex: Int) {
     val node = _graph.value.nodes.find { it.id == nodeId } ?: return
     val data = node.data
     
@@ -495,7 +527,7 @@ class BrushGraphRepository @Inject constructor(
     }
   }
 
-  fun addNodeBetween(edge: GraphEdge): String? {
+  override fun addNodeBetween(edge: GraphEdge): String? {
     var newNodeId: String? = null
     _graph.update { currentGraph ->
       val fromNode = currentGraph.nodes.find { it.id == edge.fromNodeId } ?: return@update currentGraph
@@ -533,7 +565,7 @@ class BrushGraphRepository @Inject constructor(
     return newNodeId
   }
 
-  fun reorganize(): BrushFamily? {
+  override fun reorganize(): BrushFamily? {
     var family: BrushFamily? = null
     var success = false
     _graph.update { currentGraph ->
@@ -559,7 +591,7 @@ class BrushGraphRepository @Inject constructor(
     return family
   }
 
-  fun loadBrushFamily(family: BrushFamily): Boolean {
+  override fun loadBrushFamily(family: BrushFamily): Boolean {
     return try {
       _graph.update { BrushGraphConverter.fromBrushFamily(family) }
       validate()
@@ -573,7 +605,7 @@ class BrushGraphRepository @Inject constructor(
     }
   }
 
-  fun duplicateSelectedNodes(selectedNodeIds: Set<String>): Map<String, String> {
+  override fun duplicateSelectedNodes(selectedNodeIds: Set<String>): Map<String, String> {
     var idMap = emptyMap<String, String>()
     _graph.update { currentGraph ->
       val nodesToDuplicate = currentGraph.nodes.filter { selectedNodeIds.contains(it.id) }
@@ -605,7 +637,7 @@ class BrushGraphRepository @Inject constructor(
     return idMap
   }
 
-  fun deleteNode(nodeId: String): Set<String> {
+  override fun deleteNode(nodeId: String): Set<String> {
     val modifiedNodeIds = mutableSetOf<String>()
     val node = _graph.value.nodes.find { it.id == nodeId } ?: return modifiedNodeIds
     if (node.data is NodeData.Family) {
@@ -636,7 +668,7 @@ class BrushGraphRepository @Inject constructor(
     return modifiedNodeIds
   }
 
-  fun createDefaultGraph(): BrushGraph {
+  override fun createDefaultGraph(): BrushGraph {
     val defaultTip = ink.proto.BrushTip.getDefaultInstance()
     val defaultPaint = ink.proto.BrushPaint.getDefaultInstance()
     val defaultCoat = ink.proto.BrushCoat.newBuilder()
