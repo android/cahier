@@ -32,9 +32,10 @@ fun ConstantNodeFields(
   behaviorNode: ProtoBrushBehavior.Node,
   onUpdate: (NodeData) -> Unit,
   onFieldEditComplete: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   NumericField(
+    modifier = modifier,
     title = stringResource(R.string.bg_port_value),
     value = constantNode.value,
     limits = NumericLimits(-100f, 100f, 0.01f),

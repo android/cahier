@@ -38,9 +38,9 @@ fun InterpolationNodeFields(
   modifier: Modifier = Modifier
 ) {
   FieldWithTooltip(
+    modifier = modifier,
     tooltipTitle = stringResource(R.string.bg_title_interpolation_format, stringResource(interpNode.interpolation.displayStringRId())),
     tooltipText = stringResource(interpNode.interpolation.getTooltip()),
-    modifier = modifier
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_interpolation),

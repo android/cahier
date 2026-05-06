@@ -40,9 +40,9 @@ fun PaintNodeFields(
 ) {
   val paint = data.paint
   FieldWithTooltip(
+    modifier = modifier.padding(vertical = 4.dp),
     tooltipTitle = stringResource(R.string.bg_title_self_overlap_format, stringResource(paint.selfOverlap.displayStringRId())),
     tooltipText = stringResource(paint.selfOverlap.getTooltip()),
-    modifier = modifier.padding(vertical = 4.dp)
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_self_overlap),

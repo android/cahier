@@ -39,9 +39,9 @@ fun BinaryOpNodeFields(
   modifier: Modifier = Modifier
 ) {
   FieldWithTooltip(
+    modifier = modifier,
     tooltipTitle = stringResource(R.string.bg_title_operation_format, stringResource(binaryNode.operation.displayStringRId())),
     tooltipText = stringResource(binaryNode.operation.getTooltip()),
-    modifier = modifier
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_operation),

@@ -18,26 +18,28 @@ package com.example.cahier.developer.brushgraph.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.developer.brushgraph.data.DisplayText
+import androidx.compose.ui.Modifier
 
 @Composable
-fun DisplayText.asString(): String = when (this) {
-    is DisplayText.Literal -> text
-    is DisplayText.Resource -> {
-        val resolvedArgs = args.map {
-            when (it) {
-                is DisplayText -> it.asString()
-                is List<*> -> {
-                    val stringList = it.map { item ->
-                        when (item) {
-                            is DisplayText -> item.asString()
-                            else -> item.toString()
+fun DisplayText.asString(): String =
+    when (this) {
+        is DisplayText.Literal -> text
+        is DisplayText.Resource -> {
+            val resolvedArgs = args.map {
+                when (it) {
+                    is DisplayText -> it.asString()
+                    is List<*> -> {
+                        val stringList = it.map { item ->
+                            when (item) {
+                                is DisplayText -> item.asString()
+                                else -> item.toString()
+                            }
                         }
+                        stringList.joinToString(", ")
                     }
-                    stringList.joinToString(", ")
+                    else -> it
                 }
-                else -> it
             }
+            stringResource(resId, *resolvedArgs.toTypedArray())
         }
-        stringResource(resId, *resolvedArgs.toTypedArray())
     }
-}

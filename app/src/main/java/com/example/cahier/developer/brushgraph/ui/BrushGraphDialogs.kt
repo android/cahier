@@ -45,13 +45,15 @@ import androidx.compose.runtime.setValue
 @Composable
 fun NameTextureDialog(
     show: Boolean,
-    onDismiss: () -> Unit,
     textureNameInput: String,
     onTextureNameInputChange: (String) -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (show) {
         AlertDialog(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.bg_name_texture)) },
             text = {
@@ -80,13 +82,15 @@ fun NameTextureDialog(
 @Composable
 fun SaveToPaletteDialog(
     show: Boolean,
-    onDismiss: () -> Unit,
     paletteBrushNameInput: String,
     onPaletteBrushNameInputChange: (String) -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (show) {
         AlertDialog(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.bg_save_to_palette)) },
             text = {
@@ -116,10 +120,12 @@ fun SaveToPaletteDialog(
 fun ClearGraphConfirmationDialog(
     show: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (show) {
         AlertDialog(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.bg_clear_graph)) },
             text = {
@@ -142,11 +148,13 @@ fun ClearGraphConfirmationDialog(
 @Composable
 fun TutorialWarningDialog(
     show: Boolean,
+    onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    modifier: Modifier = Modifier,
 ) {
     if (show) {
         AlertDialog(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.bg_start_tutorial)) },
             text = {
@@ -169,12 +177,14 @@ fun TutorialWarningDialog(
 @Composable
 fun TutorialFinishDialog(
     show: Boolean,
-    onDismiss: () -> Unit,
     onKeepChanges: () -> Unit,
-    onRestoreOriginal: () -> Unit
+    onRestoreOriginal: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (show) {
         AlertDialog(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.bg_exit_tutorial)) },
             text = {
@@ -197,12 +207,14 @@ fun TutorialFinishDialog(
 @Composable
 fun OptionsDialog(
     show: Boolean,
-    onDismiss: () -> Unit,
     textFieldsLocked: Boolean,
-    onToggleTextFieldsLocked: () -> Unit
+    onToggleTextFieldsLocked: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (show) {
         AlertDialog(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.bg_options)) },
             text = {
@@ -231,11 +243,13 @@ fun OptionsDialog(
 @Composable
 fun ReorganizeConfirmationDialog(
     show: Boolean,
+    onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    modifier: Modifier = Modifier,
 ) {
     if (show) {
         AlertDialog(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.bg_reorganize_graph)) },
             text = {
@@ -259,9 +273,11 @@ fun ReorganizeConfirmationDialog(
 internal fun TooltipDialog(
     title: String,
     text: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     AlertDialog(
+        modifier = modifier,
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(text) },

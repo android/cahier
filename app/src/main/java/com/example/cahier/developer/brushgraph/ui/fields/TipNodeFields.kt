@@ -35,7 +35,7 @@ fun TipNodeFields(
   modifier: Modifier = Modifier
 ) {
   val tip = data.tip
-  TipPreviewWidget(tip, strokeRenderer)
+  TipPreviewWidget(modifier = modifier, brushTip = tip, renderer = strokeRenderer)
 
   NumericField(
     title = stringResource(R.string.bg_label_scale_x),

@@ -76,9 +76,20 @@ fun NodeWidget(
   graph: BrushGraph,
   isActiveSource: Boolean,
   zoom: Float,
+  allTextureIds: Set<String>,
+  strokeRenderer: CanvasStrokeRenderer,
+  textFieldsLocked: Boolean,
+  brush: Brush,
+  onChooseColor: (Color, (Color) -> Unit) -> Unit,
+  onLoadTexture: () -> Unit,
   onMove: (Offset) -> Unit,
   onClick: () -> Unit,
   onUpdate: (NodeData) -> Unit,
+  modifier: Modifier = Modifier,
+  canvasCoordinates: LayoutCoordinates? = null,
+  isSelected: Boolean = false,
+  isSelectionMode: Boolean = false,
+  isInSelectedSet: Boolean = false,
   onDragStart: () -> Unit = {},
   onDrag: (PointerInputChange) -> Unit = {},
   onDragEnd: () -> Unit = {},
@@ -90,16 +101,6 @@ fun NodeWidget(
   getPortPosition: (String, Boolean) -> Offset,
   onPortPositioned: (String, Offset) -> Unit,
   onClearNodeCache: () -> Unit,
-  canvasCoordinates: LayoutCoordinates? = null,
-  onChooseColor: (Color, (Color) -> Unit) -> Unit,
-  allTextureIds: Set<String>,
-  onLoadTexture: () -> Unit,
-  strokeRenderer: CanvasStrokeRenderer,
-  textFieldsLocked: Boolean,
-  brush: Brush,
-  isSelected: Boolean = false,
-  isSelectionMode: Boolean = false,
-  isInSelectedSet: Boolean = false,
   onLongPress: () -> Unit = {},
 ) {
   var isPressed by remember { mutableStateOf(false) }
@@ -122,7 +123,7 @@ fun NodeWidget(
 
   Box(
     modifier =
-      Modifier.zIndex(if (isSelected) 1f else 0f)
+      modifier.zIndex(if (isSelected) 1f else 0f)
         .offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }
         .pointerInput(node.id, isSelected, isSelectionMode) {
           detectTapGestures(

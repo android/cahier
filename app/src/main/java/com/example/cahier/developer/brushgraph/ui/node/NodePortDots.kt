@@ -47,13 +47,14 @@ fun BoxScope.NodePortDots(
   graph: BrushGraph,
   visiblePorts: List<Port>,
   zoom: Float,
+  canvasCoordinates: LayoutCoordinates?,
   onPortDrag: (PortSide, String, Boolean) -> Unit,
   onPortDragUpdate: (Offset) -> Unit,
   onPortDragEnd: () -> Unit,
   getPortPosition: (String, Boolean) -> Offset,
   onPortPositioned: (String, Offset) -> Unit,
-  canvasCoordinates: LayoutCoordinates?,
   onReorderPorts: (String, Int, Int) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
   var activeReorderPortIndex by remember { mutableStateOf<Int?>(null) }
   var cumulativeDeltaY by remember { mutableFloatStateOf(0f) }
@@ -81,9 +82,9 @@ fun BoxScope.NodePortDots(
     val portKey = edge?.let { "${it.fromNodeId}_${port.id}" } ?: "port_${port.id}"
     key(portKey) {
       PortDot(
+        modifier = modifier.align(Alignment.TopStart),
         port = port,
         count = visiblePorts.size,
-        modifier = Modifier.align(Alignment.TopStart),
         zoom = zoom,
         onDrag = onPortDrag,
         onDragUpdate = onPortDragUpdate,
@@ -149,9 +150,9 @@ fun BoxScope.NodePortDots(
   }
   if (node.data.hasOutput()) {
     PortDot(
+      modifier = modifier.align(Alignment.TopEnd),
       port = Port.Output(node.id, "output"),
       count = 1,
-      modifier = Modifier.align(Alignment.TopEnd),
       zoom = zoom,
       onDrag = onPortDrag,
       onDragUpdate = onPortDragUpdate,

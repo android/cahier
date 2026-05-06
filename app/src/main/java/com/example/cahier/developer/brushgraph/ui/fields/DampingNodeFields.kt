@@ -46,9 +46,9 @@ fun DampingNodeFields(
 ) {
   val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
   FieldWithTooltip(
+    modifier = modifier,
     tooltipTitle = stringResource(R.string.bg_title_damping_source_format, stringResource(dampingNode.dampingSource.displayStringRId())),
     tooltipText = stringResource(dampingNode.dampingSource.getTooltip()),
-    modifier = modifier
   ) {
     EnumDropdown(
       label = stringResource(R.string.bg_damping_source),

@@ -55,6 +55,7 @@ import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushCoat as ProtoBrushCoat
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.BrushPaint as ProtoBrushPaint
+import ink.proto.ColorFunction as ProtoColorFunction
 
 @Composable
 fun SineWavePreview(
@@ -124,7 +125,11 @@ fun SineWavePreview(
 }
 
 @Composable
-fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer) {
+fun CoatPreviewWidget(
+  brushCoat: ProtoBrushCoat,
+  renderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier,
+) {
   val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = brushCoat) {
     value = withContext(Dispatchers.IO) {
       val familyProto = ProtoBrushFamily.newBuilder().addCoats(brushCoat).build()
@@ -132,7 +137,8 @@ fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer)
     }
   }
   StrokePreviewWidget(
-    family,
+    modifier = modifier,
+    family = family,
     renderer = renderer,
     brushSize = 10f,
     showSingleInput = false,
@@ -140,7 +146,11 @@ fun CoatPreviewWidget(brushCoat: ProtoBrushCoat, renderer: CanvasStrokeRenderer)
 }
 
 @Composable
-fun TipPreviewWidget(brushTip: ProtoBrushTip, renderer: CanvasStrokeRenderer) {
+fun TipPreviewWidget(
+  brushTip: ProtoBrushTip,
+  renderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier,
+) {
   val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = brushTip) {
     value = withContext(Dispatchers.IO) {
       val familyProto = ProtoBrushFamily.newBuilder()
@@ -149,13 +159,14 @@ fun TipPreviewWidget(brushTip: ProtoBrushTip, renderer: CanvasStrokeRenderer) {
       runCatching { familyProto.toBrushFamily() }.getOrDefault(StockBrushes.marker())
     }
   }
-  StrokePreviewWidget(family, renderer = renderer)
+  StrokePreviewWidget(modifier = modifier, family = family, renderer = renderer)
 }
 
 @Composable
 fun ColorFunctionPreviewWidget(
-  colorFunction: ink.proto.ColorFunction,
+  colorFunction: ProtoColorFunction,
   renderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier,
 ) {
   val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = colorFunction) {
     value = withContext(Dispatchers.IO) {
@@ -172,13 +183,14 @@ fun ColorFunctionPreviewWidget(
       }.getOrDefault(StockBrushes.marker())
     }
   }
-  StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
+  StrokePreviewWidget(modifier = modifier, family = family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
 @Composable
 fun TextureLayerPreviewWidget(
   textureLayer: ProtoBrushPaint.TextureLayer,
   renderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier,
 ) {
   val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = textureLayer) {
     value = withContext(Dispatchers.IO) {
@@ -195,7 +207,7 @@ fun TextureLayerPreviewWidget(
       }.getOrDefault(StockBrushes.marker())
     }
   }
-  StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
+  StrokePreviewWidget(modifier = modifier, family = family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
 @Composable
@@ -203,6 +215,7 @@ fun TextureWrapPreviewWidget(
   wrapX: ProtoBrushPaint.TextureLayer.Wrap,
   wrapY: ProtoBrushPaint.TextureLayer.Wrap,
   renderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier,
   clientTextureId: String = "",
 ) {
   val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = Triple(wrapX, wrapY, clientTextureId)) {
@@ -231,13 +244,14 @@ fun TextureWrapPreviewWidget(
       }.getOrDefault(StockBrushes.marker())
     }
   }
-  StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
+  StrokePreviewWidget(modifier = modifier, family = family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
 @Composable
 fun BlendModePreviewWidget(
   blendMode: ProtoBrushPaint.TextureLayer.BlendMode,
   renderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier,
   clientTextureId: String = "",
 ) {
   val family by produceState<BrushFamily>(initialValue = StockBrushes.marker(), key1 = Pair(blendMode, clientTextureId)) {
@@ -277,13 +291,14 @@ fun BlendModePreviewWidget(
       }.getOrDefault(StockBrushes.marker())
     }
   }
-  StrokePreviewWidget(family, renderer = renderer, brushSize = 30f, zoom = 3f)
+  StrokePreviewWidget(modifier = modifier, family = family, renderer = renderer, brushSize = 30f, zoom = 3f)
 }
 
 @Composable
 fun StrokePreviewWidget(
   family: BrushFamily,
   renderer: CanvasStrokeRenderer,
+  modifier: Modifier = Modifier,
   brushSize: Float = 30f,
   showSingleInput: Boolean = true,
   zoom: Float = 1f,
@@ -330,7 +345,7 @@ fun StrokePreviewWidget(
   val canvasSize = if (showSingleInput) maxTipWidth else maxStrokeWidth
   Canvas(
     modifier =
-      Modifier.height(canvasSize)
+      modifier.height(canvasSize)
         .width(canvasSize)
         .clip(RectangleShape)
         .background(canvasBackground),

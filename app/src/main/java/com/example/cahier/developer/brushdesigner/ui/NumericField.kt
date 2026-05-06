@@ -122,6 +122,7 @@ class NumericLimits(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun NumericField(
+    modifier: Modifier = Modifier,
     title: String,
     value: Float,
     limits: NumericLimits,
@@ -132,7 +133,7 @@ internal fun NumericField(
     var showTextInput by remember { mutableStateOf(false) }
     var textInputValue by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+    Column(modifier = modifier.padding(vertical = 4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
