@@ -22,18 +22,9 @@ import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.Port
 import java.util.UUID
 
-const val NODE_WIDTH = 300f
-const val NODE_PADDING_VERTICAL = 8f
-const val NODE_PADDING_BOTTOM = 12f
-const val TITLE_AREA_HEIGHT = 64f
-const val SUBTITLE_LINE_HEIGHT = 32f
-const val PREVIEW_AREA_HEIGHT = 64f
-const val INPUT_ROW_HEIGHT = 60f
-
-const val INSPECTOR_WIDTH_LANDSCAPE = 320f
-const val INSPECTOR_HEIGHT_PORTRAIT = 400f
-const val PREVIEW_HEIGHT_EXPANDED = 200f
-const val PREVIEW_HEIGHT_COLLAPSED = 40f
+private const val TITLE_AREA_HEIGHT = 64f
+private const val SUBTITLE_LINE_HEIGHT = 32f
+private const val PREVIEW_AREA_HEIGHT = 64f
 
 fun NodeData.width(): Float = when (this) {
     is NodeData.Family -> 3 * NODE_WIDTH

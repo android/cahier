@@ -121,6 +121,38 @@ fun NodeWidget(
   val w = node.data.width()
   val h = node.data.height(visiblePorts.size)
 
+  val backgroundColorByNodeData =
+    when (node.data) {
+      is NodeData.Coat -> MaterialTheme.colorScheme.secondaryContainer
+      is NodeData.Tip,
+      is NodeData.Paint -> MaterialTheme.colorScheme.secondaryContainer
+      is NodeData.Family -> MaterialTheme.colorScheme.tertiaryContainer
+      is NodeData.TextureLayer,
+      is NodeData.ColorFunction -> MaterialTheme.colorScheme.surfaceVariant
+      else -> MaterialTheme.colorScheme.surfaceDim
+    }
+  val (backgroundColor, outlineWeight, outlineColor) = when {
+    node.isDisabled -> 
+      Triple(MaterialTheme.colorScheme.surfaceDim, 
+              1.dp,
+              MaterialTheme.colorScheme.outline.copy(alpha = 0.38f))
+    isActiveSource || isPressed || isSelected || isInSelectedSet -> 
+      Triple(MaterialTheme.colorScheme.primaryContainer,
+              2.dp,
+              MaterialTheme.colorScheme.primary)
+     node.hasError -> 
+      Triple(MaterialTheme.colorScheme.errorContainer,
+              2.dp,
+              MaterialTheme.colorScheme.error)
+    node.hasWarning -> 
+      Triple(MaterialTheme.extendedColorScheme.warningContainer,
+              2.dp,
+              MaterialTheme.extendedColorScheme.warning)
+    else -> 
+      Triple(backgroundColorByNodeData,
+              1.dp,
+              MaterialTheme.colorScheme.outline)
+  }
   Box(
     modifier =
       modifier.zIndex(if (isSelected) 1f else 0f)
@@ -153,57 +185,15 @@ fun NodeWidget(
         }
         .then(
           with(density) {
-            val backgroundColor =
-              if (node.isDisabled) {
-                MaterialTheme.colorScheme.surfaceDim
-              } else {
-                when (node.data) {
-                  is NodeData.Coat -> MaterialTheme.colorScheme.secondaryContainer
-                  is NodeData.Tip,
-                  is NodeData.Paint -> MaterialTheme.colorScheme.secondaryContainer
-                  is NodeData.Family -> MaterialTheme.colorScheme.tertiaryContainer
-                  is NodeData.TextureLayer,
-                  is NodeData.ColorFunction -> MaterialTheme.colorScheme.surfaceVariant
-                  else -> MaterialTheme.colorScheme.surfaceDim
-                }
-              }
             Modifier.width(w.toDp())
               .height(h.toDp())
               .background(
-                if (node.isDisabled) {
-                  MaterialTheme.colorScheme.surfaceDim
-                } else if (isActiveSource || isPressed || isSelected || isInSelectedSet) {
-                  MaterialTheme.colorScheme.primaryContainer
-                } else if (node.hasError) {
-                  MaterialTheme.colorScheme.errorContainer
-                } else if (node.hasWarning) {
-                  MaterialTheme.extendedColorScheme.warningContainer
-                } else {
-                  backgroundColor
-                },
+                backgroundColor,
                 RoundedCornerShape(8.dp),
               )
               .border(
-                if (isActiveSource || isPressed || isSelected || isInSelectedSet) {
-                  2.dp
-                } else if (node.isDisabled) {
-                  1.dp
-                } else if (node.hasError || node.hasWarning) {
-                  2.dp
-                } else {
-                  1.dp
-                },
-                if (isActiveSource || isPressed || isSelected || isInSelectedSet) {
-                  MaterialTheme.colorScheme.primary
-                } else if (node.isDisabled) {
-                  MaterialTheme.colorScheme.outline.copy(alpha = 0.38f)
-                } else if (node.hasError) {
-                  MaterialTheme.colorScheme.error
-                } else if (node.hasWarning) {
-                  MaterialTheme.extendedColorScheme.warning
-                } else {
-                  MaterialTheme.colorScheme.outline
-                },
+                outlineWeight,
+                outlineColor,
                 RoundedCornerShape(8.dp),
               )
           }
@@ -251,16 +241,7 @@ fun NodeWidget(
 
       if (node.data is NodeData.Family) {
         // Division Line
-        val borderWidth = 2.dp
-        val borderColor =
-          when {
-            node.hasError -> MaterialTheme.colorScheme.error
-            node.hasWarning -> MaterialTheme.extendedColorScheme.warning
-            isActiveSource || isPressed || isSelected -> MaterialTheme.colorScheme.primary
-            else -> MaterialTheme.colorScheme.outline
-          }
-
-        Box(modifier = Modifier.fillMaxHeight().width(borderWidth).background(borderColor))
+        Box(modifier = Modifier.fillMaxHeight().width(2.dp).background(outlineColor))
 
         SineWavePreview(
           brush = brush,
