@@ -85,10 +85,10 @@ fun TargetNodeFields(
         onDismissRequest = { expandedTarget = false }
       ) {
         @Composable
-        fun TargetSection(label: String, targets: List<ProtoBrushBehavior.Target>) {
+        fun TargetSection(label: String, targets: List<ProtoBrushBehavior.Target>, modifier: Modifier = Modifier,) {
           Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+            modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp)
           ) {
             HorizontalDivider(modifier = Modifier.weight(1f))
             Text(

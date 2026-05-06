@@ -48,6 +48,7 @@ fun NoiseNodeFields(
   val limits = noiseNode.varyOver.getNumericLimits(ProgressDomainContext.NOISE)
   
   NumericField(
+    modifier = modifier,
     title = stringResource(R.string.bg_label_seed),
     value = noiseNode.seed.toFloat(),
     limits = NumericLimits(0f, 100f, 1f),

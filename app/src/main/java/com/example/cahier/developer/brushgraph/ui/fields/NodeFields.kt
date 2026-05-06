@@ -75,18 +75,19 @@ import com.example.cahier.developer.brushgraph.ui.TipPreviewWidget
 @Composable
 fun NodeFields(
   node: GraphNode,
+  textFieldsLocked: Boolean,
+  strokeRenderer: CanvasStrokeRenderer,
+  allTextureIds: Set<String>,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   onUpdate: (NodeData) -> Unit,
-  textFieldsLocked: Boolean,
-  allTextureIds: Set<String>,
   onLoadTexture: () -> Unit,
-  strokeRenderer: CanvasStrokeRenderer,
   onFieldEditComplete: () -> Unit = {},
   onDropdownEditComplete: () -> Unit = {},
+  modifier: Modifier = Modifier,
 ) {
   Column(
     modifier =
-      Modifier.padding(top = 8.dp).heightIn(max = 600.dp).verticalScroll(rememberScrollState())
+      modifier.padding(top = 8.dp).heightIn(max = 600.dp).verticalScroll(rememberScrollState())
   ) {
     when (val data = node.data) {
       is NodeData.Behavior -> {

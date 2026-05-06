@@ -264,6 +264,7 @@ private fun evaluateSteps(x: Float, n: Int, position: ProtoStepPosition): Float 
 fun ResponseCurveWidget(
   responseNode: ProtoBrushBehavior.ResponseNode,
   onResponseNodeChanged: (ProtoBrushBehavior.ResponseNode) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
   val currentCase = responseNode.responseCurveCase
   val tabs =
@@ -321,7 +322,7 @@ fun ResponseCurveWidget(
 
     Box(
       modifier =
-        Modifier.padding(vertical = 8.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        modifier.padding(vertical = 8.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
       when (currentCase) {
         ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE ->
@@ -349,9 +350,10 @@ fun ResponseCurveWidget(
 @Composable
 fun LinearWidget(
   curve: LinearEasingFunction,
+  modifier: Modifier = Modifier,
   onCurveChanged: (LinearEasingFunction) -> Unit,
 ) {
-  Column(modifier = Modifier.padding(8.dp)) {
+  Column(modifier = modifier.padding(8.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       Text(text = stringResource(R.string.bg_points), style = MaterialTheme.typography.titleSmall)
       IconButton(
@@ -418,8 +420,8 @@ fun LinearWidget(
 }
 
 @Composable
-fun CubicBezierWidget(curve: ProtoCubicBezier, onCurveChanged: (ProtoCubicBezier) -> Unit) {
-  Column(modifier = Modifier.padding(8.dp)) {
+fun CubicBezierWidget(curve: ProtoCubicBezier, modifier: Modifier = Modifier, onCurveChanged: (ProtoCubicBezier) -> Unit,) {
+  Column(modifier = modifier.padding(8.dp)) {
     NumericField(title = "x1", value = curve.x1, limits = NumericLimits(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setX1(it).build()) })
     NumericField(title = "y1", value = curve.y1, limits = NumericLimits(-2f, 2f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setY1(it).build()) })
     NumericField(title = "x2", value = curve.x2, limits = NumericLimits(0f, 1f, 0.01f), onValueChanged = { onCurveChanged(curve.toBuilder().setX2(it).build()) })
@@ -428,8 +430,8 @@ fun CubicBezierWidget(curve: ProtoCubicBezier, onCurveChanged: (ProtoCubicBezier
 }
 
 @Composable
-fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
-  Column(modifier = Modifier.padding(8.dp)) {
+fun StepsWidget(curve: ProtoSteps, modifier: Modifier = Modifier, onCurveChanged: (ProtoSteps) -> Unit,) {
+  Column(modifier = modifier.padding(8.dp)) {
     NumericField(
       title = stringResource(R.string.bg_label_step_count),
       value = curve.stepCount.toFloat(),
@@ -455,6 +457,7 @@ fun StepsWidget(curve: ProtoSteps, onCurveChanged: (ProtoSteps) -> Unit) {
 @Composable
 fun PredefinedFunctionWidget(
   current: ProtoPredefinedEasingFunction,
+  modifier: Modifier = Modifier,
   onChanged: (ProtoPredefinedEasingFunction) -> Unit,
 ) {
   EnumDropdown(
@@ -463,7 +466,7 @@ fun PredefinedFunctionWidget(
     values = ProtoPredefinedEasingFunction.values().filter {
       it != ProtoPredefinedEasingFunction.PREDEFINED_EASING_UNSPECIFIED && it.ordinal >= 0
     }.toList(),
-    modifier = Modifier.padding(8.dp),
+    modifier = modifier.padding(8.dp),
     displayName = { stringResource(it.displayStringRId()) },
     onSelected = { func ->
       onChanged(func)

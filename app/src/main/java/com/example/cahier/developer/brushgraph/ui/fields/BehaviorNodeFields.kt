@@ -82,10 +82,14 @@ fun BehaviorNodeFields(
           onDismissRequest = { expandedNodeTypes = false }
         ) {
           @Composable
-          fun DropdownSection(label: String, types: List<ProtoBrushBehavior.Node.NodeCase>) {
+          fun DropdownSection(
+            label: String,
+            types: List<ProtoBrushBehavior.Node.NodeCase>,
+            modifier: Modifier = Modifier
+          ) {
             Row(
               verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+              modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp)
             ) {
               HorizontalDivider(modifier = Modifier.weight(1f))
               Text(
