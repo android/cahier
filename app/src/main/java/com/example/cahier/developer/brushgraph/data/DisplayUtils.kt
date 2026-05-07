@@ -41,14 +41,11 @@ fun ProtoBrushBehavior.Source.displayStringRId(): Int =
     ProtoBrushBehavior.Source.SOURCE_NORMALIZED_DIRECTION_Y -> R.string.bg_source_normalized_direction_y
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE -> R.string.bg_source_distance_traveled
     ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_SECONDS -> R.string.bg_source_time_of_input_s
-    ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_MILLIS -> R.string.bg_source_time_of_input_ms
     ProtoBrushBehavior.Source.SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE ->
       R.string.bg_source_predicted_distance_traveled
     ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS -> R.string.bg_source_predicted_time_elapsed_s
-    ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS -> R.string.bg_source_predicted_time_elapsed_ms
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_IN_MULTIPLES_OF_BRUSH_SIZE -> R.string.bg_source_distance_remaining
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS -> R.string.bg_source_time_since_input_s
-    ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_MILLIS -> R.string.bg_source_time_since_input_ms
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS -> R.string.bg_source_time_since_stroke_end
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED ->
       R.string.bg_source_acceleration
@@ -60,20 +57,20 @@ fun ProtoBrushBehavior.Source.displayStringRId(): Int =
       R.string.bg_source_acceleration_forward
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_LATERAL_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED ->
       R.string.bg_source_acceleration_lateral
-    ProtoBrushBehavior.Source.SOURCE_INPUT_SPEED_IN_CENTIMETERS_PER_SECOND -> R.string.bg_source_speed_absolute
-    ProtoBrushBehavior.Source.SOURCE_INPUT_VELOCITY_X_IN_CENTIMETERS_PER_SECOND -> R.string.bg_source_velocity_x_absolute
-    ProtoBrushBehavior.Source.SOURCE_INPUT_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND -> R.string.bg_source_velocity_y_absolute
-    ProtoBrushBehavior.Source.SOURCE_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS -> R.string.bg_source_distance_traveled_absolute
-    ProtoBrushBehavior.Source.SOURCE_PREDICTED_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS ->
+    ProtoBrushBehavior.Source.SOURCE_SPEED_IN_CENTIMETERS_PER_SECOND -> R.string.bg_source_speed_absolute
+    ProtoBrushBehavior.Source.SOURCE_VELOCITY_X_IN_CENTIMETERS_PER_SECOND -> R.string.bg_source_velocity_x_absolute
+    ProtoBrushBehavior.Source.SOURCE_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND -> R.string.bg_source_velocity_y_absolute
+    ProtoBrushBehavior.Source.SOURCE_DISTANCE_TRAVELED_IN_CENTIMETERS -> R.string.bg_source_distance_traveled_absolute
+    ProtoBrushBehavior.Source.SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_CENTIMETERS ->
       R.string.bg_source_predicted_distance_traveled_absolute
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_source_acceleration_absolute
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED ->
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_source_acceleration_absolute
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED ->
       R.string.bg_source_acceleration_x_absolute
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED ->
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED ->
       R.string.bg_source_acceleration_y_absolute
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED ->
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED ->
       R.string.bg_source_acceleration_forward_absolute
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED ->
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED ->
       R.string.bg_source_acceleration_lateral_absolute
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH ->
       R.string.bg_source_distance_remaining_fraction
@@ -102,24 +99,21 @@ fun ProtoBrushBehavior.Source.getNumericLimits(): NumericLimits {
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS,
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS,
     ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS -> NumericLimits(0f, 10f, 0.001f, "s")
-    ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_MILLIS,
-    ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS,
-    ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_MILLIS -> NumericLimits(0f, 10000f, 1f, "ms")
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED -> NumericLimits(0f, 100000f, 1f, "/s²")
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_X_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_Y_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_FORWARD_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED,
     ProtoBrushBehavior.Source.SOURCE_ACCELERATION_LATERAL_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED -> NumericLimits(-100000f, 100000f, 1f, "/s²")
-    ProtoBrushBehavior.Source.SOURCE_INPUT_SPEED_IN_CENTIMETERS_PER_SECOND -> NumericLimits(0f, 100f, 0.1f, "cm/s")
-    ProtoBrushBehavior.Source.SOURCE_INPUT_VELOCITY_X_IN_CENTIMETERS_PER_SECOND,
-    ProtoBrushBehavior.Source.SOURCE_INPUT_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND -> NumericLimits(-100f, 100f, 0.1f, "cm/s")
-    ProtoBrushBehavior.Source.SOURCE_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS -> NumericLimits(0f, 100f, 0.01f, "cm")
-    ProtoBrushBehavior.Source.SOURCE_PREDICTED_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS -> NumericLimits(0f, 10f, 0.01f, "cm")
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED -> NumericLimits(0f, 5000f, 0.1f, "cm/s²")
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED,
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED,
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED,
-    ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED -> NumericLimits(-5000f, 5000f, 0.1f, "cm/s²")
+    ProtoBrushBehavior.Source.SOURCE_SPEED_IN_CENTIMETERS_PER_SECOND -> NumericLimits(0f, 100f, 0.1f, "cm/s")
+    ProtoBrushBehavior.Source.SOURCE_VELOCITY_X_IN_CENTIMETERS_PER_SECOND,
+    ProtoBrushBehavior.Source.SOURCE_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND -> NumericLimits(-100f, 100f, 0.1f, "cm/s")
+    ProtoBrushBehavior.Source.SOURCE_DISTANCE_TRAVELED_IN_CENTIMETERS -> NumericLimits(0f, 100f, 0.01f, "cm")
+    ProtoBrushBehavior.Source.SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_CENTIMETERS -> NumericLimits(0f, 10f, 0.01f, "cm")
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED -> NumericLimits(0f, 5000f, 0.1f, "cm/s²")
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED,
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED,
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED,
+    ProtoBrushBehavior.Source.SOURCE_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED -> NumericLimits(-5000f, 5000f, 0.1f, "cm/s²")
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH -> NumericLimits.floatShownAsPercent(0f, 100f)
     else -> NumericLimits(-100f, 100f, 0.01f)
   }
@@ -132,7 +126,7 @@ fun ProtoBrushBehavior.Target.getNumericLimits(): NumericLimits {
     ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS -> NumericLimits.radiansShownAsDegrees(-90f, 90f)
     ProtoBrushBehavior.Target.TARGET_PINCH_OFFSET,
     ProtoBrushBehavior.Target.TARGET_CORNER_ROUNDING_OFFSET,
-    ProtoBrushBehavior.Target.TARGET_LUMINOSITY -> NumericLimits.floatShownAsPercent(-100f, 100f)
+    ProtoBrushBehavior.Target.TARGET_LUMINOSITY_OFFSET -> NumericLimits.floatShownAsPercent(-100f, 100f)
     ProtoBrushBehavior.Target.TARGET_WIDTH_MULTIPLIER,
     ProtoBrushBehavior.Target.TARGET_HEIGHT_MULTIPLIER,
     ProtoBrushBehavior.Target.TARGET_SIZE_MULTIPLIER,
@@ -201,7 +195,7 @@ fun ProtoBrushBehavior.Target.displayStringRId(): Int =
       R.string.bg_target_position_offset_lateral
     ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS -> R.string.bg_target_hue_offset
     ProtoBrushBehavior.Target.TARGET_SATURATION_MULTIPLIER -> R.string.bg_target_saturation_multiplier
-    ProtoBrushBehavior.Target.TARGET_LUMINOSITY -> R.string.bg_target_luminosity_offset
+    ProtoBrushBehavior.Target.TARGET_LUMINOSITY_OFFSET -> R.string.bg_target_luminosity_offset
     ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER -> R.string.bg_target_opacity_multiplier
     else -> R.string.bg_node_unknown
   }
@@ -366,7 +360,6 @@ fun ProtoBrushBehavior.Node.NodeCase.displayStringRId(): Int =
 fun ProtoBrushFamily.InputModel.displayStringRId(): Int =
   when {
     hasSlidingWindowModel() -> R.string.bg_model_sliding_window
-    hasSpringModel() -> R.string.bg_model_spring
-    hasExperimentalNaiveModel() -> R.string.bg_model_naive_experimental
+    hasPassthroughModel() -> R.string.bg_model_passthrough
     else -> R.string.bg_unknown_model
   }

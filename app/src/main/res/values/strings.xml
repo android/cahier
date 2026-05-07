@@ -614,8 +614,7 @@
 
     <string name="bg_msg_source_clamp_only">This source is only compatible with \'clamp\' behavior.</string>
     <string name="bg_model_sliding_window">Sliding Window Model</string>
-    <string name="bg_model_spring">Spring Model</string>
-    <string name="bg_model_naive_experimental">Naive Experimental Model</string>
+    <string name="bg_model_passthrough">Passthrough Model</string>
     <string name="bg_section_input">Input:</string>
     <string name="bg_section_movement">Movement:</string>
     <string name="bg_section_distance">Distance:</string>
@@ -631,10 +630,6 @@
     <string name="bg_menu_custom_brushes">Custom Brushes</string>
     <string name="bg_label_size_x">Size X</string>
     <string name="bg_label_size_y">Size Y</string>
-    <string name="bg_label_animation_rows">Animation Rows</string>
-    <string name="bg_label_animation_columns">Animation Columns</string>
-    <string name="bg_label_animation_frames">Animation Frames</string>
-    <string name="bg_label_animation_duration_ms">Animation Duration (ms)</string>
     <string name="bg_label_offset_x">Offset X</string>
     <string name="bg_label_offset_y">Offset Y</string>
     <string name="bg_test_canvas_draw_prompt">Draw here to test</string>
@@ -826,9 +821,8 @@
     <string name="bg_tooltip_step_position_default">Step position behavior for step easing functions.</string>
 
     <!-- Model Tooltips -->
-    <string name="bg_tooltip_model_spring">A model that simulates a physical spring to smooth inputs. It creates a natural, fluid feeling by adding slight inertia to the stroke.</string>
     <string name="bg_tooltip_model_sliding_window">Averages nearby inputs together within a sliding time window. This creates smooth strokes by blending recent inputs.</string>
-    <string name="bg_tooltip_model_naive_experimental">A simple model that passes through raw inputs mostly unchanged. This is experimental and may result in less smooth strokes.</string>
+    <string name="bg_tooltip_model_passthrough">A simple model that passes through raw inputs mostly unchanged. This is experimental and may result in less smooth strokes.</string>
     <string name="bg_tooltip_model_default">Selects the model used to smooth raw hardware inputs.</string>
 
     <!-- ColorFunc Tooltips -->

@@ -218,7 +218,7 @@ private fun PaintPreferenceEditor(
 /**
  * Full editor for a single [ProtoBrushPaint.TextureLayer], including all
  * fields from SSA: texture ID, mapping, size unit, scale, rotation,
- * origin, offset, wrap, blend mode, and animation.
+ * origin, offset, wrap, and blend mode.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -347,66 +347,6 @@ private fun TextureLayerEditor(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
     )
-
-    if (layer.mapping == ProtoBrushPaint.TextureLayer.Mapping.MAPPING_STAMPING) {
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.brush_designer_animation),
-            style = MaterialTheme.typography.labelLarge
-        )
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                NumericField(
-                    title = stringResource(R.string.brush_designer_rows),
-                    value = if (layer.hasAnimationRows()) layer.animationRows.toFloat() else 1f,
-                    limits = NumericLimits(1f, 10f, 1f),
-                    onValueChanged = {
-                        onLayerChanged(
-                            layer.toBuilder().setAnimationRows(it.toInt()).build()
-                        )
-                    }
-                )
-                NumericField(
-                    title = stringResource(R.string.brush_designer_columns),
-                    value = if (layer.hasAnimationColumns()) layer.animationColumns.toFloat()
-                    else 1f,
-                    limits = NumericLimits(1f, 10f, 1f),
-                    onValueChanged = {
-                        onLayerChanged(
-                            layer.toBuilder().setAnimationColumns(it.toInt()).build()
-                        )
-                    }
-                )
-                NumericField(
-                    title = stringResource(R.string.brush_designer_frames),
-                    value = if (layer.hasAnimationFrames()) layer.animationFrames.toFloat()
-                    else 1f,
-                    limits = NumericLimits(1f, 64f, 1f),
-                    onValueChanged = {
-                        onLayerChanged(
-                            layer.toBuilder().setAnimationFrames(it.toInt()).build()
-                        )
-                    }
-                )
-                NumericField(
-                    title = stringResource(R.string.brush_designer_duration_seconds),
-                    value = if (layer.hasAnimationDurationSeconds())
-                        layer.animationDurationSeconds else 0f,
-                    limits = NumericLimits(0f, 5f, 0.1f),
-                    onValueChanged = {
-                        onLayerChanged(
-                            layer.toBuilder().setAnimationDurationSeconds(it).build()
-                        )
-                    }
-                )
-            }
-        }
-    }
 }
 
 /**

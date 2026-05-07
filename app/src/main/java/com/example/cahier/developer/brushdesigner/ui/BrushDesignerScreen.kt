@@ -324,8 +324,7 @@ private fun ControlsPane(
 
         InputModelSection(
             inputModel = inputModel,
-            onUpdateInputModelToSpring = { viewModel.updateInputModelToSpring() },
-            onUpdateInputModelToNaive = { viewModel.updateInputModelToNaive() },
+            onUpdateInputModelToPassthrough = { viewModel.updateInputModelToPassthrough() },
             onUpdateSlidingWindowModel = { ms,
                                            hz ->
                 viewModel.updateSlidingWindowModel(ms, hz)
@@ -465,8 +464,7 @@ internal fun MetadataSection(
 @Composable
 internal fun InputModelSection(
     inputModel: ink.proto.BrushFamily.InputModel,
-    onUpdateInputModelToSpring: () -> Unit,
-    onUpdateInputModelToNaive: () -> Unit,
+    onUpdateInputModelToPassthrough: () -> Unit,
     onUpdateSlidingWindowModel: (Long, Int) -> Unit
 ) {
     Text(
@@ -476,9 +474,8 @@ internal fun InputModelSection(
 
     var expandedModelMenu by remember { mutableStateOf(false) }
     val currentModelString = when {
-        inputModel.hasSpringModel() -> stringResource(R.string.brush_designer_spring_model)
-        inputModel.hasExperimentalNaiveModel() ->
-            stringResource(R.string.brush_designer_naive_model)
+        inputModel.hasPassthroughModel() ->
+            stringResource(R.string.brush_designer_passthrough_model)
 
         inputModel.hasSlidingWindowModel() ->
             stringResource(R.string.brush_designer_sliding_window)
@@ -508,16 +505,9 @@ internal fun InputModelSection(
             onDismissRequest = { expandedModelMenu = false }
         ) {
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.brush_designer_spring_model)) },
+                text = { Text(stringResource(R.string.brush_designer_passthrough_model)) },
                 onClick = {
-                    onUpdateInputModelToSpring()
-                    expandedModelMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.brush_designer_naive_model)) },
-                onClick = {
-                    onUpdateInputModelToNaive()
+                    onUpdateInputModelToPassthrough()
                     expandedModelMenu = false
                 }
             )
@@ -531,9 +521,7 @@ internal fun InputModelSection(
         }
     }
 
-    if (inputModel.hasSlidingWindowModel() || (!inputModel.hasSpringModel()
-                && !inputModel.hasExperimentalNaiveModel())
-    ) {
+    if (inputModel.hasSlidingWindowModel() || !inputModel.hasPassthroughModel()) {
         SlidingWindowControls(
             inputModel = inputModel,
             onUpdateSlidingWindowModel = onUpdateSlidingWindowModel
