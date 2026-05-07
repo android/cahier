@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Google LLC. All rights reserved.
+ * Copyright 2026 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package com.example.cahier.core.ui.theme
+package com.example.cahier.developer.brushdesigner.ui
 
-import androidx.compose.ui.graphics.Color
+import androidx.annotation.StringRes
+import com.example.cahier.R
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
-
-// Brush Designer: color picker presets
-val BrushBlack = Color(0xFF000000)
-val BrushRed = Color(0xFFFF0000)
-val BrushBlue = Color(0xFF0000FF)
-val BrushGreen = Color(0xFF00FF00)
-val BrushYellow = Color(0xFFFFFF00)
+/**
+ * Represents the three tabs in the Brush Designer controls' pane.
+ */
+enum class BrushDesignerTab(@param:StringRes val labelResId: Int) {
+    TipShape(R.string.brush_designer_tab_tip_shape),
+    Paint(R.string.brush_designer_tab_paint),
+    Behaviors(R.string.brush_designer_tab_behaviors);
+}
