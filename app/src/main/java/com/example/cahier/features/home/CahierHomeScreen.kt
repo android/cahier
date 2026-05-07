@@ -1,17 +1,19 @@
 /*
- * Copyright 2025 Google LLC. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2025 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package com.example.cahier.features.home
@@ -102,12 +104,10 @@ enum class AppDestinations(
 fun HomePane(
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
-    navigateToBrushDesigner: () -> Unit = {},
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
-    forceCompact: Boolean? = null,
-    homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
-    ) {
+    homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
+) {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.Home) }
     val navigator = rememberListDetailPaneScaffoldNavigator<Note>()
     val noteList by homeScreenViewModel.noteList.collectAsStateWithLifecycle()
@@ -119,8 +119,7 @@ fun HomePane(
     var hasSetInitialProportion by remember {
         mutableStateOf(false)
     }
-    val isCompact = forceCompact
-        ?: (windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact)
+    val isCompact = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact
     val context = LocalContext.current
 
 
@@ -175,7 +174,6 @@ fun HomePane(
         selectedNoteUIState = selectedNoteUIState,
         navigateToCanvas = navigateToCanvas,
         navigateToDrawingCanvas = navigateToDrawingCanvas,
-        navigateToBrushDesigner = navigateToBrushDesigner,
         navigateUp = navigateUp
     )
 }
@@ -195,7 +193,6 @@ private fun CahierNavigationSuite(
     selectedNoteUIState: CahierUiState,
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
-    navigateToBrushDesigner: () -> Unit,
     navigateUp: () -> Unit
 ) {
     NavigationSuiteScaffold(
@@ -309,7 +306,6 @@ private fun CahierNavigationSuite(
 
                 AppDestinations.Settings -> {
                     SettingsScreen(
-                        navigateToBrushDesigner = navigateToBrushDesigner,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
