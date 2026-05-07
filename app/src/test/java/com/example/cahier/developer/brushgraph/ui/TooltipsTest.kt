@@ -43,7 +43,6 @@ class TooltipsTest {
             NodeData.Behavior(BrushBehavior.Node.newBuilder().setSourceNode(BrushBehavior.SourceNode.getDefaultInstance()).build()),
             NodeData.Behavior(BrushBehavior.Node.newBuilder().setConstantNode(BrushBehavior.ConstantNode.getDefaultInstance()).build()),
             NodeData.Behavior(BrushBehavior.Node.newBuilder().setNoiseNode(BrushBehavior.NoiseNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setFallbackFilterNode(BrushBehavior.FallbackFilterNode.getDefaultInstance()).build()),
             NodeData.Behavior(BrushBehavior.Node.newBuilder().setToolTypeFilterNode(BrushBehavior.ToolTypeFilterNode.getDefaultInstance()).build()),
             NodeData.Behavior(BrushBehavior.Node.newBuilder().setDampingNode(BrushBehavior.DampingNode.getDefaultInstance()).build()),
             NodeData.Behavior(BrushBehavior.Node.newBuilder().setResponseNode(BrushBehavior.ResponseNode.getDefaultInstance()).build()),
@@ -161,16 +160,6 @@ class TooltipsTest {
     }
 
     @Test
-    fun optionalInputPropertyEnumsTooltips_checked_areUnique() {
-        val tooltips = mutableSetOf<Int>()
-        for (value in BrushBehavior.OptionalInputProperty.values()) {
-            if (value.name == "UNRECOGNIZED") continue
-            val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for OptionalInputProperty.$value: $tooltip", tooltips.add(tooltip))
-        }
-    }
-
-    @Test
     fun binaryOpEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         for (value in BrushBehavior.BinaryOp.values()) {
@@ -225,8 +214,7 @@ class TooltipsTest {
         val tooltips = mutableSetOf<Int>()
         val models = arrayOf(
             R.string.bg_model_sliding_window,
-            R.string.bg_model_spring,
-            R.string.bg_model_naive_experimental
+            R.string.bg_model_passthrough
         )
         for (modelResId in models) {
             val tooltip = getInputModelTooltip(modelResId)

@@ -31,7 +31,6 @@ fun NodeData.getTooltip(): Int = when (this) {
     ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> R.string.bg_tooltip_node_source
     ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> R.string.bg_tooltip_node_constant
     ProtoBrushBehavior.Node.NodeCase.NOISE_NODE -> R.string.bg_tooltip_node_noise
-    ProtoBrushBehavior.Node.NodeCase.FALLBACK_FILTER_NODE -> R.string.bg_tooltip_node_fallback_filter
     ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> R.string.bg_tooltip_node_tool_type_filter
     ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> R.string.bg_tooltip_node_damping
     ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> R.string.bg_tooltip_node_response
@@ -58,7 +57,6 @@ fun ProtoBrushBehavior.Source.getTooltip(): Int = when (this) {
   ProtoBrushBehavior.Source.SOURCE_NORMALIZED_DIRECTION_Y -> R.string.bg_tooltip_source_direction_y
   ProtoBrushBehavior.Source.SOURCE_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE -> R.string.bg_tooltip_source_distance_traveled
   ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_SECONDS -> R.string.bg_tooltip_source_time_of_input_s
-  ProtoBrushBehavior.Source.SOURCE_TIME_OF_INPUT_IN_MILLIS -> R.string.bg_tooltip_source_time_of_input_ms
   ProtoBrushBehavior.Source.SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE -> R.string.bg_tooltip_source_predicted_distance_traveled
   ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS -> R.string.bg_tooltip_source_predicted_time_elapsed_s
   ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS -> R.string.bg_tooltip_source_tilt_x
@@ -74,21 +72,20 @@ fun ProtoBrushBehavior.Source.getTooltip(): Int = when (this) {
   ProtoBrushBehavior.Source.SOURCE_ACCELERATION_Y_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_y
   ProtoBrushBehavior.Source.SOURCE_ACCELERATION_FORWARD_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_forward
   ProtoBrushBehavior.Source.SOURCE_ACCELERATION_LATERAL_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_lateral
-  ProtoBrushBehavior.Source.SOURCE_INPUT_SPEED_IN_CENTIMETERS_PER_SECOND -> R.string.bg_tooltip_source_speed_absolute
-  ProtoBrushBehavior.Source.SOURCE_INPUT_VELOCITY_X_IN_CENTIMETERS_PER_SECOND -> R.string.bg_tooltip_source_velocity_x_absolute
-  ProtoBrushBehavior.Source.SOURCE_INPUT_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND -> R.string.bg_tooltip_source_velocity_y_absolute
-  ProtoBrushBehavior.Source.SOURCE_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS -> R.string.bg_tooltip_source_distance_traveled_absolute
-  ProtoBrushBehavior.Source.SOURCE_PREDICTED_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS -> R.string.bg_tooltip_source_predicted_distance_traveled_absolute
-  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_absolute
-  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_x_absolute
-  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_y_absolute
-  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_forward_absolute
-  ProtoBrushBehavior.Source.SOURCE_INPUT_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_lateral_absolute
+  ProtoBrushBehavior.Source.SOURCE_SPEED_IN_CENTIMETERS_PER_SECOND -> R.string.bg_tooltip_source_speed_absolute
+  ProtoBrushBehavior.Source.SOURCE_VELOCITY_X_IN_CENTIMETERS_PER_SECOND -> R.string.bg_tooltip_source_velocity_x_absolute
+  ProtoBrushBehavior.Source.SOURCE_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND -> R.string.bg_tooltip_source_velocity_y_absolute
+  ProtoBrushBehavior.Source.SOURCE_DISTANCE_TRAVELED_IN_CENTIMETERS -> R.string.bg_tooltip_source_distance_traveled_absolute
+  ProtoBrushBehavior.Source.SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_CENTIMETERS -> R.string.bg_tooltip_source_predicted_distance_traveled_absolute
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_absolute
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_x_absolute
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_y_absolute
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_forward_absolute
+  ProtoBrushBehavior.Source.SOURCE_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED -> R.string.bg_tooltip_source_acceleration_lateral_absolute
   ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH -> R.string.bg_tooltip_source_distance_remaining_fraction
   ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS -> R.string.bg_tooltip_source_time_since_stroke_end
+  ProtoBrushBehavior.Source.SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS -> R.string.bg_tooltip_source_time_from_input_to_stroke_end
   ProtoBrushBehavior.Source.SOURCE_UNSPECIFIED -> R.string.bg_tooltip_source_unspecified
-  ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS -> R.string.bg_tooltip_source_predicted_time_elapsed_ms
-  ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_MILLIS -> R.string.bg_tooltip_source_time_since_input_ms
 }
 
 fun ProtoBrushBehavior.Target.getTooltip(): Int = when (this) {
@@ -99,7 +96,7 @@ fun ProtoBrushBehavior.Target.getTooltip(): Int = when (this) {
   ProtoBrushBehavior.Target.TARGET_CORNER_ROUNDING_OFFSET -> R.string.bg_tooltip_target_corner_rounding_offset
   ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS -> R.string.bg_tooltip_target_hue_offset
   ProtoBrushBehavior.Target.TARGET_SATURATION_MULTIPLIER -> R.string.bg_tooltip_target_saturation_multiplier
-  ProtoBrushBehavior.Target.TARGET_LUMINOSITY -> R.string.bg_tooltip_target_luminosity
+  ProtoBrushBehavior.Target.TARGET_LUMINOSITY_OFFSET -> R.string.bg_tooltip_target_luminosity
   ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS -> R.string.bg_tooltip_target_slant_offset
   ProtoBrushBehavior.Target.TARGET_PINCH_OFFSET -> R.string.bg_tooltip_target_pinch_offset
   ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER -> R.string.bg_tooltip_target_opacity_multiplier
@@ -172,14 +169,6 @@ fun ProtoBrushBehavior.OutOfRange.getTooltip(): Int = when (this) {
   ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_UNSPECIFIED -> R.string.bg_tooltip_out_of_range_unspecified
 }
 
-fun ProtoBrushBehavior.OptionalInputProperty.getTooltip(): Int = when (this) {
-  ProtoBrushBehavior.OptionalInputProperty.OPTIONAL_INPUT_PRESSURE -> R.string.bg_tooltip_optional_input_pressure
-  ProtoBrushBehavior.OptionalInputProperty.OPTIONAL_INPUT_TILT -> R.string.bg_tooltip_optional_input_tilt
-  ProtoBrushBehavior.OptionalInputProperty.OPTIONAL_INPUT_ORIENTATION -> R.string.bg_tooltip_optional_input_orientation
-  ProtoBrushBehavior.OptionalInputProperty.OPTIONAL_INPUT_TILT_X_AND_Y -> R.string.bg_tooltip_optional_input_tilt_x_y
-  else -> R.string.bg_tooltip_optional_input_default
-}
-
 fun ProtoBrushBehavior.BinaryOp.getTooltip(): Int = when (this) {
   ProtoBrushBehavior.BinaryOp.BINARY_OP_PRODUCT -> R.string.bg_tooltip_binary_op_product
   ProtoBrushBehavior.BinaryOp.BINARY_OP_SUM -> R.string.bg_tooltip_binary_op_sum
@@ -224,9 +213,8 @@ fun ProtoStepPosition.getTooltip(): Int = when (this) {
 }
 
 fun getInputModelTooltip(resId: Int): Int = when (resId) {
-  R.string.bg_model_spring -> R.string.bg_tooltip_model_spring
   R.string.bg_model_sliding_window -> R.string.bg_tooltip_model_sliding_window
-  R.string.bg_model_naive_experimental -> R.string.bg_tooltip_model_naive_experimental
+  R.string.bg_model_passthrough -> R.string.bg_tooltip_model_passthrough
   else -> R.string.bg_tooltip_model_default
 }
 
