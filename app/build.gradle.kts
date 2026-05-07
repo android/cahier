@@ -164,6 +164,9 @@ dependencies {
     //Protobuf
     implementation(project(":ink-proto"))
     implementation(libs.protobuf.javalite)
+
+    //Color Picker
+    implementation(libs.compose.color.picker.android)
 }
 java {
     toolchain {
