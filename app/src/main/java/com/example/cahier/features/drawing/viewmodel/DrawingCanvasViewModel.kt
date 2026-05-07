@@ -1,17 +1,19 @@
 /*
- * Copyright 2025 Google LLC. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2025 Google LLC. All rights reserved.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package com.example.cahier.features.drawing.viewmodel
@@ -294,8 +296,7 @@ class DrawingCanvasViewModel @Inject constructor(
         if (historyIndex >= 0 && historyIndex < history.size) {
             val strokesToSave = history[historyIndex]
             val currentBrushFamily = strokesToSave.lastOrNull()?.brush?.family
-            val clientBrushFamilyId = _customBrushes.value
-                .find { it.brushFamily == currentBrushFamily }?.name
+            val clientBrushFamilyId = _customBrushes.value.find { it.brushFamily == currentBrushFamily }?.name
             noteRepository.updateNoteStrokes(noteId, strokesToSave, clientBrushFamilyId)
         } else if (history.isEmpty()) {
             noteRepository.updateNoteStrokes(noteId, emptyList(), null)
@@ -459,34 +460,22 @@ class DrawingCanvasViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val builtInBrushes = CustomBrushes.getBrushes(context)
 
-            val decodedCache = mutableMapOf<String, CustomBrush>()
-
             customBrushDao.getAllCustomBrushes().collect { dbBrushes ->
-                val currentNames = dbBrushes.map { it.name }.toSet()
-                decodedCache.keys.retainAll(currentNames)
-
                 val userBrushes = dbBrushes.mapNotNull { entity ->
-                    decodedCache[entity.name]?.let { return@mapNotNull it }
-
                     try {
-                        GZIPInputStream(ByteArrayInputStream(entity.brushBytes))
-                            .use { gzip ->
-                                val rawProtoBytes = gzip.readBytes()
-                                val proto = ink.proto.BrushFamily.parseFrom(rawProtoBytes)
+                        val gzippedInputStream =
+                            GZIPInputStream(ByteArrayInputStream(entity.brushBytes))
+                        val rawProtoBytes = gzippedInputStream.readBytes()
+                        val proto = ink.proto.BrushFamily.parseFrom(rawProtoBytes)
 
-                                proto.textureIdToBitmapMap.forEach { (id, byteString) ->
-                                    val bitmapBytes = byteString.toByteArray()
-                                    val bitmap =
-                                        BitmapFactory.decodeByteArray(
-                                            bitmapBytes,
-                                            0,
-                                            bitmapBytes.size
-                                        )
-                                    if (bitmap != null) {
-                                        textureStore.loadTexture(id, bitmap)
-                                    }
-                                }
+                        proto.textureIdToBitmapMap.forEach { (id, byteString) ->
+                            val bitmapBytes = byteString.toByteArray()
+                            val bitmap =
+                                BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.size)
+                            if (bitmap != null) {
+                                textureStore.loadTexture(id, bitmap)
                             }
+                        }
 
                         ByteArrayInputStream(entity.brushBytes).use { inputStream ->
                             val family = BrushFamily.decode(inputStream)
@@ -495,7 +484,7 @@ class DrawingCanvasViewModel @Inject constructor(
                                 icon = com.example.cahier.R.drawable.edit_24px,
                                 brushFamily = family,
                                 isRemovable = true
-                            ).also { decodedCache[entity.name] = it }
+                            )
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Error loading textures/brush ${entity.name}", e)
