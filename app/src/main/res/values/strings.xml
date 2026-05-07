@@ -109,8 +109,7 @@
     <string name="brush_designer_developer_comment">Developer comment</string>
     <string name="brush_designer_input_model">Input Model</string>
     <string name="brush_designer_model_type">Model Type</string>
-    <string name="brush_designer_spring_model">Spring Model</string>
-    <string name="brush_designer_naive_model">Experimental Naive Model</string>
+    <string name="brush_designer_passthrough_model">Passthrough Model</string>
     <string name="brush_designer_sliding_window">Sliding Window Model</string>
     <string name="brush_designer_sliding_window_default">Sliding Window Model (Default)</string>
     <string name="brush_designer_name_texture_title">Name Texture</string>
@@ -201,7 +200,6 @@
     <string name="brush_designer_node_interpolation">Interpolation</string>
 
     <!-- Brush Designer: Paint Tab (additional) -->
-    <string name="brush_designer_animation">Animation</string>
     <string name="brush_designer_no_color_functions">No color functions — add one below.</string>
     <string name="brush_designer_opacity_multiplier">Opacity: %1$.1fx</string>
     <string name="brush_designer_replace_color">Replace Color</string>
@@ -224,11 +222,7 @@
     <string name="brush_designer_color_green">Green</string>
     <string name="brush_designer_color_yellow">Yellow</string>
 
-    <!-- Brush Designer: Animation & Color Function -->
-    <string name="brush_designer_rows">Rows</string>
-    <string name="brush_designer_columns">Columns</string>
-    <string name="brush_designer_frames">Frames</string>
-    <string name="brush_designer_duration_seconds">Duration (s)</string>
+    <!-- Brush Designer: Color Function & Sliding Window Input Model -->
     <string name="brush_designer_function_type">Function Type</string>
     <string name="brush_designer_opacity_multiplier_label">Opacity Multiplier</string>
     <string name="brush_designer_window_size_ms">Window size (ms)</string>

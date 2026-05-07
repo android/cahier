@@ -306,22 +306,12 @@ class BrushDesignerViewModel @Inject constructor(
         repository.updateActiveBrushProto(familyBuilder.build())
     }
 
-    fun updateInputModelToSpring() {
+    fun updateInputModelToPassthrough() {
         val familyBuilder = repository.activeBrushProto.value.toBuilder()
         val inputModelBuilder = familyBuilder.inputModel.toBuilder()
 
-        inputModelBuilder.setSpringModel(ink.proto.BrushFamily.SpringModel.getDefaultInstance())
-
-        familyBuilder.setInputModel(inputModelBuilder)
-        repository.updateActiveBrushProto(familyBuilder.build())
-    }
-
-    fun updateInputModelToNaive() {
-        val familyBuilder = repository.activeBrushProto.value.toBuilder()
-        val inputModelBuilder = familyBuilder.inputModel.toBuilder()
-
-        inputModelBuilder.setExperimentalNaiveModel(
-            ink.proto.BrushFamily.ExperimentalNaiveModel.getDefaultInstance()
+        inputModelBuilder.setPassthroughModel(
+            ink.proto.BrushFamily.PassthroughModel.getDefaultInstance()
         )
 
         familyBuilder.setInputModel(inputModelBuilder)
