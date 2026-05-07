@@ -21,6 +21,7 @@ adaptiveNavigationAndroid = "1.2.0"
 navigationRuntimeKtx = "2.9.7"
 navigationCompose = "2.9.7"
 protobufJavalite = "4.34.0"
+composeColorPickerAndroid = "0.7.0"
 roomKtx = "2.8.4"
 roomRuntime = "2.8.4"
 windowCore = "1.5.1"
@@ -31,7 +32,7 @@ inputMotionprediction = "1.0.0"
 
 #Tests
 mockito = "5.23.0"
-mockitoKotlin = "6.3.0"
+mockitoKotlin = "6.2.3"
 coreTesting = "2.2.0"
 kotlinxCoroutinesTest = "1.10.2"
 turbine = "1.2.1"
@@ -100,6 +101,7 @@ roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", versi
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
 roborazzi-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
+compose-color-picker-android = { module = "com.godaddy.android.colorpicker:compose-color-picker-android", version.ref = "composeColorPickerAndroid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
