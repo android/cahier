@@ -70,15 +70,15 @@ fun FamilyNodeFields(
     EnumDropdown(
       label = stringResource(R.string.bg_input_model),
       currentValue = data.inputModel.displayStringRId(),
-      values = listOf(R.string.bg_model_sliding_window, R.string.bg_model_spring, R.string.bg_model_naive_experimental),
+      values = listOf(R.string.bg_model_sliding_window, R.string.bg_model_passthrough),
       displayName = { stringResource(it) },
       onSelected = { modelResId ->
         val newModel =
           when (modelResId) {
-            R.string.bg_model_naive_experimental ->
+            R.string.bg_model_passthrough ->
               ProtoBrushFamily.InputModel.newBuilder()
-                .setExperimentalNaiveModel(
-                  ProtoBrushFamily.ExperimentalNaiveModel.getDefaultInstance()
+                .setPassthroughModel(
+                  ProtoBrushFamily.PassthroughModel.getDefaultInstance()
                 )
                 .build()
             R.string.bg_model_sliding_window ->
@@ -89,13 +89,13 @@ fun FamilyNodeFields(
                     .setExperimentalUpsamplingPeriodSeconds(0.005f)
                 )
                 .build()
-            R.string.bg_model_spring ->
-              ProtoBrushFamily.InputModel.newBuilder()
-                .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
-                .build()
             else ->
               ProtoBrushFamily.InputModel.newBuilder()
-                .setSpringModel(ProtoBrushFamily.SpringModel.getDefaultInstance())
+                .setSlidingWindowModel(
+                  ProtoBrushFamily.SlidingWindowModel.newBuilder()
+                    .setWindowSizeSeconds(0.02f)
+                    .setExperimentalUpsamplingPeriodSeconds(0.005f)
+                )
                 .build()
           }
         onUpdate(data.copy(inputModel = newModel))
@@ -105,7 +105,7 @@ fun FamilyNodeFields(
   }
   
   val inputModel = data.inputModel
-  if (inputModel.hasSlidingWindowModel() || (!inputModel.hasSpringModel() && !inputModel.hasExperimentalNaiveModel())) {
+  if (inputModel.hasSlidingWindowModel() || !inputModel.hasPassthroughModel()) {
     val swModel = inputModel.slidingWindowModel
     val windowMs = if (swModel.hasWindowSizeSeconds()) (swModel.windowSizeSeconds * 1000).toLong() else 20L
     val upsamplingHz = if (swModel.hasExperimentalUpsamplingPeriodSeconds()) {
