@@ -85,7 +85,7 @@ fun TestCanvas(
   onGetNextBrush: () -> Brush,
   onStrokesAdded: (List<Stroke>) -> Unit,
 ) {
-  Box(modifier = Modifier.fillMaxSize()) {
+  Box(modifier = modifier.fillMaxSize()) {
     Text(
       stringResource(R.string.bg_test_canvas_draw_prompt),
       modifier = Modifier.align(Alignment.Center),
@@ -139,11 +139,11 @@ fun CollapsiblePreviewPane(
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
   onToggleNotificationPane: () -> Unit,
 ) {
-  Column(modifier = Modifier.fillMaxWidth()) {
+  Column(modifier = modifier.fillMaxWidth()) {
     // Toggle Tab (always visible)
     Surface(
       modifier =
-        modifier.fillMaxWidth().height(40.dp).clickable { onTogglePreviewExpanded() },
+        Modifier.fillMaxWidth().height(40.dp).clickable { onTogglePreviewExpanded() },
       color = MaterialTheme.colorScheme.surfaceVariant,
       tonalElevation = 4.dp,
       shadowElevation = 8.dp,

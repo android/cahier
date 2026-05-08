@@ -143,13 +143,14 @@ fun EdgeInspector(
 private fun EdgeNodeInfo(
   label: DisplayText,
   node: GraphNode,
+  modifier: Modifier = Modifier,
   inputLabel: DisplayText? = null,
   onClick: () -> Unit,
 ) {
   val title = node.data.title()
   val subtitles = node.data.subtitles()
 
-  Column(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(8.dp)) {
+  Column(modifier = modifier.fillMaxWidth().clickable { onClick() }.padding(8.dp)) {
     Text(
       text = label.asString(),
       style = MaterialTheme.typography.labelMedium,

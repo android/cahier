@@ -434,8 +434,9 @@ fun EdgeRenderer(
   selectedEdgeColor: Color,
   outlineColor: Color,
   activeEdgeColor: Color,
+  modifier: Modifier = Modifier,
 ) {
-  Canvas(modifier = Modifier.fillMaxSize()) {
+  Canvas(modifier = modifier.fillMaxSize()) {
     for (edge in graph.edges) {
       if (edge == detachedEdge) continue
       val fromNode = graph.nodes.find { it.id == edge.fromNodeId }
