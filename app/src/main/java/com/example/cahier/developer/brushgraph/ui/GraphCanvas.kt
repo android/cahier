@@ -119,6 +119,7 @@ fun GraphCanvas(
   detachedEdge: GraphEdge? = null,
   onNodeDataUpdate: (String, NodeData) -> Unit = { _, _ -> },
   bottomPadding: Dp = 16.dp,
+  rightPadding: Dp = 0.dp,
   isSelectionMode: Boolean = false,
   selectedNodeIds: Set<String> = emptySet(),
   onSelectAll: () -> Unit = {},
@@ -252,7 +253,9 @@ fun GraphCanvas(
                 },
                 onDragEnd = {
                   draggingPointerPos?.let { pos ->
-                    val trashCenter = Offset(parentWidth / 2f, parentHeight - trashCenterPaddingPx)
+                    val rightPaddingPx = with(density) { rightPadding.toPx() }
+                    val trashCenterX = (parentWidth - rightPaddingPx) / 2f
+                    val trashCenter = Offset(trashCenterX, parentHeight - trashCenterPaddingPx)
                     if ((pos - trashCenter).getDistance() < 100f) {
                       onNodeDelete(node.id)
                     }
@@ -350,8 +353,9 @@ fun GraphCanvas(
         parentHeight = parentHeight,
         trashCenterPaddingPx = trashCenterPaddingPx,
         bottomPadding = bottomPadding,
+        rightPadding = rightPadding,
         onNodeDelete = onNodeDelete,
-        modifier = Modifier.align(Alignment.BottomCenter)
+        modifier = Modifier.padding(end = rightPadding).align(Alignment.BottomCenter)
       )
       
       SelectionActionMenu(
@@ -547,17 +551,22 @@ fun TrashCanArea(
   parentHeight: Float,
   trashCenterPaddingPx: Float,
   bottomPadding: Dp,
+  rightPadding: Dp = 0.dp,
   onNodeDelete: (String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val draggingNode = graph.nodes.find { it.id == draggingNodeId }
+  val density = LocalDensity.current
+  val rightPaddingPx = with(density) { rightPadding.toPx() }
+  val trashCenterX = (parentWidth - rightPaddingPx) / 2f
+
   if (draggingNode != null && draggingNode.data !is NodeData.Family) {
     Surface(
       modifier =
         modifier.padding(bottom = bottomPadding).graphicsLayer {
           val isOver =
             draggingPointerPos?.let { pos ->
-              val trashCenter = Offset(parentWidth / 2f, parentHeight - trashCenterPaddingPx)
+              val trashCenter = Offset(trashCenterX, parentHeight - trashCenterPaddingPx)
               (pos - trashCenter).getDistance() < 100f
             } ?: false
           scaleX = if (isOver) 1.2f else 1.0f

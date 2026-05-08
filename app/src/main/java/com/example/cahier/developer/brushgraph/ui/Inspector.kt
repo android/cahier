@@ -265,7 +265,7 @@ fun NodeInspector(
 
 @Composable
 fun AdaptiveInspectorPane(
-  isLandscape: Boolean,
+  isWideScreen: Boolean,
   visible: Boolean,
   title: String,
   onClose: () -> Unit,
@@ -276,13 +276,13 @@ fun AdaptiveInspectorPane(
   AnimatedVisibility(
     visible = visible,
     enter =
-      if (isLandscape) {
+      if (isWideScreen) {
         slideInHorizontally(initialOffsetX = { it })
       } else {
         slideInVertically(initialOffsetY = { it })
       },
     exit =
-      if (isLandscape) {
+      if (isWideScreen) {
         slideOutHorizontally(targetOffsetX = { it })
       } else {
         slideOutVertically(targetOffsetY = { it })
@@ -291,7 +291,7 @@ fun AdaptiveInspectorPane(
   ) {
     Surface(
       modifier =
-        if (isLandscape) {
+        if (isWideScreen) {
           Modifier.fillMaxHeight().width(INSPECTOR_WIDTH_LANDSCAPE.dp)
         } else {
           Modifier.fillMaxWidth().height(INSPECTOR_HEIGHT_PORTRAIT.dp)

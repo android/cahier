@@ -47,7 +47,7 @@ fun GraphCameraController(
   updateOffset: (Offset) -> Unit,
   viewportSize: Size,
   context: Context,
-  isLandscape: Boolean,
+  isWideScreen: Boolean,
   maxWidthDp: Dp,
   nodeRegistry: NodeRegistry
 ) {
@@ -91,7 +91,7 @@ fun GraphCameraController(
             zoom = zoom,
             viewportSize = viewportSize,
             density = density,
-            isLandscape = isLandscape,
+            isWideScreen = isWideScreen,
             isPreviewExpanded = isPreviewExpanded
           )
           animatableOffset.snapTo(offset)
@@ -110,7 +110,7 @@ private fun calculateFocusOffset(
   zoom: Float,
   viewportSize: Size = Size.Zero,
   density: Float = 1f,
-  isLandscape: Boolean = false,
+  isWideScreen: Boolean = false,
   isPreviewExpanded: Boolean = false,
   targetScreenPos: Offset? = null
 ): Offset {
@@ -121,7 +121,7 @@ private fun calculateFocusOffset(
     Pair(targetScreenPos.x, targetScreenPos.y)
   } else {
     val previewHeightPx = (if (isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED) * density
-    val safeSize = if (isLandscape) {
+    val safeSize = if (isWideScreen) {
       val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
       Pair(viewportSize.width - inspectorWidthPx, viewportSize.height - previewHeightPx)
     } else {

@@ -120,7 +120,7 @@ fun CollapsiblePreviewPane(
   isPreviewExpanded: Boolean,
   isInvertedCanvas: Boolean,
   testAutoUpdateStrokes: Boolean,
-  brushColor: Int,
+  brushColor: Color,
   brushSize: Float,
   brush: Brush,
   strokeList: List<Stroke>,
@@ -133,7 +133,7 @@ fun CollapsiblePreviewPane(
   onClearStrokes: () -> Unit,
   onToggleCanvasTheme: () -> Unit,
   onSetTestAutoUpdateStrokes: (Boolean) -> Unit,
-  onUpdateTestBrushColor: (Int) -> Unit,
+  onUpdateTestBrushColor: (Color) -> Unit,
   onUpdateTestBrushSize: (Float) -> Unit,
   onStrokesAdded: (List<Stroke>) -> Unit,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
@@ -204,11 +204,11 @@ fun CollapsiblePreviewPane(
             Box(
               modifier = Modifier
                 .size(20.dp)
-                .background(Color(brushColor))
+                .background(brushColor)
                 .border(1.dp, MaterialTheme.colorScheme.outline)
                 .clickable {
-                  onChooseColor(Color(brushColor)) { newColor ->
-                    onUpdateTestBrushColor(newColor.toArgb())
+                  onChooseColor(brushColor) { newColor ->
+                    onUpdateTestBrushColor(newColor)
                   }
                 }
             )
