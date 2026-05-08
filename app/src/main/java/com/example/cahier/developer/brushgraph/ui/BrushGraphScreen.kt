@@ -101,6 +101,8 @@ import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.developer.brushgraph.ui.PREVIEW_HEIGHT_EXPANDED
 import com.example.cahier.developer.brushgraph.data.TutorialAction
 import com.example.cahier.core.ui.CahierTextureBitmapStore
+import androidx.ink.brush.TextureBitmapStore
+import com.example.cahier.core.ui.LocalTextureStore
 
 /** The main UI for the Brush Graph studio. */
 @Composable
@@ -116,9 +118,7 @@ fun BrushGraphScreen(
   val isWideScreen = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
   val isTallAndWide = isWideScreen && windowSizeClass.windowHeightSizeClass == WindowHeightSizeClass.EXPANDED
   
-  // Use hoisted CahierTextureBitmapStore from ViewModel
-  val textureStore = viewModel.textureStore
-  
+  val textureStore = LocalTextureStore.current
   val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
 
   val primaryColor = MaterialTheme.colorScheme.primary
@@ -169,8 +169,7 @@ fun BrushGraphScreen(
             }
           }
           if (bitmap != null) {
-            textureStore.loadTexture(name, bitmap)
-            viewModel.updateAllTextureIds()
+            viewModel.loadTexture(name, bitmap)
           }
           showTextureNameDialog = false
           textureNameInput = ""
@@ -192,8 +191,7 @@ fun BrushGraphScreen(
                   stream,
                   BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
                     if (bitmap != null) {
-                      textureStore.loadTexture(id, bitmap)
-                      viewModel.updateAllTextureIds()
+                      viewModel.loadTexture(id, bitmap)
                     }
                     id
                   }
@@ -377,7 +375,6 @@ fun BrushGraphScreen(
                 colorPickerOnColorSelected = onColorSelected
                 showColorPicker = true
               },
-              textureStore = textureStore,
               allTextureIds = uiState.allTextureIds,
               onLoadTexture = { texturePickerLauncher.launch(arrayOf("image/*")) },
               strokeRenderer = renderer,
@@ -503,7 +500,6 @@ fun BrushGraphScreen(
                   brush = viewModel.brush.collectAsStateWithLifecycle().value,
                   strokeList = viewModel.strokeList,
                   strokeRenderer = renderer,
-                  textureStore = textureStore,
                   topIssue = topIssue,
                   onGetNextBrush = { viewModel.brush.value },
                   onTogglePreviewExpanded = { viewModel.togglePreviewExpanded() },
@@ -536,7 +532,6 @@ fun BrushGraphScreen(
                 paletteBrushNameInput = ""
                 showSavePaletteDialog = true
               },
-              textureStore = textureStore,
               onOrganize = viewModel::reorganize,
               onDeleteBrush = { viewModel.clearGraph() },
               onTutorialExitRequested = { showTutorialFinishDialog = true },

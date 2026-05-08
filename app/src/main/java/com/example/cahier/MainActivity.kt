@@ -30,10 +30,15 @@ import androidx.core.content.IntentCompat
 import com.example.cahier.core.data.NoteType
 import com.example.cahier.features.home.CahierApp
 import com.example.cahier.core.ui.theme.CahierAppTheme
+import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.core.ui.LocalTextureStore
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @javax.inject.Inject lateinit var textureStore: CahierTextureBitmapStore
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -47,11 +52,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CahierAppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    CahierApp(noteId = noteId, noteType = noteType)
+                androidx.compose.runtime.CompositionLocalProvider(LocalTextureStore provides textureStore) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        CahierApp(noteId = noteId, noteType = noteType, textureStore = textureStore)
+                    }
                 }
             }
         }

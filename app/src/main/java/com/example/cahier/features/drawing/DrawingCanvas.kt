@@ -82,6 +82,7 @@ import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.core.ui.FocusedFieldEnum
 import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.utils.createDropTarget
 import com.example.cahier.features.drawing.viewmodel.DrawingCanvasViewModel
 
@@ -286,7 +287,7 @@ private fun DrawingSurfaceWithTarget(
     val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
     val strokes = remember { mutableStateListOf<Stroke>() }
     val context = LocalContext.current
-    val textureStore = remember { CahierTextureBitmapStore(context) }
+    val textureStore = LocalTextureStore.current
     val canvasStrokeRenderer = remember {
         CanvasStrokeRenderer.create(textureStore = textureStore)
     }

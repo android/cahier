@@ -67,6 +67,7 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.developer.brushgraph.viewmodel.BrushGraphViewModel
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.developer.brushgraph.data.TutorialAction
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
@@ -79,12 +80,12 @@ fun TestCanvas(
   isInvertedCanvas: Boolean,
   strokeList: List<Stroke>,
   strokeRenderer: CanvasStrokeRenderer,
-  textureStore: TextureBitmapStore,
   brush: Brush,
   modifier: Modifier = Modifier,
   onGetNextBrush: () -> Brush,
   onStrokesAdded: (List<Stroke>) -> Unit,
 ) {
+  val textureStore = LocalTextureStore.current
   Box(modifier = modifier.fillMaxSize()) {
     Text(
       stringResource(R.string.bg_test_canvas_draw_prompt),
@@ -125,7 +126,6 @@ fun CollapsiblePreviewPane(
   brush: Brush,
   strokeList: List<Stroke>,
   strokeRenderer: CanvasStrokeRenderer,
-  textureStore: TextureBitmapStore,
   topIssue: GraphValidationException?,
   modifier: Modifier = Modifier,
   onGetNextBrush: () -> Brush,
@@ -299,7 +299,6 @@ fun CollapsiblePreviewPane(
         TestCanvas(
           strokeList = strokeList,
           strokeRenderer = strokeRenderer,
-          textureStore = textureStore,
           brush = brush,
           isInvertedCanvas = isInvertedCanvas,
           onGetNextBrush = onGetNextBrush,

@@ -84,6 +84,7 @@ import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.viewmodel.BrushDesignerViewModel
+import com.example.cahier.core.ui.LocalTextureStore
 import ink.proto.BrushTip as ProtoBrushTip
 
 /**
@@ -191,7 +192,6 @@ fun BrushDesignerScreen(
                         strokes = testStrokes,
                         brushColor = brushColor,
                         brushSize = brushSize,
-                        onSetTextureStore = { viewModel.setTextureStore(it) },
                         onReplaceStrokes = { viewModel.replaceStrokes(it) },
                         onStrokesFinished = { viewModel.onStrokesFinished(it) },
                         onGetNextBrush = {
@@ -240,7 +240,6 @@ fun BrushDesignerScreen(
                             strokes = testStrokes,
                             brushColor = brushColor,
                             brushSize = brushSize,
-                            onSetTextureStore = { viewModel.setTextureStore(it) },
                             onReplaceStrokes = { viewModel.replaceStrokes(it) },
                             onStrokesFinished = { viewModel.onStrokesFinished(it) },
                             onGetNextBrush = {
@@ -366,7 +365,7 @@ private fun ControlsPane(
             BrushDesignerTab.TipShape -> TipShapeTabContent(
                 currentTip = currentTip,
                 activeBrush = viewModel.getActiveBrush(),
-                textureStore = viewModel.getTextureStore(),
+                textureStore = LocalTextureStore.current,
                 onUpdateTip = { block -> viewModel.updateTip(block) }
             )
 

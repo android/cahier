@@ -60,6 +60,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +70,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.platform.LocalDensity
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.TextureBitmapStore
@@ -115,16 +119,21 @@ fun MoreOptionsMenu(
             text = { Text(stringResource(R.string.bg_organize)) },
             onClick = onOrganize
         )
+        var itemSize by remember { mutableStateOf(IntSize.Zero) }
+        val density = LocalDensity.current
         Box {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.bg_templates)) },
                 onClick = { onShowTemplatesMenuChange(true) },
-                trailingIcon = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
+                trailingIcon = { Icon(Icons.Default.ChevronRight, contentDescription = null) },
+                modifier = Modifier.onSizeChanged { itemSize = it }
             )
             DropdownMenu(
                 expanded = showTemplatesMenu,
                 onDismissRequest = { onShowTemplatesMenuChange(false) },
-                offset = DpOffset(x = 127.dp, y = (-56).dp)
+                offset = with(density) {
+                    DpOffset(x = itemSize.width.toDp(), y = -itemSize.height.toDp())
+                }
             ) {
                 listOf(
                   R.string.bg_pressure_pen to StockBrushes.pressurePen(),
@@ -226,7 +235,7 @@ fun CreateNodeSpeedDial(
   modifier: Modifier = Modifier,
   menuContent: @Composable (onClose: () -> Unit) -> Unit
 ) {
-  var expanded by remember { mutableStateOf(false) }
+  var expanded by rememberSaveable { mutableStateOf(false) }
 
   val previewHeight = if (isPreviewExpanded) {
     PREVIEW_HEIGHT_EXPANDED
@@ -296,7 +305,6 @@ fun GraphActionMenu(
   onExport: () -> Unit,
   onLoadBrushFile: () -> Unit,
   onSaveToPalette: () -> Unit,
-  textureStore: TextureBitmapStore,
   onOrganize: () -> Unit,
   onDeleteBrush: () -> Unit,
   onTutorialExitRequested: () -> Unit,
@@ -313,13 +321,13 @@ fun GraphActionMenu(
   modifier: Modifier = Modifier,
 ) {
   val context = LocalContext.current
-  var showMoreMenu by remember { mutableStateOf(false) }
-  var showPaletteMenu by remember { mutableStateOf(false) }
-  var showClearConfirmation by remember { mutableStateOf(false) }
-  var showReorganizeConfirmation by remember { mutableStateOf(false) }
-  var showTemplatesMenu by remember { mutableStateOf(false) }
-  var showOptionsDialog by remember { mutableStateOf(false) }
-  var showTutorialWarningDialog by remember { mutableStateOf(false) }
+  var showMoreMenu by rememberSaveable { mutableStateOf(false) }
+  var showPaletteMenu by rememberSaveable { mutableStateOf(false) }
+  var showClearConfirmation by rememberSaveable { mutableStateOf(false) }
+  var showReorganizeConfirmation by rememberSaveable { mutableStateOf(false) }
+  var showTemplatesMenu by rememberSaveable { mutableStateOf(false) }
+  var showOptionsDialog by rememberSaveable { mutableStateOf(false) }
+  var showTutorialWarningDialog by rememberSaveable { mutableStateOf(false) }
 
 
   ClearGraphConfirmationDialog(

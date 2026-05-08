@@ -25,9 +25,11 @@ import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.R
 import javax.inject.Inject
+import javax.inject.Singleton
 import dagger.hilt.android.qualifiers.ApplicationContext
 
 @OptIn(ExperimentalInkCustomBrushApi::class)
+@Singleton
 class CahierTextureBitmapStore @Inject constructor(@ApplicationContext context: Context) : TextureBitmapStore {
     private val resources = context.resources
 

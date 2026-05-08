@@ -162,27 +162,4 @@ class BrushDesignerViewModelTest {
 
         assertNull(vm.previewBrushFamily.value)
     }
-
-    @Test
-    fun setTextureStore_immediately_syncs_proto_textures() = runTest {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val testTextureId = "test-texture"
-        val testBitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
-
-        val baos = java.io.ByteArrayOutputStream()
-        testBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
-        val textureBytes = com.google.protobuf.ByteString.copyFrom(baos.toByteArray())
-
-        val protoWithTexture = viewModel.activeBrushProto.value.toBuilder()
-            .putTextureIdToBitmap(testTextureId, textureBytes)
-            .build()
-        repository.updateActiveBrushProto(protoWithTexture)
-
-        val store = com.example.cahier.core.ui.CahierTextureBitmapStore(context)
-        assertNull(store[testTextureId])
-
-        viewModel.setTextureStore(store)
-
-        assertNotNull(store[testTextureId])
-    }
 }

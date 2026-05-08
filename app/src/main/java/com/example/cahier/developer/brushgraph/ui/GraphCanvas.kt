@@ -99,7 +99,6 @@ fun GraphCanvas(
   onEdgeDelete: (GraphEdge) -> Unit,
   nodeRegistry: NodeRegistry,
   onChooseColor: (Color, (Color) -> Unit) -> Unit,
-  textureStore: TextureBitmapStore,
   allTextureIds: Set<String>,
   onLoadTexture: () -> Unit,
   strokeRenderer: CanvasStrokeRenderer,

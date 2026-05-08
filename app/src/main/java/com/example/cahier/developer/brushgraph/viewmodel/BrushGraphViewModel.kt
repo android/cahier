@@ -15,6 +15,7 @@
  */
 package com.example.cahier.developer.brushgraph.viewmodel
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -80,7 +81,7 @@ import java.io.ByteArrayInputStream
 @HiltViewModel
 class BrushGraphViewModel @Inject constructor(
   private val customBrushDao: CustomBrushDao,
-  public val textureStore: CahierTextureBitmapStore,
+  private val textureStore: CahierTextureBitmapStore,
   private val repository: BrushGraphRepository
 ) : ViewModel() {
 
@@ -566,6 +567,11 @@ class BrushGraphViewModel @Inject constructor(
     }
   }
 
+  fun loadTexture(id: String, bitmap: Bitmap) {
+    textureStore.loadTexture(id, bitmap)
+    updateAllTextureIds()
+  }
+
   fun loadFromPalette(entity: CustomBrushEntity) {
     viewModelScope.launch(Dispatchers.IO) {
       try {
@@ -573,7 +579,7 @@ class BrushGraphViewModel @Inject constructor(
           ByteArrayInputStream(entity.brushBytes),
           BrushFamilyDecodeCallback { id, bitmap ->
             if (bitmap != null) {
-              textureStore.loadTexture(id, bitmap)
+              loadTexture(id, bitmap)
             }
             id
           }

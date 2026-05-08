@@ -81,6 +81,7 @@ class DrawingCanvasViewModel @Inject constructor(
     val fileHelper: FileHelper,
     private val imageLoader: ImageLoader,
     private val customBrushDao: CustomBrushDao,
+    val textureStore: CahierTextureBitmapStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CahierUiState())
@@ -123,8 +124,6 @@ class DrawingCanvasViewModel @Inject constructor(
     val customBrushes: StateFlow<List<CustomBrush>> = _customBrushes.asStateFlow()
 
     private var isBrushSelectedInSession = false
-
-    val textureStore = CahierTextureBitmapStore(context)
 
     init {
         viewModelScope.launch {
@@ -284,7 +283,7 @@ class DrawingCanvasViewModel @Inject constructor(
 
         val strokeRenderer = CanvasStrokeRenderer.create(
             forcePathRendering = true,
-            textureStore = CahierTextureBitmapStore(context)
+            textureStore = textureStore
         )
         strokes.forEach { stroke ->
             strokeRenderer.draw(canvas, stroke, android.graphics.Matrix())

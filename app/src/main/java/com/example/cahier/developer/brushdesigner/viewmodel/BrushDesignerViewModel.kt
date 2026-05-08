@@ -31,6 +31,7 @@ import androidx.ink.strokes.Stroke
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.theme.BrushBlack
 import com.example.cahier.developer.brushdesigner.data.BrushDesignerRepository
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
@@ -69,6 +70,7 @@ import ink.proto.BrushTip as ProtoBrushTip
 class BrushDesignerViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val repository: BrushDesignerRepository,
+    private val textureStore: CahierTextureBitmapStore,
     private val customBrushDao: CustomBrushDao
 ) : ViewModel() {
 
@@ -90,7 +92,7 @@ class BrushDesignerViewModel @Inject constructor(
 
                     ByteArrayInputStream(baos.toByteArray()).use { inputStream ->
                         BrushFamily.decode(inputStream) { textureId, bitmap ->
-                            bitmap?.let { textureStore?.loadTexture(textureId, it) }
+                            bitmap?.let { textureStore.loadTexture(textureId, it) }
                             textureId
                         }
                     }
@@ -128,8 +130,6 @@ class BrushDesignerViewModel @Inject constructor(
     )
 
     private val autoSaveFile = File(context.cacheDir, "autosave.brush")
-
-    private var textureStore: CahierTextureBitmapStore? = null
 
     init {
         if (autoSaveFile.exists()) {
@@ -219,7 +219,7 @@ class BrushDesignerViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val baos = ByteArrayOutputStream()
-                stockBrush.encode(baos, textureStore ?: CahierTextureBitmapStore(context))
+                stockBrush.encode(baos, textureStore)
 
                 val gzippedBytes = baos.toByteArray()
                 ByteArrayInputStream(gzippedBytes).use { inputStream ->
@@ -377,7 +377,7 @@ class BrushDesignerViewModel @Inject constructor(
                     BitmapFactory.decodeStream(it)
                 } ?: return@launch
 
-                textureStore?.loadTexture(textureId, bitmap)
+                textureStore.loadTexture(textureId, bitmap)
 
                 val builder = repository.activeBrushProto.value.toBuilder()
 
@@ -486,26 +486,7 @@ class BrushDesignerViewModel @Inject constructor(
     }
 
     /** Returns the loaded bitmap for a texture ID, or null if not loaded. */
-    fun getTextureBitmap(textureId: String): Bitmap? = textureStore?.get(textureId)
-
-    /** Returns the current texture store, or null if not yet set. */
-    internal fun getTextureStore(): CahierTextureBitmapStore? = textureStore
-
-    fun setTextureStore(store: CahierTextureBitmapStore) {
-        this.textureStore = store
-        // Immediately populate the store from any textures already in the proto,
-        // since previewBrushFamily's decode callback has a 150ms debounce.
-        val bitmapMap = repository.activeBrushProto.value.textureIdToBitmapMap
-        bitmapMap.forEach { (id, byteString) ->
-            if (store.get(id) == null) {
-                try {
-                    val bytes = byteString.toByteArray()
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        ?.let { store.loadTexture(id, it) }
-                } catch (_: Exception) { /* logged during decode */ }
-            }
-        }
-    }
+    fun getTextureBitmap(textureId: String): Bitmap? = textureStore.get(textureId)
 
     fun setSelectedCoat(index: Int) {
         _selectedCoatIndex.value = index

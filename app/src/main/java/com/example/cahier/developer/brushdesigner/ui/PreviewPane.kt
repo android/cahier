@@ -58,6 +58,7 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.R
 import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.core.ui.theme.BrushBlack
 import com.example.cahier.core.ui.theme.BrushBlue
@@ -81,7 +82,6 @@ internal fun PreviewPane(
     strokes: List<Stroke>,
     brushColor: Color,
     brushSize: Float,
-    onSetTextureStore: (CahierTextureBitmapStore) -> Unit,
     onReplaceStrokes: (List<Stroke>) -> Unit,
     onStrokesFinished: (List<Stroke>) -> Unit,
     onGetNextBrush: () -> Brush,
@@ -89,11 +89,7 @@ internal fun PreviewPane(
     onSetBrushSize: (Float) -> Unit
 ) {
     val context = LocalContext.current
-    val textureStore = remember { CahierTextureBitmapStore(context) }
-
-    LaunchedEffect(textureStore) {
-        onSetTextureStore(textureStore)
-    }
+    val textureStore = LocalTextureStore.current
 
     val canvasStrokeRenderer = remember(textureStore) {
         CanvasStrokeRenderer.create(textureStore = textureStore)
