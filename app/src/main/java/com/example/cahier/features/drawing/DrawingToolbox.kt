@@ -48,6 +48,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
@@ -484,26 +486,33 @@ fun BrushesDropdownMenu(
             },
             onClick = { onBrushChange(StockBrushes.dashedLine()) }
         )
-        Box {
-            DropdownMenuItem(
-                text = { Text(text = stringResource(R.string.emoji_highlighter)) },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_emoji_highlighter),
-                        contentDescription = stringResource(R.string.emoji_highlighter)
-                    )
-                },
-                trailingIcon = {
-                    Text(text = if (showEmojiSubMenu) "▶" else "▼")
-                },
-                onClick = { showEmojiSubMenu = true }
-            )
-            DropdownMenu(
-                expanded = showEmojiSubMenu,
-                onDismissRequest = { showEmojiSubMenu = false },
-                offset = DpOffset(x = 202.dp, y = (-56).dp),
-                properties = PopupProperties(focusable = true)
-            ) {
+            var itemWidth by remember { mutableStateOf(0) }
+            var itemHeight by remember { mutableStateOf(0) }
+            val density = LocalDensity.current
+            
+            Box(modifier = Modifier.onSizeChanged { 
+                itemWidth = it.width
+                itemHeight = it.height
+            }) {
+                DropdownMenuItem(
+                    text = { Text(text = stringResource(R.string.emoji_highlighter)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_emoji_highlighter),
+                            contentDescription = stringResource(R.string.emoji_highlighter)
+                        )
+                    },
+                    trailingIcon = {
+                        Text(text = if (showEmojiSubMenu) "▶" else "▼")
+                    },
+                    onClick = { showEmojiSubMenu = true }
+                )
+                DropdownMenu(
+                    expanded = showEmojiSubMenu,
+                    onDismissRequest = { showEmojiSubMenu = false },
+                    offset = DpOffset(x = density.run { itemWidth.toDp() }, y = density.run { -itemHeight.toDp() }),
+                    properties = PopupProperties(focusable = true)
+                ) {
                 DropdownMenuItem(
                     text = { Text(text = stringResource(R.string.emoji_heart)) },
                     leadingIcon = {
