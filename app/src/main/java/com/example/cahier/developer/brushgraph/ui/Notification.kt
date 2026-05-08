@@ -52,7 +52,7 @@ import android.util.Log
 
 @Composable
 fun NotificationPane(
-  isLandscape: Boolean,
+  isWideScreen: Boolean,
   viewModel: BrushGraphViewModel,
   modifier: Modifier = Modifier,
 ) {
@@ -64,13 +64,13 @@ fun NotificationPane(
   AnimatedVisibility(
     visible = uiState.isErrorPaneOpen,
     enter =
-      if (isLandscape) {
+      if (isWideScreen) {
         slideInHorizontally(initialOffsetX = { it })
       } else {
         slideInVertically(initialOffsetY = { it })
       },
     exit =
-      if (isLandscape) {
+      if (isWideScreen) {
         slideOutHorizontally(targetOffsetX = { it })
       } else {
         slideOutVertically(targetOffsetY = { it })
@@ -79,7 +79,7 @@ fun NotificationPane(
   ) {
     Surface(
       modifier =
-        if (isLandscape) {
+        if (isWideScreen) {
           Modifier.fillMaxHeight().width(INSPECTOR_WIDTH_LANDSCAPE.dp)
         } else {
           Modifier.fillMaxWidth().height(INSPECTOR_HEIGHT_PORTRAIT.dp)
@@ -141,7 +141,7 @@ fun NotificationPane(
                 icon = Icons.Default.Error,
                 color = MaterialTheme.colorScheme.error,
                 viewModel = viewModel,
-                isLandscape = isLandscape,
+                isWideScreen = isWideScreen,
               )
             }
           }
@@ -153,7 +153,7 @@ fun NotificationPane(
                 icon = Icons.Default.Warning,
                 color = MaterialTheme.extendedColorScheme.warning,
                 viewModel = viewModel,
-                isLandscape = isLandscape,
+                isWideScreen = isWideScreen,
               )
             }
           }
@@ -165,7 +165,7 @@ fun NotificationPane(
                 icon = Icons.Default.Info,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 viewModel = viewModel,
-                isLandscape = isLandscape,
+                isWideScreen = isWideScreen,
               )
             }
           }
@@ -182,7 +182,7 @@ fun NotificationGroup(
   icon: ImageVector,
   color: Color,
   viewModel: BrushGraphViewModel,
-  isLandscape: Boolean,
+  isWideScreen: Boolean,
 ) {
   var expanded by remember { mutableStateOf(true) }
   Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
@@ -227,7 +227,7 @@ fun NotificationGroup(
             modifier =
               Modifier.fillMaxWidth().padding(vertical = 4.dp).let {
                 if (issue.nodeId != null) {
-                  it.clickable { viewModel.onIssueClick(issue, isLandscape, density) }
+                  it.clickable { viewModel.onIssueClick(issue, isWideScreen, density) }
                 } else {
                   it
                 }

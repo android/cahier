@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.window.core.layout.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -53,47 +55,46 @@ fun BrushGraphContent(
 ) {
   dialogSlot()
 
-  BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-    val currentIsLandscape = maxWidth > maxHeight
+  val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+  val isWideScreen = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
 
-    val isSidePaneOpen = currentIsLandscape && (isNodeSelected || isEdgeSelected || isErrorPaneOpen)
-    val indicatorPaddingEnd by animateDpAsState(
-      targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
-      label = "indicatorPaddingEnd",
-    )
-    val previewHeight = if (isPreviewExpanded) {
-      PREVIEW_HEIGHT_EXPANDED
-    } else {
-      PREVIEW_HEIGHT_COLLAPSED
-    }
-    val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
+  val isSidePaneOpen = isWideScreen && (isNodeSelected || isEdgeSelected || isErrorPaneOpen)
+  val indicatorPaddingEnd by animateDpAsState(
+    targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
+    label = "indicatorPaddingEnd",
+  )
+  val previewHeight = if (isPreviewExpanded) {
+    PREVIEW_HEIGHT_EXPANDED
+  } else {
+    PREVIEW_HEIGHT_COLLAPSED
+  }
+  val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
 
-    val trashPaddingBottom by animateDpAsState(
-      targetValue =
-        if (!currentIsLandscape && isAnySidePaneOpen) {
-          (maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT) + 16).dp
-        } else {
-          (previewHeight + 16).dp
-        },
-      label = "trashPaddingBottom",
-    )
+  val trashPaddingBottom by animateDpAsState(
+    targetValue =
+      if (!isWideScreen && isAnySidePaneOpen) {
+        (maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT) + 16).dp
+      } else {
+        (previewHeight + 16).dp
+      },
+    label = "trashPaddingBottom",
+  )
 
-    Scaffold { paddingValues ->
-      Box(
-        modifier =
-          Modifier.fillMaxSize().padding(paddingValues).onGloballyPositioned { coordinates ->
-            onViewportSizeChange(coordinates.size.toSize())
-          }
-      ) {
-        canvasSlot(trashPaddingBottom)
-        inspectorSlot()
-        notificationPaneSlot()
-        notificationIconSlot(indicatorPaddingEnd)
-        previewSlot()
-        menuSlot()
-        fabSlot(viewportSize)
-        tutorialSlot(viewportSize)
-      }
+  Scaffold(modifier = modifier.fillMaxSize()) { paddingValues ->
+    Box(
+      modifier =
+        Modifier.fillMaxSize().padding(paddingValues).onGloballyPositioned { coordinates ->
+          onViewportSizeChange(coordinates.size.toSize())
+        }
+    ) {
+      canvasSlot(trashPaddingBottom)
+      inspectorSlot()
+      notificationPaneSlot()
+      notificationIconSlot(indicatorPaddingEnd)
+      previewSlot()
+      menuSlot()
+      fabSlot(viewportSize)
+      tutorialSlot(viewportSize)
     }
   }
 }

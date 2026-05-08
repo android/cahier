@@ -49,7 +49,7 @@ fun BoxScope.TutorialOverlayHost(
   selectedNodeId: String?,
   selectedEdge: GraphEdge?,
   currentStepIndex: Int,
-  isLandscape: Boolean,
+  isWideScreen: Boolean,
   viewportSize: androidx.compose.ui.geometry.Size,
   isPreviewExpanded: Boolean,
   onAdvanceTutorial: (TutorialAction) -> Unit,
@@ -68,7 +68,7 @@ fun BoxScope.TutorialOverlayHost(
       
       TutorialAnchor.FAB -> {
         if (isInspectorOpen) {
-          if (isLandscape) {
+          if (isWideScreen) {
             Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp, end = (INSPECTOR_WIDTH_LANDSCAPE + 80).dp)
           } else {
             Modifier.align(Alignment.BottomEnd).padding(bottom = (INSPECTOR_HEIGHT_PORTRAIT + 16).dp, end = 80.dp)
@@ -101,7 +101,7 @@ fun BoxScope.TutorialOverlayHost(
       }
       
       TutorialAnchor.INSPECTOR -> {
-        if (isLandscape) {
+        if (isWideScreen) {
           Modifier.align(Alignment.CenterEnd).padding(end = (INSPECTOR_WIDTH_LANDSCAPE + 16).dp)
         } else {
           Modifier.align(Alignment.BottomCenter).padding(bottom = (INSPECTOR_HEIGHT_PORTRAIT + 16).dp)
@@ -110,7 +110,7 @@ fun BoxScope.TutorialOverlayHost(
       
       TutorialAnchor.TEST_CANVAS -> {
         val basePadding = if (isPreviewExpanded) PREVIEW_HEIGHT_EXPANDED else PREVIEW_HEIGHT_COLLAPSED
-        if (isInspectorOpen && !isLandscape) {
+        if (isInspectorOpen && !isWideScreen) {
           Modifier.align(Alignment.BottomCenter).padding(bottom = (maxOf(INSPECTOR_HEIGHT_PORTRAIT, basePadding) + 16).dp)
         } else {
           Modifier.align(Alignment.BottomCenter).padding(bottom = (basePadding + 16).dp)
@@ -120,7 +120,7 @@ fun BoxScope.TutorialOverlayHost(
       TutorialAnchor.ACTION_BAR -> Modifier.align(Alignment.TopStart).padding(top = 80.dp, start = 16.dp)
       
       TutorialAnchor.NOTIFICATION_ICON -> {
-        val indicatorPaddingEnd = if (isLandscape && isInspectorOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp
+        val indicatorPaddingEnd = if (isWideScreen && isInspectorOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp
         Modifier.align(Alignment.TopEnd).padding(top = 80.dp, end = indicatorPaddingEnd)
       }
     }.zIndex(20f)

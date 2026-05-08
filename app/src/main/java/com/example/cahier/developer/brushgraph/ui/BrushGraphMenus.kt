@@ -219,7 +219,7 @@ fun PaletteMenu(
 
 @Composable
 fun CreateNodeSpeedDial(
-  isLandscape: Boolean,
+  isWideScreen: Boolean,
   isAnySidePaneOpen: Boolean,
   isPreviewExpanded: Boolean,
   viewportSize: androidx.compose.ui.geometry.Size,
@@ -237,7 +237,7 @@ fun CreateNodeSpeedDial(
   val fabPaddingBottom by
     animateDpAsState(
       targetValue =
-        if (!isLandscape && isAnySidePaneOpen) {
+        if (!isWideScreen && isAnySidePaneOpen) {
           (maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT) + 16).dp
         } else {
           (previewHeight + 16).dp
@@ -248,7 +248,7 @@ fun CreateNodeSpeedDial(
   val fabPaddingEnd by
     animateDpAsState(
       targetValue =
-        if (isLandscape && isAnySidePaneOpen) {
+        if (isWideScreen && isAnySidePaneOpen) {
           (INSPECTOR_WIDTH_LANDSCAPE + 16).dp
         } else {
           16.dp

@@ -13,7 +13,7 @@
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
  */
-@file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
+@file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class, androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
 
 package com.example.cahier.developer.brushgraph.ui
 
@@ -53,6 +53,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.window.core.layout.WindowWidthSizeClass
+import androidx.window.core.layout.WindowHeightSizeClass
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,6 +112,9 @@ fun BrushGraphScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
+  val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+  val isWideScreen = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
+  val isTallAndWide = isWideScreen && windowSizeClass.windowHeightSizeClass == WindowHeightSizeClass.EXPANDED
   
   // Use hoisted CahierTextureBitmapStore from ViewModel
   val textureStore = viewModel.textureStore
@@ -118,7 +124,7 @@ fun BrushGraphScreen(
   val primaryColor = MaterialTheme.colorScheme.primary
   val onSurfaceColor = MaterialTheme.colorScheme.onSurface
   LaunchedEffect(primaryColor) {
-    viewModel.updateTestBrushColor(primaryColor.toArgb())
+    viewModel.updateTestBrushColor(primaryColor)
   }
 
   var showColorPicker by remember { mutableStateOf(false) }
@@ -256,11 +262,10 @@ fun BrushGraphScreen(
 
   CahierAppTheme {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-      val isLandscape = maxWidth > maxHeight
       var viewportSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
       var showTutorialFinishDialog by remember { mutableStateOf(false) }
 
-      val isSidePaneOpen = isLandscape && (uiState.selectedNodeId != null || uiState.isErrorPaneOpen)
+      val isSidePaneOpen = isWideScreen && (uiState.selectedNodeId != null || uiState.isErrorPaneOpen)
       val indicatorPaddingEnd by animateDpAsState(
         targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
         label = "indicatorPaddingEnd",
@@ -270,6 +275,10 @@ fun BrushGraphScreen(
       } else {
         PREVIEW_HEIGHT_COLLAPSED
       }
+      val animatedPreviewHeight by animateDpAsState(
+        targetValue = previewHeight.dp,
+        label = "animatedPreviewHeight"
+      )
       val isNodeSelected = uiState.selectedNodeId != null
       val isEdgeSelected = uiState.selectedEdge != null
       val isErrorPaneOpen = uiState.isErrorPaneOpen
@@ -277,7 +286,7 @@ fun BrushGraphScreen(
 
       val trashPaddingBottom by animateDpAsState(
         targetValue =
-          if (!isLandscape && isAnySidePaneOpen) {
+          if (!isWideScreen && isAnySidePaneOpen) {
             (maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT) + 16).dp
           } else {
             (previewHeight + 16).dp
@@ -376,6 +385,7 @@ fun BrushGraphScreen(
               selectedNodeId = uiState.selectedNodeId,
               brush = viewModel.brush.collectAsStateWithLifecycle().value,
               bottomPadding = padding,
+              rightPadding = if (isSidePaneOpen) INSPECTOR_WIDTH_LANDSCAPE.dp else 0.dp,
             )
           },
           inspectorSlot = {
@@ -390,7 +400,7 @@ fun BrushGraphScreen(
             val selectionTooltip = selectedNode?.data?.getTooltip()?.let { stringResource(it) }
 
             AdaptiveInspectorPane(
-              isLandscape = isLandscape,
+              isWideScreen = isWideScreen,
               visible = selectedNode != null || selectedEdge != null,
               title = titleText,
               tooltipText = selectionTooltip,
@@ -398,7 +408,15 @@ fun BrushGraphScreen(
                 viewModel.clearSelectedNode()
                 viewModel.clearSelectedEdge()
               },
-              modifier = Modifier.align(if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter),
+              modifier = Modifier
+                .align(if (isWideScreen) Alignment.CenterEnd else Alignment.BottomCenter)
+                .let {
+                  if (isTallAndWide) {
+                    it.padding(bottom = animatedPreviewHeight)
+                  } else {
+                    it
+                  }
+                },
             ) {
                 if (selectedNode != null) {
                   NodeInspector(
@@ -449,9 +467,17 @@ fun BrushGraphScreen(
           },
           notificationPaneSlot = {
             NotificationPane(
-              isLandscape = isLandscape,
+              isWideScreen = isWideScreen,
               viewModel = viewModel,
-              modifier = Modifier.align(if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter),
+              modifier = Modifier
+                .align(if (isWideScreen) Alignment.CenterEnd else Alignment.BottomCenter)
+                .let {
+                  if (isTallAndWide) {
+                    it.padding(bottom = animatedPreviewHeight)
+                  } else {
+                    it
+                  }
+                },
             )
           },
           notificationIconSlot = { padding ->
@@ -472,7 +498,7 @@ fun BrushGraphScreen(
                   isPreviewExpanded = uiState.isPreviewExpanded,
                   isInvertedCanvas = uiState.isDarkCanvas,
                   testAutoUpdateStrokes = uiState.testAutoUpdateStrokes,
-                  brushColor = uiState.testBrushColor ?: 0,
+                  brushColor = uiState.testBrushColor ?: primaryColor,
                   brushSize = uiState.testBrushSize,
                   brush = viewModel.brush.collectAsStateWithLifecycle().value,
                   strokeList = viewModel.strokeList,
@@ -539,7 +565,7 @@ fun BrushGraphScreen(
             val previewHeightPx = previewHeight * density
 
             val (visibleWidth, visibleHeight) =
-              if (isLandscape) {
+              if (isWideScreen) {
                 val w = if (isAnySidePaneOpen) vSize.width - inspectorWidthPx else vSize.width
                 val h = vSize.height - previewHeightPx
                 w to h
@@ -553,7 +579,7 @@ fun BrushGraphScreen(
             val centerInCanvas = (visibleCenter - Offset(uiState.offset.x, uiState.offset.y)) / uiState.zoom
 
             CreateNodeSpeedDial(
-              isLandscape = isLandscape,
+              isWideScreen = isWideScreen,
               isAnySidePaneOpen = isAnySidePaneOpen,
               isPreviewExpanded = uiState.isPreviewExpanded,
               viewportSize = vSize,
@@ -616,7 +642,7 @@ fun BrushGraphScreen(
               selectedNodeId = uiState.selectedNodeId,
               selectedEdge = uiState.selectedEdge,
               currentStepIndex = viewModel.currentStepIndex,
-              isLandscape = isLandscape,
+              isWideScreen = isWideScreen,
               viewportSize = vSize,
               isPreviewExpanded = uiState.isPreviewExpanded,
               onAdvanceTutorial = { viewModel.advanceTutorial(it) },
@@ -653,7 +679,7 @@ fun BrushGraphScreen(
         updateOffset = { viewModel.updateOffset(GraphPoint(it.x, it.y)) },
         viewportSize = viewportSize,
         context = context,
-        isLandscape = isLandscape,
+        isWideScreen = isWideScreen,
         maxWidthDp = maxWidth,
         nodeRegistry = nodeRegistry
       )
