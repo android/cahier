@@ -17,6 +17,7 @@
 
 package com.example.cahier.developer.brushgraph.ui.fields
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -38,29 +39,31 @@ fun ToolTypeFilterNodeFields(
   onUpdate: (NodeData) -> Unit,
   modifier: Modifier = Modifier
 ) {
-  Text(stringResource(R.string.bg_enabled_tool_types), style = MaterialTheme.typography.bodySmall)
-  ALL_TOOL_TYPES.forEach { toolType ->
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
-      val bitIndex = toolTypeBitIndex(toolType)
-      Checkbox(
-        checked = (filterNode.enabledToolTypes and (1 shl bitIndex)) != 0,
-        onCheckedChange = { checked ->
-          val newMask =
-            if (checked) {
-              filterNode.enabledToolTypes or (1 shl bitIndex)
-            } else {
-              filterNode.enabledToolTypes and (1 shl bitIndex).inv()
-            }
-          onUpdate(
-            NodeData.Behavior(
-              behaviorNode.toBuilder()
-                .setToolTypeFilterNode(filterNode.toBuilder().setEnabledToolTypes(newMask).build())
-                .build()
+  Column(modifier = modifier) {
+    Text(stringResource(R.string.bg_enabled_tool_types), style = MaterialTheme.typography.bodySmall)
+    ALL_TOOL_TYPES.forEach { toolType ->
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        val bitIndex = toolTypeBitIndex(toolType)
+        Checkbox(
+          checked = (filterNode.enabledToolTypes and (1 shl bitIndex)) != 0,
+          onCheckedChange = { checked ->
+            val newMask =
+              if (checked) {
+                filterNode.enabledToolTypes or (1 shl bitIndex)
+              } else {
+                filterNode.enabledToolTypes and (1 shl bitIndex).inv()
+              }
+            onUpdate(
+              NodeData.Behavior(
+                behaviorNode.toBuilder()
+                  .setToolTypeFilterNode(filterNode.toBuilder().setEnabledToolTypes(newMask).build())
+                  .build()
+              )
             )
-          )
-        }
-      )
-      Text(stringResource(toolType.displayStringRId()))
+          }
+        )
+        Text(stringResource(toolType.displayStringRId()))
+      }
     }
   }
 }

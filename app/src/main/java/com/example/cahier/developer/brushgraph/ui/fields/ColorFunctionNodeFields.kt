@@ -17,6 +17,7 @@
 
 package com.example.cahier.developer.brushgraph.ui.fields
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,90 +60,91 @@ fun ColorFunctionNodeFields(
     R.string.bg_replace_color
   }
 
-  FieldWithTooltip(
-    tooltipTitle = stringResource(R.string.bg_title_function_type_format, stringResource(currentTypeResId)),
-    tooltipText = stringResource(getColorFunctionTooltip(currentTypeResId)),
-    modifier = modifier
-  ) {
-    EnumDropdown(
-      label = stringResource(R.string.bg_function_type),
-      currentValue = currentTypeResId,
-      values = listOf(R.string.bg_opacity_multiplier, R.string.bg_replace_color),
-      displayName = { stringResource(it) },
-      onSelected = { resId ->
-        if (resId != currentTypeResId) {
-          onUpdate(
-            if (resId == R.string.bg_opacity_multiplier) {
-              NodeData.ColorFunction(
-                ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
-              )
-            } else {
-              NodeData.ColorFunction(
-                ProtoColorFunction.newBuilder()
-                  .setReplaceColor(
-                    ProtoColor.newBuilder()
-                      .setRed(0f)
-                      .setGreen(0f)
-                      .setBlue(0f)
-                      .setAlpha(1f)
-                      .build()
-                  )
-                  .build()
-              )
-            }
-          )
-        }
-        onDropdownEditComplete()
-      }
-    )
-  }
-  
-  if (function.hasOpacityMultiplier()) {
-    NumericField(
-      title = stringResource(R.string.bg_label_opacity_multiplier),
-      value = function.opacityMultiplier,
-      limits = NumericLimits(0f, 2f, 0.01f),
-      onValueChanged = { onUpdate(NodeData.ColorFunction(function.toBuilder().setOpacityMultiplier(it).build())) },
-      onValueChangeFinished = onFieldEditComplete
-    )
-  } else if (function.hasReplaceColor()) {
-    val color = function.replaceColor
-    val composeColor =
-      Color(red = color.red, green = color.green, blue = color.blue, alpha = color.alpha)
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier.padding(vertical = 8.dp)
+  Column(modifier = modifier) {
+    FieldWithTooltip(
+      tooltipTitle = stringResource(R.string.bg_title_function_type_format, stringResource(currentTypeResId)),
+      tooltipText = stringResource(getColorFunctionTooltip(currentTypeResId)),
     ) {
-      Text(stringResource(R.string.bg_color_label), style = MaterialTheme.typography.bodyMedium)
-      Surface(
-        onClick = {
-          onChooseColor(composeColor) { newColor ->
+      EnumDropdown(
+        label = stringResource(R.string.bg_function_type),
+        currentValue = currentTypeResId,
+        values = listOf(R.string.bg_opacity_multiplier, R.string.bg_replace_color),
+        displayName = { stringResource(it) },
+        onSelected = { resId ->
+          if (resId != currentTypeResId) {
             onUpdate(
-              NodeData.ColorFunction(
-                function.toBuilder()
-                  .setReplaceColor(
-                    ProtoColor.newBuilder()
-                      .setRed(newColor.red)
-                      .setGreen(newColor.green)
-                      .setBlue(newColor.blue)
-                      .setAlpha(newColor.alpha)
-                      .build()
-                  )
-                  .build()
-              )
+              if (resId == R.string.bg_opacity_multiplier) {
+                NodeData.ColorFunction(
+                  ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
+                )
+              } else {
+                NodeData.ColorFunction(
+                  ProtoColorFunction.newBuilder()
+                    .setReplaceColor(
+                      ProtoColor.newBuilder()
+                        .setRed(0f)
+                        .setGreen(0f)
+                        .setBlue(0f)
+                        .setAlpha(1f)
+                        .build()
+                    )
+                    .build()
+                )
+              }
             )
           }
-        },
-        shape = RoundedCornerShape(4.dp),
-        color = composeColor,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier.size(40.dp)
-      ) {}
-      Spacer(Modifier.width(8.dp))
-      Text(
-        text = String.format("ARGB #%08X", (composeColor.toArgb())),
-        style = MaterialTheme.typography.bodySmall,
+          onDropdownEditComplete()
+        }
       )
+    }
+    
+    if (function.hasOpacityMultiplier()) {
+      NumericField(
+        title = stringResource(R.string.bg_label_opacity_multiplier),
+        value = function.opacityMultiplier,
+        limits = NumericLimits(0f, 2f, 0.01f),
+        onValueChanged = { onUpdate(NodeData.ColorFunction(function.toBuilder().setOpacityMultiplier(it).build())) },
+        onValueChangeFinished = onFieldEditComplete
+      )
+    } else if (function.hasReplaceColor()) {
+      val color = function.replaceColor
+      val composeColor =
+        Color(red = color.red, green = color.green, blue = color.blue, alpha = color.alpha)
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 8.dp)
+      ) {
+        Text(stringResource(R.string.bg_color_label), style = MaterialTheme.typography.bodyMedium)
+        Surface(
+          onClick = {
+            onChooseColor(composeColor) { newColor ->
+              onUpdate(
+                NodeData.ColorFunction(
+                  function.toBuilder()
+                    .setReplaceColor(
+                      ProtoColor.newBuilder()
+                        .setRed(newColor.red)
+                        .setGreen(newColor.green)
+                        .setBlue(newColor.blue)
+                        .setAlpha(newColor.alpha)
+                        .build()
+                    )
+                    .build()
+                )
+              )
+            }
+          },
+          shape = RoundedCornerShape(4.dp),
+          color = composeColor,
+          border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+          modifier = Modifier.size(40.dp)
+        ) {}
+        Spacer(Modifier.width(8.dp))
+        Text(
+          text = String.format("ARGB #%08X", (composeColor.toArgb())),
+          style = MaterialTheme.typography.bodySmall,
+        )
+      }
     }
   }
 }

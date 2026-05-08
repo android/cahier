@@ -277,7 +277,7 @@ fun ResponseCurveWidget(
 
   val selectedTabIndex = tabs.indexOf(currentCase).coerceAtLeast(0)
 
-  Column {
+  Column(modifier = modifier) {
     TabRow(selectedTabIndex = selectedTabIndex) {
       tabs.forEachIndexed { index, case ->
         Tab(
@@ -322,7 +322,7 @@ fun ResponseCurveWidget(
 
     Box(
       modifier =
-        modifier.padding(vertical = 8.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        Modifier.padding(vertical = 8.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
       when (currentCase) {
         ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE ->

@@ -17,6 +17,7 @@
 
 package com.example.cahier.developer.brushgraph.ui.fields
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -63,120 +64,122 @@ fun TargetNodeFields(
   var expandedTarget by remember { mutableStateOf(false) }
   var showTargetTooltip by remember { mutableStateOf(false) }
   
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = modifier.fillMaxWidth()
-  ) {
-    ExposedDropdownMenuBox(
-      expanded = expandedTarget,
-      onExpandedChange = { expandedTarget = it },
-      modifier = Modifier.weight(1f)
+  Column(modifier = modifier) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.fillMaxWidth()
     ) {
-      OutlinedTextField(
-        value = stringResource(targetNode.target.displayStringRId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.bg_target)) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTarget) },
-        modifier = Modifier.menuAnchor().fillMaxWidth()
-      )
-      ExposedDropdownMenu(
+      ExposedDropdownMenuBox(
         expanded = expandedTarget,
-        onDismissRequest = { expandedTarget = false }
+        onExpandedChange = { expandedTarget = it },
+        modifier = Modifier.weight(1f)
       ) {
-        @Composable
-        fun TargetSection(label: String, targets: List<ProtoBrushBehavior.Target>, modifier: Modifier = Modifier,) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp)
-          ) {
-            HorizontalDivider(modifier = Modifier.weight(1f))
-            Text(
-              text = label,
-              style = MaterialTheme.typography.labelSmall,
-              color = MaterialTheme.colorScheme.outline,
-              modifier = Modifier.padding(horizontal = 8.dp)
-            )
-            HorizontalDivider(modifier = Modifier.weight(1f))
-          }
-          targets.forEach { target ->
-            DropdownMenuItem(
-              text = { Text(stringResource(target.displayStringRId())) },
-              onClick = {
-                val currentDisplayStart = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeStart.toDouble()).toFloat() else targetNode.targetModifierRangeStart
-                val currentDisplayEnd = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
+        OutlinedTextField(
+          value = stringResource(targetNode.target.displayStringRId()),
+          onValueChange = {},
+          readOnly = true,
+          label = { Text(stringResource(R.string.bg_target)) },
+          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTarget) },
+          modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+          expanded = expandedTarget,
+          onDismissRequest = { expandedTarget = false }
+        ) {
+          @Composable
+          fun TargetSection(label: String, targets: List<ProtoBrushBehavior.Target>, modifier: Modifier = Modifier,) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+            ) {
+              HorizontalDivider(modifier = Modifier.weight(1f))
+              Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(horizontal = 8.dp)
+              )
+              HorizontalDivider(modifier = Modifier.weight(1f))
+            }
+            targets.forEach { target ->
+              DropdownMenuItem(
+                text = { Text(stringResource(target.displayStringRId())) },
+                onClick = {
+                  val currentDisplayStart = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeStart.toDouble()).toFloat() else targetNode.targetModifierRangeStart
+                  val currentDisplayEnd = if (targetNode.target.isAngle()) Math.toDegrees(targetNode.targetModifierRangeEnd.toDouble()).toFloat() else targetNode.targetModifierRangeEnd
 
-                val newLimits = target.getNumericLimits()
-                val clampedDisplayStart = currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
-                val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
+                  val newLimits = target.getNumericLimits()
+                  val clampedDisplayStart = currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
+                  val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
 
-                val newProtoStart = if (target.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
-                val newProtoEnd = if (target.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
+                  val newProtoStart = if (target.isAngle()) Math.toRadians(clampedDisplayStart.toDouble()).toFloat() else clampedDisplayStart
+                  val newProtoEnd = if (target.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble()).toFloat() else clampedDisplayEnd
 
-                onUpdate(
-                  NodeData.Behavior(
-                    behaviorNode.toBuilder()
-                      .setTargetNode(
-                        targetNode.toBuilder()
-                          .setTarget(target)
-                          .setTargetModifierRangeStart(newProtoStart)
-                          .setTargetModifierRangeEnd(newProtoEnd)
-                          .build()
-                      )
-                      .build()
+                  onUpdate(
+                    NodeData.Behavior(
+                      behaviorNode.toBuilder()
+                        .setTargetNode(
+                          targetNode.toBuilder()
+                            .setTarget(target)
+                            .setTargetModifierRangeStart(newProtoStart)
+                            .setTargetModifierRangeEnd(newProtoEnd)
+                            .build()
+                        )
+                        .build()
+                    )
                   )
-                )
-                onDropdownEditComplete()
-                expandedTarget = false
-              }
-            )
+                  onDropdownEditComplete()
+                  expandedTarget = false
+                }
+              )
+            }
           }
-        }
 
-        TargetSection(stringResource(R.string.bg_section_size_shape), TARGETS_SIZE_SHAPE)
-        TargetSection(stringResource(R.string.bg_section_position), TARGETS_POSITION)
-        TargetSection(stringResource(R.string.bg_section_color_opacity), TARGETS_COLOR_OPACITY)
+          TargetSection(stringResource(R.string.bg_section_size_shape), TARGETS_SIZE_SHAPE)
+          TargetSection(stringResource(R.string.bg_section_position), TARGETS_POSITION)
+          TargetSection(stringResource(R.string.bg_section_color_opacity), TARGETS_COLOR_OPACITY)
+        }
+      }
+      IconButton(onClick = { showTargetTooltip = true }) {
+        Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
       }
     }
-    IconButton(onClick = { showTargetTooltip = true }) {
-      Icon(Icons.AutoMirrored.Filled.Help, contentDescription = stringResource(R.string.bg_cd_help))
+    if (showTargetTooltip) {
+      TooltipDialog(
+        title = stringResource(R.string.bg_title_target_format, stringResource(targetNode.target.displayStringRId())),
+        text = stringResource(targetNode.target.getTooltip()),
+        onDismiss = { showTargetTooltip = false }
+      )
     }
-  }
-  if (showTargetTooltip) {
-    TooltipDialog(
-      title = stringResource(R.string.bg_title_target_format, stringResource(targetNode.target.displayStringRId())),
-      text = stringResource(targetNode.target.getTooltip()),
-      onDismiss = { showTargetTooltip = false }
+    NumericField(
+      title = stringResource(R.string.bg_label_range_start),
+      value = targetNode.targetModifierRangeStart,
+      limits = limits,
+      onValueChanged = {
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.toBuilder()
+              .setTargetNode(targetNode.toBuilder().setTargetModifierRangeStart(it).build())
+              .build()
+          )
+        )
+      },
+      onValueChangeFinished = onFieldEditComplete
+    )
+    NumericField(
+      title = stringResource(R.string.bg_label_range_end),
+      value = targetNode.targetModifierRangeEnd,
+      limits = limits,
+      onValueChanged = {
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode.toBuilder()
+              .setTargetNode(targetNode.toBuilder().setTargetModifierRangeEnd(it).build())
+              .build()
+          )
+        )
+      },
+      onValueChangeFinished = onFieldEditComplete
     )
   }
-  NumericField(
-    title = stringResource(R.string.bg_label_range_start),
-    value = targetNode.targetModifierRangeStart,
-    limits = limits,
-    onValueChanged = {
-      onUpdate(
-        NodeData.Behavior(
-          behaviorNode.toBuilder()
-            .setTargetNode(targetNode.toBuilder().setTargetModifierRangeStart(it).build())
-            .build()
-        )
-      )
-    },
-    onValueChangeFinished = onFieldEditComplete
-  )
-  NumericField(
-    title = stringResource(R.string.bg_label_range_end),
-    value = targetNode.targetModifierRangeEnd,
-    limits = limits,
-    onValueChanged = {
-      onUpdate(
-        NodeData.Behavior(
-          behaviorNode.toBuilder()
-            .setTargetNode(targetNode.toBuilder().setTargetModifierRangeEnd(it).build())
-            .build()
-        )
-      )
-    },
-    onValueChangeFinished = onFieldEditComplete
-  )
 }
