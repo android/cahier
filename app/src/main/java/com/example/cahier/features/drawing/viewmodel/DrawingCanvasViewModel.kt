@@ -375,10 +375,12 @@ class DrawingCanvasViewModel @Inject constructor(
         isBrushSelectedInSession = true
         _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily)
-            val colorToApply = if (newBrush.family == StockBrushes.highlighter()) {
-                newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
-            } else {
-                newBrush.composeColor.copy(alpha = 1f)
+            val colorToApply = when(newBrush.family) {
+            StockBrushes.highlighter() -> newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
+            StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true) -> Color(0xFF45CA).copy(alpha = HIGHLIGHTER_ALPHA)
+            StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true) -> Color(0x783013).copy(alpha = HIGHLIGHTER_ALPHA)
+            StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true) -> Color(0xFFE100).copy(alpha = HIGHLIGHTER_ALPHA)
+            else -> newBrush.composeColor.copy(alpha = 1f)
             }
             newBrush.copyWithComposeColor(colorToApply)
         }

@@ -48,7 +48,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import com.example.cahier.R
@@ -140,6 +142,7 @@ private fun BrushLibraryMenu(
             R.string.marker to StockBrushes.marker(),
             R.string.pressure_pen to StockBrushes.pressurePen(),
             R.string.dashed_line to StockBrushes.dashedLine(),
+            R.string.emoji_highlighter to StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true),
         )
     }
 
@@ -159,7 +162,7 @@ private fun BrushLibraryMenu(
                 onClick = {},
                 enabled = false
             )
-            stockBrushes.forEach { (nameResId, brushFamily) ->
+            stockBrushes.filter { it.first != R.string.emoji_highlighter }.forEach { (nameResId, brushFamily) ->
                 DropdownMenuItem(
                     text = { Text(stringResource(nameResId)) },
                     onClick = {
@@ -167,6 +170,49 @@ private fun BrushLibraryMenu(
                         expanded = false
                     }
                 )
+            }
+            
+            var showEmojiSubMenu by remember { mutableStateOf(false) }
+            
+            Box {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.emoji_highlighter)) },
+                    trailingIcon = {
+                        Text(text = if (showEmojiSubMenu) "▶" else "▼")
+                    },
+                    onClick = { showEmojiSubMenu = true }
+                )
+                DropdownMenu(
+                    expanded = showEmojiSubMenu,
+                    onDismissRequest = { showEmojiSubMenu = false },
+                    offset = DpOffset(x = 166.dp, y = (-56).dp),
+                    properties = PopupProperties(focusable = true)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.emoji_heart)) },
+                        onClick = {
+                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true))
+                            showEmojiSubMenu = false
+                            expanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.emoji_star)) },
+                        onClick = {
+                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true))
+                            showEmojiSubMenu = false
+                            expanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.emoji_poop)) },
+                        onClick = {
+                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true))
+                            showEmojiSubMenu = false
+                            expanded = false
+                        }
+                    )
+                }
             }
 
             if (cahierBrushes.isNotEmpty()) {

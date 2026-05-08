@@ -63,4 +63,7 @@ enum class SerializedStockBrush {
     PressurePenLatest,
     HighlighterLatest,
     DashedLineLatest,
+    EmojiHighlighterHeartLatest,
+    EmojiHighlighterStarLatest,
+    EmojiHighlighterPoopLatest,
 }
