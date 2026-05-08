@@ -17,6 +17,7 @@
 
 package com.example.cahier.developer.brushgraph.ui.fields
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,50 +46,51 @@ fun DampingNodeFields(
   modifier: Modifier = Modifier
 ) {
   val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
-  FieldWithTooltip(
-    modifier = modifier,
-    tooltipTitle = stringResource(R.string.bg_title_damping_source_format, stringResource(dampingNode.dampingSource.displayStringRId())),
-    tooltipText = stringResource(dampingNode.dampingSource.getTooltip()),
-  ) {
-    EnumDropdown(
-      label = stringResource(R.string.bg_damping_source),
-      currentValue = dampingNode.dampingSource,
-      values = ALL_PROGRESS_DOMAINS.toList(),
-      displayName = { stringResource(it.displayStringRId()) },
-      onSelected = { domain ->
-        val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
-        val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
+  Column(modifier = modifier) {
+    FieldWithTooltip(
+      tooltipTitle = stringResource(R.string.bg_title_damping_source_format, stringResource(dampingNode.dampingSource.displayStringRId())),
+      tooltipText = stringResource(dampingNode.dampingSource.getTooltip()),
+    ) {
+      EnumDropdown(
+        label = stringResource(R.string.bg_damping_source),
+        currentValue = dampingNode.dampingSource,
+        values = ALL_PROGRESS_DOMAINS.toList(),
+        displayName = { stringResource(it.displayStringRId()) },
+        onSelected = { domain ->
+          val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
+          val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
 
+          onUpdate(
+            NodeData.Behavior(
+              behaviorNode.toBuilder()
+                .setDampingNode(
+                  dampingNode.toBuilder()
+                    .setDampingSource(domain)
+                    .setDampingGap(clampedGap)
+                    .build()
+                )
+                .build()
+            )
+          )
+          onDropdownEditComplete()
+        }
+      )
+    }
+    
+    NumericField(
+      title = stringResource(R.string.bg_label_damping_gap),
+      value = dampingNode.dampingGap,
+      limits = limits,
+      onValueChanged = {
         onUpdate(
           NodeData.Behavior(
             behaviorNode.toBuilder()
-              .setDampingNode(
-                dampingNode.toBuilder()
-                  .setDampingSource(domain)
-                  .setDampingGap(clampedGap)
-                  .build()
-              )
+              .setDampingNode(dampingNode.toBuilder().setDampingGap(it).build())
               .build()
           )
         )
-        onDropdownEditComplete()
-      }
+      },
+      onValueChangeFinished = onFieldEditComplete
     )
   }
-  
-  NumericField(
-    title = stringResource(R.string.bg_label_damping_gap),
-    value = dampingNode.dampingGap,
-    limits = limits,
-    onValueChanged = {
-      onUpdate(
-        NodeData.Behavior(
-          behaviorNode.toBuilder()
-            .setDampingNode(dampingNode.toBuilder().setDampingGap(it).build())
-            .build()
-        )
-      )
-    },
-    onValueChangeFinished = onFieldEditComplete
-  )
 }
