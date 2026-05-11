@@ -217,7 +217,7 @@ private fun PaintPreferenceEditor(
 
 /**
  * Full editor for a single [ProtoBrushPaint.TextureLayer], including all
- * fields from SSA: texture ID, mapping, size unit, scale, rotation,
+ * fields: texture ID, mapping, size unit, scale, rotation,
  * origin, offset, wrap, blend mode, and animation.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -345,68 +345,7 @@ private fun TextureLayerEditor(
         text = blendModeDescription(layer.blendMode),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
     )
-
-    if (layer.mapping == ProtoBrushPaint.TextureLayer.Mapping.MAPPING_STAMPING) {
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.brush_designer_animation),
-            style = MaterialTheme.typography.labelLarge
-        )
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                NumericField(
-                    title = stringResource(R.string.brush_designer_rows),
-                    value = if (layer.hasAnimationRows()) layer.animationRows.toFloat() else 1f,
-                    limits = NumericLimits(1f, 10f, 1f),
-                    onValueChanged = {
-                        onLayerChanged(
-                            layer.toBuilder().setAnimationRows(it.toInt()).build()
-                        )
-                    }
-                )
-                NumericField(
-                    title = stringResource(R.string.brush_designer_columns),
-                    value = if (layer.hasAnimationColumns()) layer.animationColumns.toFloat()
-                    else 1f,
-                    limits = NumericLimits(1f, 10f, 1f),
-                    onValueChanged = {
-                        onLayerChanged(
-                            layer.toBuilder().setAnimationColumns(it.toInt()).build()
-                        )
-                    }
-                )
-                NumericField(
-                    title = stringResource(R.string.brush_designer_frames),
-                    value = if (layer.hasAnimationFrames()) layer.animationFrames.toFloat()
-                    else 1f,
-                    limits = NumericLimits(1f, 64f, 1f),
-                    onValueChanged = {
-                        onLayerChanged(
-                            layer.toBuilder().setAnimationFrames(it.toInt()).build()
-                        )
-                    }
-                )
-                NumericField(
-                    title = stringResource(R.string.brush_designer_duration_seconds),
-                    value = if (layer.hasAnimationDurationSeconds())
-                        layer.animationDurationSeconds else 0f,
-                    limits = NumericLimits(0f, 5f, 0.1f),
-                    onValueChanged = {
-                        onLayerChanged(
-                            layer.toBuilder().setAnimationDurationSeconds(it).build()
-                        )
-                    }
-                )
-            }
-        }
-    }
 }
 
 /**
@@ -418,7 +357,10 @@ private fun ColorFunctionEditor(
     colorFunction: ProtoColorFunction,
     onFunctionChanged: (ProtoColorFunction) -> Unit
 ) {
-    val functionTypes = listOf("Opacity Multiplier", "Replace Color")
+    val functionTypes = listOf(
+        stringResource(R.string.brush_designer_opacity_multiplier_label),
+        stringResource(R.string.brush_designer_replace_color)
+    )
     val currentType = when (colorFunction.functionCase) {
         ProtoColorFunction.FunctionCase.REPLACE_COLOR -> 1
         else -> 0
@@ -487,7 +429,8 @@ internal fun <T> EnumDropdown(
     currentValue: T,
     values: List<T>,
     displayName: (T) -> String,
-    onSelected: (T) -> Unit
+    onSelected: (T) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -659,6 +602,24 @@ private fun blendModeDescription(mode: ProtoBrushPaint.TextureLayer.BlendMode): 
 
         ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_MODULATE ->
             "Multiplies source and destination colors."
+
+        ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST_ATOP ->
+            "Draws destination only where texture exists."
+
+        ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_XOR ->
+            "Shows non-overlapping regions of source and destination."
+
+        ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_SRC_OUT ->
+            "Shows texture only where destination is transparent."
+
+        ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST ->
+            "Ignores texture; destination unchanged."
+
+        ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_SRC ->
+            "Replaces destination with texture."
+
+        ProtoBrushPaint.TextureLayer.BlendMode.BLEND_MODE_DST_OVER ->
+            "Draws destination over texture."
 
         else -> ""
     }

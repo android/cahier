@@ -36,7 +36,8 @@ import ink.proto.BrushBehavior
 @Composable
 internal fun NodeEditor(
     node: BrushBehavior.Node,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     when (node.nodeCase) {
         BrushBehavior.Node.NodeCase.SOURCE_NODE ->
@@ -73,9 +74,10 @@ internal fun NodeEditor(
 @Composable
 internal fun SourceNodeEditor(
     source: BrushBehavior.SourceNode,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(stringResource(R.string.brush_designer_node_source), style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.secondary)
 
@@ -143,9 +145,10 @@ internal fun SourceNodeEditor(
 @Composable
 internal fun ResponseNodeEditor(
     response: BrushBehavior.ResponseNode,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(stringResource(R.string.brush_designer_node_response_curve), style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.secondary)
 
@@ -302,9 +305,10 @@ internal fun ResponseNodeEditor(
 @Composable
 internal fun DampingNodeEditor(
     damping: BrushBehavior.DampingNode,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(stringResource(R.string.brush_designer_node_damping), style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.secondary)
 
@@ -342,9 +346,10 @@ internal fun DampingNodeEditor(
 @Composable
 internal fun NoiseNodeEditor(
     noise: BrushBehavior.NoiseNode,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(
             text = stringResource(R.string.brush_designer_node_noise),
             style = MaterialTheme.typography.labelLarge,
@@ -398,9 +403,10 @@ internal fun NoiseNodeEditor(
 @Composable
 internal fun TargetNodeEditor(
     target: BrushBehavior.TargetNode,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(stringResource(R.string.brush_designer_node_target), style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.secondary)
 
@@ -451,9 +457,10 @@ internal fun TargetNodeEditor(
 @Composable
 internal fun ConstantNodeEditor(
     constant: BrushBehavior.ConstantNode,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(stringResource(R.string.brush_designer_node_constant_value), style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.secondary)
 
@@ -475,9 +482,10 @@ internal fun ConstantNodeEditor(
 @Composable
 internal fun BinaryOpNodeEditor(
     binaryOp: BrushBehavior.BinaryOpNode,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(stringResource(R.string.brush_designer_node_binary_operation), style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.secondary)
 
@@ -502,9 +510,10 @@ internal fun BinaryOpNodeEditor(
 @Composable
 internal fun InterpolationNodeEditor(
     interpolation: BrushBehavior.InterpolationNode,
-    onNodeChanged: (BrushBehavior.Node) -> Unit
+    onNodeChanged: (BrushBehavior.Node) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(stringResource(R.string.brush_designer_node_interpolation), style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.secondary)
 

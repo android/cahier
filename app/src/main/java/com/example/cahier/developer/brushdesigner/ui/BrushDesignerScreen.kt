@@ -284,8 +284,9 @@ private fun ControlsPane(
             textureIdInput = textureIdInput,
             onTextureIdChange = { textureIdInput = it },
             onConfirm = {
-                if (textureIdInput.isNotBlank() && pendingTextureUri != null) {
-                    viewModel.addCustomTexture(pendingTextureUri!!, textureIdInput)
+                val uri = pendingTextureUri
+                if (textureIdInput.isNotBlank() && uri != null) {
+                    viewModel.addCustomTexture(uri, textureIdInput)
                     showTextureDialog = false
                     textureIdInput = ""
                 }
@@ -324,8 +325,7 @@ private fun ControlsPane(
 
         InputModelSection(
             inputModel = inputModel,
-            onUpdateInputModelToSpring = { viewModel.updateInputModelToSpring() },
-            onUpdateInputModelToNaive = { viewModel.updateInputModelToNaive() },
+            onUpdateInputModelToPassthrough = { viewModel.updateInputModelToPassthrough() },
             onUpdateSlidingWindowModel = { ms,
                                            hz ->
                 viewModel.updateSlidingWindowModel(ms, hz)
@@ -365,7 +365,6 @@ private fun ControlsPane(
                 activeProto = activeProto,
                 selectedCoatIndex = selectedCoatIndex,
                 onUpdateBehaviors = { viewModel.updateBehaviorsList(it) },
-                onClearBehaviors = { viewModel.clearBehaviors() },
                 onAddBehavior = { nodes -> viewModel.addBehavior(nodes) },
             )
         }
@@ -465,9 +464,9 @@ internal fun MetadataSection(
 @Composable
 internal fun InputModelSection(
     inputModel: ink.proto.BrushFamily.InputModel,
-    onUpdateInputModelToSpring: () -> Unit,
-    onUpdateInputModelToNaive: () -> Unit,
-    onUpdateSlidingWindowModel: (Long, Int) -> Unit
+    onUpdateInputModelToPassthrough: () -> Unit,
+    onUpdateSlidingWindowModel: (Long, Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Text(
         stringResource(R.string.brush_designer_input_model),
@@ -476,9 +475,8 @@ internal fun InputModelSection(
 
     var expandedModelMenu by remember { mutableStateOf(false) }
     val currentModelString = when {
-        inputModel.hasSpringModel() -> stringResource(R.string.brush_designer_spring_model)
-        inputModel.hasExperimentalNaiveModel() ->
-            stringResource(R.string.brush_designer_naive_model)
+        inputModel.hasPassthroughModel() ->
+            stringResource(R.string.brush_designer_passthrough_model)
 
         inputModel.hasSlidingWindowModel() ->
             stringResource(R.string.brush_designer_sliding_window)
@@ -508,16 +506,9 @@ internal fun InputModelSection(
             onDismissRequest = { expandedModelMenu = false }
         ) {
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.brush_designer_spring_model)) },
+                text = { Text(stringResource(R.string.brush_designer_passthrough_model)) },
                 onClick = {
-                    onUpdateInputModelToSpring()
-                    expandedModelMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.brush_designer_naive_model)) },
-                onClick = {
-                    onUpdateInputModelToNaive()
+                    onUpdateInputModelToPassthrough()
                     expandedModelMenu = false
                 }
             )
@@ -531,9 +522,7 @@ internal fun InputModelSection(
         }
     }
 
-    if (inputModel.hasSlidingWindowModel() || (!inputModel.hasSpringModel()
-                && !inputModel.hasExperimentalNaiveModel())
-    ) {
+    if (inputModel.hasSlidingWindowModel() || !inputModel.hasPassthroughModel()) {
         SlidingWindowControls(
             inputModel = inputModel,
             onUpdateSlidingWindowModel = onUpdateSlidingWindowModel

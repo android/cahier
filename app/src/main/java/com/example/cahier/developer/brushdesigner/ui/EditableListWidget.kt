@@ -54,13 +54,15 @@ data class CheckableItem<T>(val item: T, val enabled: Boolean = true)
  * A generic list editor that supports add, delete, duplicate, and A/B
  * testing (enable/disable toggle) for ordered lists of proto items.
  *
- * Stateless: the canonical item list is passed in via [items], and all
- * changes are emitted via [onItemsChanged] with only the enabled items.
+ * Internally stateful: manages A/B toggle state locally via [CheckableItem].
+ * The initial item list is passed in via [items]; after initialization, the
+ * widget owns the list. All mutations are emitted via [onItemsChanged] with
+ * only the enabled items.
  *
  * @param title section header text
- * @param items current list of items (from proto)
+ * @param items initial list of items (from proto), used only for first composition
  * @param defaultItem factory default for new items
- * @param onItemsChanged callback with the updated full list of items
+ * @param onItemsChanged callback with the updated list of enabled items
  * @param itemHeader display label for each item in collapsed view
  * @param editorContent expanded editor for the selected item
  */
@@ -76,14 +78,6 @@ internal fun <T> EditableListWidget(
     var itemStates by remember { mutableStateOf(items
         .map { CheckableItem(it, true) }) }
 
-
-    if (itemStates.size != items.size ||
-        itemStates.zip(items).any { (s, i) -> s.item != i }) {
-            itemStates = items.mapIndexed { index, item ->
-                CheckableItem(item, itemStates
-                    .getOrNull(index)?.enabled ?: true)
-            }
-        }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     fun emitEnabledItems() {
