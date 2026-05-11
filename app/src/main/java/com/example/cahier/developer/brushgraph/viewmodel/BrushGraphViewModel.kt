@@ -1,17 +1,17 @@
 /*
- *  * Copyright 2026 Google LLC. All rights reserved.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Copyright 2026 Google LLC. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.example.cahier.developer.brushgraph.viewmodel
 
@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
+import androidx.ink.brush.Version
 import androidx.ink.brush.compose.composeColor
 import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.storage.AndroidBrushFamilySerialization
@@ -61,9 +62,9 @@ import ink.proto.ColorFunction as ProtoColorFunction
 /** ViewModel to manage the state of the brush graph. */
 @HiltViewModel
 class BrushGraphViewModel @Inject constructor(
-  private val customBrushDao: CustomBrushDao,
-  private val textureStore: CahierTextureBitmapStore,
-  private val repository: BrushGraphRepository,
+    private val customBrushDao: CustomBrushDao,
+    private val textureStore: CahierTextureBitmapStore,
+    private val repository: BrushGraphRepository,
 ) : ViewModel() {
 
     /** Saved brushes in the palette. */
@@ -455,10 +456,10 @@ class BrushGraphViewModel @Inject constructor(
 
     /** Finalizes an edge edit by deleting the old edge and adding the new one. */
     fun finalizeEdgeEdit(
-      oldEdge: GraphEdge,
-      newFromNodeId: String,
-      newToNodeId: String,
-      newToPortId: String,
+        oldEdge: GraphEdge,
+        newFromNodeId: String,
+        newToNodeId: String,
+        newToPortId: String,
     ) {
         if (oldEdge.toNodeId == newToNodeId && oldEdge.toPortId == newToPortId) {
             // Reconnecting to the same port, just re-enable it.
@@ -596,6 +597,7 @@ class BrushGraphViewModel @Inject constructor(
             try {
                 val family = AndroidBrushFamilySerialization.decode(
                     ByteArrayInputStream(entity.brushBytes),
+                    maxVersion = Version.DEVELOPMENT,
                     BrushFamilyDecodeCallback { id, bitmap ->
                         if (bitmap != null) {
                             loadTexture(id, bitmap)

@@ -408,7 +408,7 @@
     <string name="bg_node_polar_target">Polar Target</string>
     <string name="bg_node_unknown">Unknown</string>
     <string name="bg_node_color_function">Color Function</string>
-    
+
     <string name="bg_err_edge_missing_source">Edge refers to missing source node</string>
     <string name="bg_err_edge_missing_target">Edge refers to missing target node</string>
     <string name="bg_err_family_count">Graph must have exactly one Brush Family node. Found %1$d.</string>
@@ -478,20 +478,20 @@
     <string name="bg_port_end">End</string>
     <string name="bg_port_angle">Angle</string>
     <string name="bg_port_mag">Mag</string>
-    
+
     <string name="bg_opacity_multiplier">opacity multiplier</string>
     <string name="bg_replace_color">replace color</string>
-    
+
     <string name="bg_tool_type_unknown">unknown</string>
     <string name="bg_tool_type_mouse">mouse</string>
     <string name="bg_tool_type_touch">touch</string>
     <string name="bg_tool_type_stylus">stylus</string>
     <string name="bg_tool_type_none">none</string>
-    
+
     <string name="bg_unit_cm">cm</string>
     <string name="bg_unit_size">size</string>
     <string name="bg_unit_s">s</string>
-    
+
     <string name="bg_overlap_label">overlap: %1$s</string>
     <string name="bg_period_label">period: %1$s</string>
     <string name="bg_gap_label">gap: %1$s%2$s</string>
@@ -510,6 +510,7 @@
     <string name="bg_source_normalized_direction_y">normalized direction Y</string>
     <string name="bg_source_distance_traveled">distance traveled</string>
     <string name="bg_source_time_of_input_s">time of input (s)</string>
+    <string name="bg_source_time_from_input_to_stroke_end_s">time from input to stroke end (s)</string>
     <string name="bg_source_predicted_distance_traveled">predicted distance traveled</string>
     <string name="bg_source_predicted_time_elapsed_s">predicted time elapsed (s)</string>
     <string name="bg_source_distance_remaining">distance remaining</string>
