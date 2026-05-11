@@ -43,10 +43,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -113,108 +115,133 @@ fun NodeWidget(
     val w = node.data.width()
     val h = node.data.height(visiblePorts.size)
 
-    val backgroundColorByNodeData =
+    val (backgroundColorByNodeData, textColorByNodeData) =
         when (node.data) {
-            is NodeData.Coat -> MaterialTheme.colorScheme.secondaryContainer
+            is NodeData.Coat,
             is NodeData.Tip,
             is NodeData.Paint,
-                -> MaterialTheme.colorScheme.secondaryContainer
+                -> Pair(
+                MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer
+            )
 
-            is NodeData.Family -> MaterialTheme.colorScheme.tertiaryContainer
+            is NodeData.Family -> Pair(
+                MaterialTheme.colorScheme.tertiaryContainer,
+                MaterialTheme.colorScheme.onTertiaryContainer
+            )
+
             is NodeData.TextureLayer,
             is NodeData.ColorFunction,
-                -> MaterialTheme.colorScheme.surfaceVariant
+                -> Pair(
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-            else -> MaterialTheme.colorScheme.surfaceDim
+            else -> Pair(
+                MaterialTheme.colorScheme.surfaceDim,
+                MaterialTheme.colorScheme.onSurface
+            )
         }
-    val (backgroundColor, outlineWeight, outlineColor) = when {
+
+    data class NodeColors(
+        val backgroundColor: Color,
+        val outlineWeight: Dp,
+        val outlineColor: Color,
+        val textColor: Color,
+    )
+    val (backgroundColor, outlineWeight, outlineColor, textColor) = when {
         node.isDisabled ->
-            Triple(
+            NodeColors(
                 MaterialTheme.colorScheme.surfaceDim,
                 1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.38f)
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
+                MaterialTheme.colorScheme.onSurface,
             )
 
         isActiveSource || isPressed || isSelected || isInSelectedSet ->
-            Triple(
+            NodeColors(
                 MaterialTheme.colorScheme.primaryContainer,
                 2.dp,
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.primary,
+                MaterialTheme.colorScheme.onPrimaryContainer,
             )
 
         node.hasError ->
-            Triple(
+            NodeColors(
                 MaterialTheme.colorScheme.errorContainer,
                 2.dp,
-                MaterialTheme.colorScheme.error
+                MaterialTheme.colorScheme.error,
+                MaterialTheme.colorScheme.onErrorContainer,
             )
 
         node.hasWarning ->
-            Triple(
+            NodeColors(
                 MaterialTheme.extendedColorScheme.warningContainer,
                 2.dp,
-                MaterialTheme.extendedColorScheme.warning
+                MaterialTheme.extendedColorScheme.warning,
+                MaterialTheme.extendedColorScheme.onWarningContainer,
             )
 
         else ->
-            Triple(
+            NodeColors(
                 backgroundColorByNodeData,
                 1.dp,
-                MaterialTheme.colorScheme.outline
+                MaterialTheme.colorScheme.outline,
+                textColorByNodeData
             )
     }
     Box(
         modifier =
             modifier
-              .zIndex(if (isSelected) 1f else 0f)
-              .offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }
-              .pointerInput(node.id, isSelected, isSelectionMode) {
-                detectTapGestures(
-                  onPress = {
-                    isPressed = true
-                    try {
-                      awaitRelease()
-                    } finally {
-                      isPressed = false
-                    }
-                  },
-                  onTap = { onClick() },
-                  onLongPress = { onLongPress() }
-                )
-              }
-              .pointerInput(node.id, isSelected) {
-                detectDragGestures(
-                  onDragStart = { currentOnDragStart() },
-                  onDragEnd = { currentOnDragEnd() },
-                  onDragCancel = { currentOnDragEnd() },
-                  onDrag = { change, dragAmount ->
-                    change.consume()
-                    currentOnMove(dragAmount)
-                    currentOnDragUpdate(change)
-                  },
-                )
-              }
-              .then(
-                with(density) {
-                  Modifier
-                    .width(w.toDp())
-                    .height(h.toDp())
-                    .background(
-                      backgroundColor,
-                      RoundedCornerShape(8.dp),
-                    )
-                    .border(
-                      outlineWeight,
-                      outlineColor,
-                      RoundedCornerShape(8.dp),
+                .zIndex(if (isSelected) 1f else 0f)
+                .offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }
+                .pointerInput(node.id, isSelected, isSelectionMode) {
+                    detectTapGestures(
+                        onPress = {
+                            isPressed = true
+                            try {
+                                awaitRelease()
+                            } finally {
+                                isPressed = false
+                            }
+                        },
+                        onTap = { onClick() },
+                        onLongPress = { onLongPress() }
                     )
                 }
-              )
+                .pointerInput(node.id, isSelected) {
+                    detectDragGestures(
+                        onDragStart = { currentOnDragStart() },
+                        onDragEnd = { currentOnDragEnd() },
+                        onDragCancel = { currentOnDragEnd() },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            currentOnMove(dragAmount)
+                            currentOnDragUpdate(change)
+                        },
+                    )
+                }
+                .then(
+                    with(density) {
+                        Modifier
+                            .width(w.toDp())
+                            .height(h.toDp())
+                            .background(
+                                backgroundColor,
+                                RoundedCornerShape(8.dp),
+                            )
+                            .border(
+                                outlineWeight,
+                                outlineColor,
+                                RoundedCornerShape(8.dp),
+                            )
+                    }
+                )
     ) {
         Box(
             modifier = Modifier
-              .fillMaxSize()
-              .alpha(if (node.isDisabled) 0.38f else 1f)
+                .fillMaxSize()
+                .alpha(if (node.isDisabled) 0.38f else 1f)
         ) {
             Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) {
                 val nodeWidthDp = with(density) { NODE_WIDTH.toDp() }
@@ -222,19 +249,20 @@ fun NodeWidget(
                 val bottomPaddingDp = with(density) { NODE_PADDING_BOTTOM.toDp() }
                 Box(
                     modifier = Modifier
-                      .width(nodeWidthDp)
-                      .fillMaxHeight()
-                      .padding(bottom = bottomPaddingDp)
+                        .width(nodeWidthDp)
+                        .fillMaxHeight()
+                        .padding(bottom = bottomPaddingDp)
                 ) {
                     Column(
                         modifier = Modifier
-                          .fillMaxSize()
-                          .padding(top = topPaddingDp)
+                            .fillMaxSize()
+                            .padding(top = topPaddingDp)
                     ) {
                         NodeHeader(
                             node = node,
                             graph = graph,
-                            strokeRenderer = strokeRenderer
+                            strokeRenderer = strokeRenderer,
+                            textColor = textColor,
                         )
 
                         NodePortLabels(
@@ -242,7 +270,8 @@ fun NodeWidget(
                             graph = graph,
                             visiblePorts = visiblePorts,
                             isSelectionMode = isSelectionMode,
-                            onPortClick = onPortClick
+                            onPortClick = onPortClick,
+                            textColor = textColor,
                         )
                     }
 
@@ -266,9 +295,9 @@ fun NodeWidget(
                     // Division Line
                     Box(
                         modifier = Modifier
-                          .fillMaxHeight()
-                          .width(2.dp)
-                          .background(outlineColor)
+                            .fillMaxHeight()
+                            .width(2.dp)
+                            .background(outlineColor)
                     )
 
                     SineWavePreview(
@@ -276,10 +305,10 @@ fun NodeWidget(
                         strokeRenderer = strokeRenderer,
                         modifier =
                             Modifier
-                              .weight(1f)
-                              .fillMaxHeight()
-                              .background(MaterialTheme.colorScheme.surface)
-                              .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)),
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)),
                     )
                 }
             }
@@ -287,14 +316,14 @@ fun NodeWidget(
             if (isSelectionMode && node.data !is NodeData.Family) {
                 Box(
                     modifier = Modifier
-                      .align(Alignment.TopEnd)
-                      .offset(x = 6.dp, y = (-6).dp)
-                      .size(16.dp)
-                      .background(
-                        if (isInSelectedSet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                        CircleShape
-                      )
-                      .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 6.dp, y = (-6).dp)
+                        .size(16.dp)
+                        .background(
+                            if (isInSelectedSet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                            CircleShape
+                        )
+                        .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
                 )
             }
         }

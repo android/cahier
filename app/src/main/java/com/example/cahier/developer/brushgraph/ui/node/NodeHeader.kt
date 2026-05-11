@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,21 +53,23 @@ fun NodeHeader(
     node: GraphNode,
     graph: BrushGraph,
     strokeRenderer: CanvasStrokeRenderer,
+    textColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val data = node.data
     Column(modifier = modifier) {
         Row(
             modifier = Modifier
-              .height(with(LocalDensity.current) { data.titleHeight().toDp() })
-              .padding(horizontal = 8.dp, vertical = 4.dp)
-              .fillMaxWidth(),
+                .height(with(LocalDensity.current) { data.titleHeight().toDp() })
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
                 Text(
                     text = stringResource(data.title()),
+                    color = textColor,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -77,7 +80,7 @@ fun NodeHeader(
                     Text(
                         text = subtitleText,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = textColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -86,9 +89,11 @@ fun NodeHeader(
 
             // Previews for Tip and Coat nodes.
             if (data is NodeData.Tip) {
-                Box(modifier = Modifier
-                  .size(60.dp)
-                  .padding(4.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(4.dp)
+                ) {
                     TipPreviewWidget(data.tip, strokeRenderer)
                 }
             } else if (data is NodeData.Coat) {
@@ -103,25 +108,31 @@ fun NodeHeader(
                     }
                 }
 
-                Box(modifier = Modifier
-                  .size(60.dp)
-                  .padding(4.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(4.dp)
+                ) {
                     CoatPreviewWidget(coat, strokeRenderer)
                 }
             }
         }
 
         if (data is NodeData.ColorFunction) {
-            Box(modifier = Modifier
-              .size(60.dp)
-              .padding(4.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .padding(4.dp)
+            ) {
                 ColorFunctionPreviewWidget(data.function, strokeRenderer)
             }
         }
         if (data is NodeData.TextureLayer) {
-            Box(modifier = Modifier
-              .size(60.dp)
-              .padding(4.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .padding(4.dp)
+            ) {
                 TextureLayerPreviewWidget(data.layer, strokeRenderer)
             }
         }

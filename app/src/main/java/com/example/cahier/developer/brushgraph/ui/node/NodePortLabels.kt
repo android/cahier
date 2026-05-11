@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +56,7 @@ fun NodePortLabels(
     visiblePorts: List<Port>,
     isSelectionMode: Boolean,
     onPortClick: (String, Port) -> Unit,
+    textColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -77,17 +79,17 @@ fun NodePortLabels(
                                 .let {
                                     if (isPortEmpty) {
                                         it
-                                          .clickable(enabled = !isSelectionMode) {
-                                            onPortClick(
-                                              node.id,
-                                              port
+                                            .clickable(enabled = !isSelectionMode) {
+                                                onPortClick(
+                                                    node.id,
+                                                    port
+                                                )
+                                            }
+                                            .background(
+                                                MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                                    alpha = 0.5f
+                                                ), RoundedCornerShape(4.dp)
                                             )
-                                          }
-                                          .background(
-                                            MaterialTheme.colorScheme.tertiaryContainer.copy(
-                                              alpha = 0.5f
-                                            ), RoundedCornerShape(4.dp)
-                                          )
                                     } else {
                                         it
                                     }
@@ -110,7 +112,7 @@ fun NodePortLabels(
                             Text(
                                 text = port.label?.asString() ?: "",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isPortEmpty) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (isPortEmpty) MaterialTheme.colorScheme.primary else textColor,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -125,9 +127,9 @@ fun NodePortLabels(
                 Box(
                     modifier =
                         Modifier
-                          .height(INPUT_ROW_HEIGHT.toDp())
-                          .align(Alignment.TopEnd)
-                          .padding(horizontal = 4.dp)
+                            .height(INPUT_ROW_HEIGHT.toDp())
+                            .align(Alignment.TopEnd)
+                            .padding(horizontal = 4.dp)
                 ) {
                     Text(
                         text = stringResource(R.string.bg_label_out),
