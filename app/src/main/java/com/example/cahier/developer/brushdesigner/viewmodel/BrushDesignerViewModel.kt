@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
+import androidx.ink.brush.Version
 import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.storage.decode
 import androidx.ink.storage.encode
@@ -31,7 +32,6 @@ import androidx.ink.strokes.Stroke
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cahier.core.ui.CahierTextureBitmapStore
-import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.theme.BrushBlack
 import com.example.cahier.developer.brushdesigner.data.BrushDesignerRepository
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
@@ -71,7 +71,7 @@ class BrushDesignerViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val repository: BrushDesignerRepository,
     private val textureStore: CahierTextureBitmapStore,
-    private val customBrushDao: CustomBrushDao
+    private val customBrushDao: CustomBrushDao,
 ) : ViewModel() {
 
     val activeBrushProto: StateFlow<ProtoBrushFamily> = repository.activeBrushProto
@@ -91,7 +91,10 @@ class BrushDesignerViewModel @Inject constructor(
                     GZIPOutputStream(baos).use { it.write(rawBytes) }
 
                     ByteArrayInputStream(baos.toByteArray()).use { inputStream ->
-                        BrushFamily.decode(inputStream) { textureId, bitmap ->
+                        BrushFamily.decode(
+                            inputStream,
+                            maxVersion = Version.DEVELOPMENT
+                        ) { textureId, bitmap ->
                             bitmap?.let { textureStore.loadTexture(textureId, it) }
                             textureId
                         }

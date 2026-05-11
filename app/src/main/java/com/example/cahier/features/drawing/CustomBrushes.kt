@@ -24,6 +24,7 @@ import android.content.Context
 import android.util.Log
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
+import androidx.ink.brush.Version
 import androidx.ink.storage.decode
 import com.example.cahier.R
 import com.example.cahier.core.data.CustomBrush
@@ -58,7 +59,7 @@ object CustomBrushes {
             val (resourceId, icon) = pair
             try {
                 val brushFamily = context.resources.openRawResource(resourceId).use { inputStream ->
-                    BrushFamily.decode(inputStream)
+                    BrushFamily.decode(inputStream, maxVersion = Version.DEVELOPMENT)
                 }
                 CustomBrush(name, icon, brushFamily)
             } catch (e: Exception) {
