@@ -29,8 +29,7 @@ import com.example.cahier.R
 class CahierTextureBitmapStore(context: Context) : TextureBitmapStore {
     private val resources = context.resources
 
-    private val textureResources:
-            Map<String, Int> = mapOf(
+    private val textureResources: Map<String, Int> = mapOf(
         "music-clef-g" to R.drawable.music_clef_g,
         "music-note-sixteenth" to R.drawable.music_note_sixteenth,
         "pencil" to R.drawable.pencil,
