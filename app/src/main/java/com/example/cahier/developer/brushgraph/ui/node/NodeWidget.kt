@@ -115,31 +115,46 @@ fun NodeWidget(
     val w = node.data.width()
     val h = node.data.height(visiblePorts.size)
 
-    val (backgroundColorByNodeData, textColorByNodeData) =
+    data class NodeColorsByNodeData(
+        val backgroundColor: Color,
+        val textColor: Color,
+        val addButtonColor: Color,
+        val addButtonTextColor: Color,
+    )
+
+    val (backgroundColorByNodeData, textColorByNodeData, addButtonColorByNodeData, addButtonTextColorByNodeData) =
         when (node.data) {
             is NodeData.Coat,
             is NodeData.Tip,
             is NodeData.Paint,
-                -> Pair(
+                -> NodeColorsByNodeData(
                 MaterialTheme.colorScheme.secondaryContainer,
-                MaterialTheme.colorScheme.onSecondaryContainer
+                MaterialTheme.colorScheme.onSecondaryContainer,
+                MaterialTheme.colorScheme.surface,
+                MaterialTheme.colorScheme.onSurface,
             )
 
-            is NodeData.Family -> Pair(
+            is NodeData.Family -> NodeColorsByNodeData(
                 MaterialTheme.colorScheme.tertiaryContainer,
-                MaterialTheme.colorScheme.onTertiaryContainer
+                MaterialTheme.colorScheme.onTertiaryContainer,
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             is NodeData.TextureLayer,
             is NodeData.ColorFunction,
-                -> Pair(
+                -> NodeColorsByNodeData(
                 MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.onSurfaceVariant
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer
             )
 
-            else -> Pair(
+            else -> NodeColorsByNodeData(
                 MaterialTheme.colorScheme.surfaceDim,
-                MaterialTheme.colorScheme.onSurface
+                MaterialTheme.colorScheme.onSurface,
+                MaterialTheme.colorScheme.tertiaryContainer,
+                MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
 
@@ -148,14 +163,18 @@ fun NodeWidget(
         val outlineWeight: Dp,
         val outlineColor: Color,
         val textColor: Color,
+        val addButtonColor: Color,
+        val addButtonTextColor: Color,
     )
-    val (backgroundColor, outlineWeight, outlineColor, textColor) = when {
+    val (backgroundColor, outlineWeight, outlineColor, textColor, addButtonColor, addButtonTextColor) = when {
         node.isDisabled ->
             NodeColors(
                 MaterialTheme.colorScheme.surfaceDim,
                 1.dp,
                 MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
                 MaterialTheme.colorScheme.onSurface,
+                addButtonColorByNodeData,
+                addButtonTextColorByNodeData
             )
 
         isActiveSource || isPressed || isSelected || isInSelectedSet ->
@@ -164,6 +183,8 @@ fun NodeWidget(
                 2.dp,
                 MaterialTheme.colorScheme.primary,
                 MaterialTheme.colorScheme.onPrimaryContainer,
+                MaterialTheme.colorScheme.primary,
+                MaterialTheme.colorScheme.onPrimary,
             )
 
         node.hasError ->
@@ -172,6 +193,8 @@ fun NodeWidget(
                 2.dp,
                 MaterialTheme.colorScheme.error,
                 MaterialTheme.colorScheme.onErrorContainer,
+                MaterialTheme.colorScheme.error,
+                MaterialTheme.colorScheme.onError,
             )
 
         node.hasWarning ->
@@ -180,6 +203,8 @@ fun NodeWidget(
                 2.dp,
                 MaterialTheme.extendedColorScheme.warning,
                 MaterialTheme.extendedColorScheme.onWarningContainer,
+                MaterialTheme.extendedColorScheme.warning,
+                MaterialTheme.extendedColorScheme.onWarning,
             )
 
         else ->
@@ -187,7 +212,9 @@ fun NodeWidget(
                 backgroundColorByNodeData,
                 1.dp,
                 MaterialTheme.colorScheme.outline,
-                textColorByNodeData
+                textColorByNodeData,
+                addButtonColorByNodeData,
+                addButtonTextColorByNodeData
             )
     }
     Box(
@@ -272,6 +299,8 @@ fun NodeWidget(
                             isSelectionMode = isSelectionMode,
                             onPortClick = onPortClick,
                             textColor = textColor,
+                            addButtonColor = addButtonColor,
+                            addButtonTextColor = addButtonTextColor
                         )
                     }
 

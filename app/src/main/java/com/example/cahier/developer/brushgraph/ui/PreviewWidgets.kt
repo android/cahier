@@ -353,7 +353,7 @@ fun StrokePreviewWidget(
     showSingleInput: Boolean = true,
     zoom: Float = 1f,
 ) {
-    val canvasBackground = MaterialTheme.colorScheme.surfaceContainer
+    val canvasBackground = MaterialTheme.colorScheme.surface
     val brush =
         Brush.createWithComposeColor(
             family,
@@ -396,10 +396,10 @@ fun StrokePreviewWidget(
     Canvas(
         modifier =
             modifier
-              .height(canvasSize)
-              .width(canvasSize)
-              .clip(RectangleShape)
-              .background(canvasBackground),
+                .height(canvasSize)
+                .width(canvasSize)
+                .clip(RectangleShape)
+                .background(canvasBackground),
         onDraw = {
             drawIntoCanvas { canvas ->
                 // Translate stroke to center of the canvas.

@@ -57,6 +57,8 @@ fun NodePortLabels(
     isSelectionMode: Boolean,
     onPortClick: (String, Port) -> Unit,
     textColor: Color,
+    addButtonColor: Color,
+    addButtonTextColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -86,9 +88,7 @@ fun NodePortLabels(
                                                 )
                                             }
                                             .background(
-                                                MaterialTheme.colorScheme.tertiaryContainer.copy(
-                                                    alpha = 0.5f
-                                                ), RoundedCornerShape(4.dp)
+                                                addButtonColor, RoundedCornerShape(4.dp)
                                             )
                                     } else {
                                         it
@@ -104,7 +104,7 @@ fun NodePortLabels(
                                 Icon(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = stringResource(R.string.bg_cd_add),
-                                    tint = MaterialTheme.colorScheme.primary,
+                                    tint = addButtonTextColor,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -112,7 +112,7 @@ fun NodePortLabels(
                             Text(
                                 text = port.label?.asString() ?: "",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isPortEmpty) MaterialTheme.colorScheme.primary else textColor,
+                                color = if (isPortEmpty) addButtonTextColor else textColor,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -134,7 +134,7 @@ fun NodePortLabels(
                     Text(
                         text = stringResource(R.string.bg_label_out),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = textColor,
                         modifier = Modifier.align(Alignment.CenterEnd),
                     )
                 }
