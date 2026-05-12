@@ -34,9 +34,8 @@ import androidx.test.core.app.ApplicationProvider
 import coil3.ImageLoader
 import com.example.cahier.core.data.FakeNotesRepository
 import com.example.cahier.core.navigation.DrawingCanvasDestination
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.utils.FileHelper
-import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
-import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -52,8 +51,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -96,7 +93,8 @@ class DrawingCanvasViewModelTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         viewModel = DrawingCanvasViewModel(
             context, savedStateHandle, notesRepository, fileHelper, imageLoader,
-            customBrushDao = FakeCustomBrushDao()
+            customBrushDao = FakeCustomBrushDao(),
+            CahierTextureBitmapStore(context)
         )
     }
 

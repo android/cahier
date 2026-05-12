@@ -239,12 +239,6 @@ class BrushDesignerViewModel @Inject constructor(
         }
     }
 
-    fun updateClientBrushFamilyId(id: String) {
-        val builder = repository.activeBrushProto.value.toBuilder()
-        builder.clientBrushFamilyId = id
-        repository.updateActiveBrushProto(builder.build())
-    }
-
     fun updateDeveloperComment(comment: String) {
         val builder = repository.activeBrushProto.value.toBuilder()
         builder.developerComment = comment

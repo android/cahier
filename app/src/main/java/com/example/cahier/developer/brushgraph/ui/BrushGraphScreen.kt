@@ -185,7 +185,7 @@ fun BrushGraphScreen(
                             "BrushGraphWidget",
                             "Failed to decode with AndroidBrushFamilySerialization, and legacy fallback is disabled."
                         )
-                        viewModel.postDebug(DisplayText.Resource(R.string.bg_err_load_brush_legacy_unsupported))
+                        viewModel.postDebug(DisplayText.Resource(R.string.bg_err_load_brush))
                     } else {
                         viewModel.loadBrushFamily(family)
                         viewModel.postDebug(DisplayText.Resource(R.string.bg_msg_brush_loaded_success))

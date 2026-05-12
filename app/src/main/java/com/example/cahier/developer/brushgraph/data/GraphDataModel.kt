@@ -471,6 +471,7 @@ sealed interface NodeData {
     /** Represents the [ProtoBrushFamily] root. */
     data class Family(
         val clientBrushFamilyId: String = "",
+        val name: String = "",
         val developerComment: String = "",
         val inputModel: ProtoBrushFamily.InputModel =
             ProtoBrushFamily.InputModel.newBuilder()
@@ -493,7 +494,7 @@ sealed interface NodeData {
 
         override fun title() = R.string.bg_family
 
-        override fun subtitles() = listOf(DisplayText.Literal(clientBrushFamilyId))
+        override fun subtitles() = listOf(DisplayText.Literal(name))
 
         override fun hasOutput() = false
 

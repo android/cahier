@@ -344,7 +344,7 @@
     <string name="bg_self_overlap">Self Overlap</string>
     <string name="bg_function_type">Function Type</string>
     <string name="bg_color_label">Color: </string>
-    <string name="bg_client_brush_family_id">Client Brush Family ID</string>
+    <string name="bg_brush_family_name">Brush name</string>
     <string name="bg_brush_developer_comment">Brush developer comment</string>
     <string name="bg_input_model">Input Model</string>
     <string name="bg_delete_nodes">Delete Nodes</string>
@@ -440,7 +440,7 @@
     <string name="bg_err_expected_node_type">Expected %1$s node, found %2$s</string>
     <string name="bg_err_internal_conversion">Internal error during conversion: %1$s</string>
     <string name="bg_err_unsupported_behavior_node_type">Unsupported behavior node type: %1$s</string>
-    <string name="bg_err_load_brush_legacy_unsupported">Failed to load brush: Legacy format not supported yet.</string>
+    <string name="bg_err_load_brush">Failed to load brush.</string>
     <string name="bg_msg_brush_loaded_success">Brush loaded successfully</string>
     <string name="bg_err_load_brush_failed_with_msg">Failed to load brush: %1$s</string>
     <string name="bg_msg_brush_exported_success">Brush exported successfully</string>

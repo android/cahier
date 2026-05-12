@@ -39,21 +39,21 @@ import ink.proto.BrushFamily as ProtoBrushFamily
 
 @Composable
 fun FamilyNodeFields(
-  data: NodeData.Family,
-  onUpdate: (NodeData) -> Unit,
-  onDropdownEditComplete: () -> Unit,
-  textFieldsLocked: Boolean,
-  modifier: Modifier = Modifier,
+    data: NodeData.Family,
+    onUpdate: (NodeData) -> Unit,
+    onDropdownEditComplete: () -> Unit,
+    textFieldsLocked: Boolean,
+    modifier: Modifier = Modifier,
 ) {
 
     Column(modifier = modifier) {
         OutlinedTextField(
-            value = data.clientBrushFamilyId,
-            onValueChange = { onUpdate(data.copy(clientBrushFamilyId = it)) },
-            label = { Text(stringResource(R.string.bg_client_brush_family_id)) },
+            value = data.name,
+            onValueChange = { onUpdate(data.copy(name = it)) },
+            label = { Text(stringResource(R.string.bg_brush_family_name)) },
             modifier = Modifier
-              .fillMaxWidth()
-              .padding(vertical = 4.dp),
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
             singleLine = true,
             enabled = !textFieldsLocked,
         )
@@ -62,8 +62,8 @@ fun FamilyNodeFields(
             onValueChange = { onUpdate(data.copy(developerComment = it)) },
             label = { Text(stringResource(R.string.bg_brush_developer_comment)) },
             modifier = Modifier
-              .fillMaxWidth()
-              .padding(vertical = 4.dp),
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
             minLines = 3,
             enabled = !textFieldsLocked,
         )

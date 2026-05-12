@@ -83,8 +83,8 @@ import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.viewmodel.BrushDesignerViewModel
 import com.example.cahier.core.ui.LocalTextureStore
+import com.example.cahier.developer.brushdesigner.viewmodel.BrushDesignerViewModel
 import ink.proto.BrushTip as ProtoBrushTip
 
 /**
@@ -330,11 +330,9 @@ private fun ControlsPane(
         Spacer(modifier = Modifier.height(8.dp))
 
         MetadataSection(
-            clientId = activeProto.clientBrushFamilyId,
             developerComment = activeProto.developerComment,
             textFieldsLocked = textFieldsLocked,
             onToggleLock = { textFieldsLocked = it },
-            onClientIdChange = { viewModel.updateClientBrushFamilyId(it) },
             onCommentChange = { viewModel.updateDeveloperComment(it) }
         )
 
@@ -437,11 +435,9 @@ internal fun CoatLayersSection(
 
 @Composable
 internal fun MetadataSection(
-    clientId: String,
     developerComment: String,
     textFieldsLocked: Boolean,
     onToggleLock: (Boolean) -> Unit,
-    onClientIdChange: (String) -> Unit,
     onCommentChange: (String) -> Unit
 ) {
     Row(
@@ -457,15 +453,6 @@ internal fun MetadataSection(
             style = MaterialTheme.typography.bodyMedium
         )
     }
-
-    OutlinedTextField(
-        value = clientId,
-        onValueChange = onClientIdChange,
-        label = { Text(stringResource(R.string.brush_designer_client_id)) },
-        enabled = !textFieldsLocked,
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true
-    )
 
     OutlinedTextField(
         value = developerComment,
