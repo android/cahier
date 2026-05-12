@@ -54,7 +54,7 @@ object CustomBrushes {
             context.getString(R.string.wet_paint) to (R.raw.wet_paint to R.drawable.water_drop_24px),
             context.getString(R.string.jelly_wobble) to (R.raw.jelly_wobble to R.drawable.airwave_24px),
             context.getString(R.string.pressure_wave) to (R.raw.pressure_wave to R.drawable.vital_signs_24px),
-            context.getString(R.string.shading_pencil) to (R.raw.shading_pencil to R.drawable.edit_24px),
+            context.getString(R.string.shading_pencil) to (R.raw.shading_pencil to R.drawable.stylus_pencil_24px),
         )
 
         val loadedBrushes = brushFiles.mapNotNull { (name, pair) ->
