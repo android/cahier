@@ -51,7 +51,10 @@ object CustomBrushes {
             "Music" to (R.raw.music to R.drawable.music_note_24px),
             "Shadow" to (R.raw.shadow to R.drawable.blur_on_24px),
             "Twisted yarn" to (R.raw.twisted_yarn to R.drawable.line_weight_24px),
-            "Wet paint" to (R.raw.wet_paint to R.drawable.water_drop_24px)
+            "Wet paint" to (R.raw.wet_paint to R.drawable.water_drop_24px),
+            "Jelly Wobble" to (R.raw.jelly_wobble to R.drawable.airwave_24px),
+            "Pressure Wave" to (R.raw.pressure_wave to R.drawable.vital_signs_24px),
+            "Shading Pencil" to (R.raw.shading_pencil_v7 to R.drawable.edit_24px),
         )
 
         val loadedBrushes = brushFiles.mapNotNull { (name, pair) ->
