@@ -97,7 +97,10 @@ fun BrushGraphScreen(
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     LaunchedEffect(primaryColor) {
-        viewModel.updateTestBrushColor(primaryColor)
+        // Only null when we first open the screen, but on rotations this runs again and
+        // testBrushColor will not be null and we don't want to override it.
+        if (uiState.testBrushColor == null)
+            viewModel.updateTestBrushColor(primaryColor)
     }
 
     var showColorPicker by remember { mutableStateOf(false) }

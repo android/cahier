@@ -22,6 +22,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +34,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -56,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
@@ -136,17 +140,17 @@ fun CollapsiblePreviewPane(
         Surface(
             modifier =
                 Modifier
-                  .fillMaxWidth()
-                  .height(40.dp)
-                  .clickable { onTogglePreviewExpanded() },
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .clickable { onTogglePreviewExpanded() },
             color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 4.dp,
             shadowElevation = 8.dp,
         ) {
             Box(
                 modifier = Modifier
-                  .fillMaxSize()
-                  .padding(horizontal = 16.dp),
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Row(
@@ -170,81 +174,141 @@ fun CollapsiblePreviewPane(
                         fontWeight = FontWeight.Bold,
                     )
                     if (isPreviewExpanded) {
-                        Spacer(Modifier.width(16.dp))
-                        Text(
-                            stringResource(R.string.bg_test_canvas_reset),
-                            modifier = Modifier.clickable { onClearStrokes() },
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(Modifier.width(16.dp))
-                        Text(
-                            stringResource(R.string.bg_test_canvas_invert),
-                            modifier = Modifier.clickable { onToggleCanvasTheme() },
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(Modifier.width(16.dp))
+                        val scrollState = rememberScrollState()
+                        val showLeftFade = scrollState.value > 0
+                        val showRightFade =
+                            scrollState.value < scrollState.maxValue && scrollState.maxValue > 0
 
-                        // Auto-update toggle
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = testAutoUpdateStrokes,
-                                onCheckedChange = { onSetTestAutoUpdateStrokes(it) }
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                stringResource(R.string.bg_auto_update),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                        Spacer(Modifier.width(16.dp))
-
-                        // Color picker
                         Box(
                             modifier = Modifier
-                              .size(20.dp)
-                              .background(brushColor)
-                              .border(1.dp, MaterialTheme.colorScheme.outline)
-                              .clickable {
-                                onChooseColor(brushColor) { newColor ->
-                                  onUpdateTestBrushColor(newColor)
-                                }
-                              }
-                        )
-                        Spacer(Modifier.width(16.dp))
-
-                        // Size selector
-                        var sizeExpanded by remember { mutableStateOf(false) }
-                        ExposedDropdownMenuBox(
-                            expanded = sizeExpanded,
-                            onExpandedChange = { sizeExpanded = it },
-                            modifier = Modifier.width(80.dp)
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            contentAlignment = Alignment.CenterStart
                         ) {
-                            Text(
-                                text = "${brushSize.toInt()}px",
+                            Row(
                                 modifier = Modifier
-                                  .menuAnchor()
-                                  .clickable { sizeExpanded = true },
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            ExposedDropdownMenu(
-                                expanded = sizeExpanded,
-                                onDismissRequest = { sizeExpanded = false }
+                                    .fillMaxSize()
+                                    .horizontalScroll(scrollState)
+                                    .padding(horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                for (size in (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)) {
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.bg_size_px, size)) },
-                                        onClick = {
-                                            onUpdateTestBrushSize(size.toFloat())
-                                            sizeExpanded = false
-                                        }
+                                Text(
+                                    stringResource(R.string.bg_test_canvas_reset),
+                                    modifier = Modifier.clickable { onClearStrokes() },
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Spacer(Modifier.width(16.dp))
+                                Text(
+                                    stringResource(R.string.bg_test_canvas_invert),
+                                    modifier = Modifier.clickable { onToggleCanvasTheme() },
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Spacer(Modifier.width(16.dp))
+
+                                // Auto-update toggle
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(
+                                        checked = testAutoUpdateStrokes,
+                                        onCheckedChange = { onSetTestAutoUpdateStrokes(it) }
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        stringResource(R.string.bg_auto_update),
+                                        style = MaterialTheme.typography.labelLarge
                                     )
                                 }
+                                Spacer(Modifier.width(16.dp))
+
+                                // Color picker
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(brushColor)
+                                        .border(1.dp, MaterialTheme.colorScheme.outline)
+                                        .clickable {
+                                            onChooseColor(brushColor) { newColor ->
+                                                onUpdateTestBrushColor(newColor)
+                                            }
+                                        }
+                                )
+                                Spacer(Modifier.width(16.dp))
+
+                                // Size selector
+                                var sizeExpanded by remember { mutableStateOf(false) }
+                                ExposedDropdownMenuBox(
+                                    expanded = sizeExpanded,
+                                    onExpandedChange = { sizeExpanded = it },
+                                    modifier = Modifier.width(80.dp)
+                                ) {
+                                    Text(
+                                        text = "${brushSize.toInt()}px",
+                                        modifier = Modifier
+                                            .menuAnchor()
+                                            .clickable { sizeExpanded = true },
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = sizeExpanded,
+                                        onDismissRequest = { sizeExpanded = false }
+                                    ) {
+                                        for (size in (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)) {
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        stringResource(
+                                                            R.string.bg_size_px,
+                                                            size
+                                                        )
+                                                    )
+                                                },
+                                                onClick = {
+                                                    onUpdateTestBrushSize(size.toFloat())
+                                                    sizeExpanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Scroll fades
+                            if (showLeftFade) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .width(16.dp)
+                                        .background(
+                                            androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    MaterialTheme.colorScheme.surfaceVariant,
+                                                    Color.Transparent
+                                                )
+                                            )
+                                        )
+                                        .align(Alignment.CenterStart)
+                                )
+                            }
+                            if (showRightFade) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .width(16.dp)
+                                        .background(
+                                            androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    MaterialTheme.colorScheme.surfaceVariant
+                                                )
+                                            )
+                                        )
+                                        .align(Alignment.CenterEnd)
+                                )
                             }
                         }
 
@@ -255,14 +319,14 @@ fun CollapsiblePreviewPane(
                                 color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.extendedColorScheme.warning,
                                 tonalElevation = 2.dp,
                                 modifier = Modifier
-                                  .weight(1f)
-                                  .fillMaxHeight()
-                                  .clickable { onToggleNotificationPane() }
+                                    .widthIn(max = 160.dp)
+                                    .fillMaxHeight()
+                                    .clickable { onToggleNotificationPane() }
                             ) {
                                 Box(
                                     modifier = Modifier
-                                      .fillMaxSize()
-                                      .padding(start = 16.dp),
+                                        .fillMaxSize()
+                                        .padding(horizontal = 16.dp),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -281,6 +345,8 @@ fun CollapsiblePreviewPane(
                                             style = MaterialTheme.typography.labelLarge,
                                             color = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
                                             fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                         )
                                     }
                                 }
@@ -300,8 +366,8 @@ fun CollapsiblePreviewPane(
             Surface(
                 modifier =
                     Modifier
-                      .fillMaxWidth()
-                      .height((PREVIEW_HEIGHT_EXPANDED - PREVIEW_HEIGHT_COLLAPSED).dp),
+                        .fillMaxWidth()
+                        .height((PREVIEW_HEIGHT_EXPANDED - PREVIEW_HEIGHT_COLLAPSED).dp),
                 tonalElevation = 8.dp,
                 color =
                     if (isInvertedCanvas) {

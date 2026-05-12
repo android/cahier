@@ -19,9 +19,9 @@ import androidx.compose.ui.geometry.Offset
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.NodeData
 
-private const val TITLE_AREA_HEIGHT = 64f
-private const val SUBTITLE_LINE_HEIGHT = 32f
-private const val PREVIEW_AREA_HEIGHT = 64f
+private const val TITLE_AREA_HEIGHT = 72f
+private const val SUBTITLE_LINE_HEIGHT = 48f
+private const val PREVIEW_AREA_HEIGHT = 72f
 
 fun NodeData.width(): Float = when (this) {
     is NodeData.Family -> 3 * NODE_WIDTH
