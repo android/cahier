@@ -78,7 +78,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.ink.brush.Brush
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
+import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.viewmodel.BrushDesignerViewModel
@@ -98,7 +100,7 @@ import ink.proto.BrushTip as ProtoBrushTip
 @Composable
 fun BrushDesignerScreen(
     onNavigateUp: () -> Unit,
-    viewModel: BrushDesignerViewModel = hiltViewModel()
+    viewModel: BrushDesignerViewModel = hiltViewModel(),
 ) {
     val activity = LocalActivity.current ?: return
     val windowSizeClass = calculateWindowSizeClass(activity)
@@ -192,7 +194,15 @@ fun BrushDesignerScreen(
                         onSetTextureStore = { viewModel.setTextureStore(it) },
                         onReplaceStrokes = { viewModel.replaceStrokes(it) },
                         onStrokesFinished = { viewModel.onStrokesFinished(it) },
-                        onGetNextBrush = { viewModel.getActiveBrush() ?: activeBrush!! },
+                        onGetNextBrush = {
+                            viewModel.getActiveBrush()
+                                ?: activeBrush
+                                ?: Brush.createWithColorIntArgb(
+                                    StockBrushes.marker(),
+                                    android.graphics.Color.BLACK,
+                                    15f, 0.1f
+                                )
+                        },
                         onSetBrushColor = { viewModel.setBrushColor(it) },
                         onSetBrushSize = { viewModel.setBrushSize(it) }
                     )
@@ -233,7 +243,15 @@ fun BrushDesignerScreen(
                             onSetTextureStore = { viewModel.setTextureStore(it) },
                             onReplaceStrokes = { viewModel.replaceStrokes(it) },
                             onStrokesFinished = { viewModel.onStrokesFinished(it) },
-                            onGetNextBrush = { viewModel.getActiveBrush() ?: activeBrush!! },
+                            onGetNextBrush = {
+                                viewModel.getActiveBrush()
+                                    ?: activeBrush
+                                    ?: Brush.createWithColorIntArgb(
+                                        StockBrushes.marker(),
+                                        android.graphics.Color.BLACK,
+                                        15f, 0.1f
+                                    )
+                            },
                             onSetBrushColor = { viewModel.setBrushColor(it) },
                             onSetBrushSize = { viewModel.setBrushSize(it) }
                         )
@@ -284,8 +302,9 @@ private fun ControlsPane(
             textureIdInput = textureIdInput,
             onTextureIdChange = { textureIdInput = it },
             onConfirm = {
-                if (textureIdInput.isNotBlank() && pendingTextureUri != null) {
-                    viewModel.addCustomTexture(pendingTextureUri!!, textureIdInput)
+                val uri = pendingTextureUri
+                if (textureIdInput.isNotBlank() && uri != null) {
+                    viewModel.addCustomTexture(uri, textureIdInput)
                     showTextureDialog = false
                     textureIdInput = ""
                 }
@@ -364,7 +383,6 @@ private fun ControlsPane(
                 activeProto = activeProto,
                 selectedCoatIndex = selectedCoatIndex,
                 onUpdateBehaviors = { viewModel.updateBehaviorsList(it) },
-                onClearBehaviors = { viewModel.clearBehaviors() },
                 onAddBehavior = { nodes -> viewModel.addBehavior(nodes) },
             )
         }
@@ -465,7 +483,8 @@ internal fun MetadataSection(
 internal fun InputModelSection(
     inputModel: ink.proto.BrushFamily.InputModel,
     onUpdateInputModelToPassthrough: () -> Unit,
-    onUpdateSlidingWindowModel: (Long, Int) -> Unit
+    onUpdateSlidingWindowModel: (Long, Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Text(
         stringResource(R.string.brush_designer_input_model),
