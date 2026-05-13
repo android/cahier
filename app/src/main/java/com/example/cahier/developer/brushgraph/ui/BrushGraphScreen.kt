@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -92,7 +93,8 @@ fun BrushGraphScreen(
         isWideScreen && windowSizeClass.windowHeightSizeClass == WindowHeightSizeClass.EXPANDED
 
     val textureStore = LocalTextureStore.current
-    val renderer = remember { CanvasStrokeRenderer.create(textureStore) }
+    val cacheGen by textureStore.generation.collectAsState()
+    val renderer = remember(cacheGen) { CanvasStrokeRenderer.create(textureStore) }
 
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface

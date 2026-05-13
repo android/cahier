@@ -17,8 +17,7 @@
 package com.example.cahier.core.ui
 
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 
 val LocalTextureStore = staticCompositionLocalOf<CahierTextureBitmapStore> {
-  error("No TextureStore provided")
+    error("No TextureStore provided")
 }

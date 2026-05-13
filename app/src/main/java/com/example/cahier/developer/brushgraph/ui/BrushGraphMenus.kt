@@ -73,6 +73,7 @@ import androidx.compose.ui.zIndex
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import com.example.cahier.R
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.developer.brushgraph.data.TutorialStep
 import com.example.cahier.features.drawing.CustomBrushes
@@ -282,9 +283,11 @@ fun CreateNodeSpeedDial(
         label = "fabPaddingEnd",
     )
 
-    Box(modifier = modifier
-        .padding(bottom = fabPaddingBottom, end = fabPaddingEnd)
-        .zIndex(2f)) {
+    Box(
+        modifier = modifier
+            .padding(bottom = fabPaddingBottom, end = fabPaddingEnd)
+            .zIndex(2f)
+    ) {
         Column(horizontalAlignment = Alignment.End) {
             AnimatedVisibility(
                 visible = expanded,
@@ -341,6 +344,7 @@ fun GraphActionMenu(
     onToggleTextFieldsLocked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val textureStore = LocalTextureStore.current
     val context = LocalContext.current
     var showMoreMenu by rememberSaveable { mutableStateOf(false) }
     var showPaletteMenu by rememberSaveable { mutableStateOf(false) }
@@ -461,7 +465,7 @@ fun GraphActionMenu(
                         showTemplatesMenu = false
                         showMoreMenu = false
                     },
-                    customBrushes = CustomBrushes.getBrushes(context)
+                    customBrushes = CustomBrushes.getBrushes(context, textureStore)
                         .map { it.name to it.brushFamily },
                     onCustomBrushSelect = { family ->
                         onLoadBrushFamily(family)

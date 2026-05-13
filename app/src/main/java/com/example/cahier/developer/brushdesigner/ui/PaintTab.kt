@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.core.ui.LocalTextureStore
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.Color as ProtoColor
@@ -72,7 +73,8 @@ internal fun PaintTabContent(
         activeProto.coatsList.getOrNull(selectedCoatIndex)?.paintPreferencesList
             ?: emptyList()
 
-    val availableTextures = activeProto.textureIdToBitmapMap.keys.toList()
+    val textureStore = LocalTextureStore.current
+    val availableTextures = remember { textureStore.getAllIds().toList() }
 
     Text(
         text = stringResource(R.string.brush_designer_paint_texture),

@@ -83,7 +83,6 @@ import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
-import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.developer.brushdesigner.viewmodel.BrushDesignerViewModel
 import ink.proto.BrushTip as ProtoBrushTip
 
@@ -274,7 +273,7 @@ private fun ControlsPane(
     modifier: Modifier = Modifier,
     activeProto: ink.proto.BrushFamily,
     selectedCoatIndex: Int,
-    viewModel: BrushDesignerViewModel
+    viewModel: BrushDesignerViewModel,
 ) {
     var textFieldsLocked by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(BrushDesignerTab.TipShape) }
@@ -341,8 +340,10 @@ private fun ControlsPane(
         InputModelSection(
             inputModel = inputModel,
             onUpdateInputModelToPassthrough = { viewModel.updateInputModelToPassthrough() },
-            onUpdateSlidingWindowModel = { ms,
-                                           hz ->
+            onUpdateSlidingWindowModel = {
+                    ms,
+                    hz,
+                ->
                 viewModel.updateSlidingWindowModel(ms, hz)
             }
         )
@@ -363,7 +364,6 @@ private fun ControlsPane(
             BrushDesignerTab.TipShape -> TipShapeTabContent(
                 currentTip = currentTip,
                 activeBrush = viewModel.getActiveBrush(),
-                textureStore = LocalTextureStore.current,
                 onUpdateTip = { block -> viewModel.updateTip(block) }
             )
 
@@ -392,7 +392,7 @@ internal fun CoatLayersSection(
     selectedCoatIndex: Int,
     onSelectCoat: (Int) -> Unit,
     onAddCoat: () -> Unit,
-    onDeleteCoat: () -> Unit
+    onDeleteCoat: () -> Unit,
 ) {
     Text(
         stringResource(R.string.brush_designer_brush_layers),
@@ -438,7 +438,7 @@ internal fun MetadataSection(
     developerComment: String,
     textFieldsLocked: Boolean,
     onToggleLock: (Boolean) -> Unit,
-    onCommentChange: (String) -> Unit
+    onCommentChange: (String) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -470,7 +470,7 @@ internal fun InputModelSection(
     inputModel: ink.proto.BrushFamily.InputModel,
     onUpdateInputModelToPassthrough: () -> Unit,
     onUpdateSlidingWindowModel: (Long, Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Text(
         stringResource(R.string.brush_designer_input_model),
@@ -537,7 +537,7 @@ internal fun InputModelSection(
 @Composable
 internal fun SlidingWindowControls(
     inputModel: ink.proto.BrushFamily.InputModel,
-    onUpdateSlidingWindowModel: (Long, Int) -> Unit
+    onUpdateSlidingWindowModel: (Long, Int) -> Unit,
 ) {
     val swModel = inputModel.slidingWindowModel
     val windowMs =
@@ -580,7 +580,7 @@ internal fun TextureNameDialog(
     textureIdInput: String,
     onTextureIdChange: (String) -> Unit,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -632,7 +632,6 @@ private fun TipShapeTabPreview() {
             TipShapeTabContent(
                 currentTip = ProtoBrushTip.getDefaultInstance(),
                 activeBrush = null,
-                textureStore = null,
                 onUpdateTip = {}
             )
         }

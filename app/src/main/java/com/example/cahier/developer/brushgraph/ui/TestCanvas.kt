@@ -66,7 +66,6 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.R
 import com.example.cahier.core.ui.DrawingSurface
-import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
@@ -81,7 +80,6 @@ fun TestCanvas(
     onGetNextBrush: () -> Brush,
     onStrokesAdded: (List<Stroke>) -> Unit,
 ) {
-    val textureStore = LocalTextureStore.current
     Box(modifier = modifier.fillMaxSize()) {
         Text(
             stringResource(R.string.bg_test_canvas_draw_prompt),
@@ -97,7 +95,6 @@ fun TestCanvas(
         DrawingSurface(
             strokes = strokeList,
             canvasStrokeRenderer = strokeRenderer,
-            textureStore = textureStore,
             onStrokesFinished = onStrokesAdded,
             onErase = { _, _ -> },
             onEraseStart = {},

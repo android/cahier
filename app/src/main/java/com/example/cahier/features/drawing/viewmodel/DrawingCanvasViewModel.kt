@@ -42,7 +42,6 @@ import androidx.ink.geometry.MutableSegment
 import androidx.ink.geometry.MutableVec
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.storage.AndroidBrushFamilySerialization
-import androidx.ink.storage.decode
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -484,7 +483,7 @@ class DrawingCanvasViewModel @Inject constructor(
     @OptIn(ExperimentalInkCustomBrushApi::class)
     private fun loadCustomBrushes() {
         viewModelScope.launch(Dispatchers.IO) {
-            val builtInBrushes = CustomBrushes.getBrushes(context)
+            val builtInBrushes = CustomBrushes.getBrushes(context, textureStore)
 
             val decodedCache = mutableMapOf<String, CustomBrush>()
 
@@ -517,7 +516,14 @@ class DrawingCanvasViewModel @Inject constructor(
 
                         ByteArrayInputStream(entity.brushBytes).use { inputStream ->
                             val family =
-                                BrushFamily.decode(inputStream, maxVersion = Version.DEVELOPMENT)
+                                AndroidBrushFamilySerialization.decode(
+                                    inputStream,
+                                    maxVersion = Version.DEVELOPMENT
+                                ) { id, bitmap ->
+                                    if (bitmap != null)
+                                        textureStore.loadTexture(id, bitmap)
+                                    id
+                                }
                             CustomBrush(
                                 name = entity.name,
                                 icon = com.example.cahier.R.drawable.edit_24px,

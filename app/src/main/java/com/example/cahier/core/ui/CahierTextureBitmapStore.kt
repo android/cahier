@@ -24,13 +24,17 @@ import androidx.annotation.DrawableRes
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.R
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
-import dagger.hilt.android.qualifiers.ApplicationContext
 
 @OptIn(ExperimentalInkCustomBrushApi::class)
 @Singleton
-class CahierTextureBitmapStore @Inject constructor(@ApplicationContext context: Context) : TextureBitmapStore {
+class CahierTextureBitmapStore @Inject constructor(@ApplicationContext context: Context) :
+    TextureBitmapStore {
     private val resources = context.resources
 
     private val textureResources: Map<String, Int> = mapOf(
@@ -39,6 +43,9 @@ class CahierTextureBitmapStore @Inject constructor(@ApplicationContext context: 
     )
 
     private val loadedBitmaps = mutableMapOf<String, Bitmap>()
+
+    private val _generation = MutableStateFlow(0)
+    val generation = _generation.asStateFlow()
 
     override operator fun get(clientTextureId: String): Bitmap? {
         val id = getShortName(clientTextureId)
@@ -63,5 +70,6 @@ class CahierTextureBitmapStore @Inject constructor(@ApplicationContext context: 
     fun loadTexture(textureId: String, bitmap: Bitmap) {
         val id = getShortName(textureId)
         loadedBitmaps[id] = bitmap
+        _generation.update { it + 1 }
     }
 }

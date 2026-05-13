@@ -16,7 +16,6 @@
 
 package com.example.cahier.developer.brushdesigner.ui
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +25,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -33,12 +34,11 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.withSave
 import androidx.ink.brush.Brush
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.InputToolType
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.MutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
-import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.core.ui.LocalTextureStore
 
 /**
  * Renders a live stroke preview of the current brush — a Z-shaped squiggle
@@ -46,20 +46,15 @@ import com.example.cahier.core.ui.CahierTextureBitmapStore
  *
  * Re-renders whenever the [brush] or [textureStore] changes.
  */
-@SuppressLint("RestrictedApi")
-@OptIn(ExperimentalInkCustomBrushApi::class)
 @Composable
 internal fun TipPreview(
     brush: Brush?,
-    textureStore: CahierTextureBitmapStore?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    val strokeRenderer = remember(textureStore) {
-        if (textureStore != null) {
-            CanvasStrokeRenderer.create(textureStore = textureStore)
-        } else {
-            CanvasStrokeRenderer.create()
-        }
+    val textureStore = LocalTextureStore.current
+    val cacheGen by textureStore.generation.collectAsState()
+    val strokeRenderer = remember(cacheGen) {
+        CanvasStrokeRenderer.create(textureStore)
     }
 
     val gridColor = MaterialTheme.colorScheme.outlineVariant
