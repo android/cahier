@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -53,6 +54,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -69,6 +71,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
@@ -129,8 +132,15 @@ fun MoreOptionsMenu(
         Box {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.bg_templates)) },
-                onClick = { onShowTemplatesMenuChange(true) },
-                trailingIcon = { Icon(Icons.Default.ChevronRight, contentDescription = null) },
+                onClick = {
+                    onShowTemplatesMenuChange(true)
+                },
+                trailingIcon = {
+                    Icon(
+                        if (showTemplatesMenu) Icons.Default.ChevronRight else Icons.Default.ExpandMore,
+                        contentDescription = null
+                    )
+                },
                 modifier = Modifier.onSizeChanged { itemSize = it }
             )
             DropdownMenu(
@@ -144,7 +154,7 @@ fun MoreOptionsMenu(
                     R.string.bg_pressure_pen to StockBrushes.pressurePen(),
                     R.string.marker to StockBrushes.marker(),
                     R.string.highlighter to StockBrushes.highlighter(),
-                    R.string.dashed_line to StockBrushes.dashedLine()
+                    R.string.dashed_line to StockBrushes.dashedLine(),
                 ).forEach { (title, brush) ->
                     DropdownMenuItem(
                         text = { Text(stringResource(title)) },
@@ -153,6 +163,54 @@ fun MoreOptionsMenu(
                             onShowTemplatesMenuChange(false)
                         }
                     )
+                }
+                var showEmojiSubMenu by remember { mutableStateOf(false) }
+                var itemWidth by remember { mutableIntStateOf(0) }
+                var itemHeight by remember { mutableIntStateOf(0) }
+                val density = LocalDensity.current
+
+                Box(modifier = Modifier.onSizeChanged {
+                    itemWidth = it.width
+                    itemHeight = it.height
+                }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.emoji_highlighter)) },
+                        trailingIcon = {
+                            Icon(
+                                if (showEmojiSubMenu) Icons.Default.ChevronRight else Icons.Default.ExpandMore,
+                                contentDescription = null
+                            )
+                        },
+                        onClick = { showEmojiSubMenu = true }
+                    )
+                    DropdownMenu(
+                        expanded = showEmojiSubMenu,
+                        onDismissRequest = { showEmojiSubMenu = false },
+                        offset = DpOffset(
+                            x = density.run { itemWidth.toDp() },
+                            y = density.run { -itemHeight.toDp() }),
+                        properties = PopupProperties(focusable = true)
+                    ) {
+                        listOf(
+                            R.string.emoji_heart to "emoji-heart",
+                            R.string.emoji_star to "emoji-star",
+                            R.string.emoji_poop to "emoji-poop",
+                        ).forEach { (title, textureId) ->
+                            DropdownMenuItem(
+                                text = { Text(stringResource(title)) },
+                                onClick = {
+                                    onTemplateSelect(
+                                        StockBrushes.emojiHighlighter(
+                                            textureId,
+                                            showMiniEmojiTrail = true
+                                        )
+                                    )
+                                    onShowTemplatesMenuChange(false)
+                                    showEmojiSubMenu = false
+                                }
+                            )
+                        }
+                    }
                 }
 
                 if (customBrushes.isNotEmpty()) {
