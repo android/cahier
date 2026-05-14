@@ -393,7 +393,7 @@ class BrushGraphViewModel @Inject constructor(
     _uiState.update { it.copy(selectedEdge = null, isErrorPaneOpen = false, activeEdgeSourceId = null) }
   }
 
-  fun onIssueClick(issue: GraphValidationException, isLandscape: Boolean, density: Float) {
+  fun onIssueClick(issue: GraphValidationException, isWideScreen: Boolean, density: Float) {
     if (issue.nodeId != null) {
       centerNode(issue.nodeId)
     }
