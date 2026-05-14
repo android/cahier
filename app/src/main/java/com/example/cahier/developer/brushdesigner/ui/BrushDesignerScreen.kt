@@ -19,19 +19,42 @@ package com.example.cahier.developer.brushdesigner.ui
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
@@ -50,13 +73,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.ink.brush.Brush
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
+import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.viewmodel.BrushDesignerViewModel
+import ink.proto.BrushTip as ProtoBrushTip
 
 /**
  * Main entry point for the Brush Designer feature.
@@ -72,7 +100,7 @@ import com.example.cahier.developer.brushdesigner.viewmodel.BrushDesignerViewMod
 @Composable
 fun BrushDesignerScreen(
     onNavigateUp: () -> Unit,
-    viewModel: BrushDesignerViewModel = hiltViewModel()
+    viewModel: BrushDesignerViewModel = hiltViewModel(),
 ) {
     val activity = LocalActivity.current ?: return
     val windowSizeClass = calculateWindowSizeClass(activity)
@@ -92,6 +120,7 @@ fun BrushDesignerScreen(
 
     val savedBrushes by viewModel.savedPaletteBrushes.collectAsStateWithLifecycle()
     val activeProto by viewModel.activeBrushProto.collectAsStateWithLifecycle()
+    val selectedCoatIndex by viewModel.selectedCoatIndex.collectAsStateWithLifecycle()
     val activeBrush by viewModel.activeBrush.collectAsStateWithLifecycle()
     val testStrokes by viewModel.testStrokes.collectAsStateWithLifecycle()
     val brushColor by viewModel.brushColor.collectAsStateWithLifecycle()
@@ -145,8 +174,11 @@ fun BrushDesignerScreen(
                     scaffoldState = bottomSheetState,
                     sheetPeekHeight = 200.dp,
                     sheetContent = {
-                        ControlsPlaceholder(
-                            modifier = Modifier.fillMaxWidth()
+                        ControlsPane(
+                            modifier = Modifier.fillMaxWidth(),
+                            activeProto = activeProto,
+                            selectedCoatIndex = selectedCoatIndex,
+                            viewModel = viewModel
                         )
                     }
                 ) {
@@ -162,7 +194,15 @@ fun BrushDesignerScreen(
                         onSetTextureStore = { viewModel.setTextureStore(it) },
                         onReplaceStrokes = { viewModel.replaceStrokes(it) },
                         onStrokesFinished = { viewModel.onStrokesFinished(it) },
-                        onGetNextBrush = { viewModel.getActiveBrush() ?: activeBrush!! },
+                        onGetNextBrush = {
+                            viewModel.getActiveBrush()
+                                ?: activeBrush
+                                ?: Brush.createWithColorIntArgb(
+                                    StockBrushes.marker(),
+                                    android.graphics.Color.BLACK,
+                                    15f, 0.1f
+                                )
+                        },
                         onSetBrushColor = { viewModel.setBrushColor(it) },
                         onSetBrushSize = { viewModel.setBrushSize(it) }
                     )
@@ -183,8 +223,11 @@ fun BrushDesignerScreen(
                         )
                     },
                     listPane = {
-                        ControlsPlaceholder(
-                            modifier = Modifier.fillMaxSize()
+                        ControlsPane(
+                            modifier = Modifier.fillMaxSize(),
+                            activeProto = activeProto,
+                            selectedCoatIndex = selectedCoatIndex,
+                            viewModel = viewModel
                         )
                     },
                     detailPane = {
@@ -200,7 +243,15 @@ fun BrushDesignerScreen(
                             onSetTextureStore = { viewModel.setTextureStore(it) },
                             onReplaceStrokes = { viewModel.replaceStrokes(it) },
                             onStrokesFinished = { viewModel.onStrokesFinished(it) },
-                            onGetNextBrush = { viewModel.getActiveBrush() ?: activeBrush!! },
+                            onGetNextBrush = {
+                                viewModel.getActiveBrush()
+                                    ?: activeBrush
+                                    ?: Brush.createWithColorIntArgb(
+                                        StockBrushes.marker(),
+                                        android.graphics.Color.BLACK,
+                                        15f, 0.1f
+                                    )
+                            },
                             onSetBrushColor = { viewModel.setBrushColor(it) },
                             onSetBrushSize = { viewModel.setBrushSize(it) }
                         )
@@ -212,23 +263,392 @@ fun BrushDesignerScreen(
 }
 
 /**
- * Placeholder for the controls pane — will be replaced with the full
- * tabbed editor (Tip Shape / Paint / Behaviors) in a follow-up PR.
+ * The controls panel containing coat management, metadata fields,
+ * input model selector, and tabbed content (Tip Shape / Paint / Behaviors).
+ *
+ * Note: Still accepts ViewModel for delegation to tab content and input model
+ * sections. All state (activeProto, selectedCoatIndex) is hoisted from the screen.
  */
+@OptIn(ExperimentalInkCustomBrushApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun ControlsPlaceholder(modifier: Modifier = Modifier) {
+private fun ControlsPane(
+    modifier: Modifier = Modifier,
+    activeProto: ink.proto.BrushFamily,
+    selectedCoatIndex: Int,
+    viewModel: BrushDesignerViewModel
+) {
+    var textFieldsLocked by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableStateOf(BrushDesignerTab.TipShape) }
+
+    val currentTip = activeProto
+        .coatsList.getOrNull(selectedCoatIndex)?.tip ?: ProtoBrushTip.getDefaultInstance()
+    val inputModel = activeProto.inputModel
+
+    var showTextureDialog by remember { mutableStateOf(false) }
+    var pendingTextureUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var textureIdInput by remember { mutableStateOf("") }
+
+    val texturePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let {
+            pendingTextureUri = it
+            showTextureDialog = true
+        }
+    }
+
+    if (showTextureDialog) {
+        TextureNameDialog(
+            textureIdInput = textureIdInput,
+            onTextureIdChange = { textureIdInput = it },
+            onConfirm = {
+                val uri = pendingTextureUri
+                if (textureIdInput.isNotBlank() && uri != null) {
+                    viewModel.addCustomTexture(uri, textureIdInput)
+                    showTextureDialog = false
+                    textureIdInput = ""
+                }
+            },
+            onDismiss = { showTextureDialog = false }
+        )
+    }
+
     Column(
-        modifier = modifier.padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = stringResource(R.string.brush_designer_title),
-            style = MaterialTheme.typography.titleMedium
+        CoatLayersSection(
+            activeProto = activeProto,
+            selectedCoatIndex = selectedCoatIndex,
+            onSelectCoat = { viewModel.setSelectedCoat(it) },
+            onAddCoat = { viewModel.addNewCoat() },
+            onDeleteCoat = { viewModel.deleteSelectedCoat() }
+        )
+
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(8.dp))
+
+        MetadataSection(
+            clientId = activeProto.clientBrushFamilyId,
+            developerComment = activeProto.developerComment,
+            textFieldsLocked = textFieldsLocked,
+            onToggleLock = { textFieldsLocked = it },
+            onClientIdChange = { viewModel.updateClientBrushFamilyId(it) },
+            onCommentChange = { viewModel.updateDeveloperComment(it) }
+        )
+
+        HorizontalDivider()
+
+        InputModelSection(
+            inputModel = inputModel,
+            onUpdateInputModelToPassthrough = { viewModel.updateInputModelToPassthrough() },
+            onUpdateSlidingWindowModel = { ms,
+                                           hz ->
+                viewModel.updateSlidingWindowModel(ms, hz)
+            }
+        )
+
+        HorizontalDivider()
+
+        TabRow(selectedTabIndex = selectedTab.ordinal) {
+            BrushDesignerTab.entries.forEach { tab ->
+                Tab(
+                    selected = selectedTab == tab,
+                    onClick = { selectedTab = tab },
+                    text = { Text(stringResource(tab.labelResId)) }
+                )
+            }
+        }
+
+        when (selectedTab) {
+            BrushDesignerTab.TipShape -> TipShapeTabContent(
+                currentTip = currentTip,
+                activeBrush = viewModel.getActiveBrush(),
+                textureStore = viewModel.getTextureStore(),
+                onUpdateTip = { block -> viewModel.updateTip(block) }
+            )
+
+            BrushDesignerTab.Paint -> PaintTabContent(
+                activeProto = activeProto,
+                selectedCoatIndex = selectedCoatIndex,
+                onUpdatePaintPreferences = { viewModel.updatePaintPreferences(it) },
+                onUpdateSelfOverlap = { viewModel.updateSelfOverlap(it) },
+                texturePickerLauncher = texturePickerLauncher,
+                getTextureBitmap = { viewModel.getTextureBitmap(it) }
+            )
+
+            BrushDesignerTab.Behaviors -> BehaviorsTabContent(
+                activeProto = activeProto,
+                selectedCoatIndex = selectedCoatIndex,
+                onUpdateBehaviors = { viewModel.updateBehaviorsList(it) },
+                onAddBehavior = { nodes -> viewModel.addBehavior(nodes) },
+            )
+        }
+    }
+}
+
+@Composable
+internal fun CoatLayersSection(
+    activeProto: ink.proto.BrushFamily,
+    selectedCoatIndex: Int,
+    onSelectCoat: (Int) -> Unit,
+    onAddCoat: () -> Unit,
+    onDeleteCoat: () -> Unit
+) {
+    Text(
+        stringResource(R.string.brush_designer_brush_layers),
+        style = MaterialTheme.typography.titleMedium
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        activeProto.coatsList.forEachIndexed { index, _ ->
+            FilterChip(
+                selected = selectedCoatIndex == index,
+                onClick = { onSelectCoat(index) },
+                label = { Text(stringResource(R.string.brush_designer_coat_label, index + 1)) }
+            )
+        }
+
+        IconButton(onClick = onAddCoat) {
+            Icon(
+                painterResource(R.drawable.add_24px),
+                contentDescription = stringResource(R.string.brush_designer_add_layer)
+            )
+        }
+
+        if (activeProto.coatsList.size > 1) {
+            IconButton(onClick = onDeleteCoat) {
+                Icon(
+                    painterResource(R.drawable.delete_24px),
+                    contentDescription = stringResource(R.string.brush_designer_delete_layer),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun MetadataSection(
+    clientId: String,
+    developerComment: String,
+    textFieldsLocked: Boolean,
+    onToggleLock: (Boolean) -> Unit,
+    onClientIdChange: (String) -> Unit,
+    onCommentChange: (String) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Checkbox(
+            checked = textFieldsLocked,
+            onCheckedChange = onToggleLock
         )
         Text(
-            text = stringResource(R.string.brush_designer_controls_placeholder),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            stringResource(R.string.brush_designer_lock_fields),
+            style = MaterialTheme.typography.bodyMedium
         )
+    }
+
+    OutlinedTextField(
+        value = clientId,
+        onValueChange = onClientIdChange,
+        label = { Text(stringResource(R.string.brush_designer_client_id)) },
+        enabled = !textFieldsLocked,
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
+    )
+
+    OutlinedTextField(
+        value = developerComment,
+        onValueChange = onCommentChange,
+        label = { Text(stringResource(R.string.brush_designer_developer_comment)) },
+        enabled = !textFieldsLocked,
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 3
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun InputModelSection(
+    inputModel: ink.proto.BrushFamily.InputModel,
+    onUpdateInputModelToPassthrough: () -> Unit,
+    onUpdateSlidingWindowModel: (Long, Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        stringResource(R.string.brush_designer_input_model),
+        style = MaterialTheme.typography.titleMedium
+    )
+
+    var expandedModelMenu by remember { mutableStateOf(false) }
+    val currentModelString = when {
+        inputModel.hasPassthroughModel() ->
+            stringResource(R.string.brush_designer_passthrough_model)
+
+        inputModel.hasSlidingWindowModel() ->
+            stringResource(R.string.brush_designer_sliding_window)
+
+        else -> stringResource(R.string.brush_designer_sliding_window_default)
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expandedModelMenu,
+        onExpandedChange = { expandedModelMenu = it },
+    ) {
+        OutlinedTextField(
+            value = currentModelString,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.brush_designer_model_type)) },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedModelMenu)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+
+        DropdownMenu(
+            expanded = expandedModelMenu,
+            onDismissRequest = { expandedModelMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.brush_designer_passthrough_model)) },
+                onClick = {
+                    onUpdateInputModelToPassthrough()
+                    expandedModelMenu = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.brush_designer_sliding_window)) },
+                onClick = {
+                    onUpdateSlidingWindowModel(20L, 180)
+                    expandedModelMenu = false
+                }
+            )
+        }
+    }
+
+    if (inputModel.hasSlidingWindowModel() || !inputModel.hasPassthroughModel()) {
+        SlidingWindowControls(
+            inputModel = inputModel,
+            onUpdateSlidingWindowModel = onUpdateSlidingWindowModel
+        )
+    }
+}
+
+@Composable
+internal fun SlidingWindowControls(
+    inputModel: ink.proto.BrushFamily.InputModel,
+    onUpdateSlidingWindowModel: (Long, Int) -> Unit
+) {
+    val swModel = inputModel.slidingWindowModel
+    val windowMs =
+        if (swModel.hasWindowSizeSeconds()) (swModel.windowSizeSeconds * 1000)
+            .toLong() else 20L
+    val upsamplingHz = if (swModel.hasExperimentalUpsamplingPeriodSeconds()) {
+        val period = swModel.experimentalUpsamplingPeriodSeconds
+        if (period == Float.POSITIVE_INFINITY || period == 0f) 0 else (1f / period).toInt()
+    } else 180
+
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            BrushSliderControl(
+                label = stringResource(R.string.brush_designer_window_size_ms),
+                value = windowMs.toFloat(),
+                valueRange = 1f..100f,
+                onValueChange = { newValue ->
+                    onUpdateSlidingWindowModel(newValue.toLong(), upsamplingHz)
+                }
+            )
+            BrushSliderControl(
+                label = stringResource(R.string.brush_designer_upsampling_frequency_hz),
+                value = upsamplingHz.toFloat(),
+                valueRange = 0f..500f,
+                onValueChange = { newValue ->
+                    onUpdateSlidingWindowModel(windowMs, newValue.toInt())
+                }
+            )
+        }
+    }
+}
+
+@Composable
+internal fun TextureNameDialog(
+    textureIdInput: String,
+    onTextureIdChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.brush_designer_name_texture_title)) },
+        text = {
+            OutlinedTextField(
+                value = textureIdInput,
+                onValueChange = onTextureIdChange,
+                label = { Text(stringResource(R.string.brush_designer_texture_id_hint)) },
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.brush_designer_load))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.brush_designer_cancel))
+            }
+        }
+    )
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 200)
+@Composable
+private fun BrushSliderControlPreview() {
+    MaterialTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            BrushSliderControl(
+                label = stringResource(R.string.brush_designer_scale_x),
+                value = 1.5f,
+                valueRange = 0.1f..5f,
+                onValueChange = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 300)
+@Composable
+private fun TipShapeTabPreview() {
+    MaterialTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TipShapeTabContent(
+                currentTip = ProtoBrushTip.getDefaultInstance(),
+                activeBrush = null,
+                textureStore = null,
+                onUpdateTip = {}
+            )
+        }
     }
 }

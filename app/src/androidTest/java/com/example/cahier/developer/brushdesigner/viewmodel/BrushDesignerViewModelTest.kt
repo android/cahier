@@ -46,9 +46,42 @@ class BrushDesignerViewModelTest {
         hiltRule.inject()
         Dispatchers.setMain(testDispatcher)
 
+        // Reset the singleton repository to default state to avoid test pollution
+        // from previous test runs or app usage within the same process.
+        repository.updateActiveBrushProto(defaultProto())
+
         val context = ApplicationProvider.getApplicationContext<Context>()
         viewModel = BrushDesignerViewModel(context, repository, customBrushDao)
     }
+
+    /** Produces a clean default [ProtoBrushFamily] matching the repository's initial state. */
+    private fun defaultProto(): ink.proto.BrushFamily = ink.proto.BrushFamily.newBuilder()
+        .addCoats(
+            ink.proto.BrushCoat.newBuilder()
+                .setTip(
+                    ink.proto.BrushTip.newBuilder()
+                        .setScaleX(1f).setScaleY(1f).setCornerRounding(1f)
+                )
+                .addPaintPreferences(
+                    ink.proto.BrushPaint.newBuilder()
+                        .setSelfOverlap(
+                            ink.proto.BrushPaint.SelfOverlap.SELF_OVERLAP_ANY
+                        )
+                        .addColorFunctions(
+                            ink.proto.ColorFunction.newBuilder()
+                                .setOpacityMultiplier(1f)
+                        )
+                )
+        )
+        .setInputModel(
+            ink.proto.BrushFamily.InputModel.newBuilder()
+                .setSlidingWindowModel(
+                    ink.proto.BrushFamily.SlidingWindowModel.newBuilder()
+                        .setWindowSizeSeconds(0.02f)
+                        .setExperimentalUpsamplingPeriodSeconds(0.005f)
+                )
+        )
+        .build()
 
     @After
     fun tearDown() {
