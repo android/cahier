@@ -57,7 +57,7 @@ object BrushGraphConverter {
         nodes.add(GraphNode(id = familyNodeId, data = familyData))
 
         val behaviorDeduplicationMap =
-            mutableMapOf<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>()
+            mutableMapOf<Triple<ProtoBrushBehavior.Node, String, List<String>>, InternalNodeInfo>()
         val assignedNodeIds = mutableSetOf<String>()
         val textureDeduplicationMap = mutableMapOf<ProtoBrushPaint.TextureLayer, String>()
         val colorDeduplicationMap = mutableMapOf<ProtoColorFunction, String>()
@@ -121,7 +121,7 @@ object BrushGraphConverter {
         tip: ProtoBrushTip,
         nodes: MutableList<GraphNode>,
         edges: MutableList<GraphEdge>,
-        deduplicationMap: MutableMap<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>,
+        deduplicationMap: MutableMap<Triple<ProtoBrushBehavior.Node, String, List<String>>, InternalNodeInfo>,
         assignedNodeIds: MutableSet<String>,
     ): Pair<String, String> {
         val tipId = UUID.randomUUID().toString()
@@ -247,7 +247,7 @@ object BrushGraphConverter {
         behavior: ProtoBrushBehavior,
         nodes: MutableList<GraphNode>,
         edges: MutableList<GraphEdge>,
-        deduplicationMap: MutableMap<Pair<ProtoBrushBehavior.Node, List<String>>, InternalNodeInfo>,
+        deduplicationMap: MutableMap<Triple<ProtoBrushBehavior.Node, String, List<String>>, InternalNodeInfo>,
         assignedNodeIds: MutableSet<String>,
     ): List<Pair<String, String>> {
         val behaviorId = UUID.randomUUID().toString()
@@ -255,9 +255,13 @@ object BrushGraphConverter {
         val behaviorNodes = mutableListOf<InternalNodeInfo>()
 
         for (protoNode in behavior.nodesList) {
+            val isTarget = protoNode.nodeCase == ProtoBrushBehavior.Node.NodeCase.TARGET_NODE ||
+                           protoNode.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE
+            val comment = if (isTarget) behavior.developerComment else ""
+
             val tempNodeData = NodeData.Behavior(
                 node = protoNode,
-                developerComment = behavior.developerComment,
+                developerComment = comment,
                 behaviorId = behaviorId
             )
             val inputCount = tempNodeData.inputLabels().size
@@ -270,7 +274,7 @@ object BrushGraphConverter {
             }
 
             val childrenIds = children.map { it.id }
-            val key = Pair(protoNode, childrenIds)
+            val key = Triple(protoNode, comment, childrenIds)
 
             val existingInfo = deduplicationMap[key]
             if (existingInfo != null) {
@@ -287,7 +291,7 @@ object BrushGraphConverter {
             val inputPortIds = (0 until children.size).map { UUID.randomUUID().toString() }
             val nodeData = NodeData.Behavior(
                 node = protoNode,
-                developerComment = behavior.developerComment,
+                developerComment = comment,
                 behaviorId = behaviorId,
                 inputPortIds = inputPortIds
             )
@@ -353,7 +357,7 @@ object BrushGraphConverter {
         val behaviorNodes = nodes.filter { it.data is NodeData.Behavior }.reversed()
 
         val removedNodeIds = mutableSetOf<String>()
-        val processedNodes = mutableMapOf<Pair<ProtoBrushBehavior.Node, List<String>>, GraphNode>()
+        val processedNodes = mutableMapOf<Triple<ProtoBrushBehavior.Node, String, List<String>>, GraphNode>()
 
         for (node in behaviorNodes) {
             if (removedNodeIds.contains(node.id)) continue
@@ -371,7 +375,7 @@ object BrushGraphConverter {
 
             if (nodeOutputSet.isEmpty()) continue
 
-            val key = Pair(nodeData.node, nodeOutputSet)
+            val key = Triple(nodeData.node, nodeData.developerComment, nodeOutputSet)
             val existingNode = processedNodes[key]
 
             if (existingNode != null) {
