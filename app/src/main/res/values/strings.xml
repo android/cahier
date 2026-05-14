@@ -49,6 +49,10 @@
     <string name="marker">Marker</string>
     <string name="highlighter">Highlighter</string>
     <string name="dashed_line">Dashed line</string>
+    <string name="emoji_highlighter">Emoji Highlighter</string>
+    <string name="emoji_heart">Heart Emoji</string>
+    <string name="emoji_star">Star Emoji</string>
+    <string name="emoji_poop">Poop Emoji</string>
 
     <string name="note_image_preview">Note image preview</string>
     <string name="drawing_note_indicator">Drawing note indicator</string>

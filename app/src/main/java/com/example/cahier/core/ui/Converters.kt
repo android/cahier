@@ -49,6 +49,9 @@ class Converters {
             StockBrushes.pressurePen() to SerializedStockBrush.PressurePenLatest,
             StockBrushes.highlighter() to SerializedStockBrush.HighlighterLatest,
             StockBrushes.dashedLine() to SerializedStockBrush.DashedLineLatest,
+            StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true) to SerializedStockBrush.EmojiHighlighterHeartLatest,
+            StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true) to SerializedStockBrush.EmojiHighlighterStarLatest,
+            StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true) to SerializedStockBrush.EmojiHighlighterPoopLatest,
         )
 
         private val enumToStockBrush =
