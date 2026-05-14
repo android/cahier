@@ -36,7 +36,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -137,7 +136,7 @@ fun MoreOptionsMenu(
                 },
                 trailingIcon = {
                     Icon(
-                        if (showTemplatesMenu) Icons.Default.ChevronRight else Icons.Default.ExpandMore,
+                        Icons.Default.ChevronRight,
                         contentDescription = null
                     )
                 },
@@ -177,7 +176,7 @@ fun MoreOptionsMenu(
                         text = { Text(stringResource(R.string.emoji_highlighter)) },
                         trailingIcon = {
                             Icon(
-                                if (showEmojiSubMenu) Icons.Default.ChevronRight else Icons.Default.ExpandMore,
+                                Icons.Default.ChevronRight,
                                 contentDescription = null
                             )
                         },
