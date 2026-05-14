@@ -28,13 +28,19 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.cahier.core.data.FakeNotesRepository
 import com.example.cahier.features.home.HomePane
 import com.example.cahier.features.home.viewmodel.HomeScreenViewModel
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@HiltAndroidTest
 class CahierListDetailTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val composeTestRule = createComposeRule()
 
     private val fakeViewModel = HomeScreenViewModel(FakeNotesRepository())
@@ -83,6 +89,7 @@ class CahierListDetailTest {
         HomePane(
             navigateToCanvas = { _ -> },
             navigateToDrawingCanvas = { _ -> },
+            navigateToBrushGraph = {},
             navigateUp = {},
             forceCompact = forceCompact,
             homeScreenViewModel = fakeViewModel

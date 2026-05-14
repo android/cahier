@@ -1,23 +1,21 @@
 /*
- *  * Copyright 2026 Google LLC. All rights reserved.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Copyright 2026 Google LLC. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-@file:OptIn(androidx.ink.brush.ExperimentalInkCustomBrushApi::class)
 
 package com.example.cahier.developer.brushgraph.ui.node
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,13 +30,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
-import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.NodeData
@@ -52,70 +50,91 @@ import ink.proto.BrushCoat as ProtoBrushCoat
 
 @Composable
 fun NodeHeader(
-  node: GraphNode,
-  graph: BrushGraph,
-  strokeRenderer: CanvasStrokeRenderer,
-  modifier: Modifier = Modifier,
+    node: GraphNode,
+    graph: BrushGraph,
+    strokeRenderer: CanvasStrokeRenderer,
+    textColor: Color,
+    modifier: Modifier = Modifier,
 ) {
-  val data = node.data
-  Column(modifier = modifier) {
-    Row(
-      modifier = Modifier
-        .height(with(LocalDensity.current) { data.titleHeight().toDp() })
-        .padding(horizontal = 8.dp, vertical = 4.dp)
-        .fillMaxWidth(),
-      verticalAlignment = Alignment.Top,
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-        Text(
-          text = stringResource(data.title()),
-          style = MaterialTheme.typography.titleSmall,
-          fontWeight = FontWeight.Bold,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-        )
-        for (subtitle in data.subtitles()) {
-          val subtitleText = subtitle.asString()
-          Text(
-            text = subtitleText,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-        }
-      }
+    val data = node.data
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .height(with(LocalDensity.current) { data.titleHeight().toDp() })
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                Text(
+                    text = stringResource(data.title()),
+                    color = textColor,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                for (subtitle in data.subtitles()) {
+                    val subtitleText = subtitle.asString()
+                    Text(
+                        text = subtitleText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = textColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
 
-      // Previews for Tip and Coat nodes.
-      if (data is NodeData.Tip) {
-        Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
-          TipPreviewWidget(data.tip, strokeRenderer)
-        }
-      } else if (data is NodeData.Coat) {
-        val coat = remember(node, graph) {
-          try {
-            com.example.cahier.developer.brushgraph.data.BrushFamilyConverter.createCoat(node, graph)
-          } catch (e: Exception) {
-            ProtoBrushCoat.getDefaultInstance()
-          }
+            // Previews for Tip and Coat nodes.
+            if (data is NodeData.Tip) {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(4.dp)
+                ) {
+                    TipPreviewWidget(data.tip, strokeRenderer)
+                }
+            } else if (data is NodeData.Coat) {
+                val coat = remember(node, graph) {
+                    try {
+                        com.example.cahier.developer.brushgraph.data.BrushFamilyConverter.createCoat(
+                            node,
+                            graph
+                        )
+                    } catch (e: Exception) {
+                        ProtoBrushCoat.getDefaultInstance()
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(4.dp)
+                ) {
+                    CoatPreviewWidget(coat, strokeRenderer)
+                }
+            }
         }
 
-        Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
-          CoatPreviewWidget(coat, strokeRenderer)
+        if (data is NodeData.ColorFunction) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .padding(4.dp)
+            ) {
+                ColorFunctionPreviewWidget(data.function, strokeRenderer)
+            }
         }
-      }
+        if (data is NodeData.TextureLayer) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .padding(4.dp)
+            ) {
+                TextureLayerPreviewWidget(data.layer, strokeRenderer)
+            }
+        }
     }
-
-    if (data is NodeData.ColorFunction) {
-      Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
-        ColorFunctionPreviewWidget(data.function, strokeRenderer)
-      }
-    }
-    if (data is NodeData.TextureLayer) {
-      Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
-        TextureLayerPreviewWidget(data.layer, strokeRenderer)
-      }
-    }
-  }
 }

@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.cahier.core.data.NoteType
 import com.example.cahier.core.navigation.CahierNavHost
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.navigation.TextCanvasDestination
 
@@ -29,6 +30,7 @@ import com.example.cahier.core.navigation.TextCanvasDestination
 fun CahierApp(
     noteId: Long,
     noteType: NoteType?,
+    textureStore: CahierTextureBitmapStore,
     modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
@@ -48,6 +50,7 @@ fun CahierApp(
 
     CahierNavHost(
         navController = navController,
+        textureStore = textureStore,
         modifier = modifier
     )
 }

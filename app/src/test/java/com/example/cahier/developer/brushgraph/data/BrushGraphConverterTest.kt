@@ -211,6 +211,39 @@ class BrushGraphConverterTest {
         }
     }
 
+    @Test
+    fun fromProtoBrushFamily_targetNodesWithDifferentComments_areNotDeduplicated() {
+        val targetNodeProto = BrushBehavior.Node.newBuilder()
+            .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
+            .build()
+
+        val behaviorProto1 = BrushBehavior.newBuilder()
+            .addNodes(targetNodeProto)
+            .setDeveloperComment("Comment A")
+            .build()
+
+        val behaviorProto2 = BrushBehavior.newBuilder()
+            .addNodes(targetNodeProto)
+            .setDeveloperComment("Comment B")
+            .build()
+
+        val tipProto = BrushTip.newBuilder()
+            .addBehaviors(behaviorProto1)
+            .addBehaviors(behaviorProto2)
+            .build()
+
+        val familyProto = BrushFamily.newBuilder()
+            .addCoats(ink.proto.BrushCoat.newBuilder().setTip(tipProto).build())
+            .build()
+
+        val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
+
+        val behaviorNodes = graph.nodes.filter { it.data is NodeData.Behavior }
+        assertEquals(2, behaviorNodes.size)
+        assertTrue(behaviorNodes.any { (it.data as NodeData.Behavior).developerComment == "Comment A" })
+        assertTrue(behaviorNodes.any { (it.data as NodeData.Behavior).developerComment == "Comment B" })
+    }
+
     private fun collectTargets(tip: ink.proto.BrushTip): Set<String> {
         val targets = mutableSetOf<String>()
         for (behavior in tip.behaviorsList) {

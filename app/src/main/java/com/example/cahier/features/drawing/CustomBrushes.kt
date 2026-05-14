@@ -22,25 +22,29 @@ package com.example.cahier.features.drawing
 
 import android.content.Context
 import android.util.Log
-import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
-import androidx.ink.storage.decode
+import androidx.ink.brush.Version
+import androidx.ink.storage.AndroidBrushFamilySerialization
 import com.example.cahier.R
 import com.example.cahier.core.data.CustomBrush
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 
 
 object CustomBrushes {
     private var customBrushes: List<CustomBrush>? = null
     private const val TAG = "CustomBrushes"
 
-    fun getBrushes(context: Context): List<CustomBrush> {
+    fun getBrushes(context: Context, textureStore: CahierTextureBitmapStore): List<CustomBrush> {
         return customBrushes ?: synchronized(this) {
-            customBrushes ?: loadCustomBrushes(context).also { customBrushes = it }
+            customBrushes ?: loadCustomBrushes(context, textureStore).also { customBrushes = it }
         }
     }
 
     @OptIn(ExperimentalInkCustomBrushApi::class)
-    private fun loadCustomBrushes(context: Context): List<CustomBrush> {
+    private fun loadCustomBrushes(
+        context: Context,
+        textureStore: CahierTextureBitmapStore,
+    ): List<CustomBrush> {
         val brushFiles = mapOf(
             "Calligraphy" to (R.raw.calligraphy to R.drawable.draw_24px),
             "Flag Banner" to (R.raw.flag_banner to R.drawable.flag_24px),
@@ -58,7 +62,14 @@ object CustomBrushes {
             val (resourceId, icon) = pair
             try {
                 val brushFamily = context.resources.openRawResource(resourceId).use { inputStream ->
-                    BrushFamily.decode(inputStream)
+                    AndroidBrushFamilySerialization.decode(
+                        inputStream,
+                        maxVersion = Version.DEVELOPMENT
+                    ) { id, bitmap ->
+                        if (bitmap != null)
+                            textureStore.loadTexture(id, bitmap)
+                        id
+                    }
                 }
                 CustomBrush(name, icon, brushFamily)
             } catch (e: Exception) {

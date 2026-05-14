@@ -1,8 +1,9 @@
 package com.example.cahier.developer.brushdesigner.viewmodel
 
 import android.content.Context
-import android.graphics.Bitmap
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.BrushDesignerRepository
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -16,14 +17,15 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import javax.inject.Inject
 
+@RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltAndroidTest
 class BrushDesignerViewModelTest {
@@ -51,7 +53,10 @@ class BrushDesignerViewModelTest {
         repository.updateActiveBrushProto(defaultProto())
 
         val context = ApplicationProvider.getApplicationContext<Context>()
-        viewModel = BrushDesignerViewModel(context, repository, customBrushDao)
+        viewModel = BrushDesignerViewModel(
+            context, repository,
+            CahierTextureBitmapStore(context), customBrushDao
+        )
     }
 
     /** Produces a clean default [ProtoBrushFamily] matching the repository's initial state. */
@@ -141,7 +146,6 @@ class BrushDesignerViewModelTest {
     @Test
     fun saveToPalette_persists_to_dao() = runTest {
         val brushName = "Test Persistence Brush"
-        viewModel.updateClientBrushFamilyId("test-id")
 
         viewModel.saveToPalette(brushName).join()
 
@@ -153,36 +157,14 @@ class BrushDesignerViewModelTest {
     fun previewBrushFamily_is_null_on_invalid_proto() = runTest {
         val invalidRepo = BrushDesignerRepository()
         invalidRepo.updateActiveBrushProto(ink.proto.BrushFamily.newBuilder().build())
-
+        val context = ApplicationProvider.getApplicationContext<Context>()
         val vm = BrushDesignerViewModel(
-            ApplicationProvider.getApplicationContext(),
+            context,
             invalidRepo,
+            CahierTextureBitmapStore(context),
             customBrushDao
         )
 
         assertNull(vm.previewBrushFamily.value)
-    }
-
-    @Test
-    fun setTextureStore_immediately_syncs_proto_textures() = runTest {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val testTextureId = "test-texture"
-        val testBitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
-
-        val baos = java.io.ByteArrayOutputStream()
-        testBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
-        val textureBytes = com.google.protobuf.ByteString.copyFrom(baos.toByteArray())
-
-        val protoWithTexture = viewModel.activeBrushProto.value.toBuilder()
-            .putTextureIdToBitmap(testTextureId, textureBytes)
-            .build()
-        repository.updateActiveBrushProto(protoWithTexture)
-
-        val store = com.example.cahier.core.ui.CahierTextureBitmapStore(context)
-        assertNull(store[testTextureId])
-
-        viewModel.setTextureStore(store)
-
-        assertNotNull(store[testTextureId])
     }
 }
