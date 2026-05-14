@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -146,7 +148,10 @@ private fun BrushLibraryMenu(
             R.string.marker to StockBrushes.marker(),
             R.string.pressure_pen to StockBrushes.pressurePen(),
             R.string.dashed_line to StockBrushes.dashedLine(),
-            R.string.emoji_highlighter to StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true),
+            R.string.emoji_highlighter to StockBrushes.emojiHighlighter(
+                "emoji-heart",
+                showMiniEmojiTrail = true
+            ),
         )
     }
 
@@ -166,42 +171,50 @@ private fun BrushLibraryMenu(
                 onClick = {},
                 enabled = false
             )
-            stockBrushes.filter { it.first != R.string.emoji_highlighter }.forEach { (nameResId, brushFamily) ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(nameResId)) },
-                    onClick = {
-                        onLoadBrush(brushFamily)
-                        expanded = false
-                    }
-                )
-            }
-            
+            stockBrushes.filter { it.first != R.string.emoji_highlighter }
+                .forEach { (nameResId, brushFamily) ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(nameResId)) },
+                        onClick = {
+                            onLoadBrush(brushFamily)
+                            expanded = false
+                        }
+                    )
+                }
+
             var showEmojiSubMenu by remember { mutableStateOf(false) }
             var itemWidth by remember { mutableStateOf(0) }
             var itemHeight by remember { mutableStateOf(0) }
             val density = LocalDensity.current
-            
-            Box(modifier = Modifier.onSizeChanged { 
+
+            Box(modifier = Modifier.onSizeChanged {
                 itemWidth = it.width
                 itemHeight = it.height
             }) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.emoji_highlighter)) },
                     trailingIcon = {
-                        Text(text = if (showEmojiSubMenu) "▶" else "▼")
+                        Icon(Icons.Default.ChevronRight, contentDescription = null)
                     },
                     onClick = { showEmojiSubMenu = true }
                 )
                 DropdownMenu(
                     expanded = showEmojiSubMenu,
                     onDismissRequest = { showEmojiSubMenu = false },
-                    offset = DpOffset(x = density.run { itemWidth.toDp() }, y = density.run { -itemHeight.toDp() }),
+                    offset = DpOffset(
+                        x = density.run { itemWidth.toDp() },
+                        y = density.run { -itemHeight.toDp() }),
                     properties = PopupProperties(focusable = true)
                 ) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.emoji_heart)) },
                         onClick = {
-                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true))
+                            onLoadBrush(
+                                StockBrushes.emojiHighlighter(
+                                    "emoji-heart",
+                                    showMiniEmojiTrail = true
+                                )
+                            )
                             showEmojiSubMenu = false
                             expanded = false
                         }
@@ -209,7 +222,12 @@ private fun BrushLibraryMenu(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.emoji_star)) },
                         onClick = {
-                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true))
+                            onLoadBrush(
+                                StockBrushes.emojiHighlighter(
+                                    "emoji-star",
+                                    showMiniEmojiTrail = true
+                                )
+                            )
                             showEmojiSubMenu = false
                             expanded = false
                         }
@@ -217,7 +235,12 @@ private fun BrushLibraryMenu(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.emoji_poop)) },
                         onClick = {
-                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true))
+                            onLoadBrush(
+                                StockBrushes.emojiHighlighter(
+                                    "emoji-poop",
+                                    showMiniEmojiTrail = true
+                                )
+                            )
                             showEmojiSubMenu = false
                             expanded = false
                         }
