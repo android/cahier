@@ -56,6 +56,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import com.example.cahier.R
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.features.drawing.CustomBrushes
 
@@ -77,7 +78,7 @@ internal fun BrushDesignerTopBar(
     onClearCanvas: () -> Unit,
     onShowSaveDialog: () -> Unit,
     onImport: () -> Unit,
-    onExport: () -> Unit
+    onExport: () -> Unit,
 ) {
     TopAppBar(
         title = {
@@ -132,11 +133,12 @@ internal fun BrushDesignerTopBar(
 
 @Composable
 private fun BrushLibraryMenu(
-    onLoadBrush: (BrushFamily) -> Unit
+    onLoadBrush: (BrushFamily) -> Unit,
 ) {
+    val textureStore = LocalTextureStore.current
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val cahierBrushes = remember { CustomBrushes.getBrushes(context) }
+    val cahierBrushes = remember { CustomBrushes.getBrushes(context, textureStore) }
 
     val stockBrushes = remember {
         listOf(
@@ -253,7 +255,7 @@ private fun BrushLibraryMenu(
 private fun PaletteMenu(
     savedBrushes: List<CustomBrushEntity>,
     onLoadFromPalette: (CustomBrushEntity) -> Unit,
-    onDeleteFromPalette: (String) -> Unit
+    onDeleteFromPalette: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -304,7 +306,7 @@ private fun OverflowMenu(
     onShowSaveDialog: () -> Unit,
     onClearCanvas: () -> Unit,
     onImport: () -> Unit,
-    onExport: () -> Unit
+    onExport: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -344,7 +346,7 @@ private fun OverflowMenu(
 @Composable
 internal fun SaveToPaletteDialog(
     onSave: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     var brushNameInput by remember { mutableStateOf("") }
 

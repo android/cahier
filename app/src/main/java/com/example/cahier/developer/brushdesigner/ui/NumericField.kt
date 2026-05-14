@@ -122,16 +122,18 @@ class NumericLimits(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun NumericField(
+    modifier: Modifier = Modifier,
     title: String,
     value: Float,
     limits: NumericLimits,
+    onValueChangeFinished: (() -> Unit)? = null,
     onValueChanged: (Float) -> Unit
 ) {
     val displayValue = limits.fromRealValue(value)
     var showTextInput by remember { mutableStateOf(false) }
     var textInputValue by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+    Column(modifier = modifier.padding(vertical = 4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -191,7 +193,8 @@ internal fun NumericField(
                 value = displayValue.coerceIn(limits.min, limits.max),
                 onValueChange = { onValueChanged(limits.toRealValue(it)) },
                 valueRange = limits.min..limits.max,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onValueChangeFinished = onValueChangeFinished
             )
 
             IconButton(onClick = {

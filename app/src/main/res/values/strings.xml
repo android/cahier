@@ -107,11 +107,11 @@
     <string name="brush_designer_stock_brushes">Stock Brushes</string>
     <string name="brush_designer_my_palette">My Palette</string>
     <string name="brush_designer_no_saved_brushes">No saved brushes yet</string>
-    <string name="brush_designer_save_to_palette">Save to Palette</string>
+    <string name="brush_designer_save_to_palette">Save to Cahier Palette</string>
     <string name="brush_designer_import">Import</string>
     <string name="brush_designer_export">Export</string>
     <string name="brush_designer_more_options">More options</string>
-    <string name="brush_designer_save_dialog_title">Save to Cahier Palette</string>
+    <string name="brush_designer_save_dialog_title">Save to Palette</string>
     <string name="brush_designer_save_dialog_info">• This brush will appear in the main Cahier toolbox.\n• Large textures are stored in RAM. Avoid saving many texture-heavy brushes to prevent performance lag or memory issues.</string>
     <string name="brush_designer_brush_name">Brush Name</string>
     <string name="brush_designer_tab_tip_shape">Tip Shape</string>
@@ -361,7 +361,7 @@
     <string name="bg_self_overlap">Self Overlap</string>
     <string name="bg_function_type">Function Type</string>
     <string name="bg_color_label">Color: </string>
-    <string name="bg_client_brush_family_id">Client Brush Family ID</string>
+    <string name="bg_brush_family_name">Brush name</string>
     <string name="bg_brush_developer_comment">Brush developer comment</string>
     <string name="bg_input_model">Input Model</string>
     <string name="bg_delete_nodes">Delete Nodes</string>
@@ -401,7 +401,9 @@
     <string name="bg_cd_close_pane">Close Pane</string>
     <string name="bg_notifications_count">Notifications (%1$d)</string>
     <string name="bg_errors">Errors</string>
+    <string name="bg_error">Error: %1$s</string>
     <string name="bg_warnings">Warnings</string>
+    <string name="bg_warning">Warning: %1$s</string>
     <string name="bg_debug">Debug</string>
     <string name="bg_cd_add_point">Add Point</string>
     <string name="bg_cd_remove_point">Remove Point</string>
@@ -423,7 +425,7 @@
     <string name="bg_node_polar_target">Polar Target</string>
     <string name="bg_node_unknown">Unknown</string>
     <string name="bg_node_color_function">Color Function</string>
-    
+
     <string name="bg_err_edge_missing_source">Edge refers to missing source node</string>
     <string name="bg_err_edge_missing_target">Edge refers to missing target node</string>
     <string name="bg_err_family_count">Graph must have exactly one Brush Family node. Found %1$d.</string>
@@ -455,7 +457,7 @@
     <string name="bg_err_expected_node_type">Expected %1$s node, found %2$s</string>
     <string name="bg_err_internal_conversion">Internal error during conversion: %1$s</string>
     <string name="bg_err_unsupported_behavior_node_type">Unsupported behavior node type: %1$s</string>
-    <string name="bg_err_load_brush_legacy_unsupported">Failed to load brush: Legacy format not supported yet.</string>
+    <string name="bg_err_load_brush">Failed to load brush.</string>
     <string name="bg_msg_brush_loaded_success">Brush loaded successfully</string>
     <string name="bg_err_load_brush_failed_with_msg">Failed to load brush: %1$s</string>
     <string name="bg_msg_brush_exported_success">Brush exported successfully</string>
@@ -465,6 +467,8 @@
     <string name="bg_err_reorganization_failed">Reorganization failed</string>
     <string name="bg_err_load_brush_failed">Failed to load brush</string>
     <string name="bg_err_cannot_delete_family_node">Cannot delete Family node</string>
+    <string name="bg_err_save_palette">Failed to save brush to palette: %1$s</string>
+    <string name="bg_err_load_palette">Failed to load brush from palette: %1$s</string>
     <string name="bg_err_behavior_cannot_accept">Behavior node %1$s cannot accept input from %2$s</string>
     <string name="bg_err_behavior_cannot_accept_structural">Behavior node %1$s cannot accept input from structural node %2$s</string>
     <string name="bg_err_coat_only_accepts_tip">Coat can only accept input from Tip at the tip port</string>
@@ -491,20 +495,20 @@
     <string name="bg_port_end">End</string>
     <string name="bg_port_angle">Angle</string>
     <string name="bg_port_mag">Mag</string>
-    
+
     <string name="bg_opacity_multiplier">opacity multiplier</string>
     <string name="bg_replace_color">replace color</string>
-    
+
     <string name="bg_tool_type_unknown">unknown</string>
     <string name="bg_tool_type_mouse">mouse</string>
     <string name="bg_tool_type_touch">touch</string>
     <string name="bg_tool_type_stylus">stylus</string>
     <string name="bg_tool_type_none">none</string>
-    
+
     <string name="bg_unit_cm">cm</string>
     <string name="bg_unit_size">size</string>
     <string name="bg_unit_s">s</string>
-    
+
     <string name="bg_overlap_label">overlap: %1$s</string>
     <string name="bg_period_label">period: %1$s</string>
     <string name="bg_gap_label">gap: %1$s%2$s</string>
@@ -523,13 +527,11 @@
     <string name="bg_source_normalized_direction_y">normalized direction Y</string>
     <string name="bg_source_distance_traveled">distance traveled</string>
     <string name="bg_source_time_of_input_s">time of input (s)</string>
-    <string name="bg_source_time_of_input_ms">time of input (ms)</string>
+    <string name="bg_source_time_from_input_to_stroke_end_s">time from input to stroke end (s)</string>
     <string name="bg_source_predicted_distance_traveled">predicted distance traveled</string>
     <string name="bg_source_predicted_time_elapsed_s">predicted time elapsed (s)</string>
-    <string name="bg_source_predicted_time_elapsed_ms">predicted time elapsed (ms)</string>
     <string name="bg_source_distance_remaining">distance remaining</string>
     <string name="bg_source_time_since_input_s">time since input (s)</string>
-    <string name="bg_source_time_since_input_ms">time since input (ms)</string>
     <string name="bg_source_time_since_stroke_end">time since stroke end</string>
     <string name="bg_source_acceleration">acceleration</string>
     <string name="bg_source_acceleration_x">acceleration X</string>
@@ -690,7 +692,6 @@
     <string name="bg_tooltip_source_direction_y">Signed Y component of the modeled stroke input\'s current direction of travel, normalized to the range [-1, 1]. It indicates the vertical direction the stroke is moving.</string>
     <string name="bg_tooltip_source_distance_traveled">Distance traveled by the inputs of the current stroke, starting at 0 at the first input, where one distance unit is equal to the brush size. This is useful for effects that change progressively along the stroke.</string>
     <string name="bg_tooltip_source_time_of_input_s">The time elapsed (in seconds) from when the stroke started to when this part of the stroke was drawn. The value remains fixed for any given part of the stroke once drawn.</string>
-    <string name="bg_tooltip_source_time_of_input_ms">The time elapsed (in milliseconds) from when the stroke started. This is deprecated; use SOURCE_TIME_OF_INPUT_IN_SECONDS instead.</string>
     <string name="bg_tooltip_source_predicted_distance_traveled">Distance traveled by the inputs of the current prediction, starting at 0 at the last non-predicted input, in multiples of the brush size.</string>
     <string name="bg_tooltip_source_predicted_time_elapsed_s">Elapsed time (in seconds) of the prediction, starting at 0 at the last non-predicted input.</string>
     <string name="bg_tooltip_source_tilt_x">Stylus tilt along the horizontal axis, in radians. Positive values correspond to tilt toward the right.</string>
@@ -719,8 +720,7 @@
     <string name="bg_tooltip_source_distance_remaining_fraction">Distance remaining to the end of the stroke, as a fraction of the total stroke length.</string>
     <string name="bg_tooltip_source_time_since_stroke_end">Time elapsed since the stroke ended, in seconds. Useful for post-stroke effects.</string>
     <string name="bg_tooltip_source_unspecified">Unspecified input source.</string>
-    <string name="bg_tooltip_source_predicted_time_elapsed_ms">Elapsed time of the prediction in milliseconds. This is deprecated; use SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS instead.</string>
-    <string name="bg_tooltip_source_time_since_input_ms">Time elapsed since input was recorded in milliseconds. This is deprecated; use SOURCE_TIME_SINCE_INPUT_IN_SECONDS instead.</string>
+    <string name="bg_tooltip_source_time_from_input_to_stroke_end">Time elapsed from the current modeled stroke input until the last input in the stroke.</string>
     <!-- Target Tooltips -->
     <string name="bg_tooltip_target_width_multiplier">Scales the brush tip width. If multiple behaviors target this or size multiplier, they combine multiplicatively. The final width is clamped to a maximum of twice the baseline width.</string>
     <string name="bg_tooltip_target_height_multiplier">Scales the brush tip height. If multiple behaviors target this or size multiplier, they combine multiplicatively. The final height is clamped to a maximum of twice the baseline height.</string>
@@ -791,13 +791,6 @@
     <string name="bg_tooltip_out_of_range_repeat">Values outside the range repeat by wrapping around to the other side, creating a repeating pattern or cycle.</string>
     <string name="bg_tooltip_out_of_range_mirror">Values outside the range repeat in a mirrored fashion, bouncing back and forth between the boundaries. This creates a smooth, oscillating effect.</string>
     <string name="bg_tooltip_out_of_range_unspecified">Unspecified out of range behavior.</string>
-
-    <!-- OptionalInput Tooltips -->
-    <string name="bg_tooltip_optional_input_pressure">Stylus or touch pressure (Deprecated).</string>
-    <string name="bg_tooltip_optional_input_tilt">Stylus tilt (Deprecated).</string>
-    <string name="bg_tooltip_optional_input_orientation">Stylus orientation (Deprecated).</string>
-    <string name="bg_tooltip_optional_input_tilt_x_y">Stylus tilt along X and Y axes (Deprecated).</string>
-    <string name="bg_tooltip_optional_input_default">Optional input property (Deprecated).</string>
 
     <!-- BinaryOp Tooltips -->
     <string name="bg_tooltip_binary_op_product">Multiplies value A by value B. If either value is missing (null), the result is also missing.</string>
@@ -1037,4 +1030,4 @@
     <!-- NodeFields Strings -->
     <string name="bg_label_window_size">Window Size (ms)</string>
     <string name="bg_label_upsampling_frequency">Upsampling Frequency (Hz)</string>
-    </resources>
+</resources>

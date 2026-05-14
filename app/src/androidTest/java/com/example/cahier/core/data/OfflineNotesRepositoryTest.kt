@@ -8,6 +8,7 @@ import androidx.ink.strokes.ImmutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
 import androidx.test.core.app.ApplicationProvider
 import com.example.cahier.core.ui.Converters
+import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -36,12 +37,14 @@ class OfflineNotesRepositoryTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: OfflineNotesRepository
     private val noteDao: NoteDao = mock()
+    private val customBrushDao: CustomBrushDao = mock()
 
     @Before
-    fun setup() {
+    fun setup() = runTest {
         Dispatchers.setMain(testDispatcher)
+        whenever(customBrushDao.getAllCustomBrushesSync(any())).thenReturn(emptyList())
         val context = ApplicationProvider.getApplicationContext<Context>()
-        repository = OfflineNotesRepository(noteDao, context)
+        repository = OfflineNotesRepository(noteDao, context, customBrushDao, mock())
     }
 
     @After
@@ -86,6 +89,7 @@ class OfflineNotesRepositoryTest {
 
         verify(noteDao).updateNote(note.copy(isFavorite = true))
     }
+
 
     @Test
     fun getAllNotesStream_returns_flow_from_DAO() = runTest {

@@ -24,7 +24,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,7 +56,7 @@ internal fun BrushSliderControl(
     label: String,
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
-    onValueChange: (Float) -> Unit
+    onValueChange: (Float) -> Unit,
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Row(
@@ -59,7 +64,10 @@ internal fun BrushSliderControl(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(text = label, style = MaterialTheme.typography.bodyMedium)
-            Text(text = String.format(java.util.Locale.US, "%.2f", value), style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = String.format(java.util.Locale.US, "%.2f", value),
+                style = MaterialTheme.typography.bodySmall
+            )
         }
         Slider(
             value = value,
@@ -76,7 +84,7 @@ internal fun BrushSliderControl(
 fun CustomColorPickerDialog(
     initialColor: Color,
     onColorSelected: (Color) -> Unit,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
 ) {
     var currentColor by remember { mutableStateOf(HsvColor.from(initialColor)) }
 
@@ -99,7 +107,8 @@ fun CustomColorPickerDialog(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val hexString = String.format(java.util.Locale.US, "%08x", currentColor.toColor().toArgb())
+                val hexString =
+                    String.format(java.util.Locale.US, "%08x", currentColor.toColor().toArgb())
                 Text(
                     text = hexString,
                     style = MaterialTheme.typography.bodyMedium,
@@ -123,4 +132,53 @@ fun CustomColorPickerDialog(
             }
         }
     )
+}
+
+/**
+ * A generic [ExposedDropdownMenuBox] for selecting from enum-like value lists.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun <T> EnumDropdown(
+    label: String,
+    currentValue: T,
+    values: List<T>,
+    displayName: @Composable (T) -> String,
+    onSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = displayName(currentValue),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            values.forEach { value ->
+                DropdownMenuItem(
+                    text = { Text(displayName(value)) },
+                    onClick = {
+                        onSelected(value)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }

@@ -49,6 +49,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +64,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -80,8 +80,8 @@ import com.example.cahier.core.ui.ColorPickerDialog
 import com.example.cahier.core.ui.ConfirmationDialog
 import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.core.ui.FocusedFieldEnum
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.theme.CahierAppTheme
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.utils.createDropTarget
 import com.example.cahier.features.drawing.viewmodel.DrawingCanvasViewModel
 
@@ -93,8 +93,9 @@ import com.example.cahier.features.drawing.viewmodel.DrawingCanvasViewModel
 @Composable
 fun DrawingCanvas(
     navigateUp: () -> Unit,
+    navigateToBrushGraph: () -> Unit,
     modifier: Modifier = Modifier,
-    drawingCanvasViewModel: DrawingCanvasViewModel = hiltViewModel()
+    drawingCanvasViewModel: DrawingCanvasViewModel = hiltViewModel(),
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
     var showConfirmationDialog by rememberSaveable { mutableStateOf(false) }
@@ -140,7 +141,8 @@ fun DrawingCanvas(
         DrawingCanvasContent(
             drawingCanvasViewModel = drawingCanvasViewModel,
             imagePickerLauncher = imagePickerLauncher,
-            onNavigateUp = navigateUp
+            onNavigateUp = navigateUp,
+            navigateToBrushGraph = navigateToBrushGraph
         )
     }
 }
@@ -148,7 +150,7 @@ fun DrawingCanvas(
 @Composable
 private fun DrawingCanvasTopBar(
     drawingCanvasViewModel: DrawingCanvasViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
     var titleState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
@@ -198,7 +200,8 @@ private fun DrawingCanvasContent(
     drawingCanvasViewModel: DrawingCanvasViewModel,
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
     onNavigateUp: () -> Unit,
-    modifier: Modifier = Modifier
+    navigateToBrushGraph: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val activity = LocalActivity.current as ComponentActivity
     val windowSizeClass = calculateWindowSizeClass(activity)
@@ -237,6 +240,7 @@ private fun DrawingCanvasContent(
             onUndo = drawingCanvasViewModel::undo,
             onRedo = drawingCanvasViewModel::redo,
             onExit = onNavigateUp,
+            onEditActiveBrush = navigateToBrushGraph,
             onColorPickerClick = { showColorPicker = true },
         )
 
@@ -274,16 +278,16 @@ private fun DrawingCanvasContent(
 @Composable
 private fun DrawingSurfaceWithTarget(
     drawingCanvasViewModel: DrawingCanvasViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
     val exportedUri by drawingCanvasViewModel.exportedImageUri.collectAsStateWithLifecycle()
     val currentBrush by drawingCanvasViewModel.currentBrush.collectAsStateWithLifecycle()
     val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
     val strokes = remember { mutableStateListOf<Stroke>() }
-    val context = LocalContext.current
-    val textureStore = remember { CahierTextureBitmapStore(context) }
-    val canvasStrokeRenderer = remember {
+    val textureStore = LocalTextureStore.current
+    val cacheGen by textureStore.generation.collectAsState()
+    val canvasStrokeRenderer = remember(cacheGen) {
         CanvasStrokeRenderer.create(textureStore = textureStore)
     }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
@@ -370,7 +374,6 @@ private fun DrawingSurfaceWithTarget(
             onGetNextBrush = drawingCanvasViewModel::getCurrentBrush,
             isEraserMode = isEraserMode,
             backgroundImageUri = uiState.note.imageUriList?.firstOrNull(),
-            textureStore = textureStore,
             modifier = Modifier.fillMaxSize()
         )
     }

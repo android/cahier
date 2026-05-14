@@ -31,12 +31,13 @@ import androidx.ink.strokes.ImmutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import coil3.ImageLoader
 import com.example.cahier.core.data.FakeNotesRepository
 import com.example.cahier.core.navigation.DrawingCanvasDestination
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.utils.FileHelper
-import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
-import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
+import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.Dispatchers
@@ -51,13 +52,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import javax.inject.Inject
 
+@RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
 class DrawingCanvasViewModelTest {
@@ -95,7 +96,8 @@ class DrawingCanvasViewModelTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         viewModel = DrawingCanvasViewModel(
             context, savedStateHandle, notesRepository, fileHelper, imageLoader,
-            customBrushDao = FakeCustomBrushDao()
+            customBrushDao = FakeCustomBrushDao(),
+            CahierTextureBitmapStore(context)
         )
     }
 
@@ -217,10 +219,4 @@ class DrawingCanvasViewModelTest {
             viewModel.isEraserMode.value
         )
     }
-}
-
-private class FakeCustomBrushDao : CustomBrushDao {
-    override fun getAllCustomBrushes(): Flow<List<CustomBrushEntity>> = flowOf(emptyList())
-    override suspend fun saveCustomBrush(brush: CustomBrushEntity) {}
-    override suspend fun deleteCustomBrush(name: String) {}
 }

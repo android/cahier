@@ -72,6 +72,7 @@ fun DrawingToolbox(
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onExit: () -> Unit,
+    onEditActiveBrush: () -> Unit,
     isVertical: Boolean,
     onColorPickerClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -90,6 +91,7 @@ fun DrawingToolbox(
                 onUndo = onUndo,
                 onRedo = onRedo,
                 onExit = onExit,
+                onEditActiveBrush = onEditActiveBrush,
                 onColorPickerClick = onColorPickerClick
             )
         } else {
@@ -101,6 +103,7 @@ fun DrawingToolbox(
                 onUndo = onUndo,
                 onRedo = onRedo,
                 onExit = onExit,
+                onEditActiveBrush = onEditActiveBrush,
                 onColorPickerClick = onColorPickerClick
             )
         }
@@ -312,6 +315,7 @@ internal fun ToolboxNoteActions(
     drawingCanvasViewModel: DrawingCanvasViewModel,
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
     onExit: () -> Unit,
+    onEditActiveBrush: () -> Unit,
     isVertical: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -320,7 +324,8 @@ internal fun ToolboxNoteActions(
             ToolboxNoteActionsContent(
                 drawingCanvasViewModel = drawingCanvasViewModel,
                 imagePickerLauncher = imagePickerLauncher,
-                onExit = onExit
+                onExit = onExit,
+                onEditActiveBrush = onEditActiveBrush
             )
         }
     } else {
@@ -328,7 +333,8 @@ internal fun ToolboxNoteActions(
             ToolboxNoteActionsContent(
                 drawingCanvasViewModel = drawingCanvasViewModel,
                 imagePickerLauncher = imagePickerLauncher,
-                onExit = onExit
+                onExit = onExit,
+                onEditActiveBrush = onEditActiveBrush
             )
         }
     }
@@ -338,10 +344,12 @@ internal fun ToolboxNoteActions(
 private fun ToolboxNoteActionsContent(
     drawingCanvasViewModel: DrawingCanvasViewModel,
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    onEditActiveBrush: () -> Unit
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
     var optionsMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     IconButton(
         onClick = { drawingCanvasViewModel.toggleFavorite() },
         modifier = Modifier.size(48.dp)
@@ -387,6 +395,22 @@ private fun ToolboxNoteActionsContent(
             expanded = optionsMenuExpanded,
             onDismissRequest = { optionsMenuExpanded = false }
         ) {
+            DropdownMenuItem(
+                text = { Text("Edit active brush") },
+                onClick = {
+                    optionsMenuExpanded = false
+                    coroutineScope.launch {
+                        drawingCanvasViewModel.saveCurrentBrushToAutosave()
+                        onEditActiveBrush()
+                    }
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.edit_24px),
+                        contentDescription = null
+                    )
+                }
+            )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.exit)) },
                 onClick = {

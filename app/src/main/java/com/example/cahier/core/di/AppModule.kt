@@ -26,18 +26,36 @@ import com.example.cahier.core.data.MIGRATION_8_9
 import com.example.cahier.core.data.NoteDatabase
 import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.data.OfflineNotesRepository
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.utils.FileHelper
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
+import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
+import com.example.cahier.developer.brushgraph.data.DefaultBrushGraphRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope {
+        return CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    }
 
     @Provides
     @Singleton
@@ -61,9 +79,11 @@ object AppModule {
     @Singleton
     fun provideNoteRepository(
         database: NoteDatabase,
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        customBrushDao: CustomBrushDao,
+        textureStore: CahierTextureBitmapStore,
     ): NotesRepository {
-        return OfflineNotesRepository(database.noteDao(), context)
+        return OfflineNotesRepository(database.noteDao(), context, customBrushDao, textureStore)
     }
 
     @Provides
@@ -76,5 +96,13 @@ object AppModule {
     @Singleton
     fun provideFileHelper(@ApplicationContext context: Context): FileHelper {
         return FileHelper(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBrushGraphRepository(
+        impl: DefaultBrushGraphRepository,
+    ): BrushGraphRepository {
+        return impl
     }
 }

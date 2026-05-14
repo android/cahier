@@ -31,6 +31,7 @@ import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.StockBrushes
+import androidx.ink.brush.Version
 import androidx.ink.brush.compose.composeColor
 import androidx.ink.brush.compose.copyWithComposeColor
 import androidx.ink.brush.compose.createWithComposeColor
@@ -40,7 +41,7 @@ import androidx.ink.geometry.MutableParallelogram
 import androidx.ink.geometry.MutableSegment
 import androidx.ink.geometry.MutableVec
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
-import androidx.ink.storage.decode
+import androidx.ink.storage.AndroidBrushFamilySerialization
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -54,9 +55,11 @@ import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.ui.CahierUiState
-import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
-import com.example.cahier.features.drawing.CustomBrushes
 import com.example.cahier.core.utils.FileHelper
+import com.example.cahier.developer.brushdesigner.data.AUTOSAVE_KEY
+import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
+import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
+import com.example.cahier.features.drawing.CustomBrushes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -73,12 +76,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DrawingCanvasViewModel @Inject constructor(
-    @param: ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
     private val noteRepository: NotesRepository,
     val fileHelper: FileHelper,
     private val imageLoader: ImageLoader,
     private val customBrushDao: CustomBrushDao,
+    val textureStore: CahierTextureBitmapStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CahierUiState())
@@ -126,8 +130,6 @@ class DrawingCanvasViewModel @Inject constructor(
     val customBrushes: StateFlow<List<CustomBrush>> = _customBrushes.asStateFlow()
 
     private var isBrushSelectedInSession = false
-
-    val textureStore = CahierTextureBitmapStore(context)
 
     init {
         viewModelScope.launch {
@@ -287,7 +289,7 @@ class DrawingCanvasViewModel @Inject constructor(
 
         val strokeRenderer = CanvasStrokeRenderer.create(
             forcePathRendering = true,
-            textureStore = CahierTextureBitmapStore(context)
+            textureStore = textureStore
         )
         strokes.forEach { stroke ->
             strokeRenderer.draw(canvas, stroke, android.graphics.Matrix())
@@ -466,9 +468,33 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     @OptIn(ExperimentalInkCustomBrushApi::class)
+    suspend fun saveCurrentBrushToAutosave() {
+        withContext(Dispatchers.IO) {
+            try {
+                val stream = java.io.ByteArrayOutputStream()
+                AndroidBrushFamilySerialization.encode(
+                    _selectedBrush.value.family,
+                    stream,
+                    textureStore
+                )
+                val encodedBrushFamily = stream.toByteArray()
+                customBrushDao.saveCustomBrush(
+                    CustomBrushEntity(
+                        AUTOSAVE_KEY,
+                        encodedBrushFamily
+                    )
+                )
+                Log.d(TAG, "Auto saved brush to database successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error auto saving brush to database", e)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalInkCustomBrushApi::class)
     private fun loadCustomBrushes() {
         viewModelScope.launch(Dispatchers.IO) {
-            val builtInBrushes = CustomBrushes.getBrushes(context)
+            val builtInBrushes = CustomBrushes.getBrushes(context, textureStore)
 
             val decodedCache = mutableMapOf<String, CustomBrush>()
 
@@ -500,7 +526,15 @@ class DrawingCanvasViewModel @Inject constructor(
                             }
 
                         ByteArrayInputStream(entity.brushBytes).use { inputStream ->
-                            val family = BrushFamily.decode(inputStream)
+                            val family =
+                                AndroidBrushFamilySerialization.decode(
+                                    inputStream,
+                                    maxVersion = Version.DEVELOPMENT
+                                ) { id, bitmap ->
+                                    if (bitmap != null)
+                                        textureStore.loadTexture(id, bitmap)
+                                    id
+                                }
                             CustomBrush(
                                 name = entity.name,
                                 icon = com.example.cahier.R.drawable.edit_24px,
