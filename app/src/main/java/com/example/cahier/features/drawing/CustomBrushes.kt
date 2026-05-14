@@ -42,16 +42,19 @@ object CustomBrushes {
     @OptIn(ExperimentalInkCustomBrushApi::class)
     private fun loadCustomBrushes(context: Context): List<CustomBrush> {
         val brushFiles = mapOf(
-            "Calligraphy" to (R.raw.calligraphy to R.drawable.draw_24px),
-            "Flag Banner" to (R.raw.flag_banner to R.drawable.flag_24px),
-            "Graffiti" to (R.raw.graffiti to R.drawable.format_paint_24px),
-            "Groovy" to (R.raw.groovy to R.drawable.bubble_chart_24px),
-            "Holiday lights" to (R.raw.holiday_lights to R.drawable.lightbulb_24px),
-            "Lace" to (R.raw.lace to R.drawable.styler_24px),
-            "Music" to (R.raw.music to R.drawable.music_note_24px),
-            "Shadow" to (R.raw.shadow to R.drawable.blur_on_24px),
-            "Twisted yarn" to (R.raw.twisted_yarn to R.drawable.line_weight_24px),
-            "Wet paint" to (R.raw.wet_paint to R.drawable.water_drop_24px)
+            context.getString(R.string.calligraphy) to (R.raw.calligraphy to R.drawable.draw_24px),
+            context.getString(R.string.flag_banner) to (R.raw.flag_banner to R.drawable.flag_24px),
+            context.getString(R.string.graffiti) to (R.raw.graffiti to R.drawable.format_paint_24px),
+            context.getString(R.string.groovy) to (R.raw.groovy to R.drawable.bubble_chart_24px),
+            context.getString(R.string.holiday_lights) to (R.raw.holiday_lights to R.drawable.lightbulb_24px),
+            context.getString(R.string.lace) to (R.raw.lace to R.drawable.styler_24px),
+            context.getString(R.string.music) to (R.raw.music to R.drawable.music_note_24px),
+            context.getString(R.string.shadow) to (R.raw.shadow to R.drawable.blur_on_24px),
+            context.getString(R.string.twisted_yarn) to (R.raw.twisted_yarn to R.drawable.line_weight_24px),
+            context.getString(R.string.wet_paint) to (R.raw.wet_paint to R.drawable.water_drop_24px),
+            context.getString(R.string.jelly_wobble) to (R.raw.jelly_wobble to R.drawable.airwave_24px),
+            context.getString(R.string.pressure_wave) to (R.raw.pressure_wave to R.drawable.vital_signs_24px),
+            context.getString(R.string.shading_pencil) to (R.raw.shading_pencil to R.drawable.stylus_pencil_24px),
         )
 
         val loadedBrushes = brushFiles.mapNotNull { (name, pair) ->

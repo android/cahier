@@ -32,6 +32,7 @@ class CahierTextureBitmapStore(context: Context) : TextureBitmapStore {
     private val textureResources: Map<String, Int> = mapOf(
         "music-clef-g" to R.drawable.music_clef_g,
         "music-note-sixteenth" to R.drawable.music_note_sixteenth,
+        "pencil" to R.drawable.pencil,
         "emoji-heart" to R.drawable.emoji_heart,
         "emoji-star" to R.drawable.emoji_star,
         "emoji-poop" to R.drawable.emoji_poop,
