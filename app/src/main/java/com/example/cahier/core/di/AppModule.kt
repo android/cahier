@@ -26,6 +26,7 @@ import com.example.cahier.core.data.MIGRATION_8_9
 import com.example.cahier.core.data.NoteDatabase
 import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.data.OfflineNotesRepository
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.utils.FileHelper
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
@@ -35,11 +36,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
-import javax.inject.Qualifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import javax.inject.Qualifier
+import javax.inject.Singleton
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
@@ -78,9 +79,11 @@ object AppModule {
     @Singleton
     fun provideNoteRepository(
         database: NoteDatabase,
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        customBrushDao: CustomBrushDao,
+        textureStore: CahierTextureBitmapStore,
     ): NotesRepository {
-        return OfflineNotesRepository(database.noteDao(), context)
+        return OfflineNotesRepository(database.noteDao(), context, customBrushDao, textureStore)
     }
 
     @Provides
@@ -98,7 +101,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideBrushGraphRepository(
-        impl: DefaultBrushGraphRepository
+        impl: DefaultBrushGraphRepository,
     ): BrushGraphRepository {
         return impl
     }

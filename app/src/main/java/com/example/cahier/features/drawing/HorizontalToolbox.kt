@@ -43,6 +43,7 @@ internal fun HorizontalToolbox(
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onExit: () -> Unit,
+    onEditActiveBrush: () -> Unit,
     onColorPickerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -99,6 +100,7 @@ internal fun HorizontalToolbox(
                 drawingCanvasViewModel = drawingCanvasViewModel,
                 imagePickerLauncher = imagePickerLauncher,
                 onExit = onExit,
+                onEditActiveBrush = onEditActiveBrush,
                 isVertical = false
             )
         }

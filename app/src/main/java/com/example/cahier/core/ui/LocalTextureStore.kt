@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.cahier.developer.brushgraph.ui.fields
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.example.cahier.R
+package com.example.cahier.core.ui
 
-@Composable
-fun CoatNodeFields(
-  modifier: Modifier = Modifier,
-) {
-    Text(
-        modifier = modifier,
-        text = stringResource(R.string.bg_coat_node_description),
-        style = MaterialTheme.typography.bodySmall,
-    )
+import androidx.compose.runtime.staticCompositionLocalOf
+
+val LocalTextureStore = staticCompositionLocalOf<CahierTextureBitmapStore> {
+    error("No TextureStore provided")
 }

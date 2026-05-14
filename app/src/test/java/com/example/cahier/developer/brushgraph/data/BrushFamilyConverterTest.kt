@@ -902,4 +902,65 @@ class BrushFamilyConverterTest {
         org.junit.Assert.assertTrue(behavior2.getNodes(0).hasSourceNode())
         org.junit.Assert.assertTrue(behavior2.getNodes(1).hasTargetNode())
     }
+
+    @Test
+    fun convertIntoProto_targetNodeWithComment_serializesCommentToBehavior() {
+        val sourceNode = GraphNode(
+            id = "source",
+            data = NodeData.Behavior(
+                ink.proto.BrushBehavior.Node.newBuilder()
+                    .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).setSourceValueRangeStart(0f).setSourceValueRangeEnd(1f).build())
+                    .build()
+            )
+        )
+
+        val targetNode = GraphNode(
+            id = "target",
+            data = NodeData.Behavior(
+                node = ink.proto.BrushBehavior.Node.newBuilder()
+                    .setTargetNode(BrushBehavior.TargetNode.newBuilder().build())
+                    .build(),
+                developerComment = "Target Metadata Comment"
+            )
+        )
+
+        val tipNode = GraphNode(
+            id = "tip",
+            data = NodeData.Tip(tip = ink.proto.BrushTip.newBuilder().build(), behaviorPortIds = listOf("behavior_0"))
+        )
+
+        val paintNode = GraphNode(
+            id = "paint",
+            data = NodeData.Paint(ink.proto.BrushPaint.newBuilder().build())
+        )
+
+        val coatNode = GraphNode(
+            id = "coat",
+            data = NodeData.Coat(paintPortIds = listOf("paint_0"))
+        )
+
+        val familyNode = GraphNode(
+            id = "family",
+            data = NodeData.Family(coatPortIds = listOf("coat_0"))
+        )
+
+        val edges = listOf(
+            GraphEdge(fromNodeId = "source", toNodeId = "target", toPortId = "Input"),
+            GraphEdge(fromNodeId = "target", toNodeId = "tip", toPortId = "behavior_0"),
+            GraphEdge(fromNodeId = "tip", toNodeId = "coat", toPortId = "tip"),
+            GraphEdge(fromNodeId = "paint", toNodeId = "coat", toPortId = "paint_0"),
+            GraphEdge(fromNodeId = "coat", toNodeId = "family", toPortId = "coat_0")
+        )
+
+        val graph = BrushGraph(
+            nodes = listOf(familyNode, coatNode, tipNode, paintNode, targetNode, sourceNode),
+            edges = edges
+        )
+
+        val brushFamily = BrushFamilyConverter.convertIntoProto(graph)
+
+        val tip = brushFamily.getCoats(0).tip
+        org.junit.Assert.assertEquals(1, tip.behaviorsCount)
+        org.junit.Assert.assertEquals("Target Metadata Comment", tip.getBehaviors(0).developerComment)
+    }
 }

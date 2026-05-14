@@ -172,12 +172,12 @@ object BrushFamilyConverter {
             context.edgesByToNode[nodeId]?.find { it.toPortId == portId }
         }
         for (edge in behaviorEdges) {
+            val targetNode = context.nodesById[edge.fromNodeId]
+            val comment = (targetNode?.data as? NodeData.Behavior)?.developerComment ?: ""
             val actualSources = GraphValidator.findActualSourceNode(context.graph, edge.fromNodeId)
             for (actualSourceNode in actualSources) {
                 val behaviorLists = collectBehaviorNodes(actualSourceNode.id, context, path)
                 for (nodeList in behaviorLists) {
-                    val comment =
-                        (actualSourceNode.data as? NodeData.Behavior)?.developerComment ?: ""
                     builder.addBehaviors(
                         ProtoBrushBehavior.newBuilder()
                             .addAllNodes(nodeList)

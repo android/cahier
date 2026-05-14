@@ -1,24 +1,22 @@
 /*
- *  * Copyright 2026 Google LLC. All rights reserved.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Copyright 2026 Google LLC. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.example.cahier.developer.brushgraph.ui.fields
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,11 +25,9 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
-import com.example.cahier.developer.brushgraph.data.getNumericLimits
-import com.example.cahier.developer.brushgraph.ui.getTooltip
-import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
-import com.example.cahier.developer.brushgraph.ui.fields.ALL_POLAR_TARGETS
 import com.example.cahier.developer.brushgraph.data.displayStringRId
+import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
+import com.example.cahier.developer.brushgraph.ui.getTooltip
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
@@ -41,81 +37,110 @@ fun PolarTargetNodeFields(
   onUpdate: (NodeData) -> Unit,
   onFieldEditComplete: () -> Unit,
   onDropdownEditComplete: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier) {
-    FieldWithTooltip(
-      tooltipTitle = stringResource(R.string.bg_title_polar_target_format, stringResource(polarNode.target.displayStringRId())),
-      tooltipText = stringResource(polarNode.target.getTooltip()),
-    ) {
-      EnumDropdown(
-        label = stringResource(R.string.bg_polar_target),
-        currentValue = polarNode.target,
-        values = ALL_POLAR_TARGETS.toList(),
-        displayName = { stringResource(it.displayStringRId()) },
-        onSelected = { target ->
-          val newMagLimits = NumericLimits(-10.0f, 10.0f, 0.01f)
-          val clampedMagStart = polarNode.magnitudeRangeStart.coerceIn(newMagLimits.min, newMagLimits.max)
-          val clampedMagEnd = polarNode.magnitudeRangeEnd.coerceIn(newMagLimits.min, newMagLimits.max)
+    Column(modifier = modifier) {
+        FieldWithTooltip(
+            tooltipTitle = stringResource(
+                R.string.bg_title_polar_target_format,
+                stringResource(polarNode.target.displayStringRId())
+            ),
+            tooltipText = stringResource(polarNode.target.getTooltip()),
+        ) {
+            EnumDropdown(
+                label = stringResource(R.string.bg_polar_target),
+                currentValue = polarNode.target,
+                values = ALL_POLAR_TARGETS.toList(),
+                displayName = { stringResource(it.displayStringRId()) },
+                onSelected = { target ->
+                    val newMagLimits = NumericLimits(-10.0f, 10.0f, 0.01f)
+                    val clampedMagStart =
+                        polarNode.magnitudeRangeStart.coerceIn(newMagLimits.min, newMagLimits.max)
+                    val clampedMagEnd =
+                        polarNode.magnitudeRangeEnd.coerceIn(newMagLimits.min, newMagLimits.max)
 
-          onUpdate(
-            NodeData.Behavior(
-              behaviorNode.toBuilder()
-                .setPolarTargetNode(
-                  polarNode.toBuilder()
-                    .setTarget(target)
-                    .setMagnitudeRangeStart(clampedMagStart)
-                    .setMagnitudeRangeEnd(clampedMagEnd)
-                    .build()
-                )
-                .build()
+                    onUpdate(
+                        NodeData.Behavior(
+                            behaviorNode.toBuilder()
+                                .setPolarTargetNode(
+                                    polarNode.toBuilder()
+                                        .setTarget(target)
+                                        .setMagnitudeRangeStart(clampedMagStart)
+                                        .setMagnitudeRangeEnd(clampedMagEnd)
+                                        .build()
+                                )
+                                .build()
+                        )
+                    )
+                    onDropdownEditComplete()
+                }
             )
-          )
-          onDropdownEditComplete()
         }
-      )
+
+        NumericField(
+            title = stringResource(R.string.bg_label_angle_start),
+            value = polarNode.angleRangeStart,
+            limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
+            onValueChanged = {
+                onUpdate(
+                    NodeData.Behavior(
+                        behaviorNode.toBuilder().setPolarTargetNode(
+                            polarNode.toBuilder().setAngleRangeStart(it).build()
+                        ).build()
+                    )
+                )
+            },
+            onValueChangeFinished = onFieldEditComplete
+        )
+
+        NumericField(
+            title = stringResource(R.string.bg_label_angle_end),
+            value = polarNode.angleRangeEnd,
+            limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
+            onValueChanged = {
+                onUpdate(
+                    NodeData.Behavior(
+                        behaviorNode.toBuilder()
+                            .setPolarTargetNode(polarNode.toBuilder().setAngleRangeEnd(it).build())
+                            .build()
+                    )
+                )
+            },
+            onValueChangeFinished = onFieldEditComplete
+        )
+
+        val magLimits = NumericLimits(-10.0f, 10.0f, 0.01f)
+
+        NumericField(
+            title = stringResource(R.string.bg_label_mag_start),
+            value = polarNode.magnitudeRangeStart,
+            limits = magLimits,
+            onValueChanged = {
+                onUpdate(
+                    NodeData.Behavior(
+                        behaviorNode.toBuilder().setPolarTargetNode(
+                            polarNode.toBuilder().setMagnitudeRangeStart(it).build()
+                        ).build()
+                    )
+                )
+            },
+            onValueChangeFinished = onFieldEditComplete
+        )
+
+        NumericField(
+            title = stringResource(R.string.bg_label_mag_end),
+            value = polarNode.magnitudeRangeEnd,
+            limits = magLimits,
+            onValueChanged = {
+                onUpdate(
+                    NodeData.Behavior(
+                        behaviorNode.toBuilder().setPolarTargetNode(
+                            polarNode.toBuilder().setMagnitudeRangeEnd(it).build()
+                        ).build()
+                    )
+                )
+            },
+            onValueChangeFinished = onFieldEditComplete
+        )
     }
-    
-    NumericField(
-      title = stringResource(R.string.bg_label_angle_start),
-      value = polarNode.angleRangeStart,
-      limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
-      onValueChanged = {
-        onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setAngleRangeStart(it).build()).build()))
-      },
-      onValueChangeFinished = onFieldEditComplete
-    )
-    
-    NumericField(
-      title = stringResource(R.string.bg_label_angle_end),
-      value = polarNode.angleRangeEnd,
-      limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
-      onValueChanged = {
-        onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setAngleRangeEnd(it).build()).build()))
-      },
-      onValueChangeFinished = onFieldEditComplete
-    )
-    
-    val magLimits = NumericLimits(-10.0f, 10.0f, 0.01f)
-    
-    NumericField(
-      title = stringResource(R.string.bg_label_mag_start),
-      value = polarNode.magnitudeRangeStart,
-      limits = magLimits,
-      onValueChanged = {
-        onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setMagnitudeRangeStart(it).build()).build()))
-      },
-      onValueChangeFinished = onFieldEditComplete
-    )
-    
-    NumericField(
-      title = stringResource(R.string.bg_label_mag_end),
-      value = polarNode.magnitudeRangeEnd,
-      limits = magLimits,
-      onValueChanged = {
-        onUpdate(NodeData.Behavior(behaviorNode.toBuilder().setPolarTargetNode(polarNode.toBuilder().setMagnitudeRangeEnd(it).build()).build()))
-      },
-      onValueChangeFinished = onFieldEditComplete
-    )
-  }
 }

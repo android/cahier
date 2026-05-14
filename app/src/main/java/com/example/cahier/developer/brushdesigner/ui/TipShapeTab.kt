@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.ink.brush.Brush
 import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import com.example.cahier.R
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import ink.proto.BrushTip as ProtoBrushTip
 
 /**
@@ -52,14 +51,12 @@ import ink.proto.BrushTip as ProtoBrushTip
 internal fun TipShapeTabContent(
     currentTip: ProtoBrushTip,
     activeBrush: Brush?,
-    textureStore: CahierTextureBitmapStore?,
-    onUpdateTip: (ProtoBrushTip.Builder.() -> Unit) -> Unit
+    onUpdateTip: (ProtoBrushTip.Builder.() -> Unit) -> Unit,
 ) {
     var isScaleLocked by remember { mutableStateOf(false) }
 
     TipPreview(
         brush = activeBrush,
-        textureStore = textureStore,
         modifier = Modifier.padding(vertical = 8.dp)
     )
 

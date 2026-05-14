@@ -26,7 +26,9 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,7 +44,6 @@ import androidx.core.graphics.withSave
 import androidx.ink.authoring.compose.InProgressStrokes
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
-import androidx.ink.brush.TextureBitmapStore
 import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
@@ -54,7 +55,6 @@ import com.example.cahier.core.utils.pointerInputWithSiblingFallthrough
 fun DrawingSurface(
     strokes: List<Stroke>,
     canvasStrokeRenderer: CanvasStrokeRenderer,
-    textureStore: TextureBitmapStore? = null,
     onStrokesFinished: (List<Stroke>) -> Unit,
     onErase: (offsetX: Float, offsetY: Float) -> Unit,
     onEraseStart: () -> Unit,
@@ -64,8 +64,9 @@ fun DrawingSurface(
     isEraserMode: Boolean,
     backgroundImageUri: String?,
     onStartDrag: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
+    val textureStore = LocalTextureStore.current
     Box(modifier = modifier) {
         backgroundImageUri?.let {
             AsyncImage(
@@ -132,26 +133,26 @@ fun DrawingSurface(
                     }
             )
         } else {
-            textureStore?.let {
+            val cacheGen by textureStore.generation.collectAsState()
+            key(cacheGen) {
                 InProgressStrokes(
                     defaultBrush = currentBrush,
                     nextBrush = onGetNextBrush,
                     onStrokesFinished = onStrokesFinished,
-                    textureBitmapStore = it
+                    textureBitmapStore = textureStore
                 )
-            } ?: InProgressStrokes(
-                defaultBrush = currentBrush,
-                nextBrush = onGetNextBrush,
-                onStrokesFinished = onStrokesFinished,
-            )
+            }
         }
+
     }
 }
 
 @Preview
 @Composable
 fun DrawingSurfacePreview() {
-    val canvasStrokeRenderer = remember { CanvasStrokeRenderer.create() }
+    val textureStore = LocalTextureStore.current
+    val cacheGen by textureStore.generation.collectAsState()
+    val canvasStrokeRenderer = remember(cacheGen) { CanvasStrokeRenderer.create(textureStore) }
     var currentBrush by remember {
         mutableStateOf(
             Brush.createWithComposeColor(

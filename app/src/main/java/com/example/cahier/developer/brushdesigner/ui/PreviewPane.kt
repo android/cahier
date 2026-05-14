@@ -37,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -46,7 +47,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -57,8 +57,8 @@ import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.R
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.ui.DrawingSurface
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.theme.BrushBlack
 import com.example.cahier.core.ui.theme.BrushBlue
 import com.example.cahier.core.ui.theme.BrushGreen
@@ -81,21 +81,16 @@ internal fun PreviewPane(
     strokes: List<Stroke>,
     brushColor: Color,
     brushSize: Float,
-    onSetTextureStore: (CahierTextureBitmapStore) -> Unit,
     onReplaceStrokes: (List<Stroke>) -> Unit,
     onStrokesFinished: (List<Stroke>) -> Unit,
     onGetNextBrush: () -> Brush,
     onSetBrushColor: (Color) -> Unit,
-    onSetBrushSize: (Float) -> Unit
+    onSetBrushSize: (Float) -> Unit,
 ) {
-    val context = LocalContext.current
-    val textureStore = remember { CahierTextureBitmapStore(context) }
+    val textureStore = LocalTextureStore.current
+    val cacheGen by textureStore.generation.collectAsState()
 
-    LaunchedEffect(textureStore) {
-        onSetTextureStore(textureStore)
-    }
-
-    val canvasStrokeRenderer = remember(textureStore) {
+    val canvasStrokeRenderer = remember(cacheGen) {
         CanvasStrokeRenderer.create(textureStore = textureStore)
     }
     val localStrokes = remember { mutableStateListOf<Stroke>() }
@@ -142,7 +137,6 @@ internal fun PreviewPane(
             DrawingSurface(
                 strokes = localStrokes,
                 canvasStrokeRenderer = canvasStrokeRenderer,
-                textureStore = textureStore,
                 onStrokesFinished = { newStrokes ->
                     localStrokes.addAll(newStrokes)
                     onStrokesFinished(newStrokes)
@@ -197,7 +191,7 @@ private fun PreviewToolbar(
     onSizeSelected: (Float) -> Unit,
     onColorSelected: (Color) -> Unit,
     onShowCustomColorPicker: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
@@ -226,7 +220,7 @@ private fun PreviewToolbar(
 @Composable
 private fun SizeSelector(
     brushSize: Float,
-    onSizeSelected: (Float) -> Unit
+    onSizeSelected: (Float) -> Unit,
 ) {
     var sizeMenuExpanded by remember { mutableStateOf(false) }
     Box {
@@ -259,7 +253,7 @@ private fun SizeSelector(
 private fun ColorSelector(
     brushColor: Color,
     onColorSelected: (Color) -> Unit,
-    onShowCustomColorPicker: () -> Unit
+    onShowCustomColorPicker: () -> Unit,
 ) {
     var colorMenuExpanded by remember { mutableStateOf(false) }
     Box {

@@ -24,18 +24,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import coil3.compose.AsyncImage
-import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.core.ui.LocalTextureStore
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -45,9 +46,10 @@ fun DrawingDetailThumbnail(
     modifier: Modifier = Modifier,
     backgroundImageUri: String? = null,
 ) {
-    val context = LocalContext.current
-    val canvasStrokeRenderer = remember {
-        CanvasStrokeRenderer.create(textureStore = CahierTextureBitmapStore(context))
+    val textureStore = LocalTextureStore.current
+    val cacheGen by textureStore.generation.collectAsState()
+    val canvasStrokeRenderer = remember(cacheGen) {
+        CanvasStrokeRenderer.create(textureStore)
     }
 
     Box(
@@ -85,7 +87,7 @@ fun DrawingDetailThumbnail(
 @Preview
 @Composable
 fun DrawingDetailThumbnailPreview(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     DrawingDetailThumbnail(
         modifier = modifier
