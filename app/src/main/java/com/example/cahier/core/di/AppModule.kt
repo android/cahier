@@ -28,16 +28,33 @@ import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.data.OfflineNotesRepository
 import com.example.cahier.core.utils.FileHelper
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
+import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
+import com.example.cahier.developer.brushgraph.data.DefaultBrushGraphRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import javax.inject.Qualifier
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope {
+        return CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    }
 
     @Provides
     @Singleton
@@ -76,5 +93,13 @@ object AppModule {
     @Singleton
     fun provideFileHelper(@ApplicationContext context: Context): FileHelper {
         return FileHelper(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBrushGraphRepository(
+        impl: DefaultBrushGraphRepository
+    ): BrushGraphRepository {
+        return impl
     }
 }

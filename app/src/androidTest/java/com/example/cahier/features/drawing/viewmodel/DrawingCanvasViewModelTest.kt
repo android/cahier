@@ -37,6 +37,7 @@ import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.utils.FileHelper
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
+import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.Dispatchers
@@ -217,10 +218,4 @@ class DrawingCanvasViewModelTest {
             viewModel.isEraserMode.value
         )
     }
-}
-
-private class FakeCustomBrushDao : CustomBrushDao {
-    override fun getAllCustomBrushes(): Flow<List<CustomBrushEntity>> = flowOf(emptyList())
-    override suspend fun saveCustomBrush(brush: CustomBrushEntity) {}
-    override suspend fun deleteCustomBrush(name: String) {}
 }

@@ -24,10 +24,15 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
+public const val AUTOSAVE_KEY = "__autosave__"
+
 @Dao
 interface CustomBrushDao {
-    @Query("SELECT * FROM custom_brushes")
-    fun getAllCustomBrushes(): Flow<List<CustomBrushEntity>>
+    @Query("SELECT * FROM custom_brushes WHERE name != :autosaveKey")
+    fun getAllCustomBrushes(autosaveKey: String = AUTOSAVE_KEY): Flow<List<CustomBrushEntity>>
+
+    @Query("SELECT * FROM custom_brushes WHERE name = :autosaveKey")
+    fun getAutoSaveBrush(autosaveKey: String = AUTOSAVE_KEY): Flow<CustomBrushEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveCustomBrush(brush: CustomBrushEntity)
