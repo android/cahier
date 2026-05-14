@@ -44,11 +44,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import com.example.cahier.R
@@ -140,6 +144,7 @@ private fun BrushLibraryMenu(
             R.string.marker to StockBrushes.marker(),
             R.string.pressure_pen to StockBrushes.pressurePen(),
             R.string.dashed_line to StockBrushes.dashedLine(),
+            R.string.emoji_highlighter to StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true),
         )
     }
 
@@ -159,7 +164,7 @@ private fun BrushLibraryMenu(
                 onClick = {},
                 enabled = false
             )
-            stockBrushes.forEach { (nameResId, brushFamily) ->
+            stockBrushes.filter { it.first != R.string.emoji_highlighter }.forEach { (nameResId, brushFamily) ->
                 DropdownMenuItem(
                     text = { Text(stringResource(nameResId)) },
                     onClick = {
@@ -167,6 +172,55 @@ private fun BrushLibraryMenu(
                         expanded = false
                     }
                 )
+            }
+            
+            var showEmojiSubMenu by remember { mutableStateOf(false) }
+            var itemWidth by remember { mutableStateOf(0) }
+            var itemHeight by remember { mutableStateOf(0) }
+            val density = LocalDensity.current
+            
+            Box(modifier = Modifier.onSizeChanged { 
+                itemWidth = it.width
+                itemHeight = it.height
+            }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.emoji_highlighter)) },
+                    trailingIcon = {
+                        Text(text = if (showEmojiSubMenu) "▶" else "▼")
+                    },
+                    onClick = { showEmojiSubMenu = true }
+                )
+                DropdownMenu(
+                    expanded = showEmojiSubMenu,
+                    onDismissRequest = { showEmojiSubMenu = false },
+                    offset = DpOffset(x = density.run { itemWidth.toDp() }, y = density.run { -itemHeight.toDp() }),
+                    properties = PopupProperties(focusable = true)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.emoji_heart)) },
+                        onClick = {
+                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true))
+                            showEmojiSubMenu = false
+                            expanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.emoji_star)) },
+                        onClick = {
+                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true))
+                            showEmojiSubMenu = false
+                            expanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.emoji_poop)) },
+                        onClick = {
+                            onLoadBrush(StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true))
+                            showEmojiSubMenu = false
+                            expanded = false
+                        }
+                    )
+                }
             }
 
             if (cahierBrushes.isNotEmpty()) {

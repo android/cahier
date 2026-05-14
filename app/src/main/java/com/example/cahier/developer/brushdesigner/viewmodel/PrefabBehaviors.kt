@@ -36,6 +36,32 @@ import kotlin.math.PI
  */
 object PrefabBehaviors {
 
+    // ── Standard (un-damped) presets ───────────────────────────────
+
+    /** Simple Pressure → Size: 50%–150%, no damping. */
+    fun simplePressureToSize(): List<BrushBehavior.Node> = direct(
+        source = BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE,
+        sourceStart = 0f, sourceEnd = 1f,
+        target = BrushBehavior.Target.TARGET_SIZE_MULTIPLIER,
+        targetStart = 0.5f, targetEnd = 1.5f
+    )
+
+    /** Simple Speed → Size: 20%–200%, no damping, wide source range. */
+    fun simpleSpeedToSize(): List<BrushBehavior.Node> = direct(
+        source = BrushBehavior.Source.SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND,
+        sourceStart = 0f, sourceEnd = 50f,
+        target = BrushBehavior.Target.TARGET_SIZE_MULTIPLIER,
+        targetStart = 0.2f, targetEnd = 2.0f
+    )
+
+    /** Simple Speed → Opacity: fades at speed, no damping. */
+    fun simpleSpeedToOpacity(): List<BrushBehavior.Node> = direct(
+        source = BrushBehavior.Source.SOURCE_SPEED_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND,
+        sourceStart = 5f, sourceEnd = 40f,
+        target = BrushBehavior.Target.TARGET_OPACITY_MULTIPLIER,
+        targetStart = 1.0f, targetEnd = 0.1f
+    )
+
     // ── Pressure-based ────────────────────────────────────────────
 
     /** Pressure → Size: tip scales 50%–150% based on stylus pressure. */

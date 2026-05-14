@@ -42,13 +42,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.ink.brush.BrushFamily
@@ -431,9 +435,14 @@ fun BrushesDropdownMenu(
     customBrushes: List<CustomBrush>,
     modifier: Modifier = Modifier
 ) {
+    var showEmojiSubMenu by remember { mutableStateOf(false) }
+    
     DropdownMenu(
         expanded = expanded,
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = {
+            onDismissRequest()
+            showEmojiSubMenu = false
+        },
         properties = PopupProperties(focusable = true),
         modifier = modifier
     ) {
@@ -477,6 +486,77 @@ fun BrushesDropdownMenu(
             },
             onClick = { onBrushChange(StockBrushes.dashedLine()) }
         )
+            var itemWidth by remember { mutableStateOf(0) }
+            var itemHeight by remember { mutableStateOf(0) }
+            val density = LocalDensity.current
+            
+            Box(modifier = Modifier.onSizeChanged { 
+                itemWidth = it.width
+                itemHeight = it.height
+            }) {
+                DropdownMenuItem(
+                    text = { Text(text = stringResource(R.string.emoji_highlighter)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_emoji_highlighter),
+                            contentDescription = stringResource(R.string.emoji_highlighter)
+                        )
+                    },
+                    trailingIcon = {
+                        Text(text = if (showEmojiSubMenu) "▶" else "▼")
+                    },
+                    onClick = { showEmojiSubMenu = true }
+                )
+                DropdownMenu(
+                    expanded = showEmojiSubMenu,
+                    onDismissRequest = { showEmojiSubMenu = false },
+                    offset = DpOffset(x = density.run { itemWidth.toDp() }, y = density.run { -itemHeight.toDp() }),
+                    properties = PopupProperties(focusable = true)
+                ) {
+                DropdownMenuItem(
+                    text = { Text(text = stringResource(R.string.emoji_heart)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_emoji_heart),
+                            contentDescription = stringResource(R.string.emoji_heart)
+                        )
+                    },
+                    onClick = {
+                        onBrushChange(StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true))
+                        showEmojiSubMenu = false
+                        onDismissRequest()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(text = stringResource(R.string.emoji_star)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_emoji_star),
+                            contentDescription = stringResource(R.string.emoji_star)
+                        )
+                    },
+                    onClick = {
+                        onBrushChange(StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true))
+                        showEmojiSubMenu = false
+                        onDismissRequest()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(text = stringResource(R.string.emoji_poop)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_emoji_poop),
+                            contentDescription = stringResource(R.string.emoji_poop)
+                        )
+                    },
+                    onClick = {
+                        onBrushChange(StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true))
+                        showEmojiSubMenu = false
+                        onDismissRequest()
+                    }
+                )
+            }
+        }
         if (customBrushes.isNotEmpty()) {
             HorizontalDivider()
             Text(
