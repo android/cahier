@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
@@ -57,9 +56,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
@@ -151,7 +152,9 @@ fun CollapsiblePreviewPane(
                 contentAlignment = Alignment.Center,
             ) {
                 Row(
-                    modifier = Modifier.align(Alignment.CenterStart),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterStart),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
@@ -171,180 +174,184 @@ fun CollapsiblePreviewPane(
                         fontWeight = FontWeight.Bold,
                     )
                     if (isPreviewExpanded) {
-                        val scrollState = rememberScrollState()
-                        val showLeftFade = scrollState.value > 0
-                        val showRightFade =
-                            scrollState.value < scrollState.maxValue && scrollState.maxValue > 0
-
-                        Box(
+                        AdaptivePreviewControlsLayout(
+                            badgeMinWidth = 160.dp,
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight(),
-                            contentAlignment = Alignment.CenterStart
+                                .fillMaxHeight()
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .horizontalScroll(scrollState)
-                                    .padding(horizontal = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
+                            val scrollState = rememberScrollState()
+                            val showLeftFade = scrollState.value > 0
+                            val showRightFade =
+                                scrollState.value < scrollState.maxValue && scrollState.maxValue > 0
+
+                            Box(
+                                modifier = Modifier.fillMaxHeight(),
+                                contentAlignment = Alignment.CenterStart
                             ) {
-                                Text(
-                                    stringResource(R.string.bg_test_canvas_reset),
-                                    modifier = Modifier.clickable { onClearStrokes() },
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Spacer(Modifier.width(16.dp))
-                                Text(
-                                    stringResource(R.string.bg_test_canvas_invert),
-                                    modifier = Modifier.clickable { onToggleCanvasTheme() },
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Spacer(Modifier.width(16.dp))
-
-                                // Auto-update toggle
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Checkbox(
-                                        checked = testAutoUpdateStrokes,
-                                        onCheckedChange = { onSetTestAutoUpdateStrokes(it) }
-                                    )
-                                    Spacer(Modifier.width(4.dp))
-                                    Text(
-                                        stringResource(R.string.bg_auto_update),
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
-                                }
-                                Spacer(Modifier.width(16.dp))
-
-                                // Color picker
-                                Box(
+                                Row(
                                     modifier = Modifier
-                                        .size(20.dp)
-                                        .background(brushColor)
-                                        .border(1.dp, MaterialTheme.colorScheme.outline)
-                                        .clickable {
-                                            onChooseColor(brushColor) { newColor ->
-                                                onUpdateTestBrushColor(newColor)
-                                            }
-                                        }
-                                )
-                                Spacer(Modifier.width(16.dp))
-
-                                // Size selector
-                                var sizeExpanded by remember { mutableStateOf(false) }
-                                ExposedDropdownMenuBox(
-                                    expanded = sizeExpanded,
-                                    onExpandedChange = { sizeExpanded = it },
-                                    modifier = Modifier.width(80.dp)
+                                        .fillMaxHeight()
+                                        .horizontalScroll(scrollState)
+                                        .padding(horizontal = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
-                                        text = "${brushSize.toInt()}px",
-                                        modifier = Modifier
-                                            .menuAnchor()
-                                            .clickable { sizeExpanded = true },
+                                        stringResource(R.string.bg_test_canvas_reset),
+                                        modifier = Modifier.clickable { onClearStrokes() },
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Bold,
                                     )
-                                    ExposedDropdownMenu(
-                                        expanded = sizeExpanded,
-                                        onDismissRequest = { sizeExpanded = false }
-                                    ) {
-                                        for (size in (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)) {
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Text(
-                                                        stringResource(
-                                                            R.string.bg_size_px,
-                                                            size
-                                                        )
-                                                    )
-                                                },
-                                                onClick = {
-                                                    onUpdateTestBrushSize(size.toFloat())
-                                                    sizeExpanded = false
+                                    Spacer(Modifier.width(16.dp))
+                                    Text(
+                                        stringResource(R.string.bg_test_canvas_invert),
+                                        modifier = Modifier.clickable { onToggleCanvasTheme() },
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Spacer(Modifier.width(16.dp))
+
+                                    // Auto-update toggle
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Checkbox(
+                                            checked = testAutoUpdateStrokes,
+                                            onCheckedChange = { onSetTestAutoUpdateStrokes(it) }
+                                        )
+                                        Spacer(Modifier.width(4.dp))
+                                        Text(
+                                            stringResource(R.string.bg_auto_update),
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
+                                    Spacer(Modifier.width(16.dp))
+
+                                    // Color picker
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .background(brushColor)
+                                            .border(1.dp, MaterialTheme.colorScheme.outline)
+                                            .clickable {
+                                                onChooseColor(brushColor) { newColor ->
+                                                    onUpdateTestBrushColor(newColor)
                                                 }
-                                            )
+                                            }
+                                    )
+                                    Spacer(Modifier.width(16.dp))
+
+                                    // Size selector
+                                    var sizeExpanded by remember { mutableStateOf(false) }
+                                    ExposedDropdownMenuBox(
+                                        expanded = sizeExpanded,
+                                        onExpandedChange = { sizeExpanded = it },
+                                        modifier = Modifier.width(80.dp)
+                                    ) {
+                                        Text(
+                                            text = "${brushSize.toInt()}px",
+                                            modifier = Modifier
+                                                .menuAnchor()
+                                                .clickable { sizeExpanded = true },
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                        ExposedDropdownMenu(
+                                            expanded = sizeExpanded,
+                                            onDismissRequest = { sizeExpanded = false }
+                                        ) {
+                                            for (size in (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)) {
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text(
+                                                            stringResource(
+                                                                R.string.bg_size_px,
+                                                                size
+                                                            )
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        onUpdateTestBrushSize(size.toFloat())
+                                                        sizeExpanded = false
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            // Scroll fades
-                            if (showLeftFade) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .width(16.dp)
-                                        .background(
-                                            androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    MaterialTheme.colorScheme.surfaceVariant,
-                                                    Color.Transparent
+                                // Scroll fades
+                                if (showLeftFade) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .width(16.dp)
+                                            .background(
+                                                androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                                    colors = listOf(
+                                                        MaterialTheme.colorScheme.surfaceVariant,
+                                                        Color.Transparent
+                                                    )
                                                 )
                                             )
-                                        )
-                                        .align(Alignment.CenterStart)
-                                )
-                            }
-                            if (showRightFade) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .width(16.dp)
-                                        .background(
-                                            androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    Color.Transparent,
-                                                    MaterialTheme.colorScheme.surfaceVariant
+                                            .align(Alignment.CenterStart)
+                                    )
+                                }
+                                if (showRightFade) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .width(16.dp)
+                                            .background(
+                                                androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        MaterialTheme.colorScheme.surfaceVariant
+                                                    )
                                                 )
                                             )
-                                        )
-                                        .align(Alignment.CenterEnd)
-                                )
+                                            .align(Alignment.CenterEnd)
+                                    )
+                                }
                             }
-                        }
 
-                        // Top issue, if one is present
-                        if (topIssue != null) {
-                            val isError = topIssue.severity == ValidationSeverity.ERROR
-                            Surface(
-                                color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.extendedColorScheme.warning,
-                                tonalElevation = 2.dp,
-                                modifier = Modifier
-                                    .widthIn(max = 160.dp)
-                                    .fillMaxHeight()
-                                    .clickable { onToggleNotificationPane() }
-                            ) {
-                                Box(
+                            // Top issue, if one is present
+                            if (topIssue != null) {
+                                val isError = topIssue.severity == ValidationSeverity.ERROR
+                                Surface(
+                                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.extendedColorScheme.warning,
+                                    tonalElevation = 2.dp,
                                     modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 16.dp),
-                                    contentAlignment = Alignment.CenterStart
+                                        .fillMaxHeight()
+                                        .clickable { onToggleNotificationPane() }
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = if (isError) Icons.Default.Error else Icons.Default.Warning,
-                                            contentDescription = null,
-                                            tint = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(
-                                            text = stringResource(
-                                                if (isError) R.string.bg_error else R.string.bg_warning,
-                                                topIssue.displayMessage.asString()
-                                            ),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 16.dp),
+                                        contentAlignment = Alignment.CenterStart
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = if (isError) Icons.Default.Error else Icons.Default.Warning,
+                                                contentDescription = null,
+                                                tint = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(
+                                                text = stringResource(
+                                                    if (isError) R.string.bg_error else R.string.bg_warning,
+                                                    topIssue.displayMessage.asString()
+                                                ),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -382,6 +389,56 @@ fun CollapsiblePreviewPane(
                     onStrokesAdded = onStrokesAdded,
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun AdaptivePreviewControlsLayout(
+    badgeMinWidth: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Layout(
+        content = content,
+        modifier = modifier
+    ) { measurables, constraints ->
+        if (measurables.size == 1) {
+            val placeable = measurables[0].measure(constraints)
+            layout(placeable.width, placeable.height) {
+                placeable.placeRelative(0, 0)
+            }
+        } else if (measurables.size >= 2) {
+            val controlsMeasurable = measurables[0]
+            val badgeMeasurable = measurables[1]
+
+            val minBadgePx = badgeMinWidth.roundToPx()
+            val controlsMaxWidth = maxOf(0, constraints.maxWidth - minBadgePx)
+
+            // Measure controls first up to available width minus minimum badge width
+            val controlsPlaceable = controlsMeasurable.measure(
+                constraints.copy(minWidth = 0, maxWidth = controlsMaxWidth)
+            )
+
+            // Badge takes all the remaining space
+            val badgeWidth = maxOf(minBadgePx, constraints.maxWidth - controlsPlaceable.width)
+            val badgePlaceable = badgeMeasurable.measure(
+                constraints.copy(minWidth = badgeWidth, maxWidth = badgeWidth)
+            )
+
+            val totalWidth =
+                minOf(constraints.maxWidth, controlsPlaceable.width + badgePlaceable.width)
+            val height = maxOf(controlsPlaceable.height, badgePlaceable.height)
+
+            layout(totalWidth, height) {
+                controlsPlaceable.placeRelative(0, (height - controlsPlaceable.height) / 2)
+                badgePlaceable.placeRelative(
+                    controlsPlaceable.width,
+                    (height - badgePlaceable.height) / 2
+                )
+            }
+        } else {
+            layout(0, 0) {}
         }
     }
 }

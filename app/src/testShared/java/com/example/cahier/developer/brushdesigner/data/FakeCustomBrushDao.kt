@@ -30,4 +30,8 @@ class FakeCustomBrushDao : CustomBrushDao {
             autoSaveFlow.value = null
         }
     }
+
+    override suspend fun getAllCustomBrushesSync(autosaveKey: String): List<CustomBrushEntity> {
+        return brushes.values.filter { it.name != autosaveKey }
+    }
 }

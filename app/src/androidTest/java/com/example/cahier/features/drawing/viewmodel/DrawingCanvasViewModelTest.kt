@@ -31,6 +31,7 @@ import androidx.ink.strokes.ImmutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import coil3.ImageLoader
 import com.example.cahier.core.data.FakeNotesRepository
 import com.example.cahier.core.navigation.DrawingCanvasDestination
@@ -54,8 +55,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import javax.inject.Inject
 
+@RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
 class DrawingCanvasViewModelTest {

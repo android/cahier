@@ -2,6 +2,7 @@ package com.example.cahier.developer.brushdesigner.viewmodel
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.BrushDesignerRepository
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
@@ -21,8 +22,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import javax.inject.Inject
 
+@RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltAndroidTest
 class BrushDesignerViewModelTest {
