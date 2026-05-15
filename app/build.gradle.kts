@@ -17,7 +17,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
     alias(libs.plugins.roborazzi)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.3.20"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.3.21"
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
     id("com.google.dagger.hilt.android")

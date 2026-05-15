@@ -1,6 +1,6 @@
 plugins {
     id("java-library")
-    id("com.google.protobuf") version "0.9.6"
+    id("com.google.protobuf") version "0.10.0"
 }
 
 java {
@@ -15,7 +15,7 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.34.0"
+        artifact = "com.google.protobuf:protoc:4.34.1"
     }
 
     generateProtoTasks {
