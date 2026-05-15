@@ -485,7 +485,7 @@ fun GraphActionMenu(
 
             Box {
                 TextButton(onClick = { showPaletteMenu = true }) {
-                    Text(stringResource(R.string.bg_my_palette))
+                    Text(stringResource(R.string.bg_my_brushes))
                 }
 
                 PaletteMenu(
@@ -509,7 +509,7 @@ fun GraphActionMenu(
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.height(40.dp),
             ) {
-                Text(stringResource(R.string.bg_save_to_palette))
+                Text(stringResource(R.string.bg_save))
             }
         }
     }

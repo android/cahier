@@ -573,7 +573,7 @@ class BrushGraphViewModel @Inject constructor(
             } catch (e: Exception) {
                 postDebug(
                     DisplayText.Resource(
-                        com.example.cahier.R.string.bg_err_save_palette,
+                        com.example.cahier.R.string.bg_err_save,
                         listOf(e.message ?: e.javaClass.simpleName)
                     )
                 )
@@ -611,7 +611,7 @@ class BrushGraphViewModel @Inject constructor(
             } catch (e: Exception) {
                 postDebug(
                     DisplayText.Resource(
-                        com.example.cahier.R.string.bg_err_load_palette,
+                        com.example.cahier.R.string.bg_err_load,
                         listOf(e.message ?: e.javaClass.simpleName)
                     )
                 )
