@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -192,7 +194,7 @@ private fun BrushLibraryMenu(
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.emoji_highlighter)) },
                     trailingIcon = {
-                        Text(text = if (showEmojiSubMenu) "▶" else "▼")
+                        Icon(Icons.Default.ChevronRight, contentDescription = null)
                     },
                     onClick = { showEmojiSubMenu = true }
                 )

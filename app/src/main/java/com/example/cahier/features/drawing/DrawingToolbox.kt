@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -75,7 +77,7 @@ fun DrawingToolbox(
     onEditActiveBrush: () -> Unit,
     isVertical: Boolean,
     onColorPickerClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier,
@@ -115,7 +117,7 @@ internal fun ToolboxBrushControls(
     drawingCanvasViewModel: DrawingCanvasViewModel,
     isVertical: Boolean,
     onColorPickerClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val brushesMenuExpanded = rememberSaveable { mutableStateOf(false) }
     val sizeMenuExpanded = rememberSaveable { mutableStateOf(false) }
@@ -155,7 +157,7 @@ private fun ToolBoxContent(
     customBrushes: List<CustomBrush>,
     onColorPickerClick: () -> Unit,
     isEraserMode: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
@@ -226,7 +228,7 @@ internal fun ToolboxHistoryControls(
     drawingCanvasViewModel: DrawingCanvasViewModel,
     onClear: () -> Unit,
     isVertical: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     if (isVertical) {
         Column(modifier = modifier) {
@@ -317,7 +319,7 @@ internal fun ToolboxNoteActions(
     onExit: () -> Unit,
     onEditActiveBrush: () -> Unit,
     isVertical: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     if (isVertical) {
         Column(modifier = modifier) {
@@ -345,7 +347,7 @@ private fun ToolboxNoteActionsContent(
     drawingCanvasViewModel: DrawingCanvasViewModel,
     imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
     onExit: () -> Unit,
-    onEditActiveBrush: () -> Unit
+    onEditActiveBrush: () -> Unit,
 ) {
     val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
     var optionsMenuExpanded by rememberSaveable { mutableStateOf(false) }
@@ -433,7 +435,7 @@ fun SizeDropdownMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     onSizeChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val sizes = listOf(5f, 10f, 15f, 20f, 25f)
     DropdownMenu(
@@ -457,10 +459,10 @@ fun BrushesDropdownMenu(
     onDismissRequest: () -> Unit,
     onBrushChange: (BrushFamily) -> Unit,
     customBrushes: List<CustomBrush>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showEmojiSubMenu by remember { mutableStateOf(false) }
-    
+
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = {
@@ -510,33 +512,35 @@ fun BrushesDropdownMenu(
             },
             onClick = { onBrushChange(StockBrushes.dashedLine()) }
         )
-            var itemWidth by remember { mutableStateOf(0) }
-            var itemHeight by remember { mutableStateOf(0) }
-            val density = LocalDensity.current
-            
-            Box(modifier = Modifier.onSizeChanged { 
-                itemWidth = it.width
-                itemHeight = it.height
-            }) {
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(R.string.emoji_highlighter)) },
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_emoji_highlighter),
-                            contentDescription = stringResource(R.string.emoji_highlighter)
-                        )
-                    },
-                    trailingIcon = {
-                        Text(text = if (showEmojiSubMenu) "▶" else "▼")
-                    },
-                    onClick = { showEmojiSubMenu = true }
-                )
-                DropdownMenu(
-                    expanded = showEmojiSubMenu,
-                    onDismissRequest = { showEmojiSubMenu = false },
-                    offset = DpOffset(x = density.run { itemWidth.toDp() }, y = density.run { -itemHeight.toDp() }),
-                    properties = PopupProperties(focusable = true)
-                ) {
+        var itemWidth by remember { mutableStateOf(0) }
+        var itemHeight by remember { mutableStateOf(0) }
+        val density = LocalDensity.current
+
+        Box(modifier = Modifier.onSizeChanged {
+            itemWidth = it.width
+            itemHeight = it.height
+        }) {
+            DropdownMenuItem(
+                text = { Text(text = stringResource(R.string.emoji_highlighter)) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_emoji_highlighter),
+                        contentDescription = stringResource(R.string.emoji_highlighter)
+                    )
+                },
+                trailingIcon = {
+                    Icon(Icons.Default.ChevronRight, contentDescription = null)
+                },
+                onClick = { showEmojiSubMenu = true }
+            )
+            DropdownMenu(
+                expanded = showEmojiSubMenu,
+                onDismissRequest = { showEmojiSubMenu = false },
+                offset = DpOffset(
+                    x = density.run { itemWidth.toDp() },
+                    y = density.run { -itemHeight.toDp() }),
+                properties = PopupProperties(focusable = true)
+            ) {
                 DropdownMenuItem(
                     text = { Text(text = stringResource(R.string.emoji_heart)) },
                     leadingIcon = {
@@ -546,7 +550,12 @@ fun BrushesDropdownMenu(
                         )
                     },
                     onClick = {
-                        onBrushChange(StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true))
+                        onBrushChange(
+                            StockBrushes.emojiHighlighter(
+                                "emoji-heart",
+                                showMiniEmojiTrail = true
+                            )
+                        )
                         showEmojiSubMenu = false
                         onDismissRequest()
                     }
@@ -560,7 +569,12 @@ fun BrushesDropdownMenu(
                         )
                     },
                     onClick = {
-                        onBrushChange(StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true))
+                        onBrushChange(
+                            StockBrushes.emojiHighlighter(
+                                "emoji-star",
+                                showMiniEmojiTrail = true
+                            )
+                        )
                         showEmojiSubMenu = false
                         onDismissRequest()
                     }
@@ -574,7 +588,12 @@ fun BrushesDropdownMenu(
                         )
                     },
                     onClick = {
-                        onBrushChange(StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true))
+                        onBrushChange(
+                            StockBrushes.emojiHighlighter(
+                                "emoji-poop",
+                                showMiniEmojiTrail = true
+                            )
+                        )
                         showEmojiSubMenu = false
                         onDismissRequest()
                     }
