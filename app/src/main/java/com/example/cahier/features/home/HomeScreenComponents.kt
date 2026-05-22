@@ -390,7 +390,8 @@ fun NoteDetail(
     Surface(
         modifier = modifier.fillMaxSize(),
         shape = RoundedCornerShape(12.dp),
-        tonalElevation = 6.dp
+        tonalElevation = 6.dp,
+        shadowElevation = 8.dp
     ) {
         Spacer(modifier = Modifier.height(16.dp))
         when (note.type) {
