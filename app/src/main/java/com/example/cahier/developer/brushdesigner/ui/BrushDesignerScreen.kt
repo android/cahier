@@ -79,7 +79,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.ink.brush.Brush
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
@@ -95,7 +94,6 @@ import ink.proto.BrushTip as ProtoBrushTip
     ExperimentalMaterial3Api::class,
     ExperimentalMaterial3WindowSizeClassApi::class,
     ExperimentalMaterial3AdaptiveApi::class,
-    ExperimentalInkCustomBrushApi::class
 )
 @Composable
 fun BrushDesignerScreen(
@@ -267,7 +265,7 @@ fun BrushDesignerScreen(
  * Note: Still accepts ViewModel for delegation to tab content and input model
  * sections. All state (activeProto, selectedCoatIndex) is hoisted from the screen.
  */
-@OptIn(ExperimentalInkCustomBrushApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ControlsPane(
     modifier: Modifier = Modifier,
