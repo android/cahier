@@ -53,7 +53,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.ink.brush.Brush
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.R
@@ -72,7 +71,6 @@ import ink.proto.BrushFamily as ProtoBrushFamily
  *
  * Stateless: receives all state and callbacks, does not access ViewModel.
  */
-@OptIn(ExperimentalInkCustomBrushApi::class)
 @Composable
 internal fun PreviewPane(
     modifier: Modifier = Modifier,
