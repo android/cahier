@@ -211,7 +211,24 @@ class DefaultBrushGraphRepository @Inject constructor(
             try {
                 val uri = Uri.parse(uriString)
                 val inputStream = context.contentResolver.openInputStream(uri)
-                val bytes = inputStream?.use { it.readBytes() } ?: return@withContext false
+                val maxBytes = 10 * 1024 * 1024 // 10 MB limit
+                val bytes = inputStream?.use { input ->
+                    val output = ByteArrayOutputStream()
+                    val buffer = ByteArray(8192)
+                    var totalRead = 0
+                    var exceeded = false
+                    while (true) {
+                        val bytesRead = input.read(buffer)
+                        if (bytesRead == -1) break
+                        totalRead += bytesRead
+                        if (totalRead > maxBytes) {
+                            exceeded = true
+                            break
+                        }
+                        output.write(buffer, 0, bytesRead)
+                    }
+                    if (exceeded) null else output.toByteArray()
+                } ?: return@withContext false
 
                 val bais = ByteArrayInputStream(bytes)
                 val family = try {
@@ -240,9 +257,7 @@ class DefaultBrushGraphRepository @Inject constructor(
                         bytes
                     )
                 )
-
                 loadBrushFamily(family)
-                true
             } catch (e: Exception) {
                 android.util.Log.e(
                     "DefaultBrushGraphRepository",
