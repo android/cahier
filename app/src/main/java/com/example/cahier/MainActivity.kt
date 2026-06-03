@@ -28,22 +28,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.IntentCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.cahier.core.data.NoteType
-import com.example.cahier.features.home.CahierApp
-import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.ui.LocalTextureStore
-import dagger.hilt.android.AndroidEntryPoint
+import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
 import com.example.cahier.developer.brushgraph.data.DisplayText
-import androidx.lifecycle.lifecycleScope
+import com.example.cahier.features.home.CahierApp
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @javax.inject.Inject lateinit var textureStore: CahierTextureBitmapStore
-    @javax.inject.Inject lateinit var repository: dagger.Lazy<BrushGraphRepository>
+    @javax.inject.Inject
+    lateinit var textureStore: CahierTextureBitmapStore
+
+    @javax.inject.Inject
+    lateinit var repository: dagger.Lazy<BrushGraphRepository>
 
     private val noteIdState = androidx.compose.runtime.mutableLongStateOf(-1L)
     private val noteTypeState = androidx.compose.runtime.mutableStateOf<NoteType?>(null)
@@ -51,7 +54,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        android.util.Log.d("MainActivity", "onCreate called with intent: $intent, data: ${intent?.data}, action: ${intent?.action}")
+        android.util.Log.d(
+            "MainActivity",
+            "onCreate called with intent: $intent, data: ${intent?.data}, action: ${intent?.action}"
+        )
         enableEdgeToEdge()
 
         handleIntent(intent)
@@ -71,7 +77,9 @@ class MainActivity : ComponentActivity() {
                             noteId = noteId,
                             noteType = noteType,
                             navigateToBrushGraph = navigateToBrushGraph,
-                            onNavigateToBrushGraphHandled = { navigateToBrushGraphState.value = false },
+                            onNavigateToBrushGraphHandled = {
+                                navigateToBrushGraphState.value = false
+                            },
                             textureStore = textureStore
                         )
                     }
@@ -82,7 +90,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        android.util.Log.d("MainActivity", "onNewIntent called with intent: $intent, data: ${intent.data}, action: ${intent.action}")
+        android.util.Log.d(
+            "MainActivity",
+            "onNewIntent called with intent: $intent, data: ${intent.data}, action: ${intent.action}"
+        )
         setIntent(intent)
         handleIntent(intent)
     }
@@ -98,7 +109,10 @@ class MainActivity : ComponentActivity() {
         noteTypeState.value = noteType
 
         val uri = intent.data
-        android.util.Log.d("MainActivity", "handleIntent: action=${intent.action}, uri=$uri, scheme=${uri?.scheme}, noteId=$noteId, noteType=$noteType")
+        android.util.Log.d(
+            "MainActivity",
+            "handleIntent: action=${intent.action}, uri=$uri, scheme=${uri?.scheme}, noteId=$noteId, noteType=$noteType"
+        )
 
         if (intent.action == "com.example.cahier.intent.action.IMPORT_BRUSH" && uri != null) {
             lifecycleScope.launch {

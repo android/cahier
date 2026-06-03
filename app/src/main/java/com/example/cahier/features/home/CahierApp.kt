@@ -16,17 +16,16 @@
 
 package com.example.cahier.features.home
 
-import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.cahier.core.data.NoteType
+import com.example.cahier.core.navigation.BrushGraphDestination
 import com.example.cahier.core.navigation.CahierNavHost
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.navigation.TextCanvasDestination
-import com.example.cahier.core.navigation.BrushGraphDestination
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 
 @Composable
 fun CahierApp(
