@@ -46,13 +46,12 @@ class BrushGraphViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeDao = FakeCustomBrushDao()
-        mockTextureStore =
-            CahierTextureBitmapStore(InstrumentationRegistry.getInstrumentation().targetContext)
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        mockTextureStore = CahierTextureBitmapStore(context)
 
         val repoScope =
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + testDispatcher)
-        repository = DefaultBrushGraphRepository(fakeDao, mockTextureStore, repoScope)
-
+        repository = DefaultBrushGraphRepository(fakeDao, mockTextureStore, repoScope, context)
         viewModel = BrushGraphViewModel(fakeDao, mockTextureStore, repository)
     }
 

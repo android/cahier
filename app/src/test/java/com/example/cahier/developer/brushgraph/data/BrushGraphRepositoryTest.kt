@@ -1,5 +1,8 @@
 package com.example.cahier.developer.brushgraph.data
 
+import android.content.Context
+import androidx.ink.storage.AndroidBrushFamilySerialization
+import androidx.test.core.app.ApplicationProvider
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +48,8 @@ class BrushGraphRepositoryTest {
         mockTextureStore = mock(CahierTextureBitmapStore::class.java)
         org.mockito.Mockito.`when`(mockTextureStore.generation).thenReturn(MutableStateFlow(0))
         repoScope = kotlinx.coroutines.CoroutineScope(testDispatcher + Job())
-        repository = DefaultBrushGraphRepository(fakeDao, mockTextureStore, repoScope)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        repository = DefaultBrushGraphRepository(fakeDao, mockTextureStore, repoScope, context)
     }
 
     @After
@@ -308,5 +312,4 @@ class BrushGraphRepositoryTest {
         assertEquals(portIds[1], reorderedData.coatPortIds[0])
         assertEquals(portIds[0], reorderedData.coatPortIds[1])
     }
-
 }

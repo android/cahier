@@ -105,6 +105,8 @@ fun BrushGraphScreen(
             viewModel.updateTestBrushColor(primaryColor)
     }
 
+
+
     var showColorPicker by remember { mutableStateOf(false) }
     var colorPickerInitialColor by remember { mutableStateOf(onSurfaceColor) }
     var colorPickerOnColorSelected by remember { mutableStateOf({ _: Color -> }) }
