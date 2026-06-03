@@ -29,7 +29,6 @@ import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.Version
 import androidx.ink.brush.compose.composeColor
@@ -92,9 +91,12 @@ class DrawingCanvasViewModel @Inject constructor(
 
     private val currentNightMode = AppCompatDelegate.getDefaultNightMode()
 
-    private val heartHighlighter = StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true)
-    private val poopHighlighter = StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true)
-    private val starHighlighter = StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true)
+    private val heartHighlighter =
+        StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true)
+    private val poopHighlighter =
+        StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true)
+    private val starHighlighter =
+        StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true)
     private val highlighter = StockBrushes.highlighter()
 
     private val _defaultBrush = MutableStateFlow(
@@ -382,7 +384,7 @@ class DrawingCanvasViewModel @Inject constructor(
         isBrushSelectedInSession = true
         _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily)
-            val colorToApply = when(newBrush.family) {
+            val colorToApply = when (newBrush.family) {
                 highlighter -> newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
                 heartHighlighter -> Color(0xFFFF45CA).copy(alpha = HIGHLIGHTER_ALPHA)
                 poopHighlighter -> Color(0xFF783013).copy(alpha = HIGHLIGHTER_ALPHA)
@@ -397,7 +399,7 @@ class DrawingCanvasViewModel @Inject constructor(
         isBrushSelectedInSession = true
         _selectedBrush.update { currentBrush ->
             val newBrush = currentBrush.copy(family = brushFamily, size = size)
-            val colorToApply = when(newBrush.family) {
+            val colorToApply = when (newBrush.family) {
                 highlighter -> newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
                 heartHighlighter -> Color(0xFFFF45CA).copy(alpha = HIGHLIGHTER_ALPHA)
                 poopHighlighter -> Color(0xFF783013).copy(alpha = HIGHLIGHTER_ALPHA)
@@ -411,12 +413,14 @@ class DrawingCanvasViewModel @Inject constructor(
     fun changeBrushColor(color: Color) {
         isBrushSelectedInSession = true
         _selectedBrush.update { currentBrush ->
-            val colorToApply = when(currentBrush.family) {
+            val colorToApply = when (currentBrush.family) {
                 heartHighlighter,
                 poopHighlighter,
                 starHighlighter,
-                highlighter -> color.copy(alpha = HIGHLIGHTER_ALPHA)
-               else -> color.copy(alpha = 1f)
+                highlighter,
+                    -> color.copy(alpha = HIGHLIGHTER_ALPHA)
+
+                else -> color.copy(alpha = 1f)
             }
             currentBrush.copyWithComposeColor(color = colorToApply)
         }
@@ -467,7 +471,6 @@ class DrawingCanvasViewModel @Inject constructor(
         return _selectedBrush.value
     }
 
-    @OptIn(ExperimentalInkCustomBrushApi::class)
     suspend fun saveCurrentBrushToAutosave() {
         withContext(Dispatchers.IO) {
             try {
@@ -491,7 +494,6 @@ class DrawingCanvasViewModel @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalInkCustomBrushApi::class)
     private fun loadCustomBrushes() {
         viewModelScope.launch(Dispatchers.IO) {
             val builtInBrushes = CustomBrushes.getBrushes(context, textureStore)

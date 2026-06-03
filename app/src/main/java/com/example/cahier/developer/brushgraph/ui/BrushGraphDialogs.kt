@@ -92,7 +92,7 @@ fun SaveToPaletteDialog(
         AlertDialog(
             modifier = modifier,
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.bg_save_to_palette)) },
+            title = { Text(stringResource(R.string.bg_save_to_cahier)) },
             text = {
                 OutlinedTextField(
                     value = paletteBrushNameInput,

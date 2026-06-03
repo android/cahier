@@ -21,7 +21,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.annotation.DrawableRes
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.R
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,7 +30,6 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@OptIn(ExperimentalInkCustomBrushApi::class)
 @Singleton
 class CahierTextureBitmapStore @Inject constructor(@ApplicationContext context: Context) :
     TextureBitmapStore {

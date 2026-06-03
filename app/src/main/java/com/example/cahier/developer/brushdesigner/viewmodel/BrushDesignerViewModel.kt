@@ -23,7 +23,6 @@ import android.net.Uri
 import androidx.compose.ui.graphics.Color
 import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import androidx.ink.brush.Version
 import androidx.ink.brush.compose.createWithComposeColor
 import androidx.ink.storage.decode
@@ -65,7 +64,7 @@ import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 
-@OptIn(ExperimentalInkCustomBrushApi::class, FlowPreview::class)
+@OptIn(FlowPreview::class)
 @HiltViewModel
 class BrushDesignerViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,

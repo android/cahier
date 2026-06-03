@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.ink.brush.Brush
-import androidx.ink.brush.ExperimentalInkCustomBrushApi
 import com.example.cahier.R
 import ink.proto.BrushTip as ProtoBrushTip
 
@@ -46,7 +45,6 @@ import ink.proto.BrushTip as ProtoBrushTip
  *
  * Stateless: receives data and callbacks, does not access ViewModel.
  */
-@OptIn(ExperimentalInkCustomBrushApi::class)
 @Composable
 internal fun TipShapeTabContent(
     currentTip: ProtoBrushTip,

@@ -105,13 +105,13 @@
     <string name="brush_designer_controls_placeholder">Editing controls coming in the next update. Use the preview canvas to draw test strokes.</string>
     <string name="brush_designer_close">Close</string>
     <string name="brush_designer_stock_brushes">Stock Brushes</string>
-    <string name="brush_designer_my_palette">My Palette</string>
+    <string name="brush_designer_my_brushes">My Brushes</string>
     <string name="brush_designer_no_saved_brushes">No saved brushes yet</string>
-    <string name="brush_designer_save_to_palette">Save to Cahier Palette</string>
+    <string name="brush_designer_save">Save</string>
     <string name="brush_designer_import">Import</string>
     <string name="brush_designer_export">Export</string>
     <string name="brush_designer_more_options">More options</string>
-    <string name="brush_designer_save_dialog_title">Save to Palette</string>
+    <string name="brush_designer_save_dialog_title">Save to Cahier</string>
     <string name="brush_designer_save_dialog_info">• This brush will appear in the main Cahier toolbox.\n• Large textures are stored in RAM. Avoid saving many texture-heavy brushes to prevent performance lag or memory issues.</string>
     <string name="brush_designer_brush_name">Brush Name</string>
     <string name="brush_designer_tab_tip_shape">Tip Shape</string>
@@ -278,7 +278,8 @@
     <!-- Brush Graph -->
     <string name="bg_name_texture">Name Texture</string>
     <string name="bg_texture_id">Texture ID</string>
-    <string name="bg_save_to_palette">Save to Palette</string>
+    <string name="bg_save">Save</string>
+    <string name="bg_save_to_cahier">Save to Cahier</string>
     <string name="bg_brush_name">Brush Name</string>
     <string name="bg_clear_graph">Clear Graph</string>
     <string name="bg_clear_graph_confirmation">Are you sure you want to clear the entire brush graph? This action cannot be undone.</string>
@@ -307,7 +308,7 @@
     <string name="bg_behavior">Behavior</string>
     <string name="bg_color_function">Color Function</string>
     <string name="bg_texture_layer">Texture Layer</string>
-    <string name="bg_my_palette">My Palette</string>
+    <string name="bg_my_brushes">My Brushes</string>
     <string name="bg_delete_edge">Delete Edge</string>
     <string name="bg_delete_edge_confirmation">Are you sure you want to delete this edge?</string>
     <string name="bg_add_node_between">Add Node Between</string>
@@ -467,8 +468,8 @@
     <string name="bg_err_reorganization_failed">Reorganization failed</string>
     <string name="bg_err_load_brush_failed">Failed to load brush</string>
     <string name="bg_err_cannot_delete_family_node">Cannot delete Family node</string>
-    <string name="bg_err_save_palette">Failed to save brush to palette: %1$s</string>
-    <string name="bg_err_load_palette">Failed to load brush from palette: %1$s</string>
+    <string name="bg_err_save">Failed to save brush to Cahier: %1$s</string>
+    <string name="bg_err_load">Failed to load brush from Cahier: %1$s</string>
     <string name="bg_err_behavior_cannot_accept">Behavior node %1$s cannot accept input from %2$s</string>
     <string name="bg_err_behavior_cannot_accept_structural">Behavior node %1$s cannot accept input from structural node %2$s</string>
     <string name="bg_err_coat_only_accepts_tip">Coat can only accept input from Tip at the tip port</string>
