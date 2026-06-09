@@ -153,7 +153,7 @@ fun BrushDesignerScreen(
                 onImport = {
                     importLauncher.launch(arrayOf("application/octet-stream", "*/*"))
                 },
-                onExport = { exportLauncher.launch("custom_brush.brush") }
+                onExport = { exportLauncher.launch("custom_${System.currentTimeMillis()}.brushfamily") }
             )
         }
     ) { paddingValues ->

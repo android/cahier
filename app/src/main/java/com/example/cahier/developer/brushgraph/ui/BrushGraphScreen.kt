@@ -564,7 +564,7 @@ fun BrushGraphScreen(
                         GraphActionMenu(
                             onClose = onNavigateUp,
                             onExport = {
-                                brushExportLauncher.launch("brush_${System.currentTimeMillis()}.brushfamily")
+                                brushExportLauncher.launch("custom_${System.currentTimeMillis()}.brushfamily")
                             },
                             onLoadBrushFile = { brushFilePickerLauncher.launch(arrayOf("*/*")) },
                             onSaveToPalette = {
