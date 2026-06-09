@@ -153,7 +153,16 @@ fun BrushDesignerScreen(
                 onImport = {
                     importLauncher.launch(arrayOf("application/octet-stream", "*/*"))
                 },
-                onExport = { exportLauncher.launch("custom_${System.currentTimeMillis()}.brushfamily") }
+                onExport = {
+                    exportLauncher.launch(
+                        "custom_${
+                            android.text.format.DateFormat.format(
+                                "yyyyMMdd_HHmmss",
+                                System.currentTimeMillis()
+                            )
+                        }.brushfamily"
+                    )
+                }
             )
         }
     ) { paddingValues ->
