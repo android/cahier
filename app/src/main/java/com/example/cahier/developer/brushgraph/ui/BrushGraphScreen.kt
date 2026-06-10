@@ -564,7 +564,14 @@ fun BrushGraphScreen(
                         GraphActionMenu(
                             onClose = onNavigateUp,
                             onExport = {
-                                brushExportLauncher.launch("brush_${System.currentTimeMillis()}.brushfamily")
+                                brushExportLauncher.launch(
+                                    "custom_${
+                                        android.text.format.DateFormat.format(
+                                            "yyyyMMdd_HHmmss",
+                                            System.currentTimeMillis()
+                                        )
+                                    }.brushfamily"
+                                )
                             },
                             onLoadBrushFile = { brushFilePickerLauncher.launch(arrayOf("*/*")) },
                             onSaveToPalette = {
