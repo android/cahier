@@ -21,10 +21,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.cahier.core.data.NoteType
+import com.example.cahier.core.navigation.BrushGraphDestination
 import com.example.cahier.core.navigation.CahierNavHost
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.navigation.TextCanvasDestination
+import com.example.cahier.core.ui.CahierTextureBitmapStore
 
 @Composable
 fun CahierApp(
@@ -32,6 +33,8 @@ fun CahierApp(
     noteType: NoteType?,
     textureStore: CahierTextureBitmapStore,
     modifier: Modifier = Modifier,
+    navigateToBrushGraph: Boolean = false,
+    onNavigateToBrushGraphHandled: () -> Unit = {},
 ) {
     val navController = rememberNavController()
 
@@ -45,6 +48,13 @@ fun CahierApp(
             destination?.let {
                 navController.navigate(it)
             }
+        }
+    }
+
+    LaunchedEffect(navigateToBrushGraph) {
+        if (navigateToBrushGraph) {
+            navController.navigate(BrushGraphDestination.route)
+            onNavigateToBrushGraphHandled()
         }
     }
 

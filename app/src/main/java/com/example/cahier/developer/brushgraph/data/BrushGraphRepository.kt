@@ -15,7 +15,9 @@
  */
 package com.example.cahier.developer.brushgraph.data
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.Version
@@ -26,7 +28,9 @@ import com.example.cahier.core.di.ApplicationScope
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.AUTOSAVE_KEY
 import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +41,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.UUID
@@ -58,6 +63,7 @@ interface BrushGraphRepository {
     fun clearIssues()
 
     suspend fun loadAutoSaveBrush(): Boolean
+    suspend fun importBrushFromUri(uriString: String): Boolean
     fun loadBrushFamily(family: BrushFamily): Boolean
 
     fun createDefaultGraph(): BrushGraph
@@ -82,6 +88,7 @@ class DefaultBrushGraphRepository @Inject constructor(
     private val customBrushDao: CustomBrushDao,
     val textureStore: CahierTextureBitmapStore,
     @ApplicationScope private val scope: CoroutineScope,
+    @ApplicationContext private val context: Context,
 ) : BrushGraphRepository {
     private val _graph = MutableStateFlow(createDefaultGraph())
     override val graph: StateFlow<BrushGraph> = _graph.asStateFlow()
@@ -196,6 +203,69 @@ class DefaultBrushGraphRepository @Inject constructor(
                 e
             )
             false
+        }
+    }
+
+    override suspend fun importBrushFromUri(uriString: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val uri = Uri.parse(uriString)
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val maxBytes = 10 * 1024 * 1024 // 10 MB limit
+                val bytes = inputStream?.use { input ->
+                    val output = ByteArrayOutputStream()
+                    val buffer = ByteArray(8192)
+                    var totalRead = 0
+                    var exceeded = false
+                    while (true) {
+                        val bytesRead = input.read(buffer)
+                        if (bytesRead == -1) break
+                        totalRead += bytesRead
+                        if (totalRead > maxBytes) {
+                            exceeded = true
+                            break
+                        }
+                        output.write(buffer, 0, bytesRead)
+                    }
+                    if (exceeded) null else output.toByteArray()
+                } ?: return@withContext false
+
+                val bais = ByteArrayInputStream(bytes)
+                val family = try {
+                    AndroidBrushFamilySerialization.decode(
+                        bais,
+                        maxVersion = Version.DEVELOPMENT,
+                        BrushFamilyDecodeCallback { id, bitmap ->
+                            if (bitmap != null) {
+                                textureStore.loadTexture(id, bitmap)
+                            }
+                            id
+                        }
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e(
+                        "DefaultBrushGraphRepository",
+                        "Invalid BrushFamily file format from URI: $uriString",
+                        e
+                    )
+                    return@withContext false
+                }
+
+                customBrushDao.saveCustomBrush(
+                    com.example.cahier.developer.brushdesigner.data.CustomBrushEntity(
+                        AUTOSAVE_KEY,
+                        bytes
+                    )
+                )
+                loadBrushFamily(family)
+            } catch (e: Exception) {
+                android.util.Log.e(
+                    "DefaultBrushGraphRepository",
+                    "Failed to import brush from URI: $uriString",
+                    e
+                )
+                false
+            }
         }
     }
 
