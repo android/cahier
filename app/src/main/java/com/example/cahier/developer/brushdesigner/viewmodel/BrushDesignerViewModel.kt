@@ -25,7 +25,7 @@ import androidx.ink.brush.Brush
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.Version
 import androidx.ink.brush.compose.createWithComposeColor
-import androidx.ink.storage.AndroidBrushFamilySerialization
+import androidx.ink.storage.decode
 import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.ViewModel
@@ -90,10 +90,10 @@ class BrushDesignerViewModel @Inject constructor(
                     GZIPOutputStream(baos).use { it.write(rawBytes) }
 
                     ByteArrayInputStream(baos.toByteArray()).use { inputStream ->
-                        AndroidBrushFamilySerialization.decode(
+                        BrushFamily.decode(
                             inputStream,
                             maxVersion = Version.DEVELOPMENT
-                        ) { textureId, bitmap ->
+                        ) { textureId: String, bitmap: Bitmap? ->
                             bitmap?.let { textureStore.loadTexture(textureId, it) }
                             textureId
                         }

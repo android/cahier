@@ -21,8 +21,8 @@ import android.net.Uri
 import android.util.Log
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.Version
-import androidx.ink.storage.AndroidBrushFamilySerialization
-import androidx.ink.storage.BrushFamilyDecodeCallback
+import androidx.ink.storage.decode
+import androidx.ink.storage.encode
 import com.example.cahier.R
 import com.example.cahier.core.di.ApplicationScope
 import com.example.cahier.core.ui.CahierTextureBitmapStore
@@ -102,7 +102,7 @@ class DefaultBrushGraphRepository @Inject constructor(
                     try {
                         val family = BrushFamilyConverter.convert(graph)
                         val baos = ByteArrayOutputStream()
-                        AndroidBrushFamilySerialization.encode(family, baos, textureStore)
+                        family.encode(baos, textureStore)
                         customBrushDao.saveCustomBrush(
                             com.example.cahier.developer.brushdesigner.data.CustomBrushEntity(
                                 AUTOSAVE_KEY,
@@ -184,16 +184,14 @@ class DefaultBrushGraphRepository @Inject constructor(
         val decodedBytes = entity.brushBytes
         return try {
             val bais = ByteArrayInputStream(decodedBytes)
-            val family = AndroidBrushFamilySerialization.decode(
+            val family = BrushFamily.decode(
                 bais,
-                maxVersion = Version.DEVELOPMENT,
-                BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
-                    if (bitmap != null) {
-                        textureStore.loadTexture(id, bitmap)
-                    }
-                    id
-                }
-            )
+                maxVersion = Version.DEVELOPMENT
+            ) { id: String, bitmap: Bitmap? ->
+                bitmap?.let { textureStore.loadTexture(id, it) }
+                id
+            }
+
             loadBrushFamily(family)
             true
         } catch (e: Exception) {
@@ -232,16 +230,15 @@ class DefaultBrushGraphRepository @Inject constructor(
 
                 val bais = ByteArrayInputStream(bytes)
                 val family = try {
-                    AndroidBrushFamilySerialization.decode(
+                    BrushFamily.decode(
                         bais,
-                        maxVersion = Version.DEVELOPMENT,
-                        BrushFamilyDecodeCallback { id, bitmap ->
-                            if (bitmap != null) {
-                                textureStore.loadTexture(id, bitmap)
-                            }
-                            id
+                        maxVersion = Version.DEVELOPMENT
+                    ) { id: String, bitmap: Bitmap? ->
+                        bitmap?.let {
+                            textureStore.loadTexture(id, bitmap)
                         }
-                    )
+                        id
+                    }
                 } catch (e: Exception) {
                     android.util.Log.e(
                         "DefaultBrushGraphRepository",

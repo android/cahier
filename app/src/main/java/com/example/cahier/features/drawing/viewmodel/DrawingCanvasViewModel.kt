@@ -18,6 +18,7 @@ package com.example.cahier.features.drawing.viewmodel
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.net.Uri
@@ -40,7 +41,8 @@ import androidx.ink.geometry.MutableParallelogram
 import androidx.ink.geometry.MutableSegment
 import androidx.ink.geometry.MutableVec
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
-import androidx.ink.storage.AndroidBrushFamilySerialization
+import androidx.ink.storage.decode
+import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -475,8 +477,7 @@ class DrawingCanvasViewModel @Inject constructor(
         withContext(Dispatchers.IO) {
             try {
                 val stream = java.io.ByteArrayOutputStream()
-                AndroidBrushFamilySerialization.encode(
-                    _selectedBrush.value.family,
+                _selectedBrush.value.family.encode(
                     stream,
                     textureStore
                 )
@@ -529,12 +530,11 @@ class DrawingCanvasViewModel @Inject constructor(
 
                         ByteArrayInputStream(entity.brushBytes).use { inputStream ->
                             val family =
-                                AndroidBrushFamilySerialization.decode(
+                                BrushFamily.decode(
                                     inputStream,
                                     maxVersion = Version.DEVELOPMENT
-                                ) { id, bitmap ->
-                                    if (bitmap != null)
-                                        textureStore.loadTexture(id, bitmap)
+                                ) { id: String, bitmap: Bitmap? ->
+                                    bitmap?.let { textureStore.loadTexture(id, bitmap) }
                                     id
                                 }
                             CustomBrush(

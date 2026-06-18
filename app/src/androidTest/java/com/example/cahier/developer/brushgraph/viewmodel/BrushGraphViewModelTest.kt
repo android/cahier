@@ -16,6 +16,7 @@
 
 package com.example.cahier.developer.brushgraph.viewmodel
 
+import androidx.ink.storage.encode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.cahier.core.ui.CahierTextureBitmapStore
@@ -442,7 +443,7 @@ class BrushGraphViewModelTest {
             0.1f
         ).family
         val baos = ByteArrayOutputStream()
-        androidx.ink.storage.AndroidBrushFamilySerialization.encode(family, baos, mockTextureStore)
+        family.encode(baos, mockTextureStore)
         val entity = CustomBrushEntity(name = brushName, brushBytes = baos.toByteArray())
 
         viewModel.loadFromPalette(entity)
