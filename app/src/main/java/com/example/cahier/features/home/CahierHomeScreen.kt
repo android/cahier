@@ -163,7 +163,7 @@ fun HomePane(
             PaneExpansionAnchor.Proportion(proportion = 1f)
         )
     )
-    var hasSetInitialProportion by remember {
+    var hasSetInitialProportion by rememberSaveable {
         mutableStateOf(false)
     }
     val isCompact = forceCompact
