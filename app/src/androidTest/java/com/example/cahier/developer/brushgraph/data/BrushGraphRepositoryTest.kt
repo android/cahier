@@ -18,7 +18,7 @@ package com.example.cahier.developer.brushgraph.data
 
 import android.content.Context
 import androidx.ink.brush.StockBrushes
-import androidx.ink.storage.AndroidBrushFamilySerialization
+import androidx.ink.storage.encode
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.cahier.core.ui.CahierTextureBitmapStore
@@ -78,7 +78,7 @@ class BrushGraphRepositoryTest {
 
         val family = StockBrushes.marker()
         val outputStream = FileOutputStream(tempFile)
-        AndroidBrushFamilySerialization.encode(family, outputStream, mockTextureStore)
+        family.encode(outputStream, mockTextureStore)
         outputStream.close()
 
         val uriString = android.net.Uri.fromFile(tempFile).toString()

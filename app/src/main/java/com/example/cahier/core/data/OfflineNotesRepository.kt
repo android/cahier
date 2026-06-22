@@ -19,9 +19,10 @@
 package com.example.cahier.core.data
 
 import android.content.Context
+import android.graphics.Bitmap
+import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.Version
-import androidx.ink.storage.AndroidBrushFamilySerialization
-import androidx.ink.storage.BrushFamilyDecodeCallback
+import androidx.ink.storage.decode
 import androidx.ink.strokes.Stroke
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.ui.Converters
@@ -59,17 +60,19 @@ class OfflineNotesRepository(
         val dbBrushes = dbEntities.mapNotNull { entity ->
             try {
                 ByteArrayInputStream(entity.brushBytes).use { inputStream ->
-                    val family = AndroidBrushFamilySerialization.decode(
+                    val family = BrushFamily.decode(
                         inputStream,
-                        maxVersion = Version.DEVELOPMENT,
-                        BrushFamilyDecodeCallback { id, bitmap ->
-                            if (bitmap != null && textureStore[id] == null) textureStore.loadTexture(
-                                id,
-                                bitmap
-                            )
-                            id
+                        maxVersion = Version.DEVELOPMENT
+                    ) { id: String, bitmap: Bitmap? ->
+                        bitmap?.let {
+                            if (textureStore[id] == null)
+                                textureStore.loadTexture(
+                                    id,
+                                    bitmap
+                                )
                         }
-                    )
+                        id
+                    }
                     CustomBrush(entity.name, com.example.cahier.R.drawable.edit_24px, family, true)
                 }
             } catch (e: Exception) {

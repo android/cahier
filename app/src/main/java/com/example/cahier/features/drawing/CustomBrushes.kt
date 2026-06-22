@@ -17,9 +17,11 @@
 package com.example.cahier.features.drawing
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
+import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.Version
-import androidx.ink.storage.AndroidBrushFamilySerialization
+import androidx.ink.storage.decode
 import com.example.cahier.R
 import com.example.cahier.core.data.CustomBrush
 import com.example.cahier.core.ui.CahierTextureBitmapStore
@@ -59,12 +61,11 @@ object CustomBrushes {
             val (resourceId, icon) = pair
             try {
                 val brushFamily = context.resources.openRawResource(resourceId).use { inputStream ->
-                    AndroidBrushFamilySerialization.decode(
+                    BrushFamily.decode(
                         inputStream,
                         maxVersion = Version.DEVELOPMENT
-                    ) { id, bitmap ->
-                        if (bitmap != null)
-                            textureStore.loadTexture(id, bitmap)
+                    ) { id: String, bitmap: Bitmap? ->
+                        bitmap?.let { textureStore.loadTexture(id, bitmap) }
                         id
                     }
                 }

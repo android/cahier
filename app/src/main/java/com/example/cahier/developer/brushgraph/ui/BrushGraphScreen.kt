@@ -56,10 +56,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.Version
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
-import androidx.ink.storage.AndroidBrushFamilySerialization
-import androidx.ink.storage.BrushFamilyDecodeCallback
+import androidx.ink.storage.decode
+import androidx.ink.storage.encode
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowHeightSizeClass
 import androidx.window.core.layout.WindowWidthSizeClass
@@ -165,20 +166,17 @@ fun BrushGraphScreen(
                     val family = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         context.contentResolver.openInputStream(it)?.use { stream ->
                             try {
-                                AndroidBrushFamilySerialization.decode(
+                                BrushFamily.decode(
                                     stream,
-                                    maxVersion = Version.DEVELOPMENT,
-                                    BrushFamilyDecodeCallback { id: String, bitmap: Bitmap? ->
-                                        if (bitmap != null) {
-                                            viewModel.loadTexture(id, bitmap)
-                                        }
-                                        id
-                                    }
-                                )
+                                    maxVersion = Version.DEVELOPMENT
+                                ) { id: String, bitmap: Bitmap? ->
+                                    bitmap?.let { viewModel.loadTexture(id, it) }
+                                    id
+                                }
                             } catch (e: Exception) {
                                 Log.d(
                                     "BrushGraphWidget",
-                                    "Failed to decode with AndroidBrushFamilySerialization, trying legacy fallback"
+                                    "Failed to load brush."
                                 )
                                 null
                             }
@@ -186,10 +184,6 @@ fun BrushGraphScreen(
                     }
 
                     if (family == null) {
-                        Log.d(
-                            "BrushGraphWidget",
-                            "Failed to decode with AndroidBrushFamilySerialization, and legacy fallback is disabled."
-                        )
                         viewModel.postDebug(DisplayText.Resource(R.string.bg_err_load_brush))
                     } else {
                         viewModel.loadBrushFamily(family)
@@ -215,8 +209,7 @@ fun BrushGraphScreen(
             scope.launch {
                 try {
                     context.contentResolver.openOutputStream(it)?.use { outputStream ->
-                        AndroidBrushFamilySerialization.encode(
-                            viewModel.brush.value.family,
+                        viewModel.brush.value.family.encode(
                             outputStream,
                             textureStore
                         )

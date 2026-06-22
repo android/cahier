@@ -93,7 +93,7 @@ class BrushDesignerViewModel @Inject constructor(
                         BrushFamily.decode(
                             inputStream,
                             maxVersion = Version.DEVELOPMENT
-                        ) { textureId, bitmap ->
+                        ) { textureId: String, bitmap: Bitmap? ->
                             bitmap?.let { textureStore.loadTexture(textureId, it) }
                             textureId
                         }

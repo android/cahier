@@ -25,8 +25,8 @@ import androidx.ink.brush.StockBrushes
 import androidx.ink.brush.Version
 import androidx.ink.brush.compose.composeColor
 import androidx.ink.brush.compose.createWithComposeColor
-import androidx.ink.storage.AndroidBrushFamilySerialization
-import androidx.ink.storage.BrushFamilyDecodeCallback
+import androidx.ink.storage.decode
+import androidx.ink.storage.encode
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cahier.core.ui.CahierTextureBitmapStore
@@ -564,7 +564,7 @@ class BrushGraphViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val baos = ByteArrayOutputStream()
-                AndroidBrushFamilySerialization.encode(brush.value.family, baos, textureStore)
+                brush.value.family.encode(baos, textureStore)
                 val finalCompressedBytes = baos.toByteArray()
 
                 customBrushDao.saveCustomBrush(
@@ -595,16 +595,14 @@ class BrushGraphViewModel @Inject constructor(
     fun loadFromPalette(entity: CustomBrushEntity) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val family = AndroidBrushFamilySerialization.decode(
+                val family = BrushFamily.decode(
                     ByteArrayInputStream(entity.brushBytes),
-                    maxVersion = Version.DEVELOPMENT,
-                    BrushFamilyDecodeCallback { id, bitmap ->
-                        if (bitmap != null) {
-                            loadTexture(id, bitmap)
-                        }
-                        id
-                    }
-                )
+                    maxVersion = Version.DEVELOPMENT
+                ) { id: String, bitmap: Bitmap? ->
+                    bitmap?.let { loadTexture(id, it) }
+                    id
+                }
+
                 withContext(Dispatchers.Main) {
                     loadBrushFamily(family)
                 }
