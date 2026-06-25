@@ -15,14 +15,14 @@
  */
 package com.example.cahier.developer.brushgraph.ui
 
+import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.NodeData
 import ink.proto.BrushBehavior
 import ink.proto.BrushPaint
-import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
-import ink.proto.StepPosition as ProtoStepPosition
-import com.example.cahier.R
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
+import ink.proto.StepPosition as ProtoStepPosition
 
 class TooltipsTest {
 
@@ -38,19 +38,54 @@ class TooltipsTest {
             NodeData.ColorFunction(ink.proto.ColorFunction.getDefaultInstance()),
             NodeData.Coat(),
             NodeData.Family(),
-            
+
             // Behavior nodes
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setSourceNode(BrushBehavior.SourceNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setConstantNode(BrushBehavior.ConstantNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setNoiseNode(BrushBehavior.NoiseNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setToolTypeFilterNode(BrushBehavior.ToolTypeFilterNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setDampingNode(BrushBehavior.DampingNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setResponseNode(BrushBehavior.ResponseNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setBinaryOpNode(BrushBehavior.BinaryOpNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setInterpolationNode(BrushBehavior.InterpolationNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setIntegralNode(BrushBehavior.IntegralNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setTargetNode(BrushBehavior.TargetNode.getDefaultInstance()).build()),
-            NodeData.Behavior(BrushBehavior.Node.newBuilder().setPolarTargetNode(BrushBehavior.PolarTargetNode.getDefaultInstance()).build())
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setSourceNode(BrushBehavior.SourceNode.getDefaultInstance()).build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setConstantNode(BrushBehavior.ConstantNode.getDefaultInstance()).build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setNoiseNode(BrushBehavior.NoiseNode.getDefaultInstance()).build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setToolTypeFilterNode(BrushBehavior.ToolTypeFilterNode.getDefaultInstance())
+                    .build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setDampingNode(BrushBehavior.DampingNode.getDefaultInstance()).build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setResponseNode(BrushBehavior.ResponseNode.getDefaultInstance()).build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setBinaryOpNode(BrushBehavior.BinaryOpNode.getDefaultInstance()).build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setInterpolationNode(BrushBehavior.InterpolationNode.getDefaultInstance())
+                    .build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setIntegralNode(BrushBehavior.IntegralNode.getDefaultInstance()).build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setTargetNode(BrushBehavior.TargetNode.getDefaultInstance()).build()
+            ),
+            NodeData.Behavior(
+                BrushBehavior.Node.newBuilder()
+                    .setPolarTargetNode(BrushBehavior.PolarTargetNode.getDefaultInstance()).build()
+            )
         )
 
         for (node in nodes) {
@@ -65,7 +100,10 @@ class TooltipsTest {
         for (value in BrushBehavior.Source.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for Source.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for Source.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -75,7 +113,10 @@ class TooltipsTest {
         for (value in BrushBehavior.Target.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for Target.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for Target.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -95,7 +136,10 @@ class TooltipsTest {
         for (value in BrushPaint.TextureLayer.SizeUnit.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for SizeUnit.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for SizeUnit.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -105,7 +149,10 @@ class TooltipsTest {
         for (value in BrushPaint.TextureLayer.Origin.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for Origin.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for Origin.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -115,7 +162,10 @@ class TooltipsTest {
         for (value in BrushPaint.TextureLayer.Mapping.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for Mapping.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for Mapping.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -125,7 +175,10 @@ class TooltipsTest {
         for (value in BrushPaint.TextureLayer.BlendMode.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for BlendMode.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for BlendMode.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -135,7 +188,10 @@ class TooltipsTest {
         for (value in BrushPaint.SelfOverlap.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for SelfOverlap.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for SelfOverlap.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -145,7 +201,10 @@ class TooltipsTest {
         for (value in BrushBehavior.PolarTarget.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for PolarTarget.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for PolarTarget.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -155,7 +214,10 @@ class TooltipsTest {
         for (value in BrushBehavior.OutOfRange.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for OutOfRange.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for OutOfRange.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -165,7 +227,10 @@ class TooltipsTest {
         for (value in BrushBehavior.BinaryOp.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for BinaryOp.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for BinaryOp.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -175,7 +240,10 @@ class TooltipsTest {
         for (value in BrushBehavior.ProgressDomain.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for ProgressDomain.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for ProgressDomain.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -185,7 +253,10 @@ class TooltipsTest {
         for (value in BrushBehavior.Interpolation.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for Interpolation.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for Interpolation.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -195,7 +266,10 @@ class TooltipsTest {
         for (value in ProtoPredefinedEasingFunction.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for ProtoPredefinedEasingFunction.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for ProtoPredefinedEasingFunction.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -205,7 +279,10 @@ class TooltipsTest {
         for (value in ProtoStepPosition.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
-            assertTrue("Tooltip should be unique for ProtoStepPosition.$value: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for ProtoStepPosition.$value: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 
@@ -218,19 +295,29 @@ class TooltipsTest {
         )
         for (modelResId in models) {
             val tooltip = getInputModelTooltip(modelResId)
-            assertTrue("Tooltip should be unique for InputModel.$modelResId: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for InputModel.$modelResId: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
+
     @Test
     fun colorFunctionTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         val options = arrayOf(
-            R.string.bg_opacity_multiplier,
-            R.string.bg_replace_color
+            R.string.bg_target_opacity_multiplier,
+            R.string.bg_replace_color,
+            R.string.bg_target_saturation_multiplier,
+            R.string.bg_target_hue_offset,
+            R.string.bg_target_luminosity_offset
         )
         for (optionResId in options) {
             val tooltip = getColorFunctionTooltip(optionResId)
-            assertTrue("Tooltip should be unique for ColorFunction.$optionResId: $tooltip", tooltips.add(tooltip))
+            assertTrue(
+                "Tooltip should be unique for ColorFunction.$optionResId: $tooltip",
+                tooltips.add(tooltip)
+            )
         }
     }
 }

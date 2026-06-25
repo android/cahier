@@ -220,7 +220,10 @@ fun getInputModelTooltip(resId: Int): Int = when (resId) {
 }
 
 fun getColorFunctionTooltip(resId: Int): Int = when (resId) {
-    R.string.bg_opacity_multiplier -> R.string.bg_tooltip_color_func_opacity
+    R.string.bg_target_opacity_multiplier -> R.string.bg_tooltip_color_func_opacity
     R.string.bg_replace_color -> R.string.bg_tooltip_color_func_replace
+    R.string.bg_target_luminosity_offset -> R.string.bg_tooltip_color_func_luminosity
+    R.string.bg_target_hue_offset -> R.string.bg_tooltip_color_func_hue
+    R.string.bg_target_saturation_multiplier -> R.string.bg_tooltip_color_func_saturation
     else -> R.string.bg_tooltip_color_func_default
 }

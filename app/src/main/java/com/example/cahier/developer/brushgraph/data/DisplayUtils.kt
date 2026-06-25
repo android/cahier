@@ -21,6 +21,7 @@ import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
+import ink.proto.ColorFunction as ProtoColorFunction
 import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 import ink.proto.StepPosition as ProtoStepPosition
 
@@ -516,4 +517,19 @@ fun ProtoBrushFamily.InputModel.displayStringRId(): Int =
         hasSlidingWindowModel() -> R.string.bg_model_sliding_window
         hasPassthroughModel() -> R.string.bg_model_passthrough
         else -> R.string.bg_unknown_model
+    }
+
+fun ProtoColorFunction.displayStringRId(): Int =
+    if (this.hasOpacityMultiplier()) {
+        R.string.bg_target_opacity_multiplier
+    } else if (this.hasReplaceColor()) {
+        R.string.bg_replace_color
+    } else if (this.hasHueOffsetRadians()) {
+        R.string.bg_target_hue_offset
+    } else if (this.hasSaturationMultiplier()) {
+        R.string.bg_target_saturation_multiplier
+    } else if (this.hasLuminosityOffset()) {
+        R.string.bg_target_luminosity_offset
+    } else {
+        R.string.bg_node_unknown
     }

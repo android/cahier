@@ -497,7 +497,6 @@
     <string name="bg_port_angle">Angle</string>
     <string name="bg_port_mag">Mag</string>
 
-    <string name="bg_opacity_multiplier">opacity multiplier</string>
     <string name="bg_replace_color">replace color</string>
 
     <string name="bg_tool_type_unknown">unknown</string>
@@ -661,6 +660,10 @@
     <string name="bg_label_out">Out</string>
     <string name="bg_label_step_count">Step Count</string>
     <string name="bg_label_opacity_multiplier">Opacity Multiplier</string>
+    <string name="bg_label_hue_offset">Hue Offset</string>
+    <string name="bg_label_saturation_multiplier">Saturation Multiplier</string>
+    <string name="bg_label_luminosity_offset">Luminosity Offset</string>
+
     <!-- Tooltips -->
     <!-- NodeData Tooltips -->
     <string name="bg_tooltip_node_tip">Defines the geometric shape and size of the brush tip. This shape acts as a cross-section that is repeated or extruded along the path to create the stroke mesh.</string>
@@ -837,8 +840,11 @@
     <string name="bg_tooltip_model_default">Selects the model used to smooth raw hardware inputs.</string>
 
     <!-- ColorFunc Tooltips -->
-    <string name="bg_tooltip_color_func_opacity">Multiplies the opacity of the stroke by a calculated value, allowing for dynamic transparency effects.</string>
+    <string name="bg_tooltip_color_func_opacity">Multiplies the opacity of the stroke by the specified value.</string>
     <string name="bg_tooltip_color_func_replace">Replaces the brush color with a specified color, ignoring the baseline color for this function\'s output.</string>
+    <string name="bg_tooltip_color_func_hue">Offsets the hue of the stroke by the specified value.</string>
+    <string name="bg_tooltip_color_func_saturation">Multiplies the saturation of the stroke by the specified value.</string>
+    <string name="bg_tooltip_color_func_luminosity">Offsets the luminosity of the stroke by the specified value.</string>
     <string name="bg_tooltip_color_func_default">Selects the type of color function to apply.</string>
     <!-- Tutorial Strings -->
     <string name="bg_tutorial_welcome_title">Welcome!</string>
