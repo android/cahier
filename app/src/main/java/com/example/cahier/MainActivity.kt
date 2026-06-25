@@ -116,11 +116,11 @@ class MainActivity : ComponentActivity() {
             intent.action = null
             intent.data = null
             lifecycleScope.launch {
+                navigateToBrushGraphState.value = true
                 val repo = repository.get()
                 val success = repo.importBrushFromUri(uri.toString())
                 if (success) {
                     android.util.Log.d("MainActivity", "Import brush SUCCESS")
-                    navigateToBrushGraphState.value = true
                     repo.postDebug(DisplayText.Resource(com.example.cahier.R.string.bg_msg_brush_loaded_success))
                 } else {
                     android.util.Log.e("MainActivity", "Import brush FAILED")
