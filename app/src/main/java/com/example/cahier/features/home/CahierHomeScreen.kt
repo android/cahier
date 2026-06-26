@@ -34,6 +34,7 @@ import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.PaneExpansionAnchor
 import androidx.compose.material3.adaptive.layout.PaneExpansionState
 import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.material3.adaptive.navigation.ThreePaneScaffoldNavigator
@@ -52,10 +53,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -70,6 +76,31 @@ import com.example.cahier.features.home.viewmodel.HomeScreenViewModel
 import com.example.cahier.features.home.viewmodel.NoteListUiState
 import kotlinx.coroutines.launch
 
+private val MinPaneWidth = 250.dp
+
+
+// The layout modifier implements a minimum width for the pane while
+// allowing it to report its original width to the scaffold, preventing
+// content from being overly compressed during resizing.
+private fun Modifier.minimumWidthLayout(minWidth: Dp): Modifier = this
+    .clipToBounds()
+    .layout { measurable, constraints ->
+        if (constraints.maxWidth == 0) {
+            layout(0, 0) {}
+        } else {
+            val fixedWidth = minWidth.roundToPx()
+            val placeable = measurable.measure(
+                constraints.copy(
+                    minWidth = fixedWidth,
+                    maxWidth = maxOf(fixedWidth, constraints.maxWidth)
+                )
+            )
+            val reportedWidth = constraints.maxWidth
+            layout(reportedWidth, placeable.height) {
+                placeable.placeRelative(0, 0)
+            }
+        }
+    }
 
 object HomeDestination : NavigationDestination {
     override val route = "home"
@@ -108,7 +139,7 @@ fun HomePane(
     modifier: Modifier = Modifier,
     forceCompact: Boolean? = null,
     homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
-    ) {
+) {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.Home) }
     val navigator = rememberListDetailPaneScaffoldNavigator<Note>()
     val noteList by homeScreenViewModel.noteList.collectAsStateWithLifecycle()
@@ -116,8 +147,23 @@ fun HomePane(
     val coroutineScope = rememberCoroutineScope()
     val activity = LocalActivity.current
     val windowSizeClass = activity?.let { calculateWindowSizeClass(it) }
-    val paneExpansionState = rememberPaneExpansionState()
-    var hasSetInitialProportion by remember {
+    val paneExpansionState = rememberPaneExpansionState(
+        keyProvider = navigator.scaffoldValue,
+        anchors = listOf(
+            // 1. Fully collapsed state (0% screen fraction)
+            PaneExpansionAnchor.Proportion(proportion = 0f),
+
+            // 2. The 25 % minimum width snapping boundary anchor
+            PaneExpansionAnchor.Proportion(proportion = 0.25f),
+
+            // 3. Middle split state (50% screen fraction)
+            PaneExpansionAnchor.Proportion(proportion = 0.5f),
+
+            // 4. Fully expanded list state (100% screen fraction, detail collapsed)
+            PaneExpansionAnchor.Proportion(proportion = 1f)
+        )
+    )
+    var hasSetInitialProportion by rememberSaveable {
         mutableStateOf(false)
     }
     val isCompact = forceCompact
@@ -153,7 +199,7 @@ fun HomePane(
 
     LaunchedEffect(isCompact, hasSetInitialProportion) {
         if (!isCompact && !hasSetInitialProportion) {
-            paneExpansionState.setFirstPaneProportion(0.3f)
+            paneExpansionState.setFirstPaneProportion(0.5f)
             hasSetInitialProportion = true
         }
     }
@@ -236,6 +282,7 @@ private fun CahierNavigationSuite(
             when (currentDestination) {
                 AppDestinations.Home -> {
                     ListDetailPaneScaffold(
+                        modifier = Modifier.fillMaxSize(),
                         directive = navigator.scaffoldDirective,
                         value = navigator.scaffoldValue,
                         paneExpansionState = paneExpansionState,
@@ -243,16 +290,21 @@ private fun CahierNavigationSuite(
                             val interactionSource = remember { MutableInteractionSource() }
                             VerticalDragHandle(
                                 modifier =
-                                    Modifier.paneExpansionDraggable(
-                                        state,
-                                        LocalMinimumInteractiveComponentSize
-                                            .current,
-                                        interactionSource,
-                                    ),
+                                    Modifier
+                                        .paneExpansionDraggable(
+                                            state,
+                                            LocalMinimumInteractiveComponentSize
+                                                .current,
+                                            interactionSource,
+                                        )
+                                        .zIndex(2f), // Specify z-index to ensure the drag handle is drawn on top of the panes
                             )
                         },
                         listPane = {
                             ListPaneContent(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .minimumWidthLayout(MinPaneWidth),
                                 noteList = noteList.noteList,
                                 isCompact = isCompact,
                                 selectedNoteId = if (isCompact) null
@@ -294,6 +346,11 @@ private fun CahierNavigationSuite(
                             if (!isCompact) {
                                 selectedNoteUIState.note.let { note ->
                                     DetailPaneContent(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            // Specify z-index to ensure the detail pane content is correctly layered
+                                            .zIndex(1f)
+                                            .minimumWidthLayout(MinPaneWidth),
                                         note = note,
                                         strokes = selectedNoteUIState.strokes,
                                         onClickToEdit = {
