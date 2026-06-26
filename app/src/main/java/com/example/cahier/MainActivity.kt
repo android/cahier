@@ -68,11 +68,11 @@ class MainActivity : ComponentActivity() {
             CahierAppTheme {
                 androidx.compose.runtime.CompositionLocalProvider(LocalTextureStore provides textureStore) {
                     Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        CahierApp(
-                            noteId = noteId,
+                        modifier = Modifier
+                        .fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    CahierApp(noteId = noteId,
                             noteType = noteType,
                             navigateToBrushGraph = navigateToBrushGraph,
                             onNavigateToBrushGraphHandled = {
