@@ -35,15 +35,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -55,8 +58,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +73,11 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.R
 import com.example.cahier.core.ui.DrawingSurface
+import com.example.cahier.core.ui.theme.BrushBlack
+import com.example.cahier.core.ui.theme.BrushBlue
+import com.example.cahier.core.ui.theme.BrushGreen
+import com.example.cahier.core.ui.theme.BrushRed
+import com.example.cahier.core.ui.theme.BrushYellow
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
@@ -228,17 +239,82 @@ fun CollapsiblePreviewPane(
                                     Spacer(Modifier.width(16.dp))
 
                                     // Color picker
-                                    Box(
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .background(brushColor)
-                                            .border(1.dp, MaterialTheme.colorScheme.outline)
-                                            .clickable {
-                                                onChooseColor(brushColor) { newColor ->
-                                                    onUpdateTestBrushColor(newColor)
-                                                }
+                                    var colorMenuExpanded by remember { mutableStateOf(false) }
+                                    Box {
+                                        val iconTint =
+                                            if (brushColor.luminance() < 0.5f) Color.White else Color.Black
+
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .background(brushColor, shape = CircleShape)
+                                                .border(
+                                                    1.dp,
+                                                    MaterialTheme.colorScheme.outline,
+                                                    shape = CircleShape
+                                                )
+                                                .clip(CircleShape)
+                                                .clickable { colorMenuExpanded = true },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.palette_24px),
+                                                contentDescription = stringResource(R.string.color),
+                                                tint = iconTint,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+
+                                        DropdownMenu(
+                                            expanded = colorMenuExpanded,
+                                            onDismissRequest = { colorMenuExpanded = false }
+                                        ) {
+                                            val colors = remember {
+                                                listOf(
+                                                    R.string.brush_designer_color_black to BrushBlack,
+                                                    R.string.brush_designer_color_red to BrushRed,
+                                                    R.string.brush_designer_color_blue to BrushBlue,
+                                                    R.string.brush_designer_color_green to BrushGreen,
+                                                    R.string.brush_designer_color_yellow to BrushYellow
+                                                )
                                             }
-                                    )
+                                            colors.forEach { (nameRes, color) ->
+                                                val name = stringResource(nameRes)
+                                                DropdownMenuItem(
+                                                    text = { Text(name) },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.circle_24px),
+                                                            contentDescription = name,
+                                                            tint = color
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        onUpdateTestBrushColor(color)
+                                                        colorMenuExpanded = false
+                                                    }
+                                                )
+                                            }
+                                            HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.brush_designer_custom_color)) },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.palette_24px),
+                                                        contentDescription = stringResource(R.string.brush_designer_custom_color),
+                                                        tint = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                },
+                                                onClick = {
+                                                    colorMenuExpanded = false
+                                                    onChooseColor(brushColor) { newColor ->
+                                                        onUpdateTestBrushColor(newColor)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
                                     Spacer(Modifier.width(16.dp))
 
                                     // Size selector
