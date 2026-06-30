@@ -37,7 +37,7 @@ fun BrushGraphContent(
     isNodeSelected: Boolean,
     isEdgeSelected: Boolean,
     isErrorPaneOpen: Boolean,
-    isPreviewExpanded: Boolean,
+    previewHeight: Dp,
     viewportSize: Size,
     onViewportSizeChange: (Size) -> Unit,
     canvasSlot: @Composable (trashPaddingBottom: Dp) -> Unit,
@@ -61,19 +61,14 @@ fun BrushGraphContent(
         targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
         label = "indicatorPaddingEnd",
     )
-    val previewHeight = if (isPreviewExpanded) {
-        PREVIEW_HEIGHT_EXPANDED
-    } else {
-        PREVIEW_HEIGHT_COLLAPSED
-    }
     val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
 
     val trashPaddingBottom by animateDpAsState(
         targetValue =
             if (!isWideScreen && isAnySidePaneOpen) {
-                (maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT) + 16).dp
+                (maxOf(previewHeight.value, INSPECTOR_HEIGHT_PORTRAIT.toFloat()) + 16).dp
             } else {
-                (previewHeight + 16).dp
+                previewHeight + 16.dp
             },
         label = "trashPaddingBottom",
     )
@@ -82,11 +77,11 @@ fun BrushGraphContent(
         Box(
             modifier =
                 Modifier
-                  .fillMaxSize()
-                  .padding(paddingValues)
-                  .onGloballyPositioned { coordinates ->
-                    onViewportSizeChange(coordinates.size.toSize())
-                  }
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .onGloballyPositioned { coordinates ->
+                        onViewportSizeChange(coordinates.size.toSize())
+                    }
         ) {
             canvasSlot(trashPaddingBottom)
             inspectorSlot()
