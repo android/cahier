@@ -65,6 +65,7 @@ fun DrawingSurface(
     backgroundImageUri: String?,
     onStartDrag: () -> Unit,
     modifier: Modifier = Modifier,
+    maskPath: androidx.compose.ui.graphics.Path? = null,
 ) {
     val textureStore = LocalTextureStore.current
     Box(modifier = modifier) {
@@ -139,7 +140,8 @@ fun DrawingSurface(
                     defaultBrush = currentBrush,
                     nextBrush = onGetNextBrush,
                     onStrokesFinished = onStrokesFinished,
-                    textureBitmapStore = textureStore
+                    textureBitmapStore = textureStore,
+                    maskPath = maskPath
                 )
             }
         }

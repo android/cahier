@@ -16,12 +16,12 @@
 
 package com.example.cahier.developer.brushgraph.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -55,19 +56,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
@@ -89,10 +98,11 @@ fun TestCanvas(
     strokeRenderer: CanvasStrokeRenderer,
     brush: Brush,
     modifier: Modifier = Modifier,
+    maskPath: androidx.compose.ui.graphics.Path? = null,
     onGetNextBrush: () -> Brush,
     onStrokesAdded: (List<Stroke>) -> Unit,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier) {
         Text(
             stringResource(R.string.bg_test_canvas_draw_prompt),
             modifier = Modifier.align(Alignment.Center),
@@ -116,9 +126,54 @@ fun TestCanvas(
             isEraserMode = false,
             backgroundImageUri = null,
             onStartDrag = {},
+            modifier = Modifier.fillMaxSize(),
+            maskPath = maskPath,
         )
     }
 }
+
+/**
+ * A container that uses a native Android FrameLayout with clipChildren = true
+ * to physically clip the touch bounds and rendering of its child AndroidViews (like InProgressStrokesView).
+ * This prevents touch events and low-latency wet strokes from leaking outside the visible bounds.
+ */
+@Composable
+fun ClippedCanvasContainer(
+    currentHeight: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val density = LocalDensity.current
+    AndroidView(
+        factory = { context ->
+            val frameLayout = FrameLayout(context).apply {
+                clipChildren = true
+            }
+            val composeView = ComposeView(context).apply {
+                setContent {
+                    content()
+                }
+            }
+            frameLayout.addView(
+                composeView,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            frameLayout
+        },
+        update = { frameLayout ->
+            val heightPx = with(density) { currentHeight.roundToPx() }
+            val lp = frameLayout.layoutParams
+                ?: ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, heightPx)
+            if (lp.height != heightPx) {
+                lp.height = heightPx
+                frameLayout.layoutParams = lp
+            }
+        },
+        modifier = modifier
+    )
+}
+
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -129,9 +184,13 @@ fun CollapsiblePreviewPane(
     brushColor: Color,
     brushSize: Float,
     brush: Brush,
+    exclusionRects: List<androidx.compose.ui.geometry.Rect> = emptyList(),
     strokeList: List<Stroke>,
     strokeRenderer: CanvasStrokeRenderer,
     topIssue: GraphValidationException?,
+    currentHeight: Dp,
+    onDragStateChanged: (Boolean) -> Unit,
+    onHeightDrag: (Dp) -> Unit,
     modifier: Modifier = Modifier,
     onGetNextBrush: () -> Brush,
     onTogglePreviewExpanded: () -> Unit,
@@ -144,14 +203,52 @@ fun CollapsiblePreviewPane(
     onChooseColor: (Color, (Color) -> Unit) -> Unit,
     onToggleNotificationPane: () -> Unit,
 ) {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val onHeightDragState = rememberUpdatedState(onHeightDrag)
+    val currentHeightState = rememberUpdatedState(currentHeight)
+    var isDragging by remember { mutableStateOf(false) }
+
+    // Mutable state to synchronously track height during a drag gesture
+    val dragHeightState = remember { mutableStateOf(currentHeight) }
+
     Column(modifier = modifier.fillMaxWidth()) {
-        // Toggle Tab (always visible)
+        // Toggle Tab (always visible, draggable only when expanded)
         Surface(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .clickable { onTogglePreviewExpanded() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .then(
+                    if (isPreviewExpanded) {
+                        Modifier.pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = {
+                                    isDragging = true
+                                    dragHeightState.value = currentHeightState.value
+                                    onDragStateChanged(true)
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                    onDragStateChanged(false)
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                    onDragStateChanged(false)
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    val deltaDp = with(density) { (-dragAmount.y).toDp() }
+                                    val newHeight =
+                                        (dragHeightState.value + deltaDp).coerceIn(120.dp, 500.dp)
+                                    dragHeightState.value = newHeight
+                                    onHeightDragState.value(newHeight)
+                                }
+                            )
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+                .clickable { onTogglePreviewExpanded() },
             color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 4.dp,
             shadowElevation = 8.dp,
@@ -160,7 +257,6 @@ fun CollapsiblePreviewPane(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.Center,
             ) {
                 Row(
                     modifier = Modifier
@@ -434,36 +530,142 @@ fun CollapsiblePreviewPane(
                         }
                     }
                 }
+
+                // Drag handle pill centered at the very top of the bar (only visible when expanded)
+                if (isPreviewExpanded) {
+                    val handleScale by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (isDragging) 1.2f else 1.0f,
+                        label = "handleScale"
+                    )
+                    val handleAlpha by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (isDragging) 0.8f else 0.4f,
+                        label = "handleAlpha"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 4.dp)
+                            .graphicsLayer(scaleX = handleScale, scaleY = handleScale)
+                            .size(width = 36.dp, height = 4.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = handleAlpha),
+                                shape = CircleShape
+                            )
+                    )
+                }
             }
         }
 
-        // Expanding Drawer Content
-        AnimatedVisibility(
-            visible = isPreviewExpanded,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                // The drawer height is smoothly driven by currentHeight (animatedPreviewHeight)
+                // minus the 40.dp tab header. We coerce it to >= 0.dp.
+                .height((currentHeight - 40.dp).coerceAtLeast(0.dp)),
+            tonalElevation = 8.dp,
+            color = if (isInvertedCanvas) {
+                MaterialTheme.colorScheme.inverseSurface
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
         ) {
-            Surface(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height((PREVIEW_HEIGHT_EXPANDED - PREVIEW_HEIGHT_COLLAPSED).dp),
-                tonalElevation = 8.dp,
-                color =
-                    if (isInvertedCanvas) {
-                        MaterialTheme.colorScheme.inverseSurface
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    },
+            val contentHeight = (currentHeight - 40.dp).coerceAtLeast(0.dp)
+            var containerPositionInWindow by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+            var containerSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+            var canvasPositionInWindow by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+            var canvasSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+
+            val maskPath = remember(
+                containerPositionInWindow,
+                containerSize,
+                canvasPositionInWindow,
+                canvasSize,
+                exclusionRects
             ) {
-                TestCanvas(
-                    strokeList = strokeList,
-                    strokeRenderer = strokeRenderer,
-                    brush = brush,
-                    isInvertedCanvas = isInvertedCanvas,
-                    onGetNextBrush = onGetNextBrush,
-                    onStrokesAdded = onStrokesAdded,
-                )
+                if (containerSize == androidx.compose.ui.unit.IntSize.Zero || canvasSize == androidx.compose.ui.unit.IntSize.Zero) null else {
+                    val yContainerTop = containerPositionInWindow.y
+                    val yCanvasTop = canvasPositionInWindow.y
+                    val yContainerBottom = yContainerTop + containerSize.height
+
+                    val yVisibleTopLocal = (yContainerTop - yCanvasTop).coerceAtLeast(0f)
+                    val yVisibleBottomLocal =
+                        (yContainerBottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+
+                    androidx.compose.ui.graphics.Path().apply {
+                        if (yVisibleTopLocal > 0f) {
+                            addRect(
+                                androidx.compose.ui.geometry.Rect(
+                                    left = 0f,
+                                    top = 0f,
+                                    right = canvasSize.width.toFloat(),
+                                    bottom = yVisibleTopLocal
+                                )
+                            )
+                        }
+                        if (yVisibleBottomLocal < canvasSize.height.toFloat()) {
+                            addRect(
+                                androidx.compose.ui.geometry.Rect(
+                                    left = 0f,
+                                    top = yVisibleBottomLocal,
+                                    right = canvasSize.width.toFloat(),
+                                    bottom = canvasSize.height.toFloat()
+                                )
+                            )
+                        }
+                        val xCanvasLeft = canvasPositionInWindow.x
+                        exclusionRects.forEach { rect ->
+                            val localLeft = (rect.left - xCanvasLeft).coerceAtLeast(0f)
+                            val localTop = (rect.top - yCanvasTop).coerceAtLeast(0f)
+                            val localRight =
+                                (rect.right - xCanvasLeft).coerceAtMost(canvasSize.width.toFloat())
+                            val localBottom =
+                                (rect.bottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+
+                            if (localLeft < localRight && localTop < localBottom) {
+                                addRect(
+                                    androidx.compose.ui.geometry.Rect(
+                                        left = localLeft,
+                                        top = localTop,
+                                        right = localRight,
+                                        bottom = localBottom
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            ClippedCanvasContainer(
+                currentHeight = contentHeight,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onGloballyPositioned { coordinates ->
+                        containerPositionInWindow = coordinates.positionInWindow()
+                        containerSize = coordinates.size
+                    }
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    TestCanvas(
+                        strokeList = strokeList,
+                        strokeRenderer = strokeRenderer,
+                        brush = brush,
+                        isInvertedCanvas = isInvertedCanvas,
+                        maskPath = maskPath,
+                        onGetNextBrush = onGetNextBrush,
+                        onStrokesAdded = onStrokesAdded,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .requiredHeight(500.dp)
+                            .onGloballyPositioned { coordinates ->
+                                canvasPositionInWindow = coordinates.positionInWindow()
+                                canvasSize = coordinates.size
+                            }
+                    )
+                }
             }
         }
     }

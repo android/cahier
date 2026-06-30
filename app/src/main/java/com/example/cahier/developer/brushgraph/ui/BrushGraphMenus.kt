@@ -67,6 +67,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -305,26 +306,20 @@ fun PaletteMenu(
 fun CreateNodeSpeedDial(
     isWideScreen: Boolean,
     isAnySidePaneOpen: Boolean,
-    isPreviewExpanded: Boolean,
+    previewHeight: Dp,
     viewportSize: androidx.compose.ui.geometry.Size,
     modifier: Modifier = Modifier,
     menuContent: @Composable (onClose: () -> Unit) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
 
-    val previewHeight = if (isPreviewExpanded) {
-        PREVIEW_HEIGHT_EXPANDED
-    } else {
-        PREVIEW_HEIGHT_COLLAPSED
-    }
-
     val fabPaddingBottom by
     animateDpAsState(
         targetValue =
             if (!isWideScreen && isAnySidePaneOpen) {
-                (maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT) + 16).dp
+                maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT.dp) + 16.dp
             } else {
-                (previewHeight + 16).dp
+                previewHeight + 16.dp
             },
         label = "fabPaddingBottom",
     )
