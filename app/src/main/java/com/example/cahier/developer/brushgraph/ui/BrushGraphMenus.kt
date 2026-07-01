@@ -307,7 +307,6 @@ fun CreateNodeSpeedDial(
     isWideScreen: Boolean,
     isAnySidePaneOpen: Boolean,
     previewHeight: Dp,
-    viewportSize: androidx.compose.ui.geometry.Size,
     modifier: Modifier = Modifier,
     menuContent: @Composable (onClose: () -> Unit) -> Unit,
 ) {

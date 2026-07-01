@@ -47,7 +47,7 @@ fun BrushGraphContent(
     previewSlot: @Composable () -> Unit,
     menuSlot: @Composable () -> Unit,
     fabSlot: @Composable (viewportSize: Size) -> Unit,
-    tutorialSlot: @Composable (viewportSize: Size) -> Unit,
+    tutorialSlot: @Composable () -> Unit,
     dialogSlot: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -90,7 +90,7 @@ fun BrushGraphContent(
             previewSlot()
             menuSlot()
             fabSlot(viewportSize)
-            tutorialSlot(viewportSize)
+            tutorialSlot()
         }
     }
 }

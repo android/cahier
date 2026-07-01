@@ -120,20 +120,19 @@ fun BoxScope.TutorialOverlayHost(
             }
 
             TutorialAnchor.TEST_CANVAS -> {
-                val basePadding = previewHeight
                 if (isInspectorOpen && !isWideScreen) {
                     Modifier
                         .align(Alignment.BottomCenter)
                         .padding(
                             bottom = maxOf(
                                 INSPECTOR_HEIGHT_PORTRAIT.dp,
-                                basePadding
+                                previewHeight
                             ) + 16.dp
                         )
                 } else {
                     Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = basePadding + 16.dp)
+                        .padding(bottom = previewHeight + 16.dp)
                 }
             }
 

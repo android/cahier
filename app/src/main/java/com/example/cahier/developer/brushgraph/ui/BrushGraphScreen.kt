@@ -24,7 +24,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,6 +50,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
@@ -107,7 +108,7 @@ fun BrushGraphScreen(
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     LaunchedEffect(primaryColor) {
         // Only null when we first open the screen, but on rotations this runs again and
-        // testBrushColor will not be null and we don't want to override it.
+        // testBrushColor will not be null, and we don't want to override it.
         if (uiState.testBrushColor == null)
             viewModel.updateTestBrushColor(primaryColor)
     }
@@ -124,8 +125,8 @@ fun BrushGraphScreen(
         )
     }
 
-    var inspectorBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
-    var notificationPaneBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+    var inspectorBounds by remember { mutableStateOf<Rect?>(null) }
+    var notificationPaneBounds by remember { mutableStateOf<Rect?>(null) }
 
     val exclusionRects = remember(inspectorBounds, notificationPaneBounds) {
         listOfNotNull(inspectorBounds, notificationPaneBounds)
@@ -183,7 +184,7 @@ fun BrushGraphScreen(
                                     stream,
                                     maxVersion = Version.DEVELOPMENT
                                 ) { id: String, bitmap: Bitmap? ->
-                                    bitmap?.let { viewModel.loadTexture(id, it) }
+                                    bitmap?.let { bitmap -> viewModel.loadTexture(id, bitmap) }
                                     id
                                 }
                             } catch (e: Exception) {
@@ -203,7 +204,7 @@ fun BrushGraphScreen(
                         viewModel.postDebug(DisplayText.Resource(R.string.bg_msg_brush_loaded_success))
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("BrushGraphWidget", "Failed to load brush", e)
+                    Log.e("BrushGraphWidget", "Failed to load brush", e)
                     viewModel.postDebug(
                         DisplayText.Resource(
                             R.string.bg_err_load_brush_failed_with_msg,
@@ -229,7 +230,7 @@ fun BrushGraphScreen(
                     }
                     viewModel.postDebug(DisplayText.Resource(R.string.bg_msg_brush_exported_success))
                 } catch (e: Exception) {
-                    android.util.Log.e("BrushGraphWidget", "Failed to export brush", e)
+                    Log.e("BrushGraphWidget", "Failed to export brush", e)
                     viewModel.postDebug(
                         DisplayText.Resource(
                             R.string.bg_err_export_brush_failed_with_msg,
@@ -261,15 +262,11 @@ fun BrushGraphScreen(
 
     CahierAppTheme {
         BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-            var viewportSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+            var viewportSize by remember { mutableStateOf(Size.Zero) }
             var showTutorialFinishDialog by remember { mutableStateOf(false) }
 
             val isSidePaneOpen =
                 isWideScreen && (uiState.selectedNodeId != null || uiState.isErrorPaneOpen)
-            val indicatorPaddingEnd by animateDpAsState(
-                targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
-                label = "indicatorPaddingEnd",
-            )
             var previewExpandedHeightDp by remember { mutableStateOf(200.dp) }
             var isDraggingPreview by remember { mutableStateOf(false) }
             val currentPreviewHeightDp = if (uiState.isPreviewExpanded) {
@@ -291,7 +288,6 @@ fun BrushGraphScreen(
             val isNodeSelected = uiState.selectedNodeId != null
             val isEdgeSelected = uiState.selectedEdge != null
             val isErrorPaneOpen = uiState.isErrorPaneOpen
-            val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
 
             val nodeRegistry = remember { NodeRegistry() }
             val issues = uiState.graphIssues
@@ -436,7 +432,7 @@ fun BrushGraphScreen(
                                         selectedNode != null || selectedEdge != null
                                     inspectorBounds =
                                         if (isInspectorOpen && coordinates.size.width > 0 && coordinates.size.height > 0) {
-                                            androidx.compose.ui.geometry.Rect(
+                                            Rect(
                                                 coordinates.positionInWindow(),
                                                 coordinates.size.toSize()
                                             )
@@ -532,7 +528,7 @@ fun BrushGraphScreen(
                                 .onGloballyPositioned { coordinates: androidx.compose.ui.layout.LayoutCoordinates ->
                                     notificationPaneBounds =
                                         if (uiState.isErrorPaneOpen && coordinates.size.width > 0 && coordinates.size.height > 0) {
-                                            androidx.compose.ui.geometry.Rect(
+                                            Rect(
                                                 coordinates.positionInWindow(),
                                                 coordinates.size.toSize()
                                             )
@@ -672,7 +668,6 @@ fun BrushGraphScreen(
                             isWideScreen = isWideScreen,
                             isAnySidePaneOpen = isAnySidePaneOpen,
                             previewHeight = animatedPreviewHeight.value,
-                            viewportSize = vSize,
                             modifier = Modifier.align(Alignment.BottomEnd),
                             menuContent = { onClose ->
                                 data class SpeedDialAction(
@@ -737,7 +732,7 @@ fun BrushGraphScreen(
                             }
                         )
                     },
-                    tutorialSlot = { vSize ->
+                    tutorialSlot = {
                         TutorialOverlayHost(
                             tutorialStep = viewModel.tutorialStep,
                             graph = uiState.graph,

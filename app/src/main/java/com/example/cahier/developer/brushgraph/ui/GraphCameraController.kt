@@ -54,9 +54,8 @@ fun GraphCameraController(
 
     // Auto-pan to node in tutorial
     LaunchedEffect(tutorialStep) {
-        val step = tutorialStep
-        if (step != null && step.anchor == TutorialAnchor.NODE_CANVAS) {
-            val node = step.getTargetNode(graph)
+        if (tutorialStep != null && tutorialStep.anchor == TutorialAnchor.NODE_CANVAS) {
+            val node = tutorialStep.getTargetNode(graph)
             if (node != null) {
                 val density = context.resources.displayMetrics.density
                 val targetY = TUTORIAL_TARGET_Y * density

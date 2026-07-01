@@ -103,7 +103,7 @@ private fun TestCanvas(
     strokeRenderer: CanvasStrokeRenderer,
     brush: Brush,
     modifier: Modifier = Modifier,
-    maskPath: androidx.compose.ui.graphics.Path? = null,
+    maskPath: Path? = null,
     onGetNextBrush: () -> Brush,
     onStrokesAdded: (List<Stroke>) -> Unit,
 ) {
@@ -183,7 +183,6 @@ fun CollapsiblePreviewPane(
     brushColor: Color,
     brushSize: Float,
     brush: Brush,
-    exclusionRects: List<androidx.compose.ui.geometry.Rect> = emptyList(),
     strokeList: List<Stroke>,
     strokeRenderer: CanvasStrokeRenderer,
     topIssue: GraphValidationException?,
@@ -191,6 +190,7 @@ fun CollapsiblePreviewPane(
     onDragStateChanged: (Boolean) -> Unit,
     onHeightDrag: (Dp) -> Unit,
     modifier: Modifier = Modifier,
+    exclusionRects: List<Rect> = emptyList(),
     onGetNextBrush: () -> Brush,
     onTogglePreviewExpanded: () -> Unit,
     onClearStrokes: () -> Unit,
@@ -202,7 +202,7 @@ fun CollapsiblePreviewPane(
     onChooseColor: (Color, (Color) -> Unit) -> Unit,
     onToggleNotificationPane: () -> Unit,
 ) {
-    val density = androidx.compose.ui.platform.LocalDensity.current
+    val density = LocalDensity.current
     val onHeightDragState = rememberUpdatedState(onHeightDrag)
     val currentHeightState = rememberUpdatedState(currentHeight)
     var isDragging by remember { mutableStateOf(false) }
@@ -572,10 +572,10 @@ fun CollapsiblePreviewPane(
             },
         ) {
             val contentHeight = (currentHeight - 40.dp).coerceAtLeast(0.dp)
-            var containerPositionInWindow by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-            var containerSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
-            var canvasPositionInWindow by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-            var canvasSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+            var containerPositionInWindow by remember { mutableStateOf(Offset.Zero) }
+            var containerSize by remember { mutableStateOf(IntSize.Zero) }
+            var canvasPositionInWindow by remember { mutableStateOf(Offset.Zero) }
+            var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
             val maskPath = remember(
                 containerPositionInWindow,
