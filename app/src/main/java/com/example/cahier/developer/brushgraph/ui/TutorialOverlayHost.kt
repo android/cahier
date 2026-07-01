@@ -125,10 +125,10 @@ fun BoxScope.TutorialOverlayHost(
                     Modifier
                         .align(Alignment.BottomCenter)
                         .padding(
-                            bottom = (maxOf(
-                                INSPECTOR_HEIGHT_PORTRAIT.toFloat(),
-                                basePadding.value
-                            ) + 16).dp
+                            bottom = maxOf(
+                                INSPECTOR_HEIGHT_PORTRAIT.dp,
+                                basePadding
+                            ) + 16.dp
                         )
                 } else {
                     Modifier

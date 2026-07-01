@@ -66,7 +66,7 @@ fun BrushGraphContent(
     val trashPaddingBottom by animateDpAsState(
         targetValue =
             if (!isWideScreen && isAnySidePaneOpen) {
-                (maxOf(previewHeight.value, INSPECTOR_HEIGHT_PORTRAIT.toFloat()) + 16).dp
+                maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT.dp) + 16.dp
             } else {
                 previewHeight + 16.dp
             },

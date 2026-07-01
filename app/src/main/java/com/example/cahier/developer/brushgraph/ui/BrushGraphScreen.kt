@@ -293,15 +293,6 @@ fun BrushGraphScreen(
             val isErrorPaneOpen = uiState.isErrorPaneOpen
             val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
 
-            val trashPaddingBottom = if (!isWideScreen && isAnySidePaneOpen) {
-                (maxOf(
-                    animatedPreviewHeight.value.value,
-                    INSPECTOR_HEIGHT_PORTRAIT.toFloat()
-                ) + 16).dp
-            } else {
-                animatedPreviewHeight.value + 16.dp
-            }
-
             val nodeRegistry = remember { NodeRegistry() }
             val issues = uiState.graphIssues
 

@@ -46,6 +46,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -61,7 +62,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
@@ -75,6 +79,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ink.brush.Brush
@@ -92,7 +97,7 @@ import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
 
 @Composable
-fun TestCanvas(
+private fun TestCanvas(
     isInvertedCanvas: Boolean,
     strokeList: List<Stroke>,
     strokeRenderer: CanvasStrokeRenderer,
@@ -132,13 +137,8 @@ fun TestCanvas(
     }
 }
 
-/**
- * A container that uses a native Android FrameLayout with clipChildren = true
- * to physically clip the touch bounds and rendering of its child AndroidViews (like InProgressStrokesView).
- * This prevents touch events and low-latency wet strokes from leaking outside the visible bounds.
- */
 @Composable
-fun ClippedCanvasContainer(
+private fun ClippedCanvasContainer(
     currentHeight: Dp,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
@@ -173,7 +173,6 @@ fun ClippedCanvasContainer(
         modifier = modifier
     )
 }
-
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -423,7 +422,10 @@ fun CollapsiblePreviewPane(
                                         Text(
                                             text = "${brushSize.toInt()}px",
                                             modifier = Modifier
-                                                .menuAnchor()
+                                                .menuAnchor(
+                                                    ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                                                    enabled = true
+                                                )
                                                 .clickable { sizeExpanded = true },
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.primary,
@@ -582,58 +584,13 @@ fun CollapsiblePreviewPane(
                 canvasSize,
                 exclusionRects
             ) {
-                if (containerSize == androidx.compose.ui.unit.IntSize.Zero || canvasSize == androidx.compose.ui.unit.IntSize.Zero) null else {
-                    val yContainerTop = containerPositionInWindow.y
-                    val yCanvasTop = canvasPositionInWindow.y
-                    val yContainerBottom = yContainerTop + containerSize.height
-
-                    val yVisibleTopLocal = (yContainerTop - yCanvasTop).coerceAtLeast(0f)
-                    val yVisibleBottomLocal =
-                        (yContainerBottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
-
-                    androidx.compose.ui.graphics.Path().apply {
-                        if (yVisibleTopLocal > 0f) {
-                            addRect(
-                                androidx.compose.ui.geometry.Rect(
-                                    left = 0f,
-                                    top = 0f,
-                                    right = canvasSize.width.toFloat(),
-                                    bottom = yVisibleTopLocal
-                                )
-                            )
-                        }
-                        if (yVisibleBottomLocal < canvasSize.height.toFloat()) {
-                            addRect(
-                                androidx.compose.ui.geometry.Rect(
-                                    left = 0f,
-                                    top = yVisibleBottomLocal,
-                                    right = canvasSize.width.toFloat(),
-                                    bottom = canvasSize.height.toFloat()
-                                )
-                            )
-                        }
-                        val xCanvasLeft = canvasPositionInWindow.x
-                        exclusionRects.forEach { rect ->
-                            val localLeft = (rect.left - xCanvasLeft).coerceAtLeast(0f)
-                            val localTop = (rect.top - yCanvasTop).coerceAtLeast(0f)
-                            val localRight =
-                                (rect.right - xCanvasLeft).coerceAtMost(canvasSize.width.toFloat())
-                            val localBottom =
-                                (rect.bottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
-
-                            if (localLeft < localRight && localTop < localBottom) {
-                                addRect(
-                                    androidx.compose.ui.geometry.Rect(
-                                        left = localLeft,
-                                        top = localTop,
-                                        right = localRight,
-                                        bottom = localBottom
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
+                createMaskPath(
+                    containerPositionInWindow,
+                    containerSize,
+                    canvasPositionInWindow,
+                    canvasSize,
+                    exclusionRects
+                )
             }
 
             ClippedCanvasContainer(
@@ -672,7 +629,7 @@ fun CollapsiblePreviewPane(
 }
 
 @Composable
-fun AdaptivePreviewControlsLayout(
+private fun AdaptivePreviewControlsLayout(
     badgeMinWidth: Dp,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
@@ -717,6 +674,65 @@ fun AdaptivePreviewControlsLayout(
             }
         } else {
             layout(0, 0) {}
+        }
+    }
+}
+
+private fun createMaskPath(
+    containerPositionInWindow: Offset,
+    containerSize: IntSize,
+    canvasPositionInWindow: Offset,
+    canvasSize: IntSize,
+    exclusionRects: List<Rect>,
+): Path? {
+    if (containerSize == IntSize.Zero || canvasSize == IntSize.Zero) return null
+
+    val yContainerTop = containerPositionInWindow.y
+    val yCanvasTop = canvasPositionInWindow.y
+    val yContainerBottom = yContainerTop + containerSize.height
+
+    val yVisibleTopLocal = (yContainerTop - yCanvasTop).coerceAtLeast(0f)
+    val yVisibleBottomLocal =
+        (yContainerBottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+
+    return Path().apply {
+        if (yVisibleTopLocal > 0f) {
+            addRect(
+                Rect(
+                    left = 0f,
+                    top = 0f,
+                    right = canvasSize.width.toFloat(),
+                    bottom = yVisibleTopLocal
+                )
+            )
+        }
+        if (yVisibleBottomLocal < canvasSize.height.toFloat()) {
+            addRect(
+                Rect(
+                    left = 0f,
+                    top = yVisibleBottomLocal,
+                    right = canvasSize.width.toFloat(),
+                    bottom = canvasSize.height.toFloat()
+                )
+            )
+        }
+        val xCanvasLeft = canvasPositionInWindow.x
+        exclusionRects.forEach { rect ->
+            val localLeft = (rect.left - xCanvasLeft).coerceAtLeast(0f)
+            val localTop = (rect.top - yCanvasTop).coerceAtLeast(0f)
+            val localRight = (rect.right - xCanvasLeft).coerceAtMost(canvasSize.width.toFloat())
+            val localBottom = (rect.bottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+
+            if (localLeft < localRight && localTop < localBottom) {
+                addRect(
+                    Rect(
+                        left = localLeft,
+                        top = localTop,
+                        right = localRight,
+                        bottom = localBottom
+                    )
+                )
+            }
         }
     }
 }
