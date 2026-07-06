@@ -148,7 +148,6 @@ fun CollapsiblePreviewPane(
     strokeRenderer: CanvasStrokeRenderer,
     topIssue: GraphValidationException?,
     currentHeight: Dp,
-    onDragStateChanged: (Boolean) -> Unit,
     onHeightDrag: (Dp) -> Unit,
     modifier: Modifier = Modifier,
     exclusionRects: List<Rect> = emptyList(),
@@ -184,15 +183,12 @@ fun CollapsiblePreviewPane(
                                 onDragStart = {
                                     isDragging = true
                                     dragHeightState.value = currentHeightState.value
-                                    onDragStateChanged(true)
                                 },
                                 onDragEnd = {
                                     isDragging = false
-                                    onDragStateChanged(false)
                                 },
                                 onDragCancel = {
                                     isDragging = false
-                                    onDragStateChanged(false)
                                 },
                                 onDrag = { change, dragAmount ->
                                     change.consume()
@@ -296,6 +292,15 @@ fun CollapsiblePreviewPane(
 
                                     // Color picker
                                     var colorMenuExpanded by remember { mutableStateOf(false) }
+                                    val colors = remember {
+                                        listOf(
+                                            R.string.brush_designer_color_black to BrushBlack,
+                                            R.string.brush_designer_color_red to BrushRed,
+                                            R.string.brush_designer_color_blue to BrushBlue,
+                                            R.string.brush_designer_color_green to BrushGreen,
+                                            R.string.brush_designer_color_yellow to BrushYellow
+                                        )
+                                    }
                                     Box {
                                         val iconTint =
                                             if (brushColor.luminance() < 0.5f) Color.White else Color.Black
@@ -325,15 +330,6 @@ fun CollapsiblePreviewPane(
                                             expanded = colorMenuExpanded,
                                             onDismissRequest = { colorMenuExpanded = false }
                                         ) {
-                                            val colors = remember {
-                                                listOf(
-                                                    R.string.brush_designer_color_black to BrushBlack,
-                                                    R.string.brush_designer_color_red to BrushRed,
-                                                    R.string.brush_designer_color_blue to BrushBlue,
-                                                    R.string.brush_designer_color_green to BrushGreen,
-                                                    R.string.brush_designer_color_yellow to BrushYellow
-                                                )
-                                            }
                                             colors.forEach { (nameRes, color) ->
                                                 val name = stringResource(nameRes)
                                                 DropdownMenuItem(
@@ -532,7 +528,6 @@ fun CollapsiblePreviewPane(
                 MaterialTheme.colorScheme.surface
             },
         ) {
-            val contentHeight = (currentHeight - 40.dp).coerceAtLeast(0.dp)
             var containerPositionInWindow by remember { mutableStateOf(Offset.Zero) }
             var containerSize by remember { mutableStateOf(IntSize.Zero) }
             var canvasPositionInWindow by remember { mutableStateOf(Offset.Zero) }
@@ -652,8 +647,28 @@ private fun createMaskPath(
     val yVisibleBottomLocal =
         (yContainerBottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
 
+    val hasTopMask = yVisibleTopLocal > 0f
+    val hasBottomMask = yVisibleBottomLocal < canvasSize.height.toFloat()
+
+    val xCanvasLeft = canvasPositionInWindow.x
+    val activeExclusionRects = exclusionRects.mapNotNull { rect ->
+        val localLeft = (rect.left - xCanvasLeft).coerceAtLeast(0f)
+        val localTop = (rect.top - yCanvasTop).coerceAtLeast(0f)
+        val localRight = (rect.right - xCanvasLeft).coerceAtMost(canvasSize.width.toFloat())
+        val localBottom = (rect.bottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+        if (localLeft < localRight && localTop < localBottom) {
+            Rect(localLeft, localTop, localRight, localBottom)
+        } else {
+            null
+        }
+    }
+
+    if (!hasTopMask && !hasBottomMask && activeExclusionRects.isEmpty()) {
+        return null
+    }
+
     return Path().apply {
-        if (yVisibleTopLocal > 0f) {
+        if (hasTopMask) {
             addRect(
                 Rect(
                     left = 0f,
@@ -663,7 +678,7 @@ private fun createMaskPath(
                 )
             )
         }
-        if (yVisibleBottomLocal < canvasSize.height.toFloat()) {
+        if (hasBottomMask) {
             addRect(
                 Rect(
                     left = 0f,
@@ -673,23 +688,8 @@ private fun createMaskPath(
                 )
             )
         }
-        val xCanvasLeft = canvasPositionInWindow.x
-        exclusionRects.forEach { rect ->
-            val localLeft = (rect.left - xCanvasLeft).coerceAtLeast(0f)
-            val localTop = (rect.top - yCanvasTop).coerceAtLeast(0f)
-            val localRight = (rect.right - xCanvasLeft).coerceAtMost(canvasSize.width.toFloat())
-            val localBottom = (rect.bottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
-
-            if (localLeft < localRight && localTop < localBottom) {
-                addRect(
-                    Rect(
-                        left = localLeft,
-                        top = localTop,
-                        right = localRight,
-                        bottom = localBottom
-                    )
-                )
-            }
+        activeExclusionRects.forEach { localRect ->
+            addRect(localRect)
         }
     }
 }

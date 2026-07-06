@@ -268,7 +268,6 @@ fun BrushGraphScreen(
             val isSidePaneOpen =
                 isWideScreen && (uiState.selectedNodeId != null || uiState.isErrorPaneOpen)
             var previewExpandedHeightDp by remember { mutableStateOf(200.dp) }
-            var isDraggingPreview by remember { mutableStateOf(false) }
             val currentPreviewHeightDp = if (uiState.isPreviewExpanded) {
                 previewExpandedHeightDp
             } else {
@@ -276,12 +275,10 @@ fun BrushGraphScreen(
             }
             val animatedPreviewHeight =
                 remember { Animatable(currentPreviewHeightDp, Dp.VectorConverter) }
-            LaunchedEffect(uiState.isPreviewExpanded, previewExpandedHeightDp) {
-                if (!isDraggingPreview) {
-                    val target =
-                        if (uiState.isPreviewExpanded) previewExpandedHeightDp else PREVIEW_HEIGHT_COLLAPSED.dp
-                    animatedPreviewHeight.animateTo(target)
-                }
+            LaunchedEffect(uiState.isPreviewExpanded) {
+                val target =
+                    if (uiState.isPreviewExpanded) previewExpandedHeightDp else PREVIEW_HEIGHT_COLLAPSED.dp
+                animatedPreviewHeight.animateTo(target)
             }
 
 
@@ -567,7 +564,6 @@ fun BrushGraphScreen(
                                 strokeRenderer = renderer,
                                 topIssue = topIssue,
                                 currentHeight = animatedPreviewHeight.value,
-                                onDragStateChanged = { isDraggingPreview = it },
                                 onHeightDrag = { newHeight ->
                                     previewExpandedHeightDp = newHeight
                                     scope.launch {
