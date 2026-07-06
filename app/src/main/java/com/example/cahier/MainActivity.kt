@@ -17,12 +17,18 @@
 package com.example.cahier
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.isCaptionBarVisible
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
@@ -51,6 +57,7 @@ class MainActivity : ComponentActivity() {
     private val noteTypeState = androidx.compose.runtime.mutableStateOf<NoteType?>(null)
     private val navigateToBrushGraphState = androidx.compose.runtime.mutableStateOf(false)
 
+    @OptIn(ExperimentalLayoutApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         android.util.Log.d(
@@ -67,13 +74,22 @@ class MainActivity : ComponentActivity() {
             val navigateToBrushGraph = navigateToBrushGraphState.value
 
             CahierAppTheme {
+                val isCaptionBarVisible = WindowInsets.isCaptionBarVisible
+                LaunchedEffect(isCaptionBarVisible) {
+                    if (isCaptionBarVisible && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                        window.insetsController?.setSystemBarsAppearance(
+                            WindowInsetsController.APPEARANCE_TRANSPARENT_CAPTION_BAR_BACKGROUND,
+                            WindowInsetsController.APPEARANCE_TRANSPARENT_CAPTION_BAR_BACKGROUND
+                        )
+                    }
+                }
                 androidx.compose.runtime.CompositionLocalProvider(LocalTextureStore provides textureStore) {
                     Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        CahierApp(
-                            noteId = noteId,
+                        modifier = Modifier
+                        .fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    CahierApp(noteId = noteId,
                             noteType = noteType,
                             navigateToBrushGraph = navigateToBrushGraph,
                             onNavigateToBrushGraphHandled = {
