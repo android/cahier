@@ -16,7 +16,6 @@
 
 package com.example.cahier.developer.brushgraph.ui
 
-import android.content.Context
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
@@ -25,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
@@ -45,19 +45,18 @@ fun GraphCameraController(
     selectedNodeId: String?,
     updateOffset: (Offset) -> Unit,
     viewportSize: Size,
-    context: Context,
     isWideScreen: Boolean,
     maxWidthDp: Dp,
     nodeRegistry: NodeRegistry,
 ) {
     val animatableOffset = remember { Animatable(offset, Offset.VectorConverter) }
+    val density = LocalDensity.current.density
 
     // Auto-pan to node in tutorial
     LaunchedEffect(tutorialStep) {
         if (tutorialStep != null && tutorialStep.anchor == TutorialAnchor.NODE_CANVAS) {
             val node = tutorialStep.getTargetNode(graph)
             if (node != null) {
-                val density = context.resources.displayMetrics.density
                 val targetY = TUTORIAL_TARGET_Y * density
                 val targetX = maxWidthDp.value * density / 2f
 
@@ -82,7 +81,6 @@ fun GraphCameraController(
             selectedNodeId?.let { nodeId ->
                 val node = graph.nodes.find { it.id == nodeId }
                 if (node != null) {
-                    val density = context.resources.displayMetrics.density
                     val newOffset = calculateFocusOffset(
                         node = node,
                         position = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero,

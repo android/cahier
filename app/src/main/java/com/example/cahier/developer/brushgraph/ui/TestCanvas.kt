@@ -16,8 +16,6 @@
 
 package com.example.cahier.developer.brushgraph.ui
 
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -62,6 +60,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -72,7 +71,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -81,7 +79,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
@@ -137,42 +134,6 @@ private fun TestCanvas(
     }
 }
 
-@Composable
-private fun ClippedCanvasContainer(
-    currentHeight: Dp,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    val density = LocalDensity.current
-    AndroidView(
-        factory = { context ->
-            val frameLayout = FrameLayout(context).apply {
-                clipChildren = true
-            }
-            val composeView = ComposeView(context).apply {
-                setContent {
-                    content()
-                }
-            }
-            frameLayout.addView(
-                composeView,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            frameLayout
-        },
-        update = { frameLayout ->
-            val heightPx = with(density) { currentHeight.roundToPx() }
-            val lp = frameLayout.layoutParams
-                ?: ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, heightPx)
-            if (lp.height != heightPx) {
-                lp.height = heightPx
-                frameLayout.layoutParams = lp
-            }
-        },
-        modifier = modifier
-    )
-}
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -423,7 +384,7 @@ fun CollapsiblePreviewPane(
                                             text = "${brushSize.toInt()}px",
                                             modifier = Modifier
                                                 .menuAnchor(
-                                                    ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                                                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
                                                     enabled = true
                                                 )
                                                 .clickable { sizeExpanded = true },
@@ -593,36 +554,32 @@ fun CollapsiblePreviewPane(
                 )
             }
 
-            ClippedCanvasContainer(
-                currentHeight = contentHeight,
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .clipToBounds()
                     .onGloballyPositioned { coordinates ->
                         containerPositionInWindow = coordinates.positionInWindow()
                         containerSize = coordinates.size
-                    }
+                    },
+                contentAlignment = Alignment.BottomCenter
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    TestCanvas(
-                        strokeList = strokeList,
-                        strokeRenderer = strokeRenderer,
-                        brush = brush,
-                        isInvertedCanvas = isInvertedCanvas,
-                        maskPath = maskPath,
-                        onGetNextBrush = onGetNextBrush,
-                        onStrokesAdded = onStrokesAdded,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .requiredHeight(500.dp)
-                            .onGloballyPositioned { coordinates ->
-                                canvasPositionInWindow = coordinates.positionInWindow()
-                                canvasSize = coordinates.size
-                            }
-                    )
-                }
+                TestCanvas(
+                    strokeList = strokeList,
+                    strokeRenderer = strokeRenderer,
+                    brush = brush,
+                    isInvertedCanvas = isInvertedCanvas,
+                    maskPath = maskPath,
+                    onGetNextBrush = onGetNextBrush,
+                    onStrokesAdded = onStrokesAdded,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .requiredHeight(500.dp)
+                        .onGloballyPositioned { coordinates ->
+                            canvasPositionInWindow = coordinates.positionInWindow()
+                            canvasSize = coordinates.size
+                        }
+                )
             }
         }
     }

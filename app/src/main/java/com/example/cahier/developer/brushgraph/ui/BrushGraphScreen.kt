@@ -776,7 +776,6 @@ fun BrushGraphScreen(
                 selectedNodeId = uiState.selectedNodeId,
                 updateOffset = { viewModel.updateOffset(GraphPoint(it.x, it.y)) },
                 viewportSize = viewportSize,
-                context = context,
                 isWideScreen = isWideScreen,
                 maxWidthDp = maxWidth,
                 nodeRegistry = nodeRegistry
