@@ -183,13 +183,7 @@ sealed interface NodeData {
         override fun title() = R.string.bg_color_function
 
         override fun subtitles() =
-            listOf(
-                if (function.hasOpacityMultiplier()) {
-                    DisplayText.Resource(R.string.bg_opacity_multiplier)
-                } else {
-                    DisplayText.Resource(R.string.bg_replace_color)
-                }
-            )
+            listOf(DisplayText.Resource(function.displayStringRId()))
     }
 
     /** Wraps a [ProtoBrushBehavior.Node] */

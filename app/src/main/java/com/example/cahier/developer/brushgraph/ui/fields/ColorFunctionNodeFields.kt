@@ -39,6 +39,7 @@ import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
 import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushgraph.ui.getColorFunctionTooltip
 import ink.proto.Color as ProtoColor
@@ -46,18 +47,14 @@ import ink.proto.ColorFunction as ProtoColorFunction
 
 @Composable
 fun ColorFunctionNodeFields(
-  function: ProtoColorFunction,
-  onUpdate: (NodeData) -> Unit,
-  onChooseColor: (Color, (Color) -> Unit) -> Unit,
-  onDropdownEditComplete: () -> Unit,
-  onFieldEditComplete: () -> Unit,
-  modifier: Modifier = Modifier,
+    function: ProtoColorFunction,
+    onUpdate: (NodeData) -> Unit,
+    onChooseColor: (Color, (Color) -> Unit) -> Unit,
+    onDropdownEditComplete: () -> Unit,
+    onFieldEditComplete: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val currentTypeResId = if (function.hasOpacityMultiplier()) {
-        R.string.bg_opacity_multiplier
-    } else {
-        R.string.bg_replace_color
-    }
+    val currentTypeResId = function.displayStringRId()
 
     Column(modifier = modifier) {
         FieldWithTooltip(
@@ -70,28 +67,54 @@ fun ColorFunctionNodeFields(
             EnumDropdown(
                 label = stringResource(R.string.bg_function_type),
                 currentValue = currentTypeResId,
-                values = listOf(R.string.bg_opacity_multiplier, R.string.bg_replace_color),
+                values = listOf(
+                    R.string.bg_target_opacity_multiplier,
+                    R.string.bg_replace_color,
+                    R.string.bg_target_hue_offset,
+                    R.string.bg_target_saturation_multiplier,
+                    R.string.bg_target_luminosity_offset
+                ),
                 displayName = { stringResource(it) },
                 onSelected = { resId ->
                     if (resId != currentTypeResId) {
                         onUpdate(
-                            if (resId == R.string.bg_opacity_multiplier) {
-                                NodeData.ColorFunction(
-                                    ProtoColorFunction.newBuilder().setOpacityMultiplier(1f).build()
-                                )
-                            } else {
-                                NodeData.ColorFunction(
-                                    ProtoColorFunction.newBuilder()
-                                        .setReplaceColor(
-                                            ProtoColor.newBuilder()
-                                                .setRed(0f)
-                                                .setGreen(0f)
-                                                .setBlue(0f)
-                                                .setAlpha(1f)
-                                                .build()
-                                        )
-                                        .build()
-                                )
+                            when (resId) {
+                                R.string.bg_target_opacity_multiplier -> {
+                                    NodeData.ColorFunction(
+                                        ProtoColorFunction.newBuilder().setOpacityMultiplier(1f)
+                                            .build()
+                                    )
+                                }
+
+                                R.string.bg_replace_color -> {
+                                    NodeData.ColorFunction(
+                                        ProtoColorFunction.newBuilder().setReplaceColor(
+                                            ProtoColor.newBuilder().setRed(0f).setGreen(0f)
+                                                .setBlue(0f).setAlpha(1f).build()
+                                        ).build()
+                                    )
+                                }
+
+                                R.string.bg_target_hue_offset -> {
+                                    NodeData.ColorFunction(
+                                        ProtoColorFunction.newBuilder().setHueOffsetRadians(0f)
+                                            .build()
+                                    )
+                                }
+
+                                R.string.bg_target_saturation_multiplier -> {
+                                    NodeData.ColorFunction(
+                                        ProtoColorFunction.newBuilder().setSaturationMultiplier(1f)
+                                            .build()
+                                    )
+                                }
+
+                                else -> {  // bg_target_luminosity_offset
+                                    NodeData.ColorFunction(
+                                        ProtoColorFunction.newBuilder().setLuminosityOffset(0f)
+                                            .build()
+                                    )
+                                }
                             }
                         )
                     }
@@ -104,11 +127,53 @@ fun ColorFunctionNodeFields(
             NumericField(
                 title = stringResource(R.string.bg_label_opacity_multiplier),
                 value = function.opacityMultiplier,
-                limits = NumericLimits(0f, 2f, 0.01f),
+                limits = NumericLimits(0f, 2f, 0.01f, "x"),
                 onValueChanged = {
                     onUpdate(
                         NodeData.ColorFunction(
                             function.toBuilder().setOpacityMultiplier(it).build()
+                        )
+                    )
+                },
+                onValueChangeFinished = onFieldEditComplete
+            )
+        } else if (function.hasSaturationMultiplier()) {
+            NumericField(
+                title = stringResource(R.string.bg_label_saturation_multiplier),
+                value = function.saturationMultiplier,
+                limits = NumericLimits(0f, 2f, 0.01f, "x"),
+                onValueChanged = {
+                    onUpdate(
+                        NodeData.ColorFunction(
+                            function.toBuilder().setSaturationMultiplier(it).build()
+                        )
+                    )
+                },
+                onValueChangeFinished = onFieldEditComplete
+            )
+        } else if (function.hasHueOffsetRadians()) {
+            NumericField(
+                title = stringResource(R.string.bg_label_hue_offset),
+                value = function.hueOffsetRadians,
+                limits = NumericLimits.radiansShownAsDegrees(-360f, 360f),
+                onValueChanged = {
+                    onUpdate(
+                        NodeData.ColorFunction(
+                            function.toBuilder().setHueOffsetRadians(it).build()
+                        )
+                    )
+                },
+                onValueChangeFinished = onFieldEditComplete
+            )
+        } else if (function.hasLuminosityOffset()) {
+            NumericField(
+                title = stringResource(R.string.bg_label_luminosity_offset),
+                value = function.luminosityOffset,
+                limits = NumericLimits.floatShownAsPercent(-100f, 100f),
+                onValueChanged = {
+                    onUpdate(
+                        NodeData.ColorFunction(
+                            function.toBuilder().setLuminosityOffset(it).build()
                         )
                     )
                 },
