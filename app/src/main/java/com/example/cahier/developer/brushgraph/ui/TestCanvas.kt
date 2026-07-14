@@ -16,12 +16,10 @@
 
 package com.example.cahier.developer.brushgraph.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,18 +30,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -52,36 +55,56 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.R
 import com.example.cahier.core.ui.DrawingSurface
+import com.example.cahier.core.ui.theme.BrushBlack
+import com.example.cahier.core.ui.theme.BrushBlue
+import com.example.cahier.core.ui.theme.BrushGreen
+import com.example.cahier.core.ui.theme.BrushRed
+import com.example.cahier.core.ui.theme.BrushYellow
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
 
 @Composable
-fun TestCanvas(
+private fun TestCanvas(
     isInvertedCanvas: Boolean,
     strokeList: List<Stroke>,
     strokeRenderer: CanvasStrokeRenderer,
     brush: Brush,
     modifier: Modifier = Modifier,
+    maskPath: Path? = null,
     onGetNextBrush: () -> Brush,
     onStrokesAdded: (List<Stroke>) -> Unit,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier) {
         Text(
             stringResource(R.string.bg_test_canvas_draw_prompt),
             modifier = Modifier.align(Alignment.Center),
@@ -105,9 +128,12 @@ fun TestCanvas(
             isEraserMode = false,
             backgroundImageUri = null,
             onStartDrag = {},
+            modifier = Modifier.fillMaxSize(),
+            maskPath = maskPath,
         )
     }
 }
+
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,7 +147,10 @@ fun CollapsiblePreviewPane(
     strokeList: List<Stroke>,
     strokeRenderer: CanvasStrokeRenderer,
     topIssue: GraphValidationException?,
+    currentHeight: Dp,
+    onHeightDrag: (Dp) -> Unit,
     modifier: Modifier = Modifier,
+    exclusionRects: List<Rect> = emptyList(),
     onGetNextBrush: () -> Brush,
     onTogglePreviewExpanded: () -> Unit,
     onClearStrokes: () -> Unit,
@@ -133,14 +162,49 @@ fun CollapsiblePreviewPane(
     onChooseColor: (Color, (Color) -> Unit) -> Unit,
     onToggleNotificationPane: () -> Unit,
 ) {
+    val density = LocalDensity.current
+    val onHeightDragState = rememberUpdatedState(onHeightDrag)
+    val currentHeightState = rememberUpdatedState(currentHeight)
+    var isDragging by remember { mutableStateOf(false) }
+
+    // Mutable state to synchronously track height during a drag gesture
+    val dragHeightState = remember { mutableStateOf(currentHeight) }
+
     Column(modifier = modifier.fillMaxWidth()) {
-        // Toggle Tab (always visible)
+        // Toggle Tab (always visible, draggable only when expanded)
         Surface(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .clickable { onTogglePreviewExpanded() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .then(
+                    if (isPreviewExpanded) {
+                        Modifier.pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = {
+                                    isDragging = true
+                                    dragHeightState.value = currentHeightState.value
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    val deltaDp = with(density) { (-dragAmount.y).toDp() }
+                                    val newHeight =
+                                        (dragHeightState.value + deltaDp).coerceIn(120.dp, 500.dp)
+                                    dragHeightState.value = newHeight
+                                    onHeightDragState.value(newHeight)
+                                }
+                            )
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+                .clickable { onTogglePreviewExpanded() },
             color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 4.dp,
             shadowElevation = 8.dp,
@@ -149,7 +213,6 @@ fun CollapsiblePreviewPane(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.Center,
             ) {
                 Row(
                     modifier = Modifier
@@ -228,17 +291,82 @@ fun CollapsiblePreviewPane(
                                     Spacer(Modifier.width(16.dp))
 
                                     // Color picker
-                                    Box(
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .background(brushColor)
-                                            .border(1.dp, MaterialTheme.colorScheme.outline)
-                                            .clickable {
-                                                onChooseColor(brushColor) { newColor ->
-                                                    onUpdateTestBrushColor(newColor)
-                                                }
+                                    var colorMenuExpanded by remember { mutableStateOf(false) }
+                                    val colors = remember {
+                                        listOf(
+                                            R.string.brush_designer_color_black to BrushBlack,
+                                            R.string.brush_designer_color_red to BrushRed,
+                                            R.string.brush_designer_color_blue to BrushBlue,
+                                            R.string.brush_designer_color_green to BrushGreen,
+                                            R.string.brush_designer_color_yellow to BrushYellow
+                                        )
+                                    }
+                                    Box {
+                                        val iconTint =
+                                            if (brushColor.luminance() < 0.5f) Color.White else Color.Black
+
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .background(brushColor, shape = CircleShape)
+                                                .border(
+                                                    1.dp,
+                                                    MaterialTheme.colorScheme.outline,
+                                                    shape = CircleShape
+                                                )
+                                                .clip(CircleShape)
+                                                .clickable { colorMenuExpanded = true },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.palette_24px),
+                                                contentDescription = stringResource(R.string.color),
+                                                tint = iconTint,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+
+                                        DropdownMenu(
+                                            expanded = colorMenuExpanded,
+                                            onDismissRequest = { colorMenuExpanded = false }
+                                        ) {
+                                            colors.forEach { (nameRes, color) ->
+                                                val name = stringResource(nameRes)
+                                                DropdownMenuItem(
+                                                    text = { Text(name) },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.circle_24px),
+                                                            contentDescription = name,
+                                                            tint = color
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        onUpdateTestBrushColor(color)
+                                                        colorMenuExpanded = false
+                                                    }
+                                                )
                                             }
-                                    )
+                                            HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.brush_designer_custom_color)) },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.palette_24px),
+                                                        contentDescription = stringResource(R.string.brush_designer_custom_color),
+                                                        tint = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                },
+                                                onClick = {
+                                                    colorMenuExpanded = false
+                                                    onChooseColor(brushColor) { newColor ->
+                                                        onUpdateTestBrushColor(newColor)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
                                     Spacer(Modifier.width(16.dp))
 
                                     // Size selector
@@ -251,7 +379,10 @@ fun CollapsiblePreviewPane(
                                         Text(
                                             text = "${brushSize.toInt()}px",
                                             modifier = Modifier
-                                                .menuAnchor()
+                                                .menuAnchor(
+                                                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                                                    enabled = true
+                                                )
                                                 .clickable { sizeExpanded = true },
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.primary,
@@ -358,35 +489,91 @@ fun CollapsiblePreviewPane(
                         }
                     }
                 }
+
+                // Drag handle pill centered at the very top of the bar (only visible when expanded)
+                if (isPreviewExpanded) {
+                    val handleScale by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (isDragging) 1.2f else 1.0f,
+                        label = "handleScale"
+                    )
+                    val handleAlpha by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (isDragging) 0.8f else 0.4f,
+                        label = "handleAlpha"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 4.dp)
+                            .graphicsLayer(scaleX = handleScale, scaleY = handleScale)
+                            .size(width = 36.dp, height = 4.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = handleAlpha),
+                                shape = CircleShape
+                            )
+                    )
+                }
             }
         }
 
-        // Expanding Drawer Content
-        AnimatedVisibility(
-            visible = isPreviewExpanded,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                // The drawer height is smoothly driven by currentHeight (animatedPreviewHeight)
+                // minus the 40.dp tab header. We coerce it to >= 0.dp.
+                .height((currentHeight - 40.dp).coerceAtLeast(0.dp)),
+            tonalElevation = 8.dp,
+            color = if (isInvertedCanvas) {
+                MaterialTheme.colorScheme.inverseSurface
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
         ) {
-            Surface(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height((PREVIEW_HEIGHT_EXPANDED - PREVIEW_HEIGHT_COLLAPSED).dp),
-                tonalElevation = 8.dp,
-                color =
-                    if (isInvertedCanvas) {
-                        MaterialTheme.colorScheme.inverseSurface
-                    } else {
-                        MaterialTheme.colorScheme.surface
+            var containerPositionInWindow by remember { mutableStateOf(Offset.Zero) }
+            var containerSize by remember { mutableStateOf(IntSize.Zero) }
+            var canvasPositionInWindow by remember { mutableStateOf(Offset.Zero) }
+            var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+
+            val maskPath = remember(
+                containerPositionInWindow,
+                containerSize,
+                canvasPositionInWindow,
+                canvasSize,
+                exclusionRects
+            ) {
+                createMaskPath(
+                    containerPositionInWindow,
+                    containerSize,
+                    canvasPositionInWindow,
+                    canvasSize,
+                    exclusionRects
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clipToBounds()
+                    .onGloballyPositioned { coordinates ->
+                        containerPositionInWindow = coordinates.positionInWindow()
+                        containerSize = coordinates.size
                     },
+                contentAlignment = Alignment.BottomCenter
             ) {
                 TestCanvas(
                     strokeList = strokeList,
                     strokeRenderer = strokeRenderer,
                     brush = brush,
                     isInvertedCanvas = isInvertedCanvas,
+                    maskPath = maskPath,
                     onGetNextBrush = onGetNextBrush,
                     onStrokesAdded = onStrokesAdded,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .requiredHeight(500.dp)
+                        .onGloballyPositioned { coordinates ->
+                            canvasPositionInWindow = coordinates.positionInWindow()
+                            canvasSize = coordinates.size
+                        }
                 )
             }
         }
@@ -394,7 +581,7 @@ fun CollapsiblePreviewPane(
 }
 
 @Composable
-fun AdaptivePreviewControlsLayout(
+private fun AdaptivePreviewControlsLayout(
     badgeMinWidth: Dp,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
@@ -439,6 +626,70 @@ fun AdaptivePreviewControlsLayout(
             }
         } else {
             layout(0, 0) {}
+        }
+    }
+}
+
+private fun createMaskPath(
+    containerPositionInWindow: Offset,
+    containerSize: IntSize,
+    canvasPositionInWindow: Offset,
+    canvasSize: IntSize,
+    exclusionRects: List<Rect>,
+): Path? {
+    if (containerSize == IntSize.Zero || canvasSize == IntSize.Zero) return null
+
+    val yContainerTop = containerPositionInWindow.y
+    val yCanvasTop = canvasPositionInWindow.y
+    val yContainerBottom = yContainerTop + containerSize.height
+
+    val yVisibleTopLocal = (yContainerTop - yCanvasTop).coerceAtLeast(0f)
+    val yVisibleBottomLocal =
+        (yContainerBottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+
+    val hasTopMask = yVisibleTopLocal > 0f
+    val hasBottomMask = yVisibleBottomLocal < canvasSize.height.toFloat()
+
+    val xCanvasLeft = canvasPositionInWindow.x
+    val activeExclusionRects = exclusionRects.mapNotNull { rect ->
+        val localLeft = (rect.left - xCanvasLeft).coerceAtLeast(0f)
+        val localTop = (rect.top - yCanvasTop).coerceAtLeast(0f)
+        val localRight = (rect.right - xCanvasLeft).coerceAtMost(canvasSize.width.toFloat())
+        val localBottom = (rect.bottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+        if (localLeft < localRight && localTop < localBottom) {
+            Rect(localLeft, localTop, localRight, localBottom)
+        } else {
+            null
+        }
+    }
+
+    if (!hasTopMask && !hasBottomMask && activeExclusionRects.isEmpty()) {
+        return null
+    }
+
+    return Path().apply {
+        if (hasTopMask) {
+            addRect(
+                Rect(
+                    left = 0f,
+                    top = 0f,
+                    right = canvasSize.width.toFloat(),
+                    bottom = yVisibleTopLocal
+                )
+            )
+        }
+        if (hasBottomMask) {
+            addRect(
+                Rect(
+                    left = 0f,
+                    top = yVisibleBottomLocal,
+                    right = canvasSize.width.toFloat(),
+                    bottom = canvasSize.height.toFloat()
+                )
+            )
+        }
+        activeExclusionRects.forEach { localRect ->
+            addRect(localRect)
         }
     }
 }

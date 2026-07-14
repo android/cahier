@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.withSaveLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -65,6 +66,7 @@ fun DrawingSurface(
     backgroundImageUri: String?,
     onStartDrag: () -> Unit,
     modifier: Modifier = Modifier,
+    maskPath: Path? = null,
 ) {
     val textureStore = LocalTextureStore.current
     Box(modifier = modifier) {
@@ -139,7 +141,8 @@ fun DrawingSurface(
                     defaultBrush = currentBrush,
                     nextBrush = onGetNextBrush,
                     onStrokesFinished = onStrokesFinished,
-                    textureBitmapStore = textureStore
+                    textureBitmapStore = textureStore,
+                    maskPath = maskPath
                 )
             }
         }
