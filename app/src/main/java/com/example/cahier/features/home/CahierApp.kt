@@ -53,7 +53,9 @@ fun CahierApp(
 
     LaunchedEffect(navigateToBrushGraph) {
         if (navigateToBrushGraph) {
-            navController.navigate(BrushGraphDestination.route)
+            if (navController.currentDestination?.route != BrushGraphDestination.route) {
+                navController.navigate(BrushGraphDestination.route)
+            }
             onNavigateToBrushGraphHandled()
         }
     }

@@ -17,6 +17,10 @@ package com.example.cahier.developer.brushgraph.ui
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -51,10 +55,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -67,6 +73,7 @@ import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
 import com.example.cahier.developer.brushgraph.viewmodel.BrushGraphViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun NotificationPane(
@@ -99,12 +106,12 @@ fun NotificationPane(
             modifier =
                 if (isWideScreen) {
                     Modifier
-                      .fillMaxHeight()
-                      .width(INSPECTOR_WIDTH_LANDSCAPE.dp)
+                        .fillMaxHeight()
+                        .width(INSPECTOR_WIDTH_LANDSCAPE.dp)
                 } else {
                     Modifier
-                      .fillMaxWidth()
-                      .height(INSPECTOR_HEIGHT_PORTRAIT.dp)
+                        .fillMaxWidth()
+                        .height(INSPECTOR_HEIGHT_PORTRAIT.dp)
                 },
             tonalElevation = 8.dp,
             shadowElevation = 8.dp,
@@ -135,8 +142,8 @@ fun NotificationPane(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                          .padding(horizontal = 16.dp, vertical = 8.dp)
-                          .fillMaxWidth(),
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .fillMaxWidth(),
                     ) {
                         Icon(headerIcon, contentDescription = null, tint = iconColor)
                         Spacer(Modifier.width(8.dp))
@@ -215,13 +222,13 @@ fun NotificationGroup(
     var expanded by remember { mutableStateOf(true) }
     Column(
         modifier = Modifier
-          .fillMaxWidth()
-          .padding(vertical = 8.dp)
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
     ) {
         Surface(
             modifier = Modifier
-              .fillMaxWidth()
-              .clickable { expanded = !expanded },
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             shape = RoundedCornerShape(8.dp),
         ) {
@@ -293,8 +300,35 @@ fun NotificationIcon(
     issues: List<GraphValidationException>,
     indicatorPaddingEnd: androidx.compose.ui.unit.Dp,
     onToggleErrorPane: () -> Unit,
-    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier,
+    modifier: Modifier = Modifier,
 ) {
+    val scale = remember { Animatable(1f) }
+    val rotation = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(issues) {
+        coroutineScope.launch {
+            rotation.animateTo(10f, tween(100))
+            rotation.animateTo(-10f, tween(100))
+            rotation.animateTo(5f, tween(75))
+            rotation.animateTo(-5f, tween(75))
+            rotation.animateTo(0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium))
+        }
+        coroutineScope.launch {
+            scale.animateTo(
+                targetValue = 1.25f,
+                animationSpec = tween(durationMillis = 150)
+            )
+            scale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+        }
+    }
+
     if (issues.isNotEmpty()) {
         val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
         val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
@@ -320,8 +354,13 @@ fun NotificationIcon(
         IconButton(
             onClick = onToggleErrorPane,
             modifier = modifier
-              .padding(top = 16.dp, end = indicatorPaddingEnd)
-              .zIndex(2f),
+                .padding(top = 16.dp, end = indicatorPaddingEnd)
+                .zIndex(2f)
+                .graphicsLayer(
+                    rotationZ = rotation.value,
+                    scaleX = scale.value,
+                    scaleY = scale.value
+                ),
             colors =
                 IconButtonDefaults.iconButtonColors(
                     containerColor = containerColor,
