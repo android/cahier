@@ -292,7 +292,6 @@ class DrawingCanvasViewModel @Inject constructor(
         }
 
         val strokeRenderer = CanvasStrokeRenderer.create(
-            forcePathRendering = true,
             textureStore = textureStore
         )
         strokes.forEach { stroke ->
