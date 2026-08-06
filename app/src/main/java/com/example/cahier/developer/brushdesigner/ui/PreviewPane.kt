@@ -63,6 +63,7 @@ import com.example.cahier.core.ui.theme.BrushBlue
 import com.example.cahier.core.ui.theme.BrushGreen
 import com.example.cahier.core.ui.theme.BrushRed
 import com.example.cahier.core.ui.theme.BrushYellow
+import com.example.cahier.developer.brushgraph.ui.CustomColorPickerDialog
 import ink.proto.BrushFamily as ProtoBrushFamily
 
 /**

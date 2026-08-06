@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
@@ -31,10 +31,10 @@ import ink.proto.BrushPaint as ProtoBrushPaint
 
 @Composable
 fun PaintNodeFields(
-  data: NodeData.Paint,
-  onUpdate: (NodeData) -> Unit,
-  onDropdownEditComplete: () -> Unit,
-  modifier: Modifier = Modifier,
+    data: NodeData.Paint,
+    onUpdate: (NodeData) -> Unit,
+    onDropdownEditComplete: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val paint = data.paint
     FieldWithTooltip(

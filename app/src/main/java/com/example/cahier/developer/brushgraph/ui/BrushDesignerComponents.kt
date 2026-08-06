@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.cahier.developer.brushdesigner.ui
+package com.example.cahier.developer.brushgraph.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import com.godaddy.android.colorpicker.ClassicColorPicker
 import com.godaddy.android.colorpicker.HsvColor
+import java.util.Locale
 
 /**
  * A reusable slider control for brush property editing.
@@ -65,7 +66,7 @@ internal fun BrushSliderControl(
         ) {
             Text(text = label, style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = String.format(java.util.Locale.US, "%.2f", value),
+                text = String.format(Locale.US, "%.2f", value),
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -108,7 +109,7 @@ fun CustomColorPickerDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 val hexString =
-                    String.format(java.util.Locale.US, "%08x", currentColor.toColor().toArgb())
+                    String.format(Locale.US, "%08x", currentColor.toColor().toArgb())
                 Text(
                     text = hexString,
                     style = MaterialTheme.typography.bodyMedium,

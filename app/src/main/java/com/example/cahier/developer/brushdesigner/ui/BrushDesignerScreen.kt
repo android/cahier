@@ -83,6 +83,7 @@ import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
 import com.example.cahier.developer.brushdesigner.viewmodel.BrushDesignerViewModel
+import com.example.cahier.developer.brushgraph.ui.BrushSliderControl
 import ink.proto.BrushTip as ProtoBrushTip
 
 /**

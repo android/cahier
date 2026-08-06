@@ -42,10 +42,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
+import com.example.cahier.developer.brushgraph.ui.NumericField
 import com.example.cahier.developer.brushgraph.ui.TooltipDialog
 import com.example.cahier.developer.brushgraph.ui.getTooltip
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -81,8 +81,8 @@ fun TargetNodeFields(
                     label = { Text(stringResource(R.string.bg_target)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTarget) },
                     modifier = Modifier
-                      .menuAnchor()
-                      .fillMaxWidth()
+                        .menuAnchor()
+                        .fillMaxWidth()
                 )
                 ExposedDropdownMenu(
                     expanded = expandedTarget,

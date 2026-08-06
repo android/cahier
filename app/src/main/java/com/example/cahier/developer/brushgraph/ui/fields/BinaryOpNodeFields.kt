@@ -20,7 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip

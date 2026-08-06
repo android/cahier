@@ -20,7 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
@@ -29,10 +29,10 @@ import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
 fun InterpolationNodeFields(
-  interpNode: ProtoBrushBehavior.InterpolationNode,
-  behaviorNode: ProtoBrushBehavior.Node,
-  onUpdate: (NodeData) -> Unit,
-  modifier: Modifier = Modifier,
+    interpNode: ProtoBrushBehavior.InterpolationNode,
+    behaviorNode: ProtoBrushBehavior.Node,
+    onUpdate: (NodeData) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FieldWithTooltip(
         modifier = modifier,
