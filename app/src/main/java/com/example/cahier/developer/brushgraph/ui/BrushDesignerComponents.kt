@@ -129,7 +129,7 @@ fun CustomColorPickerDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text(stringResource(R.string.brush_designer_cancel))
+                Text(stringResource(R.string.bg_cancel))
             }
         }
     )
