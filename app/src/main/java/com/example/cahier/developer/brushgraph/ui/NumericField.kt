@@ -249,7 +249,7 @@ internal fun NumericField(
                 },
                 dismissButton = {
                     TextButton(onClick = { showTextInput = false }) {
-                        Text(stringResource(R.string.brush_designer_cancel))
+                        Text(stringResource(R.string.bg_cancel))
                     }
                 }
             )
