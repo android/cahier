@@ -109,7 +109,7 @@ object HomeDestination : NavigationDestination {
 enum class AppDestinations(
     @param:StringRes val label: Int,
     @param:DrawableRes val icon: Int,
-    @param:StringRes val contentDescription: Int
+    @param:StringRes val contentDescription: Int,
 ) {
     Home(
         label = R.string.home,
@@ -133,7 +133,6 @@ enum class AppDestinations(
 fun HomePane(
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
-    navigateToBrushDesigner: () -> Unit = {},
     navigateToBrushGraph: () -> Unit = {},
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
@@ -222,7 +221,6 @@ fun HomePane(
         selectedNoteUIState = selectedNoteUIState,
         navigateToCanvas = navigateToCanvas,
         navigateToDrawingCanvas = navigateToDrawingCanvas,
-        navigateToBrushDesigner = navigateToBrushDesigner,
         navigateToBrushGraph = navigateToBrushGraph,
         navigateUp = navigateUp
     )
@@ -243,9 +241,8 @@ private fun CahierNavigationSuite(
     selectedNoteUIState: CahierUiState,
     navigateToCanvas: (Long) -> Unit,
     navigateToDrawingCanvas: (Long) -> Unit,
-    navigateToBrushDesigner: () -> Unit,
     navigateToBrushGraph: () -> Unit,
-    navigateUp: () -> Unit
+    navigateUp: () -> Unit,
 ) {
     NavigationSuiteScaffold(
         modifier = modifier,
@@ -369,7 +366,6 @@ private fun CahierNavigationSuite(
 
                 AppDestinations.Settings -> {
                     SettingsScreen(
-                        navigateToBrushDesigner = navigateToBrushDesigner,
                         navigateToBrushGraph = navigateToBrushGraph,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -416,7 +412,7 @@ private fun DetailPaneContent(
     note: Note,
     strokes: List<Stroke>,
     onClickToEdit: (Note) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     NoteDetail(
         note = note,

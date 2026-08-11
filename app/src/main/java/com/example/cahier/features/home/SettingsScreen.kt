@@ -35,7 +35,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -58,14 +57,12 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    navigateToBrushDesigner: () -> Unit,
     navigateToBrushGraph: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val isRoleAvailable by viewModel.isRoleAvailable.collectAsStateWithLifecycle()
     val isRoleHeld by viewModel.isRoleHeld.collectAsStateWithLifecycle()
-    val isUsingGraphUi by viewModel.isUsingGraphUi.collectAsStateWithLifecycle()
     LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -131,6 +128,7 @@ fun SettingsScreen(
                                     !isRoleAvailable -> stringResource(
                                         R.string.notes_role_not_available
                                     )
+
                                     isRoleHeld -> stringResource(R.string.notes_role_held)
                                     else -> stringResource(R.string.notes_role_not_held)
                                 },
@@ -175,8 +173,10 @@ fun SettingsScreen(
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = stringResource(R.string
-                                        .settings_developer_tools_description),
+                                    text = stringResource(
+                                        R.string
+                                            .settings_developer_tools_description
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -190,8 +190,10 @@ fun SettingsScreen(
                                     style = MaterialTheme.typography.bodyLarge
                                 )
                                 Text(
-                                    text = stringResource(R.string
-                                        .settings_brush_designer_description),
+                                    text = stringResource(
+                                        R.string
+                                            .settings_brush_designer_description
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -199,38 +201,11 @@ fun SettingsScreen(
 
                             FilledTonalButton(
                                 onClick = {
-                                    if (isUsingGraphUi) {
-                                        navigateToBrushGraph()
-                                    } else {
-                                        navigateToBrushDesigner()
-                                    }
+                                    navigateToBrushGraph()
                                 }
                             ) {
                                 Text(stringResource(R.string.settings_launch))
                             }
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.settings_graph_ui),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = stringResource(R.string.settings_graph_description),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Switch(
-                                checked = isUsingGraphUi,
-                                onCheckedChange = { viewModel.setUsingGraphUi(it) },
-                                enabled = true
-                            )
                         }
                     }
                 }

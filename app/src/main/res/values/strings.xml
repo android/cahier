@@ -270,10 +270,8 @@
     <string name="settings_developer_tools">Developer Tools</string>
     <string name="settings_developer_tools_description">Experimental features and debugging tools.</string>
     <string name="settings_brush_designer_title">Ink Brush Designer</string>
-    <string name="settings_brush_designer_description">Create, test, and export custom brush families.</string>
+    <string name="settings_brush_designer_description">Create, test, and export custom brush families in a visual, node-based, graph UI.</string>
     <string name="settings_launch">Launch</string>
-    <string name="settings_graph_ui">Graph UI</string>
-    <string name="settings_graph_description">Visual, node-based brush designer</string>
 
     <!-- Brush Graph -->
     <string name="bg_name_texture">Name Texture</string>
