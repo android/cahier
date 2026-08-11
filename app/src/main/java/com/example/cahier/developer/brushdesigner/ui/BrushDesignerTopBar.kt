@@ -58,8 +58,8 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import com.example.cahier.R
+import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.ui.LocalTextureStore
-import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.features.drawing.CustomBrushes
 
 /**

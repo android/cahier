@@ -25,7 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
+import com.example.cahier.developer.brushgraph.ui.NumericField
+import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import ink.proto.BrushBehavior
+import ink.proto.CubicBezierEasingFunction
+import ink.proto.LinearEasingFunction
+import ink.proto.StepsEasingFunction
 import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 
 /**
@@ -38,7 +44,7 @@ import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 internal fun NodeEditor(
     node: BrushBehavior.Node,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     when (node.nodeCase) {
         BrushBehavior.Node.NodeCase.SOURCE_NODE ->
@@ -76,11 +82,14 @@ internal fun NodeEditor(
 internal fun SourceNodeEditor(
     source: BrushBehavior.SourceNode,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        Text(stringResource(R.string.brush_designer_node_source), style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary)
+        Text(
+            stringResource(R.string.brush_designer_node_source),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
 
         val sources = BrushBehavior.Source.entries.filter {
             it != BrushBehavior.Source.SOURCE_UNSPECIFIED
@@ -147,11 +156,14 @@ internal fun SourceNodeEditor(
 internal fun ResponseNodeEditor(
     response: BrushBehavior.ResponseNode,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        Text(stringResource(R.string.brush_designer_node_response_curve), style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary)
+        Text(
+            stringResource(R.string.brush_designer_node_response_curve),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
 
         MathCurvePreview(
             responseNode = response,
@@ -161,10 +173,13 @@ internal fun ResponseNodeEditor(
         val currentType = when (response.responseCurveCase) {
             BrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE ->
                 ResponseCurveType.CubicBezier
+
             BrushBehavior.ResponseNode.ResponseCurveCase.LINEAR_RESPONSE_CURVE ->
                 ResponseCurveType.Linear
+
             BrushBehavior.ResponseNode.ResponseCurveCase.STEPS_RESPONSE_CURVE ->
                 ResponseCurveType.Steps
+
             else -> ResponseCurveType.Predefined
         }
 
@@ -180,18 +195,21 @@ internal fun ResponseNodeEditor(
                         newResponseBuilder.setPredefinedResponseCurve(
                             ProtoPredefinedEasingFunction.PREDEFINED_EASING_EASE
                         )
+
                     ResponseCurveType.CubicBezier ->
                         newResponseBuilder.setCubicBezierResponseCurve(
-                            ink.proto.CubicBezierEasingFunction.newBuilder()
+                            CubicBezierEasingFunction.newBuilder()
                                 .setX1(0.25f).setY1(0.1f).setX2(0.25f).setY2(1f)
                         )
+
                     ResponseCurveType.Linear ->
                         newResponseBuilder.setLinearResponseCurve(
-                            ink.proto.LinearEasingFunction.newBuilder()
+                            LinearEasingFunction.newBuilder()
                         )
+
                     ResponseCurveType.Steps ->
                         newResponseBuilder.setStepsResponseCurve(
-                            ink.proto.StepsEasingFunction.newBuilder().setStepCount(4)
+                            StepsEasingFunction.newBuilder().setStepCount(4)
                         )
                 }
                 onNodeChanged(
@@ -307,11 +325,14 @@ internal fun ResponseNodeEditor(
 internal fun DampingNodeEditor(
     damping: BrushBehavior.DampingNode,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        Text(stringResource(R.string.brush_designer_node_damping), style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary)
+        Text(
+            stringResource(R.string.brush_designer_node_damping),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
 
         EnumDropdown(
             label = stringResource(R.string.brush_designer_node_damping_source),
@@ -348,7 +369,7 @@ internal fun DampingNodeEditor(
 internal fun NoiseNodeEditor(
     noise: BrushBehavior.NoiseNode,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         Text(
@@ -405,11 +426,14 @@ internal fun NoiseNodeEditor(
 internal fun TargetNodeEditor(
     target: BrushBehavior.TargetNode,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        Text(stringResource(R.string.brush_designer_node_target), style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary)
+        Text(
+            stringResource(R.string.brush_designer_node_target),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
 
         EnumDropdown(
             label = stringResource(R.string.brush_designer_node_target_output),
@@ -459,11 +483,14 @@ internal fun TargetNodeEditor(
 internal fun ConstantNodeEditor(
     constant: BrushBehavior.ConstantNode,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        Text(stringResource(R.string.brush_designer_node_constant_value), style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary)
+        Text(
+            stringResource(R.string.brush_designer_node_constant_value),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
 
         NumericField(
             title = stringResource(R.string.brush_designer_node_value),
@@ -484,11 +511,14 @@ internal fun ConstantNodeEditor(
 internal fun BinaryOpNodeEditor(
     binaryOp: BrushBehavior.BinaryOpNode,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        Text(stringResource(R.string.brush_designer_node_binary_operation), style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary)
+        Text(
+            stringResource(R.string.brush_designer_node_binary_operation),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
 
         EnumDropdown(
             label = stringResource(R.string.brush_designer_node_operation),
@@ -512,11 +542,14 @@ internal fun BinaryOpNodeEditor(
 internal fun InterpolationNodeEditor(
     interpolation: BrushBehavior.InterpolationNode,
     onNodeChanged: (BrushBehavior.Node) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        Text(stringResource(R.string.brush_designer_node_interpolation), style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary)
+        Text(
+            stringResource(R.string.brush_designer_node_interpolation),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
 
         EnumDropdown(
             label = stringResource(R.string.brush_designer_node_interpolation),

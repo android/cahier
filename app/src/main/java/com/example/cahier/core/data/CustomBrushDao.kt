@@ -16,7 +16,7 @@
  *
  */
 
-package com.example.cahier.developer.brushdesigner.data
+package com.example.cahier.core.data
 
 import androidx.room.Dao
 import androidx.room.Insert

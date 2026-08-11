@@ -17,7 +17,7 @@ package com.example.cahier.developer.brushgraph.data
 
 import androidx.ink.brush.InputToolType
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.NumericLimits
+import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint

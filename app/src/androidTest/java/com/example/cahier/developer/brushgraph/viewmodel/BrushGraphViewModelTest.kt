@@ -19,8 +19,8 @@ package com.example.cahier.developer.brushgraph.viewmodel
 import androidx.ink.storage.encode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.ui.CahierTextureBitmapStore
-import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.DefaultBrushGraphRepository

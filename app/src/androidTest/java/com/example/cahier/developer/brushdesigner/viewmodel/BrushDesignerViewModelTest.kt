@@ -3,9 +3,9 @@ package com.example.cahier.developer.brushdesigner.viewmodel
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.cahier.core.data.CustomBrushDao
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.BrushDesignerRepository
-import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.Dispatchers

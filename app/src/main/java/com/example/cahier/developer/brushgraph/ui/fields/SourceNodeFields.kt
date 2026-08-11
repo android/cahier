@@ -42,12 +42,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
-import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
+import com.example.cahier.developer.brushgraph.ui.NumericField
 import com.example.cahier.developer.brushgraph.ui.TooltipDialog
 import com.example.cahier.developer.brushgraph.ui.getTooltip
 import ink.proto.BrushBehavior as ProtoBrushBehavior
@@ -83,8 +83,8 @@ fun SourceNodeFields(
                     label = { Text(stringResource(R.string.bg_source)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
                     modifier = Modifier
-                      .menuAnchor()
-                      .fillMaxWidth()
+                        .menuAnchor()
+                        .fillMaxWidth()
                 )
                 ExposedDropdownMenu(
                     expanded = expandedSource,

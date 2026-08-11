@@ -34,13 +34,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.ink.brush.Brush
 import com.example.cahier.R
+import com.example.cahier.developer.brushgraph.ui.NumericField
+import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import ink.proto.BrushTip as ProtoBrushTip
 
 /**
  * Tab 0: Tip geometry controls — scale (with lock toggle), corner rounding,
  * slant, rotation, pinch, and particle (stamp) settings.
  *
- * Uses [NumericField] for professional ±button input with degree/percent
+ * Uses [com.example.cahier.developer.brushgraph.ui.NumericField] for professional ±button input with degree/percent
  * unit conversions and click-to-edit exact-value entry.
  *
  * Stateless: receives data and callbacks, does not access ViewModel.

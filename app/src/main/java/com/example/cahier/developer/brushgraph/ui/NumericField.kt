@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.cahier.developer.brushdesigner.ui
+package com.example.cahier.developer.brushgraph.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
+import java.util.Locale
 import kotlin.math.PI
 
 /**
@@ -60,7 +61,7 @@ class NumericLimits(
     val max: Float,
     val step: Float = 0.01f,
     val displayUnit: String = "",
-    val unitScale: Float = 1.0f
+    val unitScale: Float = 1.0f,
 ) {
     /** Convert a display value back to the real value as described by [unitScale]. */
     fun toRealValue(displayValue: Float): Float = displayValue / unitScale
@@ -73,7 +74,7 @@ class NumericLimits(
         val formatted = if (displayValue == displayValue.toLong().toFloat()) {
             displayValue.toLong().toString()
         } else {
-            String.format(java.util.Locale.US, "%.2f", displayValue)
+            String.format(Locale.US, "%.2f", displayValue)
         }
         return "$formatted$displayUnit"
     }
@@ -82,7 +83,7 @@ class NumericLimits(
         /** Values stored as 0..1 shown as 0..100% */
         fun floatShownAsPercent(
             minPercent: Float = 0f,
-            maxPercent: Float = 100f
+            maxPercent: Float = 100f,
         ): NumericLimits =
             NumericLimits(
                 min = minPercent,
@@ -95,7 +96,7 @@ class NumericLimits(
         /** Values stored in radians, shown in degrees */
         fun radiansShownAsDegrees(
             minDegrees: Float,
-            maxDegrees: Float
+            maxDegrees: Float,
         ): NumericLimits =
             NumericLimits(
                 min = minDegrees,
@@ -127,7 +128,7 @@ internal fun NumericField(
     value: Float,
     limits: NumericLimits,
     onValueChangeFinished: (() -> Unit)? = null,
-    onValueChanged: (Float) -> Unit
+    onValueChanged: (Float) -> Unit,
 ) {
     val displayValue = limits.fromRealValue(value)
     var showTextInput by remember { mutableStateOf(false) }

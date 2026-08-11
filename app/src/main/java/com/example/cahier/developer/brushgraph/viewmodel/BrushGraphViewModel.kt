@@ -29,9 +29,9 @@ import androidx.ink.storage.decode
 import androidx.ink.storage.encode
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cahier.core.data.CustomBrushDao
+import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.ui.CahierTextureBitmapStore
-import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
-import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
 import com.example.cahier.developer.brushgraph.data.DisplayText
 import com.example.cahier.developer.brushgraph.data.GraphEdge
