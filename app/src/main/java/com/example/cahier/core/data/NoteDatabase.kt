@@ -22,8 +22,6 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.cahier.core.ui.Converters
-import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
-import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 
 @Database(
     entities = [Note::class, CustomBrushEntity::class],

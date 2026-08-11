@@ -21,18 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.NumericField
-import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.ui.NumericField
+import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.ui.TipPreviewWidget
 
 @Composable
 fun TipNodeFields(
-  data: NodeData.Tip,
-  onUpdate: (NodeData) -> Unit,
-  onFieldEditComplete: () -> Unit,
-  strokeRenderer: CanvasStrokeRenderer,
-  modifier: Modifier = Modifier,
+    data: NodeData.Tip,
+    onUpdate: (NodeData) -> Unit,
+    onFieldEditComplete: () -> Unit,
+    strokeRenderer: CanvasStrokeRenderer,
+    modifier: Modifier = Modifier,
 ) {
     val tip = data.tip
     Column(modifier = modifier) {

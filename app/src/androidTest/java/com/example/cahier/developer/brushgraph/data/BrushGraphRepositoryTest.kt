@@ -21,6 +21,7 @@ import androidx.ink.brush.StockBrushes
 import androidx.ink.storage.encode
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.cahier.core.data.AUTOSAVE_KEY
 import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import kotlinx.coroutines.Dispatchers
@@ -88,7 +89,7 @@ class BrushGraphRepositoryTest {
         val savedEntity = fakeDao.getAutoSaveBrush().first()
         assertNotNull(savedEntity)
         assertEquals(
-            com.example.cahier.developer.brushdesigner.data.AUTOSAVE_KEY,
+            AUTOSAVE_KEY,
             savedEntity!!.name
         )
         assertTrue(savedEntity.brushBytes.isNotEmpty())

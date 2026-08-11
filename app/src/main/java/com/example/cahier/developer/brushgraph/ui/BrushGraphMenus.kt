@@ -76,8 +76,8 @@ import androidx.compose.ui.zIndex
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import com.example.cahier.R
+import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.ui.LocalTextureStore
-import com.example.cahier.developer.brushdesigner.data.CustomBrushEntity
 import com.example.cahier.developer.brushgraph.data.TutorialStep
 import com.example.cahier.features.drawing.CustomBrushes
 

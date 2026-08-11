@@ -24,10 +24,11 @@ import androidx.ink.brush.Version
 import androidx.ink.storage.decode
 import androidx.ink.storage.encode
 import com.example.cahier.R
+import com.example.cahier.core.data.AUTOSAVE_KEY
+import com.example.cahier.core.data.CustomBrushDao
+import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.di.ApplicationScope
 import com.example.cahier.core.ui.CahierTextureBitmapStore
-import com.example.cahier.developer.brushdesigner.data.AUTOSAVE_KEY
-import com.example.cahier.developer.brushdesigner.data.CustomBrushDao
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -104,7 +105,7 @@ class DefaultBrushGraphRepository @Inject constructor(
                         val baos = ByteArrayOutputStream()
                         family.encode(baos, textureStore)
                         customBrushDao.saveCustomBrush(
-                            com.example.cahier.developer.brushdesigner.data.CustomBrushEntity(
+                            CustomBrushEntity(
                                 AUTOSAVE_KEY,
                                 baos.toByteArray()
                             )
@@ -249,7 +250,7 @@ class DefaultBrushGraphRepository @Inject constructor(
                 }
 
                 customBrushDao.saveCustomBrush(
-                    com.example.cahier.developer.brushdesigner.data.CustomBrushEntity(
+                    CustomBrushEntity(
                         AUTOSAVE_KEY,
                         bytes
                     )

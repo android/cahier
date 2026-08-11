@@ -21,24 +21,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
-import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.ProgressDomainContext
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
+import com.example.cahier.developer.brushgraph.ui.NumericField
 import com.example.cahier.developer.brushgraph.ui.getTooltip
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
 fun DampingNodeFields(
-  dampingNode: ProtoBrushBehavior.DampingNode,
-  behaviorNode: ProtoBrushBehavior.Node,
-  onUpdate: (NodeData) -> Unit,
-  onFieldEditComplete: () -> Unit,
-  onDropdownEditComplete: () -> Unit,
-  modifier: Modifier = Modifier,
+    dampingNode: ProtoBrushBehavior.DampingNode,
+    behaviorNode: ProtoBrushBehavior.Node,
+    onUpdate: (NodeData) -> Unit,
+    onFieldEditComplete: () -> Unit,
+    onDropdownEditComplete: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
     Column(modifier = modifier) {

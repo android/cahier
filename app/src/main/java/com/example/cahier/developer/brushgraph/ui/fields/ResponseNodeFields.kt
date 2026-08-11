@@ -44,11 +44,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
-import com.example.cahier.developer.brushdesigner.ui.NumericField
-import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
+import com.example.cahier.developer.brushgraph.ui.NumericField
+import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import ink.proto.LinearEasingFunction
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -61,10 +61,10 @@ import ink.proto.StepsEasingFunction as ProtoSteps
 
 @Composable
 fun ResponseNodeFields(
-  responseNode: ProtoBrushBehavior.ResponseNode,
-  behaviorNode: ProtoBrushBehavior.Node,
-  onUpdate: (NodeData) -> Unit,
-  modifier: Modifier = Modifier,
+    responseNode: ProtoBrushBehavior.ResponseNode,
+    behaviorNode: ProtoBrushBehavior.Node,
+    onUpdate: (NodeData) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         CurvePreviewWidget(
@@ -91,9 +91,9 @@ fun CurvePreviewWidget(
 ) {
     BoxWithConstraints(
         modifier = modifier
-          .height(120.dp)
-          .fillMaxWidth()
-          .border(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            .height(120.dp)
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         val widthPx = constraints.maxWidth.toFloat()
         val heightPx = constraints.maxHeight.toFloat()
@@ -339,8 +339,8 @@ fun ResponseCurveWidget(
         Box(
             modifier =
                 Modifier
-                  .padding(vertical = 8.dp)
-                  .border(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    .padding(vertical = 8.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
             when (currentCase) {
                 ProtoBrushBehavior.ResponseNode.ResponseCurveCase.CUBIC_BEZIER_RESPONSE_CURVE ->
@@ -465,9 +465,9 @@ fun LinearWidget(
 
 @Composable
 fun CubicBezierWidget(
-  curve: ProtoCubicBezier,
-  modifier: Modifier = Modifier,
-  onCurveChanged: (ProtoCubicBezier) -> Unit,
+    curve: ProtoCubicBezier,
+    modifier: Modifier = Modifier,
+    onCurveChanged: (ProtoCubicBezier) -> Unit,
 ) {
     Column(modifier = modifier.padding(8.dp)) {
         NumericField(
@@ -495,9 +495,9 @@ fun CubicBezierWidget(
 
 @Composable
 fun StepsWidget(
-  curve: ProtoSteps,
-  modifier: Modifier = Modifier,
-  onCurveChanged: (ProtoSteps) -> Unit,
+    curve: ProtoSteps,
+    modifier: Modifier = Modifier,
+    onCurveChanged: (ProtoSteps) -> Unit,
 ) {
     Column(modifier = modifier.padding(8.dp)) {
         NumericField(

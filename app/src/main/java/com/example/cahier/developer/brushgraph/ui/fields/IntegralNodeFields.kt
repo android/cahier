@@ -23,22 +23,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
-import com.example.cahier.developer.brushdesigner.ui.NumericField
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.ProgressDomainContext
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.data.getNumericLimits
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
+import com.example.cahier.developer.brushgraph.ui.NumericField
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
 fun IntegralNodeFields(
-  integralNode: ProtoBrushBehavior.IntegralNode,
-  behaviorNode: ProtoBrushBehavior.Node,
-  onUpdate: (NodeData) -> Unit,
-  onFieldEditComplete: () -> Unit,
-  onDropdownEditComplete: () -> Unit,
-  modifier: Modifier = Modifier,
+    integralNode: ProtoBrushBehavior.IntegralNode,
+    behaviorNode: ProtoBrushBehavior.Node,
+    onUpdate: (NodeData) -> Unit,
+    onFieldEditComplete: () -> Unit,
+    onDropdownEditComplete: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val limits = integralNode.integrateOver.getNumericLimits(ProgressDomainContext.INTEGRAL)
     Column(modifier = modifier) {

@@ -35,13 +35,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.example.cahier.R
-import com.example.cahier.developer.brushdesigner.ui.EnumDropdown
-import com.example.cahier.developer.brushdesigner.ui.NumericField
-import com.example.cahier.developer.brushdesigner.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.BlendModePreviewWidget
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
+import com.example.cahier.developer.brushgraph.ui.NumericField
+import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.ui.TextureLayerPreviewWidget
 import com.example.cahier.developer.brushgraph.ui.TextureWrapPreviewWidget
 import com.example.cahier.developer.brushgraph.ui.getTooltip
@@ -49,12 +49,12 @@ import ink.proto.BrushPaint as ProtoBrushPaint
 
 @Composable
 fun TextureLayerNodeFields(
-  layer: ProtoBrushPaint.TextureLayer,
-  allTextureIds: Set<String>,
-  onLoadTexture: () -> Unit,
-  onUpdate: (NodeData.TextureLayer) -> Unit,
-  strokeRenderer: CanvasStrokeRenderer,
-  modifier: Modifier = Modifier,
+    layer: ProtoBrushPaint.TextureLayer,
+    allTextureIds: Set<String>,
+    onLoadTexture: () -> Unit,
+    onUpdate: (NodeData.TextureLayer) -> Unit,
+    strokeRenderer: CanvasStrokeRenderer,
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(bottom = 8.dp)) {
