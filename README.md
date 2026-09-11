@@ -66,21 +66,43 @@ families which can be used in apps using AndroidX Ink.
 The best way to learn how to use Brush Designer is through experience, which is why we recommend
 starting with the in-app [interactive tutorial](#interactive-tutorial).
 
+#### Interactive Tutorial
+
+Try out the in-app tutorial to learn the structure of brush families,
+and how to use Brush Designer to create them.
+
+* Click the three dots in the upper left-hand corner to the left of "My Brushes".
+* Click "Tutorial".
+* Click "Start" to begin.
+* Follow the instructions of the tutorial. The tutorial should advance automatically as you perform
+  the instructions, but you can also advance/regress the tutorial with the buttons "Next"/"Got It"
+  and "Back".
+* To exit the tutorial early, click the "X" in the upper right-hand corner of the tutorial pane.
+
+#### Templates
+
+Another good way to get started is to explore one of the built-in brush templates. These are also
+useful as a starting place for design. To open a template:
+
+* Click the three dots in the upper left-hand corner to the left of "My Brushes".
+* Click "Templates".
+* Select the desired template. **WARNING: this will replace your current `BrushFamily`.**
+
 ### Fundamentals
 
-##### Graph View
+#### Graph View
 
 In Brush Designer, all the pieces of a `BrushFamily` are represented as *nodes* in a *graph*.
 Those nodes can be dragged around the screen. They can be connected via their *ports*
 (the dots on either side of the node) by dragging from one port to another to create an *edge*. You
 can pinch to zoom in/out, and pan around the nodes in this view.
 
-##### Inspector Pane
+#### Inspector Pane
 
 Tapping on a node opens the *inspector* pane. Here you can modify individual fields on the part of
 the `BrushFamily` represented by the selected node.
 
-##### Test Canvas
+#### Test Canvas
 
 At the bottom of the screen, is a canvas which you can draw on using the `BrushFamily` you are
 designing. You can change the color and size of your `Brush`. You can clear the canvas, invert the
@@ -88,7 +110,7 @@ background color on the canvas, and configure whether the canvas will auto-updat
 of all the strokes as you edit fields in the graph view. The size of the canvas can be adjusted by
 dragging up and down on the top bar of the canvas, and it can be collapsed by tapping the top bar.
 
-##### Notification Pane
+#### Notification Pane
 
 At times, Brush Designer may want to notify you of something. To show you this, an icon will appear
 in the upper right corner of the screen. If you tap it, it will open the *notification pane* where
@@ -100,7 +122,7 @@ notification severities:
     * These messages convey general information helpful while debugging, such as "BrushFamily was
       successfully imported".
 * Warning
-    * Represented by a yellow "!" in a triangle icon.
+    * Represented by an orange "!" in a triangle icon.
     * These messages convey non-breaking antipatterns identified with your current brush,
       such as unused nodes in the graph view, or a `BrushBehavior` incompatible with a `SelfOverlap`
       setting in the `BrushPaint`.
@@ -113,7 +135,7 @@ notification severities:
 Error and Warning severity notifications will also appear along the top bar of the test canvas, for
 improved visibility.
 
-##### Menu
+#### Menu
 
 In the top left corner of the screen is a floating action bar. From left to right, there is a
 back arrow to exit Brush Designer and return to Cahier. A three-dots button to open the menu. A
@@ -137,33 +159,11 @@ Inside the menu, there are many helpful features:
 * *Options*: configure options for the Brush Designer itself.
 * *Feedback*: report bugs, request features, or just tell us what you think!
 
-#### Interactive Tutorial
-
-Try out the in-app tutorial to learn the structure of brush families,
-and how to use Brush Designer to create them.
-
-* Click the three dots in the upper left-hand corner to the left of "My Brushes".
-* Click "Tutorial".
-* Click "Start" to begin.
-* Follow the instructions of the tutorial. The tutorial should advance automatically as you perform
-  the instructions, but you can also advance/regress the tutorial with the buttons "Next"/"Got It"
-  and "Back".
-* To exit the tutorial early, click the "X" in the upper right-hand corner of the tutorial pane.
-
-#### Templates
-
-Another good way to get started is to explore one of the built-in brush templates. These are also
-useful as a starting place for design. To open a template:
-
-* Click the three dots in the upper left-hand corner to the left of "My Brushes".
-* Click "Templates".
-* Select the desired template. **WARNING: this will replace your current `BrushFamily`.**
-
 ### AI Brush Designer CLI
 
-Cahier also has a CLI available to generate custom brush families with the help of AI. This
-experience is not yet available solely in the app. The CLI can send generated brush families to the
-app on your Android device using ADB though, and import them right into Brush Designer for you to
+Cahier also provides a CLI to generate custom brush families with the help of AI.
+The CLI can send generated brush families from your computer to the Cahier app on your Android
+device using ADB, and import them right into Brush Designer for you to
 test and edit. Here's how to get started:
 
 * Connect your Android device to your computer using your cable.
@@ -172,7 +172,7 @@ test and edit. Here's how to get started:
 * Ensure you have Cahier installed on the Android device.
 * Get a Gemini API key. If you don't have one, go to https://ai.google.dev/gemini-api/docs/api-key
   to create one.
-* Run export `GOOGLE_API_KEY=<insert_api_key_here>` to put the API key in your environment.
+* Run `export GOOGLE_API_KEY=<insert_api_key_here>` to put the API key in your environment.
 * Compile AIBD with `./gradlew :aibd:cli:installDist`
 * Run it with `./aibd/cli/build/install/cli/bin/cli`
 * Type in your brush description and hit enter to send it to Gemini.
