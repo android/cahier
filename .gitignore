@@ -11,6 +11,10 @@
 /.idea/deploymentTargetDropDown.xml
 .DS_Store
 /build
+/tools/build
+/aibd/core/build
+/aibd/cli/build
+/aibd/prompt/build
 /captures
 .externalNativeBuild
 .cxx
