@@ -161,6 +161,9 @@ Inside the menu, there are many helpful features:
 
 ### AI Brush Designer CLI
 
+*Note: AI Brush Designer CLI is untested in Windows environments. If you experience any problems,
+please open an issue on GitHub.*
+
 Cahier also provides a CLI to generate custom brush families with the help of AI.
 The CLI can send generated brush families from your computer to the Cahier app on your Android
 device using ADB, and import them right into Brush Designer for you to
