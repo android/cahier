@@ -170,7 +170,7 @@ Known Limitations:
 
 * AIBD CLI is untested in Windows environments. If you experience any problems,
 please open an issue on GitHub.
-* Developing brush families which use textures is currently unsupported.
+* Generating brush families which use `TextureLayer`s is currently unsupported.
 
 Here's how to get started:
 
