@@ -161,13 +161,18 @@ Inside the menu, there are many helpful features:
 
 ### AI Brush Designer CLI
 
-*Note: AI Brush Designer CLI is untested in Windows environments. If you experience any problems,
-please open an issue on GitHub.*
-
-Cahier also provides a CLI to generate custom brush families with the help of AI.
+Cahier also provides a CLI to generate custom brush families with the help of AI (AIBD CLI).
 The CLI can send generated brush families from your computer to the Cahier app on your Android
 device using ADB, and import them right into Brush Designer for you to
-test and edit. Here's how to get started:
+test and edit.
+
+Known Limitations:
+
+* AIBD CLI is untested in Windows environments. If you experience any problems,
+please open an issue on GitHub.
+* Developing brush families which use textures is currently unsupported.
+
+Here's how to get started:
 
 * Connect your Android device to your computer using your cable.
 * Establish a connection between your computer and your Android device. This can be tested by
