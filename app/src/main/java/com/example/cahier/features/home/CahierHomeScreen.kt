@@ -65,9 +65,8 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.cahier.AppArgs
-import com.example.cahier.MainActivity
 import com.example.cahier.R
+import com.example.cahier.core.data.AppArgs
 import com.example.cahier.core.data.Note
 import com.example.cahier.core.data.NoteType
 import com.example.cahier.core.navigation.NavigationDestination
@@ -172,7 +171,8 @@ fun HomePane(
 
     LaunchedEffect(Unit) {
         homeScreenViewModel.newWindowEvent.collect { (noteType, noteId) ->
-            val intent = Intent(context, MainActivity::class.java).apply {
+            val componentName = activity?.componentName ?: return@collect
+            val intent = Intent.makeMainActivity(componentName).apply {
                 putExtra(AppArgs.NOTE_TYPE_KEY, noteType)
                 putExtra(AppArgs.NOTE_ID_KEY, noteId)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or

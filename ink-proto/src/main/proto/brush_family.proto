@@ -1,12 +1,29 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Proto definitions for Brush and related messages for use in Ink Strokes API.
+
 syntax = "proto2";
 
 package ink.proto;
 
-option java_package = "ink.proto";
-option java_multiple_files = true;
-
 import "color.proto";
 import "options.proto";
+
+option java_package = "ink.proto";
+option java_outer_classname = "BrushFamilyProto";
+option java_multiple_files = true;
 
 // Specifies a list of `BrushCoat`s that determine the stroke shape and dynamic
 // input response and the shading of the stroke geometry. The `BrushFamily` can
@@ -141,9 +158,10 @@ message BrushCoat {
 //
 // Depending on the combination of values, the tip can be shaped as a rounded
 // parallelogram, circle, or stadium. Through `BrushBehavior`s, the tip can
-// produce a per-vertex HSLA color shift that can be used to modify the `Brush`
-// color when drawing. The default values produce a static circular tip shape
-// with diameter equal to the `Brush` size and no color shift.
+// produce a per-vertex HCLA (hue, chroma, lightness, alpha) color shift that
+// can be used to modify the `Brush` color when drawing. The default values
+// produce a static circular tip shape with diameter equal to the `Brush` size
+// and no color shift.
 message BrushTip {
   option (ink.proto.message_min_version) = 0;
 
@@ -232,6 +250,8 @@ message BrushPaint {
   message TextureLayer {
     option (ink.proto.message_min_version) = 0;
 
+    // LINT.IfChange(texture_wrap)
+
     // Texture wrapping modes for specifying `TextureLayer::wrap_x` and
     // `wrap_y`.
     enum Wrap {
@@ -250,6 +270,9 @@ message BrushPaint {
       // solid color.
       WRAP_CLAMP = 3 [(ink.proto.enum_value_min_version) = 0];
     }
+    // LINT.ThenChange(../../brush/brush_paint.h:texture_wrap)
+
+    // LINT.IfChange(texture_size_unit)
 
     // Units for specifying `TextureLayer::size`.
     enum SizeUnit {
@@ -263,6 +286,9 @@ message BrushPaint {
 
       reserved 3;
     }
+    // LINT.ThenChange(../../brush/brush_paint.h:texture_size_unit)
+
+    // LINT.IfChange(texture_origin)
 
     // Specification of the origin point to use for the texture.
     enum Origin {
@@ -280,6 +306,9 @@ message BrushPaint {
       // for an in-progress stroke will move as more inputs are added.
       ORIGIN_LAST_STROKE_INPUT = 3 [(ink.proto.enum_value_min_version) = 0];
     }
+    // LINT.ThenChange(../../brush/brush_paint.h:texture_origin)
+
+    // LINT.IfChange(texture_mapping)
 
     // Specification of how the texture should be applied to the stroke.
     enum Mapping {
@@ -296,6 +325,9 @@ message BrushPaint {
       // stroke, scaled or rotated appropriately to cover the whole particle.
       MAPPING_STAMPING = 2 [(ink.proto.enum_value_min_version) = 0];
     }
+    // LINT.ThenChange(../../brush/brush_paint.h:texture_mapping)
+
+    // LINT.IfChange(blend_mode)
 
     // Setting for how an incoming ("source" / "src") color should be combined
     // with the already present ("destination" / "dst") color at a given pixel.
@@ -401,13 +433,18 @@ message BrushPaint {
       // Color = (1 - Alpha_dst) * Color_src + (1 - Alpha_src) * Color_dst
       BLEND_MODE_XOR = 12 [(ink.proto.enum_value_min_version) = 0];
     }
+    // LINT.ThenChange(../../brush/brush_paint.h:blend_mode)
 
     oneof layer {
       TilingTexture tiling_texture = 24
-      [(ink.proto.field_min_version) = 2147483647];
+          [(ink.proto.field_min_version) = 2147483647];
       StampingTexture stamping_texture = 25
-      [(ink.proto.field_min_version) = 2147483647];
+          [(ink.proto.field_min_version) = 2147483647];
     }
+
+    // TODO(b/543451823): Deprecate the below `TextureLayer` fields, except for
+    // `blend_mode`, in favor of the `oneof` above, once the `oneof` fields are
+    // assigned a non-development `field_min_version`.
 
     // String id that will be used by renderers to retrieve the color texture.
     optional string client_texture_id = 1 [(ink.proto.field_min_version) = 0];
@@ -482,7 +519,7 @@ message BrushPaint {
 
     // String id that will be used by renderers to retrieve the color texture.
     optional string client_texture_id = 1
-    [(ink.proto.field_min_version) = 2147483647];
+        [(ink.proto.field_min_version) = 2147483647];
 
     // The origin point to use for the texture
     optional TextureLayer.Origin origin = 2 [
@@ -499,22 +536,22 @@ message BrushPaint {
     // How points outside the texture in the x direction are treated for this
     // texture layer
     optional TextureLayer.Wrap wrap_x = 4
-    [default = WRAP_REPEAT, (ink.proto.field_min_version) = 2147483647];
+        [default = WRAP_REPEAT, (ink.proto.field_min_version) = 2147483647];
 
     // How points outside the texture in the y direction are treated for this
     // texture layer
     optional TextureLayer.Wrap wrap_y = 5
-    [default = WRAP_REPEAT, (ink.proto.field_min_version) = 2147483647];
+        [default = WRAP_REPEAT, (ink.proto.field_min_version) = 2147483647];
 
     // The x-dimension of size of (one animation frame of) the texture,
     // specified in  `size_unit`s
     optional float size_x = 6
-    [default = 1, (ink.proto.field_min_version) = 2147483647];
+        [default = 1, (ink.proto.field_min_version) = 2147483647];
 
     // The y-dimension of size of (one animation frame of) the texture,
     // specified in  `size_unit`s
     optional float size_y = 7
-    [default = 1, (ink.proto.field_min_version) = 2147483647];
+        [default = 1, (ink.proto.field_min_version) = 2147483647];
 
     // An x-offset into the texture, specified as fractions of the texture size.
     optional float offset_x = 8 [(ink.proto.field_min_version) = 2147483647];
@@ -526,7 +563,7 @@ message BrushPaint {
     // carried out about the center of the texture's first repetition along both
     // axes.
     optional float rotation_in_radians = 10
-    [(ink.proto.field_min_version) = 2147483647];
+        [(ink.proto.field_min_version) = 2147483647];
   }
 
   // A texture intended for use with particle brush coats (i.e. with a brush tip
@@ -538,7 +575,7 @@ message BrushPaint {
 
     // String id that will be used by renderers to retrieve the color texture.
     optional string client_texture_id = 1
-    [(ink.proto.field_min_version) = 2147483647];
+        [(ink.proto.field_min_version) = 2147483647];
 
     reserved 2 to 5;
   }
@@ -560,12 +597,14 @@ message BrushPaint {
   // mesh renderer. In the case where both are specified on the same
   // `BrushCoat`, the effects of the `BrushBehavior`/`TextureLayer`(s) will not
   // be rendered.
+  // LINT.IfChange(self_overlap)
   enum SelfOverlap {
     SELF_OVERLAP_UNSPECIFIED = 0 [(ink.proto.enum_value_min_version) = 0];
     SELF_OVERLAP_ANY = 1 [(ink.proto.enum_value_min_version) = 0];
     SELF_OVERLAP_ACCUMULATE = 2 [(ink.proto.enum_value_min_version) = 0];
     SELF_OVERLAP_DISCARD = 3 [(ink.proto.enum_value_min_version) = 0];
   }
+  // LINT.ThenChange(../../brush/brush_paint.h:self_overlap)
 
   // Zero or more textures to blend together to affect this coat's appearance.
   // Each layer is blended into the next one, and finally into the color of the
@@ -657,6 +696,8 @@ message BrushPaint {
 // distance traveled from one input to the next.
 message BrushBehavior {
   option (ink.proto.message_min_version) = 0;
+
+  // LINT.IfChange(source)
 
   // A stroke input property, along with its units, that can act as a source for
   // a `BrushBehavior.SourceNode`.
@@ -762,9 +803,9 @@ message BrushBehavior {
 
     // Time elapsed (in seconds) since the modeled stroke input. This continues
     // to increase even after all stroke inputs have completed, and can be used
-    // to drive wet-layer stroke animations. This source is only compatible with
-    // a `source_out_of_range_behavior` of `OUT_OF_RANGE_CLAMP`, to ensure that
-    // the animation will eventually end.
+    // to drive wet-layer brush tip animations. This source is only compatible
+    // with a `source_out_of_range_behavior` of `OUT_OF_RANGE_CLAMP`, to ensure
+    // that the animation will eventually end.
     SOURCE_TIME_SINCE_INPUT_IN_SECONDS = 19
         [(ink.proto.enum_value_min_version) = 0];
 
@@ -883,8 +924,8 @@ message BrushBehavior {
 
     // Time elapsed (in seconds) since the final input of the stroke, or zero if
     // the final input hasn't arrived yet. This can be used to drive wet-layer
-    // stroke animations that should occur after the final input. This source is
-    // only compatible with a `source_out_of_range_behavior` of
+    // brush tip animations that should occur after the final input. This source
+    // is only compatible with a `source_out_of_range_behavior` of
     // `OUT_OF_RANGE_CLAMP`, to ensure that the animation will eventually end.
     SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS = 40
         [(ink.proto.enum_value_min_version) = 1];
@@ -893,7 +934,18 @@ message BrushBehavior {
     // last input in the stroke.
     SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS = 41
         [(ink.proto.enum_value_min_version) = 2147483647];
+
+    // Stylus barrel twist with values reported in the range [0, 2π).
+    SOURCE_BARREL_TWIST_IN_RADIANS = 42
+        [(ink.proto.enum_value_min_version) = 2147483647];
+
+    // Stylus barrel twist with values reported in the range (-π, π].
+    SOURCE_BARREL_TWIST_ABOUT_ZERO_IN_RADIANS = 43
+        [(ink.proto.enum_value_min_version) = 2147483647];
   }
+  // LINT.ThenChange(../../brush/brush_behavior.h:source)
+
+  // LINT.IfChange(target)
 
   // `BrushTip` properties that can be modified by a `BrushBehavior`.
   enum Target {
@@ -934,35 +986,38 @@ message BrushBehavior {
     // this target, they stack additively.
     TARGET_CORNER_ROUNDING_OFFSET = 7 [(ink.proto.enum_value_min_version) = 0];
 
-    // Shifts the hue of the base brush color.  A positive offset shifts around
-    // the hue wheel from red towards orange, while a negative offset shifts the
-    // other way, from red towards violet. The final hue offset is not clamped,
-    // but is effectively normalized (mod 2π). If multiple behaviors have this
-    // target, they stack additively.
+    // Shifts the hue of the base brush color, while maintaining the same level
+    // of perceived lightness. A positive offset shifts around the hue wheel
+    // from red towards orange, while a negative offset shifts the other way,
+    // from red towards violet. The final hue offset is not clamped, but is
+    // effectively normalized (mod 2π). If multiple behaviors have this target,
+    // they stack additively.
     //
     // This target is for tip color adjustments. Renderers can apply it to the
     // brush color when a stroke is drawn to contribute to the local color of
     // each part of the stroke.
     TARGET_HUE_OFFSET_IN_RADIANS = 8 [(ink.proto.enum_value_min_version) = 0];
 
-    // Scales the saturation of the base brush color.  If multiple behaviors
-    // have one of these targets, they stack multiplicatively.  The final
-    // saturation multiplier is clamped to [0, 2].
+    // Scales the chroma of the base brush color. A value greater than 1.0
+    // makes the color more saturated, a value less than 1.0 makes the color
+    // less saturated, and a value of 0.0 makes the color grayscale. If
+    // multiple behaviors have one of these targets, they stack
+    // multiplicatively. The final chroma multiplier is clamped to [0, 2].
     //
     // This target is for tip color adjustments. Renderers can apply it to the
     // brush color when a stroke is drawn to contribute to the local color of
     // each part of the stroke.
-    TARGET_SATURATION_MULTIPLIER = 9 [(ink.proto.enum_value_min_version) = 0];
+    TARGET_CHROMA_MULTIPLIER = 9 [(ink.proto.enum_value_min_version) = 0];
 
-    // Shifts the luminosity of the base brush color. An offset of ±1.0
-    // corresponds to changing the luminosity by up to ±100%. If multiple
-    // behaviors have this target, they stack additively.  The final luminosity
+    // Shifts the perceived lightness of the base brush color. An offset of ±1.0
+    // corresponds to changing the lightness by up to ±100%. If multiple
+    // behaviors have this target, they stack additively. The final lightness
     // offset is clamped to [-1, 1].
     //
     // This target is for tip color adjustments. Renderers can apply it to the
     // brush color when a stroke is drawn to contribute to the local color of
     // each part of the stroke.
-    TARGET_LUMINOSITY_OFFSET = 10 [(ink.proto.enum_value_min_version) = 0];
+    TARGET_LIGHTNESS_OFFSET = 10 [(ink.proto.enum_value_min_version) = 0];
 
     // Scales the opacity of the base brush color.  If multiple behaviors have
     // one of these targets, they stack multiplicatively.  The final opacity
@@ -1003,6 +1058,9 @@ message BrushBehavior {
     reserved 16;
     reserved 17;
   }
+  // LINT.ThenChange(../../brush/brush_behavior.h:target)
+
+  // LINT.IfChange(polar_target)
 
   // Like `Target`, but for vector values.
   enum PolarTarget {
@@ -1029,6 +1087,9 @@ message BrushBehavior {
     POLAR_POSITION_OFFSET_RELATIVE_IN_RADIANS_AND_MULTIPLES_OF_BRUSH_SIZE = 2
         [(ink.proto.enum_value_min_version) = 0];
   }
+  // LINT.ThenChange(../../brush/brush_behavior.h:polar_target)
+
+  // LINT.IfChange(out_of_range)
 
   // The desired behavior when an input value is outside the bounds of
   // `source_value_range`.
@@ -1053,6 +1114,9 @@ message BrushBehavior {
     // `OUT_OF_RANGE_REPEAT`.
     OUT_OF_RANGE_MIRROR = 3 [(ink.proto.enum_value_min_version) = 0];
   }
+  // LINT.ThenChange(../../brush/brush_behavior.h:out_of_range)
+
+  // LINT.IfChange(binary_op)
 
   // A binary operation for combining two values in a `BinaryOpNode`.
   enum BinaryOp {
@@ -1079,6 +1143,9 @@ message BrushBehavior {
     // A if B is null, or B if A is null, or null if neither is null
     BINARY_OP_XOR_ELSE = 7 [(ink.proto.enum_value_min_version) = 1];
   }
+  // LINT.ThenChange(../../brush/brush_behavior.h:binary_op)
+
+  // LINT.IfChange(progress_domain)
 
   // Dimensions and units for measuring distance/time along the length/duration
   // of a stroke.
@@ -1103,6 +1170,9 @@ message BrushBehavior {
     PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE = 3
         [(ink.proto.enum_value_min_version) = 0];
   }
+  // LINT.ThenChange(../../brush/brush_behavior.h:progress_domain)
+
+  // LINT.IfChange(interpolation)
 
   // An interpolation function for combining three values in an
   // `InterpolationNode`.
@@ -1117,6 +1187,7 @@ message BrushBehavior {
     // interpolating linearly in between. Outputs null if B=C.
     INTERPOLATION_INVERSE_LERP = 2 [(ink.proto.enum_value_min_version) = 0];
   }
+  // LINT.ThenChange(../../brush/brush_behavior.h:interpolation)
 
   // A single node in a behavior's graph. Each node type is either a "value
   // node" which consumes zero or more input values and produces a single output
@@ -1250,19 +1321,18 @@ message BrushBehavior {
   // null, the output value is null until the first non-null input.
   //
   // To be valid:
-  //   * `damping_source` must be a valid `ProgressDomain` enumerator.
-  //   * `damping_gap` must be finite and non-negative.
+  //   * `damp_over` must be a valid `ProgressDomain` enumerator.
+  //   * `strength` must be finite and non-negative.
   message DampingNode {
     option (ink.proto.message_min_version) = 0;
 
     // The domain units over which damping is applied.
-    optional ProgressDomain damping_source = 1
-        [(ink.proto.field_min_version) = 0];
+    optional ProgressDomain damp_over = 1 [(ink.proto.field_min_version) = 0];
 
-    // A scaling factor, in `damping_source` units, for the damping. Smaller
-    // gaps result in less damping, so the output follows the input more
-    // closely.
-    optional float damping_gap = 2 [(ink.proto.field_min_version) = 0];
+    // A scaling factor, in `damp_over` units, for the damping. A smaller
+    // strength value results in less damping, so the output follows the input
+    // more closely.
+    optional float strength = 2 [(ink.proto.field_min_version) = 0];
   }
 
   // Value node for mapping a value through a response curve.
@@ -1448,19 +1518,21 @@ message ColorFunction {
     float opacity_multiplier = 1 [(ink.proto.field_min_version) = 0];
     // Ignores the original color and replaces it with a fixed color.
     Color replace_color = 2 [(ink.proto.field_min_version) = 0];
-    // Applies an additive offset to the color's hue angle.  The offset angle
-    // must be finite, but can be positive or negative (or zero).
+    // Applies an additive offset to the color's hue angle, while maintaining
+    // the same level of perceived lightness.  The offset angle must be finite,
+    // but can be positive or negative (or zero).
     float hue_offset_radians = 3 [(ink.proto.field_min_version) = 2147483647];
-    // Applies a multiplier to the color's saturation.  The multiplier must be
+    // Applies a multiplier to the color's chroma.  The multiplier must be
     // finite and nonnegative.  Typical multiplier values range between 0 and 1.
-    float saturation_multiplier = 4
-        [(ink.proto.field_min_version) = 2147483647];
-    // Applies an additive offset to the color's luminosity.  The offset must be
-    // finite, but can be positive or negative (or zero).  Typical offset values
-    // range between -1 and 1.
-    float luminosity_offset = 5 [(ink.proto.field_min_version) = 2147483647];
+    float chroma_multiplier = 4 [(ink.proto.field_min_version) = 2147483647];
+    // Applies an additive offset to the color's perceived lightness.  The
+    // offset must be finite, but can be positive or negative (or zero).
+    // Typical offset values range between -1 and 1.
+    float lightness_offset = 5 [(ink.proto.field_min_version) = 2147483647];
   }
 }
+
+// LINT.IfChange(predefined)
 
 // Specifies a predefined easing function.
 enum PredefinedEasingFunction {
@@ -1497,6 +1569,7 @@ enum PredefinedEasingFunction {
   // https://www.w3.org/TR/css-easing-1/#step-easing-functions
   PREDEFINED_EASING_STEP_END = 7 [(ink.proto.enum_value_min_version) = 0];
 }
+// LINT.ThenChange(../../brush/easing_function.h:predefined)
 
 // Parameters for a custom cubic Bezier easing function.
 //
@@ -1551,6 +1624,8 @@ message LinearEasingFunction {
   repeated float y = 2 [packed = true, (ink.proto.field_min_version) = 0];
 }
 
+// LINT.IfChange(step_position)
+
 // Setting to determine the desired output value of the first and last
 // step of [0, 1) for the Steps EasingFunction. See below for more context.
 enum StepPosition {
@@ -1576,6 +1651,7 @@ enum StepPosition {
   //   * for x in [1 - 1/step_count, 1)  =>     y = 1 - 1/(step_count + 1)
   STEP_POSITION_JUMP_BOTH = 4 [(ink.proto.enum_value_min_version) = 0];
 }
+// LINT.ThenChange(../../brush/easing_function.h:step_position)
 
 // Parameters for a custom step easing function.
 //

@@ -36,7 +36,7 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
-import com.example.cahier.AppArgs
+import com.example.cahier.core.data.AppArgs
 import com.example.cahier.core.data.Note
 
 @OptIn(ExperimentalFoundationApi::class)

@@ -41,9 +41,9 @@ fun NodeFields(
     onChooseColor: (Color, (Color) -> Unit) -> Unit,
     onUpdate: (NodeData) -> Unit,
     onLoadTexture: () -> Unit,
+    modifier: Modifier = Modifier,
     onFieldEditComplete: () -> Unit = {},
     onDropdownEditComplete: () -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =
@@ -165,8 +165,8 @@ internal fun createDefaultNode(nodeCase: ProtoBrushBehavior.Node.NodeCase): Node
                 ProtoBrushBehavior.Node.newBuilder()
                     .setDampingNode(
                         ProtoBrushBehavior.DampingNode.newBuilder()
-                            .setDampingSource(ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE)
-                            .setDampingGap(0.1f)
+                            .setDampOver(ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_MULTIPLES_OF_BRUSH_SIZE)
+                            .setStrength(0.1f)
                     )
                     .build()
             )

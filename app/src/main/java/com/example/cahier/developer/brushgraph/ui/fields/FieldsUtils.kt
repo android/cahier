@@ -24,7 +24,9 @@ internal val SOURCES_INPUT = listOf(
     ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS,
     ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS,
     ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS,
-    ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS
+    ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS,
+    ProtoBrushBehavior.Source.SOURCE_BARREL_TWIST_IN_RADIANS,
+    ProtoBrushBehavior.Source.SOURCE_BARREL_TWIST_ABOUT_ZERO_IN_RADIANS,
 )
 
 internal val SOURCES_MOVEMENT = listOf(
@@ -54,7 +56,7 @@ internal val SOURCES_TIME = listOf(
     ProtoBrushBehavior.Source.SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS,
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS,
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS,
-    ProtoBrushBehavior.Source.SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS
+    ProtoBrushBehavior.Source.SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS,
 )
 
 internal val SOURCES_ACCELERATION = listOf(
@@ -77,7 +79,7 @@ internal val TARGETS_SIZE_SHAPE = listOf(
     ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS,
     ProtoBrushBehavior.Target.TARGET_PINCH_OFFSET,
     ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS,
-    ProtoBrushBehavior.Target.TARGET_CORNER_ROUNDING_OFFSET
+    ProtoBrushBehavior.Target.TARGET_CORNER_ROUNDING_OFFSET,
 )
 
 internal val TARGETS_POSITION = listOf(
@@ -89,8 +91,8 @@ internal val TARGETS_POSITION = listOf(
 
 internal val TARGETS_COLOR_OPACITY = listOf(
     ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS,
-    ProtoBrushBehavior.Target.TARGET_SATURATION_MULTIPLIER,
-    ProtoBrushBehavior.Target.TARGET_LUMINOSITY_OFFSET,
+    ProtoBrushBehavior.Target.TARGET_CHROMA_MULTIPLIER,
+    ProtoBrushBehavior.Target.TARGET_LIGHTNESS_OFFSET,
     ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER
 )
 

@@ -1,13 +1,61 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Proto definitions related to colors of Ink strokes.
+
 syntax = "proto2";
 
 package ink.proto;
 
 option java_package = "ink.proto";
+option java_outer_classname = "ColorProto";
 option java_multiple_files = true;
 
+// LINT.IfChange(color_space)
+enum ColorSpace {
+  // UNSPECIFIED exists only to signal unset instances; client code should never
+  // set a ColorSpace to this value.
+  // See https://protobuf.dev/programming-guides/dos-donts/#unspecified-enum.
+  COLOR_SPACE_UNSPECIFIED = 0;
+
+  // sRGB.
+  COLOR_SPACE_SRGB = 1;
+
+  // Display P3, which uses the DCI-P3 primaries and sRGB transfer function.
+  COLOR_SPACE_DISPLAY_P3 = 2;
+}
+// LINT.ThenChange(../../color/color_space.h:color_space)
+
+// WARNING: Unless you're an expert, DO NOT populate this proto manually. The
+// color channel values stored here are linear, whereas typical human-readable
+// color representations (like CSS hex colors or the Photoshop color picker)
+// show gamma-encoded (nonlinear) values. Your colors will look washed out if
+// you write gamma-encoded values into the color channel fields of this proto.
+//
+// Instead, use the API types: ../../color/color.h or android.graphics.Color.
 message Color {
-  optional float red = 1;
-  optional float green = 2;
-  optional float blue = 3;
-  optional float alpha = 4;
+  // All color channel values are:
+  // - Linear (NOT gamma-encoded; see warning above)
+  // - Non-premultiplied
+  // - Nominally in the range [0, 1], though any float value is accepted. In
+  //   particular, out-of-gamut colors may have values greater than 1.
+  optional float r = 1;
+  optional float g = 2;
+  optional float b = 3;
+
+  // Alpha must be in the range [0, 1].
+  optional float a = 4;
+
+  optional ColorSpace color_space = 5;
 }

@@ -17,7 +17,6 @@ package com.example.cahier.developer.brushgraph.data
 
 import androidx.ink.brush.InputToolType
 import com.example.cahier.R
-import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
@@ -87,7 +86,10 @@ fun ProtoBrushBehavior.Source.displayStringRId(): Int =
 
         ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH ->
             R.string.bg_source_distance_remaining_fraction
-
+        ProtoBrushBehavior.Source.SOURCE_BARREL_TWIST_ABOUT_ZERO_IN_RADIANS ->
+            R.string.bg_source_barrel_twist_about_zero
+        ProtoBrushBehavior.Source.SOURCE_BARREL_TWIST_IN_RADIANS ->
+            R.string.bg_source_barrel_twist
         else -> R.string.bg_node_unknown
     }
 
@@ -102,11 +104,11 @@ fun ProtoBrushBehavior.Source.getNumericLimits(): NumericLimits {
         ProtoBrushBehavior.Source.SOURCE_TILT_X_IN_RADIANS,
         ProtoBrushBehavior.Source.SOURCE_TILT_Y_IN_RADIANS,
             -> NumericLimits.radiansShownAsDegrees(-90f, 90f)
-
+        ProtoBrushBehavior.Source.SOURCE_BARREL_TWIST_IN_RADIANS,
         ProtoBrushBehavior.Source.SOURCE_DIRECTION_IN_RADIANS,
         ProtoBrushBehavior.Source.SOURCE_ORIENTATION_IN_RADIANS,
             -> NumericLimits.radiansShownAsDegrees(0f, 360f)
-
+        ProtoBrushBehavior.Source.SOURCE_BARREL_TWIST_ABOUT_ZERO_IN_RADIANS,
         ProtoBrushBehavior.Source.SOURCE_DIRECTION_ABOUT_ZERO_IN_RADIANS,
         ProtoBrushBehavior.Source.SOURCE_ORIENTATION_ABOUT_ZERO_IN_RADIANS,
             -> NumericLimits.radiansShownAsDegrees(-180f, 180f)
@@ -215,13 +217,13 @@ fun ProtoBrushBehavior.Target.getNumericLimits(): NumericLimits {
 
         ProtoBrushBehavior.Target.TARGET_PINCH_OFFSET,
         ProtoBrushBehavior.Target.TARGET_CORNER_ROUNDING_OFFSET,
-        ProtoBrushBehavior.Target.TARGET_LUMINOSITY_OFFSET,
+        ProtoBrushBehavior.Target.TARGET_LIGHTNESS_OFFSET,
             -> NumericLimits.floatShownAsPercent(-100f, 100f)
 
         ProtoBrushBehavior.Target.TARGET_WIDTH_MULTIPLIER,
         ProtoBrushBehavior.Target.TARGET_HEIGHT_MULTIPLIER,
         ProtoBrushBehavior.Target.TARGET_SIZE_MULTIPLIER,
-        ProtoBrushBehavior.Target.TARGET_SATURATION_MULTIPLIER,
+        ProtoBrushBehavior.Target.TARGET_CHROMA_MULTIPLIER,
         ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER,
             -> NumericLimits(0f, 2f, 0.01f, "x")
 
@@ -347,8 +349,8 @@ fun ProtoBrushBehavior.Target.displayStringRId(): Int =
             R.string.bg_target_position_offset_lateral
 
         ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS -> R.string.bg_target_hue_offset
-        ProtoBrushBehavior.Target.TARGET_SATURATION_MULTIPLIER -> R.string.bg_target_saturation_multiplier
-        ProtoBrushBehavior.Target.TARGET_LUMINOSITY_OFFSET -> R.string.bg_target_luminosity_offset
+        ProtoBrushBehavior.Target.TARGET_CHROMA_MULTIPLIER -> R.string.bg_target_chroma_multiplier
+        ProtoBrushBehavior.Target.TARGET_LIGHTNESS_OFFSET -> R.string.bg_target_lightness_offset
         ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER -> R.string.bg_target_opacity_multiplier
         else -> R.string.bg_node_unknown
     }
@@ -526,10 +528,10 @@ fun ProtoColorFunction.displayStringRId(): Int =
         R.string.bg_replace_color
     } else if (this.hasHueOffsetRadians()) {
         R.string.bg_target_hue_offset
-    } else if (this.hasSaturationMultiplier()) {
-        R.string.bg_target_saturation_multiplier
-    } else if (this.hasLuminosityOffset()) {
-        R.string.bg_target_luminosity_offset
+    } else if (this.hasChromaMultiplier()) {
+        R.string.bg_target_chroma_multiplier
+    } else if (this.hasLightnessOffset()) {
+        R.string.bg_target_lightness_offset
     } else {
         R.string.bg_node_unknown
     }

@@ -29,9 +29,9 @@ import androidx.ink.storage.decode
 import androidx.ink.storage.encode
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.CustomBrushDao
 import com.example.cahier.core.data.CustomBrushEntity
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
 import com.example.cahier.developer.brushgraph.data.DisplayText
 import com.example.cahier.developer.brushgraph.data.GraphEdge
@@ -55,6 +55,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import ink.proto.BrushBehavior as ProtoBrushBehavior
+import ink.proto.BrushBehavior.Node.NodeCase as ProtoNodeCase
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.ColorFunction as ProtoColorFunction
@@ -343,13 +344,16 @@ class BrushGraphViewModel @Inject constructor(
     }
 
     private fun checkSelectNodeTrigger(nodeId: String) {
-        val node = uiState.value.graph.nodes.find { it.id == nodeId }
-        if (node != null) {
-            val shouldAdvance = (node.data is NodeData.Tip) ||
-                    (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE) ||
-                    (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE) ||
-                    (node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE) ||
-                    tutorialStep?.getTargetNode(uiState.value.graph)?.id == nodeId
+        uiState.value.graph.nodes.find { it.id == nodeId }?.let { node ->
+            val shouldAdvance =
+                when (val data = node.data) {
+                    is NodeData.Tip -> true
+                    is NodeData.Behavior ->
+                        data.node.nodeCase == ProtoNodeCase.SOURCE_NODE ||
+                        data.node.nodeCase == ProtoNodeCase.BINARY_OP_NODE ||
+                        data.node.nodeCase == ProtoNodeCase.TARGET_NODE
+                    else -> false
+                } || tutorialStep?.getTargetNode(uiState.value.graph)?.id == nodeId
             if (shouldAdvance) {
                 advanceTutorial(TutorialAction.SELECT_NODE)
             }
@@ -397,9 +401,7 @@ class BrushGraphViewModel @Inject constructor(
     }
 
     fun onIssueClick(issue: GraphValidationException, isWideScreen: Boolean, density: Float) {
-        if (issue.nodeId != null) {
-            centerNode(issue.nodeId)
-        }
+        issue.nodeId?.let { centerNode(it) }
 
         advanceTutorial(TutorialAction.CLICK_ERROR_LINK)
     }
@@ -445,10 +447,19 @@ class BrushGraphViewModel @Inject constructor(
         val fromNode = uiState.value.graph.nodes.find { it.id == fromNodeId } ?: return
         val toNode = uiState.value.graph.nodes.find { it.id == toNodeId } ?: return
         val shouldAdvance =
-            (fromNode.data is NodeData.Behavior && fromNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.SOURCE_NODE &&
-                    toNode.data is NodeData.Behavior && toNode.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.TARGET_NODE) ||
-                    (fromNode.data is NodeData.Coat && toNode.data is NodeData.Family) ||
-                    (fromNode.data is NodeData.Behavior && toNode.data is NodeData.Tip)
+            when (val fromData = fromNode.data) {
+                is NodeData.Behavior ->
+                    when (val toData = toNode.data) {
+                      is NodeData.Tip -> true
+                      is NodeData.Behavior ->
+                            fromData.node.nodeCase == ProtoNodeCase.SOURCE_NODE &&
+                            toData.node.nodeCase == ProtoNodeCase.TARGET_NODE
+                      else -> false
+                    }
+                is NodeData.Coat ->
+                    toNode.data is NodeData.Family
+                else -> false
+            }
         if (shouldAdvance) {
             advanceTutorial(TutorialAction.CONNECT_NODES)
         }

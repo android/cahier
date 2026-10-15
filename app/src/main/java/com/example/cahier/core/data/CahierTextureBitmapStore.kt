@@ -15,7 +15,7 @@
  */
 
 
-package com.example.cahier.core.ui
+package com.example.cahier.core.data
 
 import android.content.Context
 import android.graphics.Bitmap

@@ -34,8 +34,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
+import com.example.cahier.core.data.AppArgs
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.NoteType
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.developer.brushgraph.data.BrushGraphRepository

@@ -24,9 +24,3 @@ import dagger.hilt.android.HiltAndroidApp
 @HiltAndroidApp
 class CahierApplication : Application() {
 }
-
-object AppArgs {
-    const val NOTE_TYPE_KEY = "NOTE_TYPE_EXTRA"
-    const val NOTE_ID_KEY = "NOTE_ID_EXTRA"
-    const val NEW_WINDOW_REQUEST_CODE = 1992
-}

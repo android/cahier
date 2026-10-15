@@ -36,12 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.NumericLimits
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.BlendModePreviewWidget
 import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushgraph.ui.NumericField
-import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.ui.TextureLayerPreviewWidget
 import com.example.cahier.developer.brushgraph.ui.TextureWrapPreviewWidget
 import com.example.cahier.developer.brushgraph.ui.getTooltip

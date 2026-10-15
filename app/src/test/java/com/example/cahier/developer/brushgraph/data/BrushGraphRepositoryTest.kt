@@ -18,13 +18,12 @@ package com.example.cahier.developer.brushgraph.data
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -39,7 +38,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushTip as ProtoBrushTip
@@ -52,7 +50,7 @@ class BrushGraphRepositoryTest {
     private val testScope = TestScope(testDispatcher)
 
     private lateinit var fakeDao: FakeCustomBrushDao
-    private lateinit var mockTextureStore: CahierTextureBitmapStore
+    private lateinit var textureStore: CahierTextureBitmapStore
     private lateinit var repository: DefaultBrushGraphRepository
     private lateinit var repoScope: kotlinx.coroutines.CoroutineScope
 
@@ -60,11 +58,10 @@ class BrushGraphRepositoryTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeDao = FakeCustomBrushDao()
-        mockTextureStore = mock(CahierTextureBitmapStore::class.java)
-        org.mockito.Mockito.`when`(mockTextureStore.generation).thenReturn(MutableStateFlow(0))
-        repoScope = kotlinx.coroutines.CoroutineScope(testDispatcher + Job())
         val context = ApplicationProvider.getApplicationContext<Context>()
-        repository = DefaultBrushGraphRepository(fakeDao, mockTextureStore, repoScope, context)
+        textureStore = CahierTextureBitmapStore(context)
+        repoScope = kotlinx.coroutines.CoroutineScope(testDispatcher + Job())
+        repository = DefaultBrushGraphRepository(fakeDao, textureStore, repoScope, context)
     }
 
     @After

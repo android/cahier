@@ -16,16 +16,21 @@
 
 package com.example.cahier.developer.brushgraph.viewmodel
 
+import androidx.ink.brush.Brush
+import androidx.ink.brush.StockBrushes
 import androidx.ink.storage.encode
+import androidx.ink.strokes.ImmutableStrokeInputBatch
+import androidx.ink.strokes.Stroke
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.CustomBrushEntity
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.DefaultBrushGraphRepository
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.NodeData
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -43,7 +48,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.mock
 import java.io.ByteArrayOutputStream
 import ink.proto.BrushTip as ProtoBrushTip
 
@@ -412,7 +416,7 @@ class BrushGraphViewModelTest {
         viewModel.saveToPalette(brushName)
 
         // Wait for the IO coroutine to finish on the device
-        Thread.sleep(500)
+        delay(500)
 
         val savedBrushes = fakeDao.getAllCustomBrushes().first()
         assertTrue(savedBrushes.any { it.name == brushName })
@@ -427,7 +431,7 @@ class BrushGraphViewModelTest {
         viewModel.deleteFromPalette(brushName)
 
         // Wait for the IO coroutine to finish on the device
-        Thread.sleep(500)
+        delay(500)
 
         val savedBrushes = fakeDao.getAllCustomBrushes().first()
         assertFalse(savedBrushes.any { it.name == brushName })
@@ -617,7 +621,9 @@ class BrushGraphViewModelTest {
 
     @Test
     fun clearStrokes_clearsList() = testScope.runTest {
-        viewModel.strokeList.add(mock(androidx.ink.strokes.Stroke::class.java))
+        viewModel.strokeList.add(
+            Stroke(Brush(StockBrushes.marker(), 1f, 1f), ImmutableStrokeInputBatch.EMPTY)
+        )
         assertFalse(viewModel.strokeList.isEmpty())
 
         viewModel.clearStrokes()

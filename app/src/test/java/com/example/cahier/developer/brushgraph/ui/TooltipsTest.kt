@@ -17,12 +17,14 @@ package com.example.cahier.developer.brushgraph.ui
 
 import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.NodeData
-import ink.proto.BrushBehavior
-import ink.proto.BrushPaint
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import ink.proto.BrushBehavior as ProtoBrushBehavior
+import ink.proto.ColorFunction as ProtoColorFunction
+import ink.proto.BrushPaint as ProtoBrushPaint
+import ink.proto.BrushTip as ProtoBrushTip
 import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 import ink.proto.StepPosition as ProtoStepPosition
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class TooltipsTest {
 
@@ -32,59 +34,59 @@ class TooltipsTest {
     fun nodeDataTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
         val nodes = listOf(
-            NodeData.Tip(ink.proto.BrushTip.getDefaultInstance()),
-            NodeData.Paint(ink.proto.BrushPaint.getDefaultInstance()),
-            NodeData.TextureLayer(ink.proto.BrushPaint.TextureLayer.getDefaultInstance()),
-            NodeData.ColorFunction(ink.proto.ColorFunction.getDefaultInstance()),
+            NodeData.Tip(ProtoBrushTip.getDefaultInstance()),
+            NodeData.Paint(ProtoBrushPaint.getDefaultInstance()),
+            NodeData.TextureLayer(ProtoBrushPaint.TextureLayer.getDefaultInstance()),
+            NodeData.ColorFunction(ProtoColorFunction.getDefaultInstance()),
             NodeData.Coat(),
             NodeData.Family(),
 
             // Behavior nodes
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setSourceNode(BrushBehavior.SourceNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setSourceNode(ProtoBrushBehavior.SourceNode.getDefaultInstance()).build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setConstantNode(BrushBehavior.ConstantNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setConstantNode(ProtoBrushBehavior.ConstantNode.getDefaultInstance()).build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setNoiseNode(BrushBehavior.NoiseNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setNoiseNode(ProtoBrushBehavior.NoiseNode.getDefaultInstance()).build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setToolTypeFilterNode(BrushBehavior.ToolTypeFilterNode.getDefaultInstance())
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setToolTypeFilterNode(ProtoBrushBehavior.ToolTypeFilterNode.getDefaultInstance())
                     .build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setDampingNode(BrushBehavior.DampingNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setDampingNode(ProtoBrushBehavior.DampingNode.getDefaultInstance()).build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setResponseNode(BrushBehavior.ResponseNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setResponseNode(ProtoBrushBehavior.ResponseNode.getDefaultInstance()).build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setBinaryOpNode(BrushBehavior.BinaryOpNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setBinaryOpNode(ProtoBrushBehavior.BinaryOpNode.getDefaultInstance()).build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setInterpolationNode(BrushBehavior.InterpolationNode.getDefaultInstance())
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setInterpolationNode(ProtoBrushBehavior.InterpolationNode.getDefaultInstance())
                     .build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setIntegralNode(BrushBehavior.IntegralNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setIntegralNode(ProtoBrushBehavior.IntegralNode.getDefaultInstance()).build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setTargetNode(BrushBehavior.TargetNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setTargetNode(ProtoBrushBehavior.TargetNode.getDefaultInstance()).build()
             ),
             NodeData.Behavior(
-                BrushBehavior.Node.newBuilder()
-                    .setPolarTargetNode(BrushBehavior.PolarTargetNode.getDefaultInstance()).build()
+                ProtoBrushBehavior.Node.newBuilder()
+                    .setPolarTargetNode(ProtoBrushBehavior.PolarTargetNode.getDefaultInstance()).build()
             )
         )
 
@@ -97,7 +99,7 @@ class TooltipsTest {
     @Test
     fun sourceEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushBehavior.Source.values()) {
+        for (value in ProtoBrushBehavior.Source.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -110,7 +112,7 @@ class TooltipsTest {
     @Test
     fun targetEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushBehavior.Target.values()) {
+        for (value in ProtoBrushBehavior.Target.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -123,7 +125,7 @@ class TooltipsTest {
     @Test
     fun wrapEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushPaint.TextureLayer.Wrap.values()) {
+        for (value in ProtoBrushPaint.TextureLayer.Wrap.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue("Tooltip should be unique for Wrap.$value: $tooltip", tooltips.add(tooltip))
@@ -133,7 +135,7 @@ class TooltipsTest {
     @Test
     fun sizeUnitEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushPaint.TextureLayer.SizeUnit.values()) {
+        for (value in ProtoBrushPaint.TextureLayer.SizeUnit.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -146,7 +148,7 @@ class TooltipsTest {
     @Test
     fun originEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushPaint.TextureLayer.Origin.values()) {
+        for (value in ProtoBrushPaint.TextureLayer.Origin.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -159,7 +161,7 @@ class TooltipsTest {
     @Test
     fun mappingEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushPaint.TextureLayer.Mapping.values()) {
+        for (value in ProtoBrushPaint.TextureLayer.Mapping.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -172,7 +174,7 @@ class TooltipsTest {
     @Test
     fun blendModeEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushPaint.TextureLayer.BlendMode.values()) {
+        for (value in ProtoBrushPaint.TextureLayer.BlendMode.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -185,7 +187,7 @@ class TooltipsTest {
     @Test
     fun selfOverlapEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushPaint.SelfOverlap.values()) {
+        for (value in ProtoBrushPaint.SelfOverlap.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -198,7 +200,7 @@ class TooltipsTest {
     @Test
     fun polarTargetEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushBehavior.PolarTarget.values()) {
+        for (value in ProtoBrushBehavior.PolarTarget.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -211,7 +213,7 @@ class TooltipsTest {
     @Test
     fun outOfRangeEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushBehavior.OutOfRange.values()) {
+        for (value in ProtoBrushBehavior.OutOfRange.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -224,7 +226,7 @@ class TooltipsTest {
     @Test
     fun binaryOpEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushBehavior.BinaryOp.values()) {
+        for (value in ProtoBrushBehavior.BinaryOp.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -237,7 +239,7 @@ class TooltipsTest {
     @Test
     fun progressDomainEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushBehavior.ProgressDomain.values()) {
+        for (value in ProtoBrushBehavior.ProgressDomain.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -250,7 +252,7 @@ class TooltipsTest {
     @Test
     fun interpolationEnumsTooltips_checked_areUnique() {
         val tooltips = mutableSetOf<Int>()
-        for (value in BrushBehavior.Interpolation.values()) {
+        for (value in ProtoBrushBehavior.Interpolation.values()) {
             if (value.name == "UNRECOGNIZED") continue
             val tooltip = value.getTooltip()
             assertTrue(
@@ -308,9 +310,9 @@ class TooltipsTest {
         val options = arrayOf(
             R.string.bg_target_opacity_multiplier,
             R.string.bg_replace_color,
-            R.string.bg_target_saturation_multiplier,
+            R.string.bg_target_chroma_multiplier,
             R.string.bg_target_hue_offset,
-            R.string.bg_target_luminosity_offset
+            R.string.bg_target_lightness_offset
         )
         for (optionResId in options) {
             val tooltip = getColorFunctionTooltip(optionResId)
