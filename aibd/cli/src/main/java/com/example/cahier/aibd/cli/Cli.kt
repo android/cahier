@@ -540,7 +540,7 @@ fun main() {
         .addSubcommand("/help", CommandLine.HelpCommand())
         .addSubcommand("/new", NewCommand(harness))
         .addSubcommand("/model", ModelCommand(harness))      
- 	.addSubcommand("/fork", ForkCommand(harness))
+        .addSubcommand("/fork", ForkCommand(harness))
         .addSubcommand("/deploy", DeployCommand(harness, lineReader, terminal, dispatcher))
         .addSubcommand("/resume", ResumeCommand(harness, lineReader))
         .addSubcommand("/image", ImageCommand(harness, terminal, dispatcher))
