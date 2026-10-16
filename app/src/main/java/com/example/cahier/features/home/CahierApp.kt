@@ -17,15 +17,23 @@
 package com.example.cahier.features.home
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.NoteType
 import com.example.cahier.core.navigation.BrushGraphDestination
-import com.example.cahier.core.navigation.CahierNavHost
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.navigation.TextCanvasDestination
-import com.example.cahier.core.ui.CahierTextureBitmapStore
+import com.example.cahier.developer.brushgraph.ui.BrushGraphScreen
+import com.example.cahier.features.drawing.DrawingCanvas
+import com.example.cahier.features.text.TextNoteCanvasScreen
 
 @Composable
 fun CahierApp(
@@ -65,4 +73,63 @@ fun CahierApp(
         textureStore = textureStore,
         modifier = modifier
     )
+}
+
+@OptIn(ExperimentalComposeApi::class)
+@Composable
+private fun CahierNavHost(
+    navController: NavHostController,
+    textureStore: CahierTextureBitmapStore,
+    modifier: Modifier = Modifier,
+) {
+    NavHost(
+        navController = navController,
+        startDestination = HomeDestination.route,
+        modifier = modifier
+    ) {
+        composable(HomeDestination.route) {
+            HomePane(
+                navigateToCanvas = { noteId ->
+                    navController.navigate("${TextCanvasDestination.route}/$noteId")
+                },
+                navigateToDrawingCanvas = { noteId ->
+                    navController.navigate("${DrawingCanvasDestination.route}/$noteId")
+                },
+                navigateUp = {
+                    navController.navigateUp()
+                },
+                navigateToBrushGraph = {
+                    navController.navigate(BrushGraphDestination.route)
+                },
+
+                )
+        }
+        composable(
+            route = TextCanvasDestination.routeWithArgs,
+            arguments = listOf(navArgument(TextCanvasDestination.NOTE_ID_ARG) {
+                type = NavType.LongType
+            })
+        ) { navBackStackEntry ->
+            TextNoteCanvasScreen(
+                onExit = { navController.navigateUp() },
+            )
+        }
+        composable(
+            route = DrawingCanvasDestination.routeWithArgs,
+            arguments = listOf(navArgument(DrawingCanvasDestination.NOTE_ID_ARG) {
+                type = NavType.LongType
+            })
+        ) { navBackStackEntry ->
+            DrawingCanvas(
+                navigateUp = { navController.navigateUp() },
+                navigateToBrushGraph = { navController.navigate(BrushGraphDestination.route) }
+            )
+        }
+        composable(route = BrushGraphDestination.route) {
+            BrushGraphScreen(
+                onNavigateUp = { navController.navigateUp() }
+            )
+        }
+
+    }
 }

@@ -40,31 +40,31 @@ fun DampingNodeFields(
     onDropdownEditComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val limits = dampingNode.dampingSource.getNumericLimits(ProgressDomainContext.DAMPING)
+    val limits = dampingNode.dampOver.getNumericLimits(ProgressDomainContext.DAMPING)
     Column(modifier = modifier) {
         FieldWithTooltip(
             tooltipTitle = stringResource(
-                R.string.bg_title_damping_source_format,
-                stringResource(dampingNode.dampingSource.displayStringRId())
+                R.string.bg_title_damp_over_format,
+                stringResource(dampingNode.dampOver.displayStringRId())
             ),
-            tooltipText = stringResource(dampingNode.dampingSource.getTooltip()),
+            tooltipText = stringResource(dampingNode.dampOver.getTooltip()),
         ) {
             EnumDropdown(
-                label = stringResource(R.string.bg_damping_source),
-                currentValue = dampingNode.dampingSource,
+                label = stringResource(R.string.bg_damp_over),
+                currentValue = dampingNode.dampOver,
                 values = ALL_PROGRESS_DOMAINS.toList(),
                 displayName = { stringResource(it.displayStringRId()) },
                 onSelected = { domain ->
                     val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
-                    val clampedGap = dampingNode.dampingGap.coerceIn(newLimits.min, newLimits.max)
+                    val clampedGap = dampingNode.strength.coerceIn(newLimits.min, newLimits.max)
 
                     onUpdate(
                         NodeData.Behavior(
                             behaviorNode.toBuilder()
                                 .setDampingNode(
                                     dampingNode.toBuilder()
-                                        .setDampingSource(domain)
-                                        .setDampingGap(clampedGap)
+                                        .setDampOver(domain)
+                                        .setStrength(clampedGap)
                                         .build()
                                 )
                                 .build()
@@ -76,14 +76,14 @@ fun DampingNodeFields(
         }
 
         NumericField(
-            title = stringResource(R.string.bg_label_damping_gap),
-            value = dampingNode.dampingGap,
+            title = stringResource(R.string.bg_label_strength),
+            value = dampingNode.strength,
             limits = limits,
             onValueChanged = {
                 onUpdate(
                     NodeData.Behavior(
                         behaviorNode.toBuilder()
-                            .setDampingNode(dampingNode.toBuilder().setDampingGap(it).build())
+                            .setDampingNode(dampingNode.toBuilder().setStrength(it).build())
                             .build()
                     )
                 )

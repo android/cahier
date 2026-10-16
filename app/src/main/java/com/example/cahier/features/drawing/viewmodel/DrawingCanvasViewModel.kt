@@ -52,15 +52,16 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
 import com.example.cahier.core.data.AUTOSAVE_KEY
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.CustomBrush
 import com.example.cahier.core.data.CustomBrushDao
 import com.example.cahier.core.data.CustomBrushEntity
+import com.example.cahier.core.data.CustomBrushes
 import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.navigation.DrawingCanvasDestination
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.ui.CahierUiState
 import com.example.cahier.core.utils.FileHelper
-import com.example.cahier.features.drawing.CustomBrushes
+import ink.proto.BrushFamily as ProtoBrushFamily
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -511,7 +512,7 @@ class DrawingCanvasViewModel @Inject constructor(
                         GZIPInputStream(ByteArrayInputStream(entity.brushBytes))
                             .use { gzip ->
                                 val rawProtoBytes = gzip.readBytes()
-                                val proto = ink.proto.BrushFamily.parseFrom(rawProtoBytes)
+                                val proto = ProtoBrushFamily.parseFrom(rawProtoBytes)
 
                                 proto.textureIdToBitmapMap.forEach { (id, byteString) ->
                                     val bitmapBytes = byteString.toByteArray()
@@ -557,7 +558,6 @@ class DrawingCanvasViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         viewModelScope.launch {
             saveStrokes()
         }

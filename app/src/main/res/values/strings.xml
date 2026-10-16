@@ -174,7 +174,7 @@
     <string name="bg_out_of_range_behavior">Out of Range Behavior</string>
     <string name="bg_vary_over">Vary Over</string>
     <string name="bg_enabled_tool_types">Enabled Tool Types:</string>
-    <string name="bg_damping_source">Damping Source</string>
+    <string name="bg_damp_over">Damp Over</string>
     <string name="bg_integrate_over">Integrate Over</string>
     <string name="bg_operation">Operation</string>
     <string name="bg_interpolation">Interpolation</string>
@@ -399,6 +399,8 @@
     <string name="bg_source_acceleration_forward_absolute">acceleration forward (absolute)</string>
     <string name="bg_source_acceleration_lateral_absolute">acceleration lateral (absolute)</string>
     <string name="bg_source_distance_remaining_fraction">distance remaining (fraction)</string>
+    <string name="bg_source_barrel_twist">barrel twist</string>
+    <string name="bg_source_barrel_twist_about_zero">barrel twist about zero</string>
     <string name="bg_target_width_multiplier">width multiplier</string>
     <string name="bg_target_height_multiplier">height multiplier</string>
     <string name="bg_target_size_multiplier">size multiplier</string>
@@ -411,8 +413,8 @@
     <string name="bg_target_position_offset_forward">position offset forward</string>
     <string name="bg_target_position_offset_lateral">position offset lateral</string>
     <string name="bg_target_hue_offset">hue offset</string>
-    <string name="bg_target_saturation_multiplier">saturation multiplier</string>
-    <string name="bg_target_luminosity_offset">luminosity offset</string>
+    <string name="bg_target_chroma_multiplier">chroma multiplier</string>
+    <string name="bg_target_lightness_offset">lightness offset</string>
     <string name="bg_target_opacity_multiplier">opacity multiplier</string>
     <string name="bg_polar_target_position_offset_absolute">position offset absolute</string>
     <string name="bg_polar_target_position_offset_relative">position offset relative</string>
@@ -455,7 +457,7 @@
     <string name="bg_label_range_start">Range Start</string>
     <string name="bg_label_range_end">Range End</string>
     <string name="bg_label_base_period">Base Period</string>
-    <string name="bg_label_damping_gap">Damping Gap</string>
+    <string name="bg_label_strength">Strength</string>
     <string name="bg_label_angle_start">Angle Start</string>
     <string name="bg_label_angle_end">Angle End</string>
     <string name="bg_label_mag_start">Mag Start</string>
@@ -472,7 +474,7 @@
 
     <string name="bg_title_out_of_range_behavior_format">Out of Range Behavior: %1$s</string>
     <string name="bg_title_vary_over_format">Vary Over: %1$s</string>
-    <string name="bg_title_damping_source_format">Damping Source: %1$s</string>
+    <string name="bg_title_damp_over_format">Damp Over: %1$s</string>
     <string name="bg_title_operation_format">Operation: %1$s</string>
     <string name="bg_title_interpolation_format">Interpolation: %1$s</string>
     <string name="bg_title_target_format">Target: %1$s</string>
@@ -511,8 +513,8 @@
     <string name="bg_label_step_count">Step Count</string>
     <string name="bg_label_opacity_multiplier">Opacity Multiplier</string>
     <string name="bg_label_hue_offset">Hue Offset</string>
-    <string name="bg_label_saturation_multiplier">Saturation Multiplier</string>
-    <string name="bg_label_luminosity_offset">Luminosity Offset</string>
+    <string name="bg_label_chroma_multiplier">Chroma Multiplier</string>
+    <string name="bg_label_lightness_offset">Lightness Offset</string>
 
     <!-- Tooltips -->
     <!-- NodeData Tooltips -->
@@ -545,15 +547,12 @@
     <string name="bg_tooltip_source_direction_x">Signed X component of the modeled stroke input\'s current direction of travel, normalized to the range [-1, 1]. It indicates the horizontal direction the stroke is moving.</string>
     <string name="bg_tooltip_source_direction_y">Signed Y component of the modeled stroke input\'s current direction of travel, normalized to the range [-1, 1]. It indicates the vertical direction the stroke is moving.</string>
     <string name="bg_tooltip_source_distance_traveled">Distance traveled by the inputs of the current stroke, starting at 0 at the first input, where one distance unit is equal to the brush size. This is useful for effects that change progressively along the stroke.</string>
-    <string name="bg_tooltip_source_time_of_input_s">The time elapsed (in seconds) from when the stroke started to when this part of the stroke was drawn. The value remains fixed for any given part of the stroke once drawn.</string>
     <string name="bg_tooltip_source_predicted_distance_traveled">Distance traveled by the inputs of the current prediction, starting at 0 at the last non-predicted input, in multiples of the brush size.</string>
-    <string name="bg_tooltip_source_predicted_time_elapsed_s">Elapsed time (in seconds) of the prediction, starting at 0 at the last non-predicted input.</string>
     <string name="bg_tooltip_source_tilt_x">Stylus tilt along the horizontal axis, in radians. Positive values correspond to tilt toward the right.</string>
     <string name="bg_tooltip_source_tilt_y">Stylus tilt along the vertical axis, in radians. Positive values correspond to tilt downward.</string>
     <string name="bg_tooltip_source_orientation">Stylus orientation or angle relative to the screen, in radians from 0 to 2π.</string>
     <string name="bg_tooltip_source_orientation_about_zero">Stylus orientation centered around zero, in radians from -π to π.</string>
     <string name="bg_tooltip_source_distance_remaining">Estimated distance remaining to the end of the stroke, in multiples of brush size. This changes dynamically as you draw.</string>
-    <string name="bg_tooltip_source_time_since_input_s">Time elapsed since this specific input was recorded, in seconds. This continues to increase and can drive post-stroke animations.</string>
     <string name="bg_tooltip_source_direction">Angle of the direction of travel, in radians from 0 to 2π.</string>
     <string name="bg_tooltip_source_direction_about_zero">Angle of the direction of travel, centered around zero, in radians from -π to π.</string>
     <string name="bg_tooltip_source_acceleration">Absolute acceleration of the stroke input, in multiples of brush size per second squared.</string>
@@ -575,6 +574,11 @@
     <string name="bg_tooltip_source_time_since_stroke_end">Time elapsed since the stroke ended, in seconds. Useful for post-stroke effects.</string>
     <string name="bg_tooltip_source_unspecified">Unspecified input source.</string>
     <string name="bg_tooltip_source_time_from_input_to_stroke_end">Time elapsed from the current modeled stroke input until the last input in the stroke.</string>
+    <string name="bg_tooltip_source_time_of_input_s">The time elapsed (in seconds) from when the stroke started to when this part of the stroke was drawn. The value remains fixed for any given part of the stroke once drawn.</string>
+    <string name="bg_tooltip_source_predicted_time_elapsed_s">Elapsed time (in seconds) of the prediction, starting at 0 at the last non-predicted input.</string>
+    <string name="bg_tooltip_source_time_since_input_s">Time elapsed since this specific input was recorded, in seconds. This continues to increase and can drive post-stroke animations.</string>
+    <string name="bg_tooltip_source_barrel_twist">Measures the twist of the stylus around its axis.</string>
+    <string name="bg_tooltip_source_barrel_twist_about_zero">Measures the twist of the stylus around its axis, centered around zero.</string>
     <!-- Target Tooltips -->
     <string name="bg_tooltip_target_width_multiplier">Scales the brush tip width. If multiple behaviors target this or size multiplier, they combine multiplicatively. The final width is clamped to a maximum of twice the baseline width.</string>
     <string name="bg_tooltip_target_height_multiplier">Scales the brush tip height. If multiple behaviors target this or size multiplier, they combine multiplicatively. The final height is clamped to a maximum of twice the baseline height.</string>
@@ -582,8 +586,8 @@
     <string name="bg_tooltip_target_rotation_offset">Adds an offset to the brush tip rotation. The final rotation angle is normalized modulo 2π. If multiple behaviors have this target, they stack additively.</string>
     <string name="bg_tooltip_target_corner_rounding_offset">Adds an offset to the brush tip corner rounding. The final value is clamped to the range [0, 1]. If multiple behaviors have this target, they stack additively.</string>
     <string name="bg_tooltip_target_hue_offset">Shifts the hue of the brush color. A positive offset shifts around the hue wheel from red towards orange. If multiple behaviors have this target, they stack additively.</string>
-    <string name="bg_tooltip_target_saturation_multiplier">Scales the saturation of the brush color. If multiple behaviors have this target, they stack multiplicatively. The final multiplier is clamped to [0, 2].</string>
-    <string name="bg_tooltip_target_luminosity" formatted="false">Modifies the luminosity of the brush color. An offset of +/-100% corresponds to changing the luminosity by up to +/-100%.</string>
+    <string name="bg_tooltip_target_chroma_multiplier">Scales the chroma of the brush color. If multiple behaviors have this target, they stack multiplicatively. The final multiplier is clamped to [0, 2].</string>
+    <string name="bg_tooltip_target_lightness" formatted="false">Modifies the lightness of the brush color. An offset of +/-100% corresponds to changing the lightness by up to +/-100%.</string>
     <string name="bg_tooltip_target_slant_offset">Adds an offset to the brush tip slant. This tilts the shape of the tip. If multiple behaviors have this target, they stack additively.</string>
     <string name="bg_tooltip_target_pinch_offset">Adds an offset to the brush tip pinch. This brings the upper corners of the tip closer together. If multiple behaviors have this target, they stack additively.</string>
     <string name="bg_tooltip_target_opacity_multiplier">Scales the opacity of the brush color. If multiple behaviors have this target, they stack multiplicatively. The final multiplier is clamped to [0, 2].</string>
@@ -693,8 +697,8 @@
     <string name="bg_tooltip_color_func_opacity">Multiplies the opacity of the stroke by the specified value.</string>
     <string name="bg_tooltip_color_func_replace">Replaces the brush color with a specified color, ignoring the baseline color for this function\'s output.</string>
     <string name="bg_tooltip_color_func_hue">Offsets the hue of the stroke by the specified value.</string>
-    <string name="bg_tooltip_color_func_saturation">Multiplies the saturation of the stroke by the specified value.</string>
-    <string name="bg_tooltip_color_func_luminosity">Offsets the luminosity of the stroke by the specified value.</string>
+    <string name="bg_tooltip_color_func_chroma">Multiplies the chroma of the stroke by the specified value.</string>
+    <string name="bg_tooltip_color_func_lightness">Offsets the lightness of the stroke by the specified value.</string>
     <string name="bg_tooltip_color_func_default">Selects the type of color function to apply.</string>
     <!-- Tutorial Strings -->
     <string name="bg_tutorial_welcome_title">Welcome!</string>
@@ -716,7 +720,7 @@
     <string name="bg_tutorial_brush_behaviors_title">Brush Behaviors</string>
     <string name="bg_tutorial_brush_behaviors_message">In addition to defining a shape, a Tip contains behaviors. In a behavior, a \'Source\' collects data from the input (e.g., pressure, speed), normalizes it, and passes it to a \'Target\' which uses that data to modify a value that affect the appearance of the stroke (e.g., color, size).</string>
     <string name="bg_tutorial_add_behavior_title">Add Behavior</string>
-    <string name="bg_tutorial_add_behavior_message">The \'+...\' buttons on nodes will add a default node that produces an output compatible as input for the other node, and connect the two. Begin by adding a new behavior to the tip by clicking \'+ Behavior\'. </string>
+    <string name="bg_tutorial_add_behavior_message">The \'+…\' buttons on nodes will add a default node that produces an output compatible as input for the other node, and connect the two. Begin by adding a new behavior to the tip by clicking \'+ Behavior\'. </string>
     <string name="bg_tutorial_error_title">Error!</string>
     <string name="bg_tutorial_error_message">Uh-oh, this causes an error! Click the error icon in the upper right corner to take a closer look.</string>
     <string name="bg_tutorial_notification_pane_title">Notification Pane</string>

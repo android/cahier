@@ -28,7 +28,7 @@ private class ConversionContext(
     val graph: BrushGraph,
     val nodesById: Map<String, GraphNode>,
     val edgesByToNode: Map<String, List<GraphEdge>>,
-    val behaviorCache: MutableMap<String, List<List<ink.proto.BrushBehavior.Node>>> = mutableMapOf(),
+    val behaviorCache: MutableMap<String, List<List<ProtoBrushBehavior.Node>>> = mutableMapOf(),
 )
 
 /** Utility to convert a [BrushGraph] data model into a functional [BrushFamily] object. */
@@ -92,7 +92,7 @@ object BrushFamilyConverter {
     fun createCoat(
         coatNode: GraphNode,
         graph: BrushGraph,
-        behaviorCache: MutableMap<String, List<List<ink.proto.BrushBehavior.Node>>> = mutableMapOf(),
+        behaviorCache: MutableMap<String, List<List<ProtoBrushBehavior.Node>>> = mutableMapOf(),
     ): ProtoBrushCoat {
         val nodesById = graph.nodes.associateBy { it.id }
         val edgesByToNode = graph.edges.filter { !it.isDisabled }.groupBy { it.toNodeId }
@@ -227,13 +227,13 @@ object BrushFamilyConverter {
 
         val ids = if (data.inputPortIds.isEmpty()) {
             when (nodeCase) {
-                ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE -> listOf("input_0", "input_1")
-                ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> listOf(
+                ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> listOf("input_0", "input_1")
+                ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> listOf(
                     "angle_0",
                     "mag_0"
                 )
 
-                ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf(
+                ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> listOf(
                     "Value",
                     "Start",
                     "End"
@@ -247,7 +247,7 @@ object BrushFamilyConverter {
             inputEdges.find { it.toPortId == portId }
         }
 
-        if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.BINARY_OP_NODE) {
+        if (nodeCase == ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE) {
             val setLists = mutableListOf<List<List<ProtoBrushBehavior.Node>>>()
 
             for (edge in sortedEdges) {

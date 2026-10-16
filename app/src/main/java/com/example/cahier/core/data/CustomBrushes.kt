@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.cahier.features.drawing
+package com.example.cahier.core.data
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -23,8 +23,6 @@ import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.Version
 import androidx.ink.storage.decode
 import com.example.cahier.R
-import com.example.cahier.core.data.CustomBrush
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 
 
 object CustomBrushes {

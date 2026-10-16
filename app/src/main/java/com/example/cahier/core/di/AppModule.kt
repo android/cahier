@@ -21,13 +21,13 @@ package com.example.cahier.core.di
 import android.content.Context
 import androidx.room.Room
 import coil3.ImageLoader
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.CustomBrushDao
 import com.example.cahier.core.data.MIGRATION_7_8
 import com.example.cahier.core.data.MIGRATION_8_9
 import com.example.cahier.core.data.NoteDatabase
 import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.data.OfflineNotesRepository
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.utils.FileHelper
 import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
 import com.example.cahier.developer.brushgraph.data.DefaultBrushGraphRepository
@@ -39,12 +39,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import javax.inject.Qualifier
 import javax.inject.Singleton
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)

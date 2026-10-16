@@ -244,9 +244,8 @@ fun CollapsiblePreviewPane(
                                 .fillMaxHeight()
                         ) {
                             val scrollState = rememberScrollState()
-                            val showLeftFade = scrollState.value > 0
-                            val showRightFade =
-                                scrollState.value < scrollState.maxValue && scrollState.maxValue > 0
+                            val showLeftFade = scrollState.canScrollBackward
+                            val showRightFade = scrollState.canScrollForward
 
                             Box(
                                 modifier = Modifier.fillMaxHeight(),

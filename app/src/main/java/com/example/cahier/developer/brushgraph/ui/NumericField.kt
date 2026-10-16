@@ -44,69 +44,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import java.util.Locale
-import kotlin.math.PI
+import com.example.cahier.developer.brushgraph.data.NumericLimits
 
-/**
- * Defines display limits and unit conversion for numeric fields.
- *
- * @param min minimum display value
- * @param max maximum display value
- * @param step increment/decrement step in display units
- * @param displayUnit suffix shown after the value (e.g. "°", "%")
- * @param unitScale multiplier to convert real value → display value
- */
-class NumericLimits(
-    val min: Float,
-    val max: Float,
-    val step: Float = 0.01f,
-    val displayUnit: String = "",
-    val unitScale: Float = 1.0f,
-) {
-    /** Convert a display value back to the real value as described by [unitScale]. */
-    fun toRealValue(displayValue: Float): Float = displayValue / unitScale
-
-    /** Convert a real value to the display value as described by [unitScale]. */
-    fun fromRealValue(realValue: Float): Float = realValue * unitScale
-
-    /** Format a display value with its unit suffix. */
-    fun format(displayValue: Float): String {
-        val formatted = if (displayValue == displayValue.toLong().toFloat()) {
-            displayValue.toLong().toString()
-        } else {
-            String.format(Locale.US, "%.2f", displayValue)
-        }
-        return "$formatted$displayUnit"
-    }
-
-    companion object {
-        /** Values stored as 0..1 shown as 0..100% */
-        fun floatShownAsPercent(
-            minPercent: Float = 0f,
-            maxPercent: Float = 100f,
-        ): NumericLimits =
-            NumericLimits(
-                min = minPercent,
-                max = maxPercent,
-                step = 1f,
-                displayUnit = "%",
-                unitScale = 100f
-            )
-
-        /** Values stored in radians, shown in degrees */
-        fun radiansShownAsDegrees(
-            minDegrees: Float,
-            maxDegrees: Float,
-        ): NumericLimits =
-            NumericLimits(
-                min = minDegrees,
-                max = maxDegrees,
-                step = 1f,
-                displayUnit = "°",
-                unitScale = (180f / PI.toFloat())
-            )
-    }
-}
 
 /**
  * A professional numeric input with a slider, ± buttons, and a click-to-edit

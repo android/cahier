@@ -16,14 +16,13 @@
 package com.example.cahier.developer.brushgraph.data
 
 import com.example.cahier.developer.brushgraph.data.BrushGraphConverter
-import com.example.cahier.developer.brushgraph.data.BrushGraph
-import com.example.cahier.developer.brushgraph.data.GraphNode
-import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.NodeData
 import ink.proto.BrushBehavior
 import ink.proto.BrushTip
 import ink.proto.BrushPaint
 import ink.proto.BrushFamily
+import ink.proto.BrushCoat
+import ink.proto.ColorFunction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,7 +30,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import com.example.cahier.R
-import java.util.UUID
 
 @RunWith(RobolectricTestRunner::class)
 class BrushGraphConverterTest {
@@ -50,7 +48,7 @@ class BrushGraphConverterTest {
             .build()
             
         val familyProto = BrushFamily.newBuilder()
-            .addCoats(ink.proto.BrushCoat.newBuilder().setTip(tipProto).build())
+            .addCoats(BrushCoat.newBuilder().setTip(tipProto).build())
             .build()
             
         val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
@@ -76,7 +74,7 @@ class BrushGraphConverterTest {
             .build()
             
         val familyProto = BrushFamily.newBuilder()
-            .addCoats(ink.proto.BrushCoat.newBuilder().setTip(tipProto).build())
+            .addCoats(BrushCoat.newBuilder().setTip(tipProto).build())
             .build()
             
         val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
@@ -94,27 +92,27 @@ class BrushGraphConverterTest {
 
     @Test
     fun fromProtoBrushFamily_polarTargetNodes_areDeduplicated() {
-        val sourceNode = ink.proto.BrushBehavior.Node.newBuilder()
-            .setSourceNode(ink.proto.BrushBehavior.SourceNode.newBuilder().setSource(ink.proto.BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).build())
+        val sourceNode = BrushBehavior.Node.newBuilder()
+            .setSourceNode(BrushBehavior.SourceNode.newBuilder().setSource(BrushBehavior.Source.SOURCE_NORMALIZED_PRESSURE).build())
             .build()
             
-        val polarTargetNode = ink.proto.BrushBehavior.Node.newBuilder()
-            .setPolarTargetNode(ink.proto.BrushBehavior.PolarTargetNode.newBuilder().build())
+        val polarTargetNode = BrushBehavior.Node.newBuilder()
+            .setPolarTargetNode(BrushBehavior.PolarTargetNode.newBuilder().build())
             .build()
             
-        val behaviorProto1 = ink.proto.BrushBehavior.newBuilder()
+        val behaviorProto1 = BrushBehavior.newBuilder()
             .addNodes(sourceNode)
             .addNodes(sourceNode)
             .addNodes(polarTargetNode)
             .build()
             
-        val tipProto = ink.proto.BrushTip.newBuilder()
+        val tipProto = BrushTip.newBuilder()
             .addBehaviors(behaviorProto1)
             .addBehaviors(behaviorProto1)
             .build()
             
-        val familyProto = ink.proto.BrushFamily.newBuilder()
-            .addCoats(ink.proto.BrushCoat.newBuilder().setTip(tipProto).build())
+        val familyProto = BrushFamily.newBuilder()
+            .addCoats(BrushCoat.newBuilder().setTip(tipProto).build())
             .build()
             
         val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
@@ -137,7 +135,7 @@ class BrushGraphConverterTest {
             .build()
             
         val familyProto = BrushFamily.newBuilder()
-            .addCoats(ink.proto.BrushCoat.newBuilder().addPaintPreferences(paintProto1).addPaintPreferences(paintProto2).build())
+            .addCoats(BrushCoat.newBuilder().addPaintPreferences(paintProto1).addPaintPreferences(paintProto2).build())
             .build()
             
         val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
@@ -148,7 +146,7 @@ class BrushGraphConverterTest {
 
     @Test
     fun fromProtoBrushFamily_colorFunctionNodes_areDeduplicated() {
-        val colorFunction1 = ink.proto.ColorFunction.getDefaultInstance()
+        val colorFunction1 = ColorFunction.getDefaultInstance()
             
         val paintProto1 = BrushPaint.newBuilder()
             .addColorFunctions(colorFunction1)
@@ -159,7 +157,7 @@ class BrushGraphConverterTest {
             .build()
             
         val familyProto = BrushFamily.newBuilder()
-            .addCoats(ink.proto.BrushCoat.newBuilder().addPaintPreferences(paintProto1).addPaintPreferences(paintProto2).build())
+            .addCoats(BrushCoat.newBuilder().addPaintPreferences(paintProto1).addPaintPreferences(paintProto2).build())
             .build()
             
         val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
@@ -186,7 +184,7 @@ class BrushGraphConverterTest {
         for (resId in brushResources) {
             val stream = RuntimeEnvironment.getApplication().resources.openRawResource(resId)
             val gis = java.util.zip.GZIPInputStream(stream)
-            val originalProto = ink.proto.BrushFamily.parseFrom(gis)
+            val originalProto = BrushFamily.parseFrom(gis)
 
             val graph = BrushGraphConverter.fromProtoBrushFamily(originalProto)
             val roundTrippedProto = BrushFamilyConverter.convertIntoProto(graph)
@@ -233,7 +231,7 @@ class BrushGraphConverterTest {
             .build()
 
         val familyProto = BrushFamily.newBuilder()
-            .addCoats(ink.proto.BrushCoat.newBuilder().setTip(tipProto).build())
+            .addCoats(BrushCoat.newBuilder().setTip(tipProto).build())
             .build()
 
         val graph = BrushGraphConverter.fromProtoBrushFamily(familyProto)
@@ -244,7 +242,7 @@ class BrushGraphConverterTest {
         assertTrue(behaviorNodes.any { (it.data as NodeData.Behavior).developerComment == "Comment B" })
     }
 
-    private fun collectTargets(tip: ink.proto.BrushTip): Set<String> {
+    private fun collectTargets(tip: BrushTip): Set<String> {
         val targets = mutableSetOf<String>()
         for (behavior in tip.behaviorsList) {
             for (node in behavior.nodesList) {

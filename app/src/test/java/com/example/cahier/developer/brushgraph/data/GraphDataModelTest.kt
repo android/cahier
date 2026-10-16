@@ -15,8 +15,6 @@
  */
 package com.example.cahier.developer.brushgraph.data
 
-import com.example.cahier.developer.brushgraph.data.Port
-import com.example.cahier.developer.brushgraph.data.PortSide
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.BrushGraph
@@ -25,6 +23,8 @@ import com.example.cahier.developer.brushgraph.data.GraphEdge
 import com.example.cahier.developer.brushgraph.data.getVisiblePorts
 import com.example.cahier.R
 import ink.proto.BrushBehavior as ProtoBrushBehavior
+import ink.proto.ColorFunction as ProtoColorFunction
+import ink.proto.BrushPaint as ProtoBrushPaint
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -162,7 +162,7 @@ class GraphDataModelTest {
 
     @Test
     fun getVisiblePorts_paintNoConnections_returnsAddTextureAndAddColorPorts() {
-        val node = GraphNode(id = "1", data = NodeData.Paint(paint = ink.proto.BrushPaint.getDefaultInstance()))
+        val node = GraphNode(id = "1", data = NodeData.Paint(paint = ProtoBrushPaint.getDefaultInstance()))
         val graph = BrushGraph(nodes = listOf(node))
         val ports = node.getVisiblePorts(graph)
         
@@ -178,13 +178,13 @@ class GraphDataModelTest {
         val node = GraphNode(
             id = "1",
             data = NodeData.Paint(
-                paint = ink.proto.BrushPaint.getDefaultInstance(),
+                paint = ProtoBrushPaint.getDefaultInstance(),
                 texturePortIds = listOf("texture_0"),
                 colorPortIds = listOf("color_0")
             )
         )
-        val textureNode = GraphNode(id = "2", data = NodeData.TextureLayer(layer = ink.proto.BrushPaint.TextureLayer.getDefaultInstance()))
-        val colorNode = GraphNode(id = "3", data = NodeData.ColorFunction(function = ink.proto.ColorFunction.getDefaultInstance()))
+        val textureNode = GraphNode(id = "2", data = NodeData.TextureLayer(layer = ProtoBrushPaint.TextureLayer.getDefaultInstance()))
+        val colorNode = GraphNode(id = "3", data = NodeData.ColorFunction(function = ProtoColorFunction.getDefaultInstance()))
         
         val edge1 = GraphEdge(fromNodeId = "2", toNodeId = "1", toPortId = "texture_0")
         val edge2 = GraphEdge(fromNodeId = "3", toNodeId = "1", toPortId = "color_0")

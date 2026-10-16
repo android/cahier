@@ -17,18 +17,24 @@ package com.example.cahier.developer.brushgraph.data
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.Version
 import androidx.ink.storage.decode
 import androidx.ink.storage.encode
 import com.example.cahier.R
 import com.example.cahier.core.data.AUTOSAVE_KEY
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.CustomBrushDao
 import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.di.ApplicationScope
-import com.example.cahier.core.ui.CahierTextureBitmapStore
+import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
+import ink.proto.BrushBehavior as ProtoBrushBehavior
+import ink.proto.BrushCoat as ProtoBrushCoat
+import ink.proto.BrushFamily as ProtoBrushFamily
+import ink.proto.BrushPaint as ProtoBrushPaint
+import ink.proto.BrushTip as ProtoBrushTip
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +54,6 @@ import java.io.ByteArrayOutputStream
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
-import ink.proto.PredefinedEasingFunction as ProtoPredefinedEasingFunction
 
 interface BrushGraphRepository {
     val graph: StateFlow<BrushGraph>
@@ -208,7 +213,7 @@ class DefaultBrushGraphRepository @Inject constructor(
     override suspend fun importBrushFromUri(uriString: String): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                val uri = Uri.parse(uriString)
+                val uri = uriString.toUri()
                 val inputStream = context.contentResolver.openInputStream(uri)
                 val maxBytes = 10 * 1024 * 1024 // 10 MB limit
                 val bytes = inputStream?.use { input ->
@@ -370,7 +375,7 @@ class DefaultBrushGraphRepository @Inject constructor(
 
                 is Port.AddInput -> {
                     val data = toData as NodeData.Behavior
-                    if (data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+                    if (data.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
                         val newPortId1 = UUID.randomUUID().toString()
                         val newPortId2 = UUID.randomUUID().toString()
                         val newData = data.copy(
@@ -461,7 +466,7 @@ class DefaultBrushGraphRepository @Inject constructor(
 
                 is NodeData.Behavior -> {
                     val nodeCase = toData.node.nodeCase
-                    if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+                    if (nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
                         val chunkedIds = toData.inputPortIds.chunked(2)
                         val pair = chunkedIds.find { it.contains(edge.toPortId) }
                         if (pair != null && pair.size == 2) {
@@ -480,7 +485,7 @@ class DefaultBrushGraphRepository @Inject constructor(
                                 modifiedNodeIds.add(edge.toNodeId)
                             }
                         }
-                    } else if (nodeCase == ink.proto.BrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
+                    } else if (nodeCase == ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE) {
                         // Do nothing to inputPortIds for fixed schema nodes!
                     } else {
                         if (toData.inputPortIds.contains(edge.toPortId)) {
@@ -626,7 +631,7 @@ class DefaultBrushGraphRepository @Inject constructor(
             }
 
             is NodeData.Behavior -> {
-                if (data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
+                if (data.node.nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE) {
                     val setSize = 2
                     val fromSet = fromIndex / setSize
                     val toSet = toIndex / setSize
@@ -715,9 +720,9 @@ class DefaultBrushGraphRepository @Inject constructor(
             val newNode = GraphNode(
                 id = id,
                 data = NodeData.Behavior(
-                    node = ink.proto.BrushBehavior.Node.newBuilder()
+                    node = ProtoBrushBehavior.Node.newBuilder()
                         .setResponseNode(
-                            ink.proto.BrushBehavior.ResponseNode.newBuilder()
+                            ProtoBrushBehavior.ResponseNode.newBuilder()
                                 .setPredefinedResponseCurve(ProtoPredefinedEasingFunction.PREDEFINED_EASING_LINEAR)
                         )
                         .build(),
@@ -844,17 +849,17 @@ class DefaultBrushGraphRepository @Inject constructor(
     }
 
     override fun createDefaultGraph(): BrushGraph {
-        val defaultTip = ink.proto.BrushTip.getDefaultInstance()
-        val defaultPaint = ink.proto.BrushPaint.getDefaultInstance()
-        val defaultCoat = ink.proto.BrushCoat.newBuilder()
+        val defaultTip = ProtoBrushTip.getDefaultInstance()
+        val defaultPaint = ProtoBrushPaint.getDefaultInstance()
+        val defaultCoat = ProtoBrushCoat.newBuilder()
             .setTip(defaultTip)
             .addPaintPreferences(defaultPaint)
             .build()
-        val defaultProto = ink.proto.BrushFamily.newBuilder()
+        val defaultProto = ProtoBrushFamily.newBuilder()
             .setInputModel(
-                ink.proto.BrushFamily.InputModel.newBuilder()
+                ProtoBrushFamily.InputModel.newBuilder()
                     .setSlidingWindowModel(
-                        ink.proto.BrushFamily.SlidingWindowModel.newBuilder()
+                        ProtoBrushFamily.SlidingWindowModel.newBuilder()
                             .setWindowSizeSeconds(0.02f)
                             .setExperimentalUpsamplingPeriodSeconds(0.005f)
                     )

@@ -86,6 +86,8 @@ fun ProtoBrushBehavior.Source.getTooltip(): Int = when (this) {
     ProtoBrushBehavior.Source.SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH -> R.string.bg_tooltip_source_distance_remaining_fraction
     ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS -> R.string.bg_tooltip_source_time_since_stroke_end
     ProtoBrushBehavior.Source.SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS -> R.string.bg_tooltip_source_time_from_input_to_stroke_end
+    ProtoBrushBehavior.Source.SOURCE_BARREL_TWIST_ABOUT_ZERO_IN_RADIANS -> R.string.bg_tooltip_source_barrel_twist_about_zero
+    ProtoBrushBehavior.Source.SOURCE_BARREL_TWIST_IN_RADIANS -> R.string.bg_tooltip_source_barrel_twist
     ProtoBrushBehavior.Source.SOURCE_UNSPECIFIED -> R.string.bg_tooltip_source_unspecified
 }
 
@@ -96,8 +98,8 @@ fun ProtoBrushBehavior.Target.getTooltip(): Int = when (this) {
     ProtoBrushBehavior.Target.TARGET_ROTATION_OFFSET_IN_RADIANS -> R.string.bg_tooltip_target_rotation_offset
     ProtoBrushBehavior.Target.TARGET_CORNER_ROUNDING_OFFSET -> R.string.bg_tooltip_target_corner_rounding_offset
     ProtoBrushBehavior.Target.TARGET_HUE_OFFSET_IN_RADIANS -> R.string.bg_tooltip_target_hue_offset
-    ProtoBrushBehavior.Target.TARGET_SATURATION_MULTIPLIER -> R.string.bg_tooltip_target_saturation_multiplier
-    ProtoBrushBehavior.Target.TARGET_LUMINOSITY_OFFSET -> R.string.bg_tooltip_target_luminosity
+    ProtoBrushBehavior.Target.TARGET_CHROMA_MULTIPLIER -> R.string.bg_tooltip_target_chroma_multiplier
+    ProtoBrushBehavior.Target.TARGET_LIGHTNESS_OFFSET -> R.string.bg_tooltip_target_lightness
     ProtoBrushBehavior.Target.TARGET_SLANT_OFFSET_IN_RADIANS -> R.string.bg_tooltip_target_slant_offset
     ProtoBrushBehavior.Target.TARGET_PINCH_OFFSET -> R.string.bg_tooltip_target_pinch_offset
     ProtoBrushBehavior.Target.TARGET_OPACITY_MULTIPLIER -> R.string.bg_tooltip_target_opacity_multiplier
@@ -222,8 +224,8 @@ fun getInputModelTooltip(resId: Int): Int = when (resId) {
 fun getColorFunctionTooltip(resId: Int): Int = when (resId) {
     R.string.bg_target_opacity_multiplier -> R.string.bg_tooltip_color_func_opacity
     R.string.bg_replace_color -> R.string.bg_tooltip_color_func_replace
-    R.string.bg_target_luminosity_offset -> R.string.bg_tooltip_color_func_luminosity
+    R.string.bg_target_lightness_offset -> R.string.bg_tooltip_color_func_lightness
     R.string.bg_target_hue_offset -> R.string.bg_tooltip_color_func_hue
-    R.string.bg_target_saturation_multiplier -> R.string.bg_tooltip_color_func_saturation
+    R.string.bg_target_chroma_multiplier -> R.string.bg_tooltip_color_func_chroma
     else -> R.string.bg_tooltip_color_func_default
 }

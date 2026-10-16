@@ -27,8 +27,8 @@ import ink.proto.BrushBehavior as ProtoBrushBehavior
 import ink.proto.BrushFamily as ProtoBrushFamily
 import ink.proto.BrushPaint as ProtoBrushPaint
 import ink.proto.BrushTip as ProtoBrushTip
-import ink.proto.Color as ProtoColor
 import ink.proto.ColorFunction as ProtoColorFunction
+import ink.proto.Color as ProtoColor
 
 /**
  * Converts a [ProtoBrushFamily] into a functional [BrushFamily] object.
@@ -283,7 +283,7 @@ sealed interface NodeData {
                 }
 
                 ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> {
-                    val source = node.dampingNode.dampingSource
+                    val source = node.dampingNode.dampOver
                     val unit = when (source) {
                         ProtoBrushBehavior.ProgressDomain.PROGRESS_DOMAIN_DISTANCE_IN_CENTIMETERS -> DisplayText.Resource(
                             R.string.bg_unit_cm
@@ -303,7 +303,7 @@ sealed interface NodeData {
                         DisplayText.Resource(source.displayStringRId()),
                         DisplayText.Resource(
                             R.string.bg_gap_label,
-                            listOf(node.dampingNode.dampingGap.toString(), unit)
+                            listOf(node.dampingNode.strength.toString(), unit)
                         )
                     )
                 }
@@ -682,10 +682,10 @@ fun Port.inferNodeData(node: GraphNode): NodeData? = when (this) {
         ProtoColorFunction.newBuilder()
             .setReplaceColor(
                 ProtoColor.newBuilder()
-                    .setRed(0f)
-                    .setGreen(0f)
-                    .setBlue(0f)
-                    .setAlpha(1f)
+                    .setR(0f)
+                    .setG(0f)
+                    .setB(0f)
+                    .setA(1f)
                     .build()
             ).build()
     )

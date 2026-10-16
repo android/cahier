@@ -242,19 +242,17 @@ private fun NoteItemContent(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            if (!note.imageUriList.isNullOrEmpty()) {
-                note.imageUriList.forEach { imageUri ->
-                    AsyncImage(
-                        model = imageUri,
-                        contentDescription = stringResource(R.string.note_image_preview),
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        contentScale = ContentScale.Crop,
-                        placeholder = painterResource(id = R.drawable.media)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                }
+            note.imageUriList?.forEach { imageUri ->
+                AsyncImage(
+                    model = imageUri,
+                    contentDescription = stringResource(R.string.note_image_preview),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(id = R.drawable.media)
+                )
+                Spacer(Modifier.width(8.dp))
             }
             NoteItemBody(note)
         }
@@ -272,9 +270,10 @@ private fun NoteItemBody(
     ) {
         when (note.type) {
             NoteType.Text -> {
-                if (!note.text.isNullOrBlank()) {
+                val text = note.text
+                if (!text.isNullOrBlank()) {
                     Text(
-                        text = note.text,
+                        text = text,
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,

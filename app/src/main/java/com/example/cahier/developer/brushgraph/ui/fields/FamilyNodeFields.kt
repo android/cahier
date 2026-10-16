@@ -29,11 +29,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.NumericLimits
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushgraph.ui.NumericField
-import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.ui.getInputModelTooltip
 import ink.proto.BrushFamily as ProtoBrushFamily
 

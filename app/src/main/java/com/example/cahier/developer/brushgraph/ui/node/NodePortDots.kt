@@ -37,6 +37,7 @@ import com.example.cahier.developer.brushgraph.data.isPortReorderable
 import com.example.cahier.developer.brushgraph.ui.INPUT_ROW_HEIGHT
 import com.example.cahier.developer.brushgraph.ui.NODE_PADDING_VERTICAL
 import com.example.cahier.developer.brushgraph.ui.titleHeight
+import ink.proto.BrushBehavior.Node.NodeCase as ProtoNodeCase
 import kotlin.math.roundToInt
 
 @Composable
@@ -58,9 +59,10 @@ fun BoxScope.NodePortDots(
     var activeReorderPortIndex by remember { mutableStateOf<Int?>(null) }
     var cumulativeDeltaY by remember { mutableFloatStateOf(0f) }
     val hasAddPort = visiblePorts.any { it.isAddPort }
+    val data = node.data
 
     val portCounts = remember(graph.edges, graph.nodes, node.id) {
-        if (node.data is NodeData.Paint) {
+        if (data is NodeData.Paint) {
             val nodesById = graph.nodes.associateBy { it.id }
             val textureCount = graph.edges.count { edge ->
                 edge.toNodeId == node.id && nodesById[edge.fromNodeId]?.data is NodeData.TextureLayer
@@ -90,8 +92,8 @@ fun BoxScope.NodePortDots(
                 onPortPositioned = { pos -> onPortPositioned(port.id, pos) },
                 canvasCoordinates = canvasCoordinates,
                 portPosition = getPortPosition(port.id, true) - position,
-                isReorderable = node.data.isPortReorderable(port, index, hasAddPort),
-                isLargeHandle = node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE && index % 2 == 0,
+                isReorderable = data.isPortReorderable(port, index, hasAddPort),
+                isLargeHandle = data is NodeData.Behavior && data.node.nodeCase == ProtoNodeCase.POLAR_TARGET_NODE && index % 2 == 0,
                 onReorderUpdate = { deltaY ->
                     if (activeReorderPortIndex != index) {
                         activeReorderPortIndex = index
@@ -101,9 +103,9 @@ fun BoxScope.NodePortDots(
 
                     val originalY = getPortPosition(port.id, true).y - position.y
                     var maxValidIndex = visiblePorts.size - 2 // Exclude add port
-                    var minValidIndex = if (node.data is NodeData.Coat) 1 else 0
+                    var minValidIndex = if (data is NodeData.Coat) 1 else 0
 
-                    if (node.data is NodeData.Paint) {
+                    if (data is NodeData.Paint) {
                         if (index in 0 until T) {
                             minValidIndex = 0
                             maxValidIndex = T - 1
@@ -114,22 +116,22 @@ fun BoxScope.NodePortDots(
                     }
 
                     val minDragY =
-                        NODE_PADDING_VERTICAL + node.data.titleHeight() + (0 + 0.5f) * INPUT_ROW_HEIGHT
+                        NODE_PADDING_VERTICAL + data.titleHeight() + (0 + 0.5f) * INPUT_ROW_HEIGHT
                     val maxDragY =
-                        NODE_PADDING_VERTICAL + node.data.titleHeight() + (visiblePorts.size - 1 + 0.5f) * INPUT_ROW_HEIGHT
+                        NODE_PADDING_VERTICAL + data.titleHeight() + (visiblePorts.size - 1 + 0.5f) * INPUT_ROW_HEIGHT
 
                     val requestedY = originalY + cumulativeDeltaY
 
                     val isPolarTarget =
-                        node.data is NodeData.Behavior && node.data.node.nodeCase == ink.proto.BrushBehavior.Node.NodeCase.POLAR_TARGET_NODE
+                        data is NodeData.Behavior && data.node.nodeCase == ProtoNodeCase.POLAR_TARGET_NODE
 
                     val targetIndex = if (isPolarTarget) {
                         val setSize = 2
                         val currentSet =
-                            ((requestedY - NODE_PADDING_VERTICAL - node.data.titleHeight()) / (INPUT_ROW_HEIGHT * setSize) - 0.5f).roundToInt()
+                            ((requestedY - NODE_PADDING_VERTICAL - data.titleHeight()) / (INPUT_ROW_HEIGHT * setSize) - 0.5f).roundToInt()
                         currentSet * setSize
                     } else {
-                        ((requestedY - NODE_PADDING_VERTICAL - node.data.titleHeight()) / INPUT_ROW_HEIGHT - 0.5f).roundToInt()
+                        ((requestedY - NODE_PADDING_VERTICAL - data.titleHeight()) / INPUT_ROW_HEIGHT - 0.5f).roundToInt()
                     }
 
                     val currentY = requestedY.coerceIn(minDragY, maxDragY)
@@ -150,7 +152,7 @@ fun BoxScope.NodePortDots(
             )
         }
     }
-    if (node.data.hasOutput()) {
+    if (data.hasOutput()) {
         PortDot(
             modifier = modifier.align(Alignment.TopEnd),
             port = Port.Output(node.id, "output"),

@@ -21,8 +21,10 @@
 
 package com.example.cahier.features.text.viewmodel
 
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
+import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import com.example.cahier.core.data.FakeNotesRepository
 import com.example.cahier.core.data.Note
@@ -41,9 +43,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.kotlin.mock
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 @ExperimentalCoroutinesApi
+@RunWith(RobolectricTestRunner::class)
 class CanvasScreenViewModelTest {
 
     @get:Rule
@@ -52,12 +56,13 @@ class CanvasScreenViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var viewModel: CanvasScreenViewModel
     private lateinit var notesRepository: FakeNotesRepository
-    private val fileHelper: FileHelper = mock()
+    private lateinit var fileHelper: FileHelper
     private var noteId: Long = 0L
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        fileHelper = FileHelper(ApplicationProvider.getApplicationContext<Context>())
         notesRepository = FakeNotesRepository()
         noteId = runBlocking {
             notesRepository.addNote(Note(title = "Initial Title", text = "Initial Text"))

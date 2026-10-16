@@ -19,7 +19,7 @@
  */
 
 
-package com.example.cahier.core.ui
+package com.example.cahier.core.data
 
 import android.util.Log
 import androidx.ink.brush.Brush
@@ -29,10 +29,6 @@ import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.ink.strokes.StrokeInputBatch
 import androidx.room.TypeConverter
-import com.example.cahier.core.data.CustomBrush
-import com.example.cahier.core.data.SerializedBrush
-import com.example.cahier.core.data.SerializedStockBrush
-import com.example.cahier.core.data.SerializedStroke
 import kotlinx.serialization.json.Json
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream

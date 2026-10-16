@@ -64,7 +64,7 @@ enum class TutorialAction {
     CLICK_DONE
 }
 
-val TUTORIAL_STEPS = listOf(
+val TUTORIAL_STEPS : List<TutorialStep> = listOf(
     TutorialStep(
         title = R.string.bg_tutorial_welcome_title,
         message = R.string.bg_tutorial_welcome_message,

@@ -33,9 +33,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import coil3.ImageLoader
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.FakeNotesRepository
 import com.example.cahier.core.navigation.DrawingCanvasDestination
-import com.example.cahier.core.ui.CahierTextureBitmapStore
 import com.example.cahier.core.utils.FileHelper
 import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import dagger.hilt.android.testing.HiltAndroidRule

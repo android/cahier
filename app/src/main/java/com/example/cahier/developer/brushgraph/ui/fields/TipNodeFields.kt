@@ -22,8 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.example.cahier.R
 import com.example.cahier.developer.brushgraph.data.NodeData
+import com.example.cahier.developer.brushgraph.data.NumericLimits
 import com.example.cahier.developer.brushgraph.ui.NumericField
-import com.example.cahier.developer.brushgraph.ui.NumericLimits
 import com.example.cahier.developer.brushgraph.ui.TipPreviewWidget
 
 @Composable

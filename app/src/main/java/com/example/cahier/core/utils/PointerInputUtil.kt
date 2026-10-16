@@ -38,9 +38,9 @@ import androidx.compose.ui.unit.IntSize
  * normal implementation, but has
  * [androidx.compose.ui.node.PointerInputModifierNode.sharePointerInputWithSiblings] return true.
  */
-internal fun Modifier.pointerInputWithSiblingFallthrough(
+fun Modifier.pointerInputWithSiblingFallthrough(
     pointerInputEventHandler: PointerInputEventHandler
-) = this then PointerInputSiblingFallthroughElement(pointerInputEventHandler)
+): Modifier = this then PointerInputSiblingFallthroughElement(pointerInputEventHandler)
 
 private class PointerInputSiblingFallthroughModifierNode(
     pointerInputEventHandler: PointerInputEventHandler
