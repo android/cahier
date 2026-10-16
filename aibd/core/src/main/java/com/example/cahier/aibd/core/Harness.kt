@@ -89,7 +89,7 @@ interface BrushFamilyDeployer {
  */
 class Harness<T>(
   private val imageConverter: ImagePayloadConverter<T>,
-  private val modelName: String = "gemini-3.8-flash",
+  private var modelName: String = "gemini-3.8-flash",
   val storage: Storage = DesktopStorage(File(System.getProperty("user.home"), ".ink-aibd")),
   private val client: Client =
     try {
@@ -125,6 +125,24 @@ class Harness<T>(
   }
 
   private fun createChat(): Chat = client.chats.create(modelName, chatConfig)
+
+  fun getCurrentModel(): String = modelName
+
+  /**
+   * Changes the model used for the current conversation. The model will be used for all future
+   * requests in the current session. Future sessions will still use the default model unless
+   * explicitly set.
+   *
+   * @param modelName The model code for the Gemini model to use. Find model codes under the model
+   *   descriptions available at https://ai.google.dev/gemini-api/docs/models, e.g. gemini-3.5-flash
+   *   for https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash#gemini-35-flash
+   */
+  fun changeModel(modelName: String) {
+    this.modelName = modelName
+    activeConversation =
+      activeConversation.copy(chat = createChat()).saveAsActive()
+        ?: throw IllegalStateException("Failed to change model.")
+  }
 
   /**
    * Starts a new conversation with the given title. If the title is empty, the title will be
