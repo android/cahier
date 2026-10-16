@@ -224,6 +224,29 @@ class NewCommand(private val harness: Harness<ByteArray>) : Runnable {
 }
 
 @Command(
+  name = "/model",
+  description =
+    ["Change the model used for the current conversation. Pass 'current' to see the current model."],
+)
+class ModelCommand(private val harness: Harness<ByteArray>) : Runnable {
+  @Parameters(
+    index = "0",
+    paramLabel = "<model>",
+    description = ["The model to use for the current conversation."],
+  )
+  lateinit var model: String
+
+  override fun run() {
+    if (model == "current") {
+      println("Current model: ${harness.getCurrentModel()}")
+      return
+    }
+    harness.changeModel(model)
+    harness.logAndPrint("Model set to $model")
+  }
+}
+
+@Command(
   name = "/fork",
   description =
     [
@@ -516,6 +539,7 @@ fun main() {
       CommandLine(CliRootCommand())
         .addSubcommand("/help", CommandLine.HelpCommand())
         .addSubcommand("/new", NewCommand(harness))
+        .addSubcommand("/model", ModelCommand(harness))      
         .addSubcommand("/fork", ForkCommand(harness))
         .addSubcommand("/deploy", DeployCommand(harness, lineReader, terminal, dispatcher))
         .addSubcommand("/resume", ResumeCommand(harness, lineReader))
