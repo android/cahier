@@ -89,7 +89,7 @@ interface BrushFamilyDeployer {
  */
 class Harness<T>(
   private val imageConverter: ImagePayloadConverter<T>,
-  private val modelName: String = "gemini-3.5-flash",
+  private val modelName: String = "gemini-3.8-flash",
   val storage: Storage = DesktopStorage(File(System.getProperty("user.home"), ".ink-aibd")),
   private val client: Client =
     try {
