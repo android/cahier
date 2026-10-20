@@ -78,14 +78,23 @@ class DesktopDeployer(val adb: Adb = RealAdb(), val targetAppKey: String = "auto
           throw IllegalStateException(msg)
         }
 
+    val userResult = adb.run(listOf("shell", "am", "get-current-user"))
+    val currentUser =
+      if (userResult.exitCode == 0) {
+        userResult.stdout.trim().ifEmpty { PRIMARY_USER_ID }
+      } else {
+        PRIMARY_USER_ID
+      }
+
     // Push directly to external files storage so that both debug and release builds work.
     val appExternalDir = "/sdcard/Android/data/${targetApp.packageName}/files/"
+    val stagedFilePath = "$appExternalDir${outputBinaryFile.name}"
 
     adb.run(listOf("shell", "mkdir", "-p", appExternalDir))
-    log("Pushing directly to app external storage: $appExternalDir${outputBinaryFile.name}")
+    log("Pushing directly to app external storage: $stagedFilePath")
     val pushResult =
       adb.run(
-        listOf("push", outputBinaryFile.absolutePath, "$appExternalDir${outputBinaryFile.name}")
+        listOf("push", outputBinaryFile.absolutePath, stagedFilePath)
       )
     if (pushResult.exitCode != 0) {
       throw IllegalStateException("ADB push failed: ${pushResult.stderr}")
@@ -93,27 +102,47 @@ class DesktopDeployer(val adb: Adb = RealAdb(), val targetAppKey: String = "auto
     log("Successfully pushed brush family to app storage.")
 
     val contentUri =
-      "content://${targetApp.packageName}.${targetApp.providerPath}${outputBinaryFile.name}"
+      if (currentUser == PRIMARY_USER_ID) {
+        "content://${targetApp.packageName}.${targetApp.providerPath}${outputBinaryFile.name}"
+      } else {
+        log("Detected multi-user profile (user $currentUser); copying brush to internal shared cache...")
+        val copyResult =
+          adb.run(
+            listOf(
+              "shell",
+              "cat $stagedFilePath | run-as ${targetApp.packageName} --user $currentUser sh -c " +
+                "'mkdir -p $SHARED_CACHE_DIR && cat > $SHARED_CACHE_DIR/${outputBinaryFile.name}'",
+            )
+          )
+        if (copyResult.exitCode != 0) {
+          throw IllegalStateException(
+            "Failed to copy brush to user $currentUser cache: ${copyResult.stderr}"
+          )
+        }
+        "content://${targetApp.packageName}.$SHARED_PROVIDER_PATH${outputBinaryFile.name}"
+      }
     log("Importing from URI: $contentUri")
     log("Launching ${targetApp.name} and importing brush...")
 
     val dateResult = adb.run(listOf("shell", "date", """+"%m-%d %H:%M:%S.000""""))
     val startTime = dateResult.stdout.trim()
 
-    val startResult =
-      adb.run(
-        listOf(
-          "shell",
-          "am",
-          "start",
-          "-n",
-          "${targetApp.packageName}/${targetApp.activity}",
-          "-a",
-          targetApp.intent,
-          "-d",
-          contentUri,
-        )
-      )
+    val startArgs = buildList {
+      add("shell")
+      add("am")
+      add("start")
+      if (currentUser != PRIMARY_USER_ID) {
+        add("--user")
+        add(currentUser)
+      }
+      add("-n")
+      add("${targetApp.packageName}/${targetApp.activity}")
+      add("-a")
+      add(targetApp.intent)
+      add("-d")
+      add(contentUri)
+    }
+    val startResult = adb.run(startArgs)
     if (startResult.exitCode != 0) {
       throw IllegalStateException("ADB am start failed: ${startResult.stderr}")
     }
@@ -141,6 +170,12 @@ class DesktopDeployer(val adb: Adb = RealAdb(), val targetAppKey: String = "auto
     if (result.exitCode == 0 && result.stdout.trim().isNotEmpty()) {
       throw IllegalStateException("Import failed with logcat errors:\n${result.stdout.trim()}")
     }
+  }
+
+  companion object {
+    private const val SHARED_PROVIDER_PATH = "provider/shared_files/"
+    private const val SHARED_CACHE_DIR = "cache/shares"
+    private const val PRIMARY_USER_ID = "0"
   }
 }
 
