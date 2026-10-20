@@ -81,9 +81,9 @@ class DesktopDeployer(val adb: Adb = RealAdb(), val targetAppKey: String = "auto
     val userResult = adb.run(listOf("shell", "am", "get-current-user"))
     val currentUser =
       if (userResult.exitCode == 0) {
-        userResult.stdout.trim().ifEmpty { "0" }
+        userResult.stdout.trim().ifEmpty { PRIMARY_USER_ID }
       } else {
-        "0"
+        PRIMARY_USER_ID
       }
 
     // Push directly to external files storage so that both debug and release builds work.
@@ -102,7 +102,7 @@ class DesktopDeployer(val adb: Adb = RealAdb(), val targetAppKey: String = "auto
     log("Successfully pushed brush family to app storage.")
 
     val contentUri =
-      if (currentUser == "0") {
+      if (currentUser == PRIMARY_USER_ID) {
         "content://${targetApp.packageName}.${targetApp.providerPath}${outputBinaryFile.name}"
       } else {
         log("Detected multi-user profile (user $currentUser); copying brush to internal shared cache...")
@@ -131,7 +131,7 @@ class DesktopDeployer(val adb: Adb = RealAdb(), val targetAppKey: String = "auto
       add("shell")
       add("am")
       add("start")
-      if (currentUser != "0") {
+      if (currentUser != PRIMARY_USER_ID) {
         add("--user")
         add(currentUser)
       }
@@ -175,6 +175,7 @@ class DesktopDeployer(val adb: Adb = RealAdb(), val targetAppKey: String = "auto
   companion object {
     private const val SHARED_PROVIDER_PATH = "provider/shared_files/"
     private const val SHARED_CACHE_DIR = "cache/shares"
+    private const val PRIMARY_USER_ID = "0"
   }
 }
 
