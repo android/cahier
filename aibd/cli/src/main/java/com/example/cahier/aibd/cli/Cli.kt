@@ -20,6 +20,7 @@ import com.example.cahier.aibd.core.ImagePayloadConverter
 import com.example.cahier.tools.Adb
 import com.example.cahier.tools.DesktopDeployer
 import com.example.cahier.tools.RealAdb
+import com.google.genai.errors.ClientException
 import com.google.genai.errors.GenAiIOException
 import com.google.genai.types.Part
 import java.io.File
@@ -150,6 +151,15 @@ fun <R> runWithSpinnerAndCancel(
     val result = runBlocking { deferred.await() }
     spinner.stop(true)
     return result
+  } catch (e: ClientException) {
+    spinner.stop(false)
+    harness.revertChatState()
+    println(
+      "Active Gemini request failed. Chat history reverted. Failure reason:\n${e.message}\n\n" +
+        "Please try again."
+    )
+    harness.log("Gemini request failed: ${e.message}")
+    return null
   } catch (e: GenAiIOException) {
     spinner.stop(false)
     harness.revertChatState()
