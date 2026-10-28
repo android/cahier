@@ -45,7 +45,7 @@ val APPS: List<InkApp> =
       secondaryUserDir = "cache/shares",
       secondaryUserProviderPath = "provider/shared_files/",
       intent = "com.example.cahier.intent.action.IMPORT_BRUSH",
-      activity = ".MainActivity",
+      activity = "com.example.cahier.MainActivity",
       name = "Cahier",
     )
   )
