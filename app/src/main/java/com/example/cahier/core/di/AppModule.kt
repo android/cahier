@@ -1,19 +1,17 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  * Copyright 2025 Google LLC. All rights reserved.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.example.cahier.core.di
@@ -36,68 +34,62 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    @Provides
-    @Singleton
-    @ApplicationScope
-    fun provideApplicationScope(): CoroutineScope {
-        return CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    }
+  @Provides
+  @Singleton
+  @ApplicationScope
+  fun provideApplicationScope(): CoroutineScope {
+    return CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  }
 
-    @Provides
-    @Singleton
-    fun provideNoteDatabase(@ApplicationContext context: Context): NoteDatabase {
-        return Room.databaseBuilder(
-            context,
-            NoteDatabase::class.java,
-            NoteDatabase.DATABASE_NAME
-        )
-            .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
-            .build()
-    }
+  @Provides
+  @Singleton
+  fun provideNoteDatabase(@ApplicationContext context: Context): NoteDatabase {
+    return Room.databaseBuilder(context, NoteDatabase::class.java, NoteDatabase.DATABASE_NAME)
+      .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
+      .build()
+  }
 
-    @Provides
-    @Singleton
-    fun provideCustomBrushDao(database: NoteDatabase): CustomBrushDao {
-        return database.customBrushDao()
-    }
+  @Provides
+  @Singleton
+  fun provideCustomBrushDao(database: NoteDatabase): CustomBrushDao {
+    return database.customBrushDao()
+  }
 
-    @Provides
-    @Singleton
-    fun provideNoteRepository(
-        database: NoteDatabase,
-        @ApplicationContext context: Context,
-        customBrushDao: CustomBrushDao,
-        textureStore: CahierTextureBitmapStore,
-    ): NotesRepository {
-        return OfflineNotesRepository(database.noteDao(), context, customBrushDao, textureStore)
-    }
+  @Provides
+  @Singleton
+  fun provideNoteRepository(
+    database: NoteDatabase,
+    @ApplicationContext context: Context,
+    customBrushDao: CustomBrushDao,
+    textureStore: CahierTextureBitmapStore,
+  ): NotesRepository {
+    return OfflineNotesRepository(database.noteDao(), context, customBrushDao, textureStore)
+  }
 
-    @Provides
-    @Singleton
-    fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
-        return ImageLoader(context)
-    }
+  @Provides
+  @Singleton
+  fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
+    return ImageLoader(context)
+  }
 
-    @Provides
-    @Singleton
-    fun provideFileHelper(@ApplicationContext context: Context): FileHelper {
-        return FileHelper(context)
-    }
+  @Provides
+  @Singleton
+  fun provideFileHelper(@ApplicationContext context: Context): FileHelper {
+    return FileHelper(context)
+  }
 
-    @Provides
-    @Singleton
-    fun provideBrushGraphRepository(
-        impl: DefaultBrushGraphRepository,
-    ): BrushGraphRepository {
-        return impl
-    }
+  @Provides
+  @Singleton
+  fun provideBrushGraphRepository(impl: DefaultBrushGraphRepository): BrushGraphRepository {
+    return impl
+  }
 }

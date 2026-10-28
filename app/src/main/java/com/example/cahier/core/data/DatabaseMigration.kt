@@ -1,21 +1,17 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  *
- *  *  * Copyright 2025 Google LLC. All rights reserved.
- *  *  *
- *  *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  *  * you may not use this file except in compliance with the License.
- *  *  * You may obtain a copy of the License at
- *  *  *
- *  *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *  *
- *  *  * Unless required by applicable law or agreed to in writing, software
- *  *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  * See the License for the specific language governing permissions and
- *  *  * limitations under the License.
- *  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.example.cahier.core.data
@@ -23,16 +19,18 @@ package com.example.cahier.core.data
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-val MIGRATION_7_8 = object : Migration(7, 8) {
+val MIGRATION_7_8: Migration =
+  object : Migration(7, 8) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("UPDATE notes SET type = 'Drawing' WHERE type = 'DRAWING'")
+      db.execSQL("UPDATE notes SET type = 'Drawing' WHERE type = 'DRAWING'")
     }
-}
+  }
 
-val MIGRATION_8_9 = object : Migration(8, 9) {
+val MIGRATION_8_9: Migration =
+  object : Migration(8, 9) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
-            "CREATE TABLE IF NOT EXISTS `custom_brushes` (`name` TEXT NOT NULL, `brushBytes` BLOB NOT NULL, PRIMARY KEY(`name`))"
-        )
+      db.execSQL(
+        "CREATE TABLE IF NOT EXISTS `custom_brushes` (`name` TEXT NOT NULL, `brushBytes` BLOB NOT NULL, PRIMARY KEY(`name`))"
+      )
     }
-}
+  }

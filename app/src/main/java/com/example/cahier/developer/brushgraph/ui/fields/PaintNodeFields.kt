@@ -22,48 +22,50 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.cahier.R
-import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
+import com.example.cahier.developer.brushgraph.ui.EnumDropdown
 import com.example.cahier.developer.brushgraph.ui.FieldWithTooltip
 import com.example.cahier.developer.brushgraph.ui.getTooltip
 import ink.proto.BrushPaint as ProtoBrushPaint
 
 @Composable
 fun PaintNodeFields(
-    data: NodeData.Paint,
-    onUpdate: (NodeData) -> Unit,
-    onDropdownEditComplete: () -> Unit,
-    modifier: Modifier = Modifier,
+  data: NodeData.Paint,
+  onUpdate: (NodeData) -> Unit,
+  onDropdownEditComplete: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    val paint = data.paint
-    FieldWithTooltip(
-        modifier = modifier.padding(vertical = 4.dp),
-        tooltipTitle = stringResource(
-            R.string.bg_title_self_overlap_format,
-            stringResource(paint.selfOverlap.displayStringRId())
+  val paint = data.paint
+  FieldWithTooltip(
+    modifier = modifier.padding(vertical = 4.dp),
+    tooltipTitle =
+      stringResource(
+        R.string.bg_title_self_overlap_format,
+        stringResource(paint.selfOverlap.displayStringRId()),
+      ),
+    tooltipText = stringResource(paint.selfOverlap.getTooltip()),
+  ) {
+    EnumDropdown(
+      label = stringResource(R.string.bg_self_overlap),
+      currentValue = paint.selfOverlap,
+      values =
+        listOf(
+          ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ANY,
+          ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ACCUMULATE,
+          ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD,
         ),
-        tooltipText = stringResource(paint.selfOverlap.getTooltip()),
-    ) {
-        EnumDropdown(
-            label = stringResource(R.string.bg_self_overlap),
-            currentValue = paint.selfOverlap,
-            values = listOf(
-                ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ANY,
-                ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_ACCUMULATE,
-                ProtoBrushPaint.SelfOverlap.SELF_OVERLAP_DISCARD,
-            ),
-            displayName = { stringResource(it.displayStringRId()) },
-            onSelected = { so ->
-                onUpdate(
-                    NodeData.Paint(
-                        paint.toBuilder().setSelfOverlap(so).build(),
-                        texturePortIds = data.texturePortIds,
-                        colorPortIds = data.colorPortIds
-                    )
-                )
-                onDropdownEditComplete()
-            }
+      displayName = { stringResource(it.displayStringRId()) },
+      onSelected = { so ->
+        onUpdate(
+          NodeData.Paint(
+            paint.toBuilder().setSelfOverlap(so).build(),
+            texturePortIds = data.texturePortIds,
+            colorPortIds = data.colorPortIds,
+          )
         )
-    }
+        onDropdownEditComplete()
+      },
+    )
+  }
 }

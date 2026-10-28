@@ -33,62 +33,62 @@ import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
 fun DampingNodeFields(
-    dampingNode: ProtoBrushBehavior.DampingNode,
-    behaviorNode: ProtoBrushBehavior.Node,
-    onUpdate: (NodeData) -> Unit,
-    onFieldEditComplete: () -> Unit,
-    onDropdownEditComplete: () -> Unit,
-    modifier: Modifier = Modifier,
+  dampingNode: ProtoBrushBehavior.DampingNode,
+  behaviorNode: ProtoBrushBehavior.Node,
+  onUpdate: (NodeData) -> Unit,
+  onFieldEditComplete: () -> Unit,
+  onDropdownEditComplete: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    val limits = dampingNode.dampOver.getNumericLimits(ProgressDomainContext.DAMPING)
-    Column(modifier = modifier) {
-        FieldWithTooltip(
-            tooltipTitle = stringResource(
-                R.string.bg_title_damp_over_format,
-                stringResource(dampingNode.dampOver.displayStringRId())
-            ),
-            tooltipText = stringResource(dampingNode.dampOver.getTooltip()),
-        ) {
-            EnumDropdown(
-                label = stringResource(R.string.bg_damp_over),
-                currentValue = dampingNode.dampOver,
-                values = ALL_PROGRESS_DOMAINS.toList(),
-                displayName = { stringResource(it.displayStringRId()) },
-                onSelected = { domain ->
-                    val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
-                    val clampedGap = dampingNode.strength.coerceIn(newLimits.min, newLimits.max)
+  val limits = dampingNode.dampOver.getNumericLimits(ProgressDomainContext.DAMPING)
+  Column(modifier = modifier) {
+    FieldWithTooltip(
+      tooltipTitle =
+        stringResource(
+          R.string.bg_title_damp_over_format,
+          stringResource(dampingNode.dampOver.displayStringRId()),
+        ),
+      tooltipText = stringResource(dampingNode.dampOver.getTooltip()),
+    ) {
+      EnumDropdown(
+        label = stringResource(R.string.bg_damp_over),
+        currentValue = dampingNode.dampOver,
+        values = ALL_PROGRESS_DOMAINS.toList(),
+        displayName = { stringResource(it.displayStringRId()) },
+        onSelected = { domain ->
+          val newLimits = domain.getNumericLimits(ProgressDomainContext.DAMPING)
+          val clampedGap = dampingNode.strength.coerceIn(newLimits.min, newLimits.max)
 
-                    onUpdate(
-                        NodeData.Behavior(
-                            behaviorNode.toBuilder()
-                                .setDampingNode(
-                                    dampingNode.toBuilder()
-                                        .setDampOver(domain)
-                                        .setStrength(clampedGap)
-                                        .build()
-                                )
-                                .build()
-                        )
-                    )
-                    onDropdownEditComplete()
-                }
-            )
-        }
-
-        NumericField(
-            title = stringResource(R.string.bg_label_strength),
-            value = dampingNode.strength,
-            limits = limits,
-            onValueChanged = {
-                onUpdate(
-                    NodeData.Behavior(
-                        behaviorNode.toBuilder()
-                            .setDampingNode(dampingNode.toBuilder().setStrength(it).build())
-                            .build()
-                    )
+          onUpdate(
+            NodeData.Behavior(
+              behaviorNode
+                .toBuilder()
+                .setDampingNode(
+                  dampingNode.toBuilder().setDampOver(domain).setStrength(clampedGap).build()
                 )
-            },
-            onValueChangeFinished = onFieldEditComplete
-        )
+                .build()
+            )
+          )
+          onDropdownEditComplete()
+        },
+      )
     }
+
+    NumericField(
+      title = stringResource(R.string.bg_label_strength),
+      value = dampingNode.strength,
+      limits = limits,
+      onValueChanged = {
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode
+              .toBuilder()
+              .setDampingNode(dampingNode.toBuilder().setStrength(it).build())
+              .build()
+          )
+        )
+      },
+      onValueChangeFinished = onFieldEditComplete,
+    )
+  }
 }

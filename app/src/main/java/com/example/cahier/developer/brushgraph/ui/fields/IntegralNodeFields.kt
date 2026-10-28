@@ -33,100 +33,99 @@ import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
 fun IntegralNodeFields(
-    integralNode: ProtoBrushBehavior.IntegralNode,
-    behaviorNode: ProtoBrushBehavior.Node,
-    onUpdate: (NodeData) -> Unit,
-    onFieldEditComplete: () -> Unit,
-    onDropdownEditComplete: () -> Unit,
-    modifier: Modifier = Modifier,
+  integralNode: ProtoBrushBehavior.IntegralNode,
+  behaviorNode: ProtoBrushBehavior.Node,
+  onUpdate: (NodeData) -> Unit,
+  onFieldEditComplete: () -> Unit,
+  onDropdownEditComplete: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    val limits = integralNode.integrateOver.getNumericLimits(ProgressDomainContext.INTEGRAL)
-    Column(modifier = modifier) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            EnumDropdown(
-                label = stringResource(R.string.bg_integrate_over),
-                currentValue = integralNode.integrateOver,
-                values = ALL_PROGRESS_DOMAINS.toList(),
-                modifier = Modifier.weight(1f),
-                displayName = { stringResource(it.displayStringRId()) },
-                onSelected = { domain ->
-                    val newLimits = domain.getNumericLimits(ProgressDomainContext.INTEGRAL)
-                    val clampedStart =
-                        integralNode.integralValueRangeStart.coerceIn(newLimits.min, newLimits.max)
-                    val clampedEnd =
-                        integralNode.integralValueRangeEnd.coerceIn(newLimits.min, newLimits.max)
+  val limits = integralNode.integrateOver.getNumericLimits(ProgressDomainContext.INTEGRAL)
+  Column(modifier = modifier) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+      EnumDropdown(
+        label = stringResource(R.string.bg_integrate_over),
+        currentValue = integralNode.integrateOver,
+        values = ALL_PROGRESS_DOMAINS.toList(),
+        modifier = Modifier.weight(1f),
+        displayName = { stringResource(it.displayStringRId()) },
+        onSelected = { domain ->
+          val newLimits = domain.getNumericLimits(ProgressDomainContext.INTEGRAL)
+          val clampedStart =
+            integralNode.integralValueRangeStart.coerceIn(newLimits.min, newLimits.max)
+          val clampedEnd = integralNode.integralValueRangeEnd.coerceIn(newLimits.min, newLimits.max)
 
-                    onUpdate(
-                        NodeData.Behavior(
-                            behaviorNode.toBuilder()
-                                .setIntegralNode(
-                                    integralNode.toBuilder()
-                                        .setIntegrateOver(domain)
-                                        .setIntegralValueRangeStart(clampedStart)
-                                        .setIntegralValueRangeEnd(clampedEnd)
-                                        .build()
-                                )
-                                .build()
-                        )
-                    )
-                    onDropdownEditComplete()
-                }
-            )
-        }
-
-        NumericField(
-            title = stringResource(R.string.bg_label_range_start),
-            value = integralNode.integralValueRangeStart,
-            limits = limits,
-            onValueChangeFinished = onFieldEditComplete
-        ) {
-            onUpdate(
-                NodeData.Behavior(
-                    behaviorNode.toBuilder()
-                        .setIntegralNode(
-                            integralNode.toBuilder().setIntegralValueRangeStart(it).build()
-                        )
-                        .build()
+          onUpdate(
+            NodeData.Behavior(
+              behaviorNode
+                .toBuilder()
+                .setIntegralNode(
+                  integralNode
+                    .toBuilder()
+                    .setIntegrateOver(domain)
+                    .setIntegralValueRangeStart(clampedStart)
+                    .setIntegralValueRangeEnd(clampedEnd)
+                    .build()
                 )
+                .build()
             )
-        }
-        NumericField(
-            title = stringResource(R.string.bg_label_range_end),
-            value = integralNode.integralValueRangeEnd,
-            limits = limits,
-            onValueChangeFinished = onFieldEditComplete
-        ) {
-            onUpdate(
-                NodeData.Behavior(
-                    behaviorNode.toBuilder()
-                        .setIntegralNode(
-                            integralNode.toBuilder().setIntegralValueRangeEnd(it).build()
-                        )
-                        .build()
-                )
-            )
-        }
-
-        Row(modifier = Modifier.fillMaxWidth()) {
-            EnumDropdown(
-                label = stringResource(R.string.bg_out_of_range_behavior),
-                currentValue = integralNode.integralOutOfRangeBehavior,
-                values = ALL_OUT_OF_RANGE.toList(),
-                modifier = Modifier.weight(1f),
-                displayName = { stringResource(it.displayStringRId()) },
-                onSelected = { oor ->
-                    onUpdate(
-                        NodeData.Behavior(
-                            behaviorNode.toBuilder()
-                                .setIntegralNode(
-                                    integralNode.toBuilder().setIntegralOutOfRangeBehavior(oor)
-                                        .build()
-                                )
-                                .build()
-                        )
-                    )
-                }
-            )
-        }
+          )
+          onDropdownEditComplete()
+        },
+      )
     }
+
+    NumericField(
+      title = stringResource(R.string.bg_label_range_start),
+      value = integralNode.integralValueRangeStart,
+      limits = limits,
+      onValueChangeFinished = onFieldEditComplete,
+    ) {
+      onUpdate(
+        NodeData.Behavior(
+          behaviorNode
+            .toBuilder()
+            .setIntegralNode(integralNode.toBuilder().setIntegralValueRangeStart(it).build())
+            .build()
+        )
+      )
+    }
+    NumericField(
+      title = stringResource(R.string.bg_label_range_end),
+      value = integralNode.integralValueRangeEnd,
+      limits = limits,
+      onValueChangeFinished = onFieldEditComplete,
+    ) {
+      onUpdate(
+        NodeData.Behavior(
+          behaviorNode
+            .toBuilder()
+            .setIntegralNode(integralNode.toBuilder().setIntegralValueRangeEnd(it).build())
+            .build()
+        )
+      )
+    }
+
+    Row(modifier = Modifier.fillMaxWidth()) {
+      EnumDropdown(
+        label = stringResource(R.string.bg_out_of_range_behavior),
+        currentValue = integralNode.integralOutOfRangeBehavior,
+        values = ALL_OUT_OF_RANGE.toList(),
+        modifier = Modifier.weight(1f),
+        displayName = { stringResource(it.displayStringRId()) },
+        onSelected = { oor ->
+          onUpdate(
+            NodeData.Behavior(
+              behaviorNode
+                .toBuilder()
+                .setIntegralNode(
+                  integralNode.toBuilder().setIntegralOutOfRangeBehavior(oor).build()
+                )
+                .build()
+            )
+          )
+        },
+      )
+    }
+  }
 }

@@ -55,9 +55,7 @@ class DeployBrushTest {
       )
     testdataDir =
       candidates.firstOrNull { it.exists() }
-        ?: throw IllegalStateException(
-          "Could not find testdata directory in any location: $candidates"
-        )
+        ?: error("Could not find testdata directory in any location: $candidates")
     tempDir = tempFolder.newFolder("deploy_test")
     inputFile = File(tempDir, "output.textproto")
     val validFile = File(testdataDir, "valid_brush.textproto")
@@ -65,14 +63,14 @@ class DeployBrushTest {
   }
 
   @Test
-  fun testValidateProtoValid() {
+  fun validateProto_validFile_succeeds() {
     val validFile = File(testdataDir, "valid_brush.textproto")
     val bytes = validateAndCompressBrushFamily(validFile.readText())
     assertThat(bytes).isNotEmpty()
   }
 
   @Test
-  fun testValidateProtoInvalid() {
+  fun validateProto_invalidFile_throwsException() {
     val invalidFile = File(testdataDir, "invalid_brush.textproto")
     assertThrows(ValidationException::class.java) {
       validateAndCompressBrushFamily(invalidFile.readText())
@@ -80,7 +78,7 @@ class DeployBrushTest {
   }
 
   @Test
-  fun testDeployFailsWhenNoDevices() {
+  fun deploy_noDevice_throwsException() {
     val fakeAdb = FakeAdb(device = null)
     val deployer = DesktopDeployer(adb = fakeAdb)
 
@@ -92,7 +90,7 @@ class DeployBrushTest {
   }
 
   @Test
-  fun testDeployFailsWhenTargetAppNotInstalled() {
+  fun deploy_targetAppNotInstalled_throwsException() {
     val fakeAdb = FakeAdb(installedApps = emptySet(), device = "device1")
     val deployer = DesktopDeployer(adb = fakeAdb)
 
@@ -104,7 +102,7 @@ class DeployBrushTest {
   }
 
   @Test
-  fun testDeployHandlesLogcatErrors() {
+  fun deploy_logcatError_throwsExceptionCitingLogcat() {
     val fakeAdb =
       FakeAdb(
         installedApps = setOf("com.example.cahier"),
@@ -139,7 +137,7 @@ class DeployBrushTest {
   }
 
   @Test
-  fun testBrushfamilyInputFormatSkipsValidation() {
+  fun deploy_brushfamilyInputFormat_skipsValidation() {
     val binaryFile = File(tempDir, "sample.brushfamily")
     binaryFile.writeBytes(byteArrayOf(1, 2, 3)) // This would fail validation.
 
@@ -156,6 +154,52 @@ class DeployBrushTest {
           "push",
           binaryFile.absolutePath,
           "/sdcard/Android/data/com.example.cahier/files/sample.brushfamily",
+        )
+      )
+  }
+
+  @Test
+  fun deploy_multiUser_runsExpectedCommands() {
+    val fakeAdb =
+      FakeAdb(installedApps = setOf("com.example.cahier"), device = "device1", currentUser = "1")
+    val deployer = DesktopDeployer(adb = fakeAdb)
+
+    deployer.deploy(BrushFamilyInputFormat.TEXTPROTO, inputFile.absolutePath) {}
+
+    assertThat(fakeAdb.commandsRun)
+      .contains(
+        listOf(
+          "-s",
+          "device1",
+          "shell",
+          "cat",
+          "/sdcard/Android/data/com.example.cahier/files/output.brushfamily",
+          "|",
+          "run-as",
+          "com.example.cahier",
+          "--user",
+          "1",
+          "sh",
+          "-c",
+          "'mkdir -p cache/shares && cat > cache/shares/output.brushfamily'",
+        )
+      )
+    assertThat(fakeAdb.commandsRun)
+      .contains(
+        listOf(
+          "-s",
+          "device1",
+          "shell",
+          "am",
+          "start",
+          "--user",
+          "1",
+          "-n",
+          "com.example.cahier/.MainActivity",
+          "-a",
+          "com.example.cahier.intent.action.IMPORT_BRUSH",
+          "-d",
+          "content://com.example.cahier.provider/shared_files/output.brushfamily",
         )
       )
   }

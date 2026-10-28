@@ -32,10 +32,15 @@ import com.example.cahier.tools.CommandResult
 import com.example.cahier.tools.FakeAdb
 import com.google.common.truth.Truth.assertThat
 import com.google.genai.types.GenerateContentResponse
+import com.google.genai.types.Part
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
 import kotlinx.coroutines.Dispatchers
+import org.jline.reader.LineReader
+import org.jline.terminal.Attributes
+import org.jline.terminal.Terminal
+import org.jline.utils.NonBlockingReader
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -64,8 +69,8 @@ class CliTest {
   private val capturedOut = ByteArrayOutputStream()
 
   class FakeImageConverter : ImagePayloadConverter<ByteArray> {
-    override fun convert(payload: ByteArray): com.google.genai.types.Part {
-      return com.google.genai.types.Part.builder().text("fake-image").build()
+    override fun convert(payload: ByteArray): Part {
+      return Part.builder().text("fake-image").build()
     }
   }
 
@@ -110,10 +115,10 @@ class CliTest {
     System.setOut(systemOut)
   }
 
-  private fun createMockTerminal(): org.jline.terminal.Terminal {
-    val terminal = mock<org.jline.terminal.Terminal>()
-    val attributes = mock<org.jline.terminal.Attributes>()
-    val reader = mock<org.jline.utils.NonBlockingReader>()
+  private fun createMockTerminal(): Terminal {
+    val terminal = mock<Terminal>()
+    val attributes = mock<Attributes>()
+    val reader = mock<NonBlockingReader>()
     whenever(terminal.enterRawMode()).thenReturn(attributes)
     whenever(terminal.reader()).thenReturn(reader)
     whenever(reader.peek(any())).thenReturn(-1)
@@ -142,7 +147,7 @@ class CliTest {
   @Test
   fun deployCommand_noBrushesOrStagedContent_printsErrorMsg() {
     val terminal = createMockTerminal()
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     val command = DeployCommand(harness, lineReader, terminal, Dispatchers.Unconfined)
     command.run()
 
@@ -160,7 +165,7 @@ class CliTest {
     binaryFile.writeBytes(brushFamilyBytes)
 
     val terminal = createMockTerminal()
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("c")
 
     val command = DeployCommand(harness, lineReader, terminal, Dispatchers.Unconfined)
@@ -189,7 +194,7 @@ class CliTest {
       )
 
     val terminal = createMockTerminal()
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("0")
 
     val command = DeployCommand(localHarness, lineReader, terminal, Dispatchers.Unconfined)
@@ -218,7 +223,7 @@ class CliTest {
       )
 
     val terminal = createMockTerminal()
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("1")
 
     val command = DeployCommand(localHarness, lineReader, terminal, Dispatchers.Unconfined)
@@ -237,7 +242,7 @@ class CliTest {
     binaryFile.writeBytes(brushFamilyBytes)
 
     val terminal = createMockTerminal()
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("5")
 
     val command = DeployCommand(harness, lineReader, terminal, Dispatchers.Unconfined)
@@ -256,7 +261,7 @@ class CliTest {
     binaryFile.writeBytes(brushFamilyBytes)
 
     val terminal = createMockTerminal()
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("asdf")
 
     val command = DeployCommand(harness, lineReader, terminal, Dispatchers.Unconfined)
@@ -281,7 +286,7 @@ class CliTest {
     File(tempDir, "conversations/${localHarness.activeConversation.uuid}").deleteRecursively()
     File(tempDir, "active_conversation").delete()
 
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     val command = ResumeCommand(localHarness, lineReader)
     command.run()
 
@@ -293,7 +298,7 @@ class CliTest {
     harness.createNewConversation(title = "Convo 1")
     harness.createNewConversation(title = "Convo 2")
 
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("c")
 
     val command = ResumeCommand(harness, lineReader)
@@ -309,7 +314,7 @@ class CliTest {
     harness.createNewConversation(title = "Convo 2")
 
     // Inputs "2" (the second conversation list element)
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("2")
 
     val command = ResumeCommand(harness, lineReader)
@@ -323,7 +328,7 @@ class CliTest {
   fun resumeCommand_invalidIndexInput_printsWarningAndCancels() {
     harness.createNewConversation(title = "Convo 1")
 
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("99")
 
     val command = ResumeCommand(harness, lineReader)
@@ -336,7 +341,7 @@ class CliTest {
   fun resumeCommand_nonIntegerInput_printsWarningAndCancels() {
     harness.createNewConversation(title = "Convo 1")
 
-    val lineReader = mock<org.jline.reader.LineReader>()
+    val lineReader = mock<LineReader>()
     whenever(lineReader.readLine(any<String>())).thenReturn("asdf")
 
     val command = ResumeCommand(harness, lineReader)
@@ -418,5 +423,28 @@ class CliTest {
     assertThat(fakeAdb.commandsRun).isNotEmpty()
     assertThat(fakeAdb.commandsRun[0]).containsExactly("exec-out", "screencap", "-p")
     assertThat(fakeChat.sentRequests).isNotEmpty()
+  }
+
+  @Test
+  fun modelCommand_changesModel() {
+    assertThat(harness.getCurrentModel()).isNotEqualTo("test-model")
+
+    val command = ModelCommand(harness)
+    command.model = "test-model"
+    command.run()
+
+    assertThat(harness.getCurrentModel()).isEqualTo("test-model")
+  }
+
+  @Test
+  fun modelCommand_printsCurrentModel() {
+    val command = ModelCommand(harness)
+    command.model = "test-model"
+    command.run()
+
+    command.model = "current"
+    command.run()
+
+    assertThat(capturedOut.toString()).contains("Current model: test-model")
   }
 }

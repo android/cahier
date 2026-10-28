@@ -1,19 +1,17 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  * Copyright 2025 Google LLC. All rights reserved.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.example.cahier.features.drawing
@@ -85,343 +83,301 @@ import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.core.utils.createDropTarget
 import com.example.cahier.features.drawing.viewmodel.DrawingCanvasViewModel
 
-
-@OptIn(
-    ExperimentalFoundationApi::class,
-    ExperimentalMaterial3WindowSizeClassApi::class
-)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun DrawingCanvas(
-    navigateUp: () -> Unit,
-    navigateToBrushGraph: () -> Unit,
-    modifier: Modifier = Modifier,
-    drawingCanvasViewModel: DrawingCanvasViewModel = hiltViewModel(),
+  navigateUp: () -> Unit,
+  navigateToBrushGraph: () -> Unit,
+  modifier: Modifier = Modifier,
+  drawingCanvasViewModel: DrawingCanvasViewModel = hiltViewModel(),
 ) {
-    val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
-    var showConfirmationDialog by rememberSaveable { mutableStateOf(false) }
-    var pendingImageUri by remember { mutableStateOf<Uri?>(null) }
+  val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
+  var showConfirmationDialog by rememberSaveable { mutableStateOf(false) }
+  var pendingImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        uri?.let {
-            if (uiState.note.imageUriList?.isNotEmpty() == true) {
-                pendingImageUri = it
-                showConfirmationDialog = true
-            } else {
-                drawingCanvasViewModel.processAndAddImageFromPicker(it)
-            }
+  val imagePickerLauncher =
+    rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia()) {
+      uri: Uri? ->
+      uri?.let {
+        if (uiState.note.imageUriList?.isNotEmpty() == true) {
+          pendingImageUri = it
+          showConfirmationDialog = true
+        } else {
+          drawingCanvasViewModel.processAndAddImageFromPicker(it)
         }
+      }
     }
 
-    if (showConfirmationDialog) {
-        ConfirmationDialog(
-            onConfirm = {
-                drawingCanvasViewModel.replaceImage(pendingImageUri)
-                showConfirmationDialog = false
-                pendingImageUri = null
-            },
-            onDismiss = {
-                showConfirmationDialog = false
-                pendingImageUri = null
-            },
-            title = stringResource(R.string.replace_image_title),
-            text = stringResource(R.string.replace_image_text)
-        )
-    }
+  if (showConfirmationDialog) {
+    ConfirmationDialog(
+      onConfirm = {
+        drawingCanvasViewModel.replaceImage(pendingImageUri)
+        showConfirmationDialog = false
+        pendingImageUri = null
+      },
+      onDismiss = {
+        showConfirmationDialog = false
+        pendingImageUri = null
+      },
+      title = stringResource(R.string.replace_image_title),
+      text = stringResource(R.string.replace_image_text),
+    )
+  }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-    ) {
-        DrawingCanvasTopBar(drawingCanvasViewModel)
-        DrawingCanvasContent(
-            drawingCanvasViewModel = drawingCanvasViewModel,
-            imagePickerLauncher = imagePickerLauncher,
-            onNavigateUp = navigateUp,
-            navigateToBrushGraph = navigateToBrushGraph
-        )
-    }
+  Column(
+    modifier = modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()
+  ) {
+    DrawingCanvasTopBar(drawingCanvasViewModel)
+    DrawingCanvasContent(
+      drawingCanvasViewModel = drawingCanvasViewModel,
+      imagePickerLauncher = imagePickerLauncher,
+      onNavigateUp = navigateUp,
+      navigateToBrushGraph = navigateToBrushGraph,
+    )
+  }
 }
 
 @Composable
 private fun DrawingCanvasTopBar(
-    drawingCanvasViewModel: DrawingCanvasViewModel,
-    modifier: Modifier = Modifier,
+  drawingCanvasViewModel: DrawingCanvasViewModel,
+  modifier: Modifier = Modifier,
 ) {
-    val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
-    var titleState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(uiState.note.title))
+  val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
+  var titleState by
+    rememberSaveable(stateSaver = TextFieldValue.Saver) {
+      mutableStateOf(TextFieldValue(uiState.note.title))
     }
-    var focusedFieldEnum by rememberSaveable { mutableStateOf(FocusedFieldEnum.None) }
-    val titleFocusRequester = remember { FocusRequester() }
+  var focusedFieldEnum by rememberSaveable { mutableStateOf(FocusedFieldEnum.None) }
+  val titleFocusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(focusedFieldEnum) {
-        if (focusedFieldEnum == FocusedFieldEnum.Title) {
-            titleFocusRequester.requestFocus()
-        }
+  LaunchedEffect(focusedFieldEnum) {
+    if (focusedFieldEnum == FocusedFieldEnum.Title) {
+      titleFocusRequester.requestFocus()
     }
+  }
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-    ) {
-        TextField(
-            value = titleState,
-            onValueChange = { newTitle ->
-                titleState = newTitle
-                drawingCanvasViewModel.onTitleChanged(newTitle.text)
-            },
-            placeholder = { Text(text = stringResource(R.string.drawing_title)) },
-            modifier = Modifier
-                .weight(1f)
-                .focusRequester(titleFocusRequester)
-                .onFocusChanged { focusState ->
-                    if (focusState.isFocused) {
-                        focusedFieldEnum = FocusedFieldEnum.Title
-                    }
-                },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { })
-        )
-    }
+  Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
+    // TODO(b/573149579)
+    @Suppress("DEPRECATION")
+    TextField(
+      value = titleState,
+      onValueChange = { newTitle ->
+        titleState = newTitle
+        drawingCanvasViewModel.onTitleChanged(newTitle.text)
+      },
+      placeholder = { Text(text = stringResource(R.string.drawing_title)) },
+      modifier =
+        Modifier.weight(1f).focusRequester(titleFocusRequester).onFocusChanged { focusState ->
+          if (focusState.isFocused) {
+            focusedFieldEnum = FocusedFieldEnum.Title
+          }
+        },
+      singleLine = true,
+      keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+      keyboardActions = KeyboardActions(onDone = {}),
+    )
+  }
 }
 
-@OptIn(
-    ExperimentalMaterial3WindowSizeClassApi::class,
-    ExperimentalFoundationApi::class
-)
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun DrawingCanvasContent(
-    drawingCanvasViewModel: DrawingCanvasViewModel,
-    imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
-    onNavigateUp: () -> Unit,
-    navigateToBrushGraph: () -> Unit,
-    modifier: Modifier = Modifier,
+  drawingCanvasViewModel: DrawingCanvasViewModel,
+  imagePickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>,
+  onNavigateUp: () -> Unit,
+  navigateToBrushGraph: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    val activity = LocalActivity.current as ComponentActivity
-    val windowSizeClass = calculateWindowSizeClass(activity)
-    val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+  val activity = LocalActivity.current as ComponentActivity
+  val windowSizeClass = calculateWindowSizeClass(activity)
+  val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
 
-    val canUndo by drawingCanvasViewModel.canUndo.collectAsStateWithLifecycle()
-    val canRedo by drawingCanvasViewModel.canRedo.collectAsStateWithLifecycle()
-    var showColorPicker by rememberSaveable { mutableStateOf(false) }
-    var brushesMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    var sizeMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    val customBrushes by drawingCanvasViewModel.customBrushes.collectAsStateWithLifecycle()
+  val canUndo by drawingCanvasViewModel.canUndo.collectAsStateWithLifecycle()
+  val canRedo by drawingCanvasViewModel.canRedo.collectAsStateWithLifecycle()
+  var showColorPicker by rememberSaveable { mutableStateOf(false) }
+  var brushesMenuExpanded by rememberSaveable { mutableStateOf(false) }
+  var sizeMenuExpanded by rememberSaveable { mutableStateOf(false) }
+  val customBrushes by drawingCanvasViewModel.customBrushes.collectAsStateWithLifecycle()
 
-    Box(modifier = modifier.fillMaxSize()) {
-        DrawingSurfaceWithTarget(
-            drawingCanvasViewModel,
-            modifier = Modifier.fillMaxSize()
-        )
+  Box(modifier = modifier.fillMaxSize()) {
+    DrawingSurfaceWithTarget(drawingCanvasViewModel, modifier = Modifier.fillMaxSize())
 
-        val toolboxModifier = if (isCompact) {
-            Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 8.dp)
-        } else {
-            Modifier
-                .align(Alignment.TopCenter)
-                .padding(8.dp)
-        }
+    val toolboxModifier =
+      if (isCompact) {
+        Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)
+      } else {
+        Modifier.align(Alignment.TopCenter).padding(8.dp)
+      }
 
-        DrawingToolbox(
-            isVertical = isCompact,
-            modifier = toolboxModifier,
-            drawingCanvasViewModel = drawingCanvasViewModel,
-            imagePickerLauncher = imagePickerLauncher,
-            canUndo = canUndo,
-            canRedo = canRedo,
-            onUndo = drawingCanvasViewModel::undo,
-            onRedo = drawingCanvasViewModel::redo,
-            onExit = onNavigateUp,
-            onEditActiveBrush = navigateToBrushGraph,
-            onColorPickerClick = { showColorPicker = true },
-        )
+    DrawingToolbox(
+      isVertical = isCompact,
+      modifier = toolboxModifier,
+      drawingCanvasViewModel = drawingCanvasViewModel,
+      imagePickerLauncher = imagePickerLauncher,
+      canUndo = canUndo,
+      canRedo = canRedo,
+      onUndo = drawingCanvasViewModel::undo,
+      onRedo = drawingCanvasViewModel::redo,
+      onExit = onNavigateUp,
+      onEditActiveBrush = navigateToBrushGraph,
+      onColorPickerClick = { showColorPicker = true },
+    )
 
-        BrushesDropdownMenu(
-            expanded = brushesMenuExpanded,
-            onDismissRequest = { brushesMenuExpanded = false },
-            onBrushChange = { newBrush ->
-                drawingCanvasViewModel.changeBrush(newBrush)
-                brushesMenuExpanded = false
-            },
-            customBrushes = customBrushes
-        )
+    BrushesDropdownMenu(
+      expanded = brushesMenuExpanded,
+      onDismissRequest = { brushesMenuExpanded = false },
+      onBrushChange = { newBrush ->
+        drawingCanvasViewModel.changeBrush(newBrush)
+        brushesMenuExpanded = false
+      },
+      customBrushes = customBrushes,
+    )
 
-        SizeDropdownMenu(
-            expanded = sizeMenuExpanded,
-            onDismissRequest = { sizeMenuExpanded = false },
-            onSizeChange = { newSize ->
-                drawingCanvasViewModel.changeBrushSize(newSize)
-                sizeMenuExpanded = false
-            }
-        )
+    SizeDropdownMenu(
+      expanded = sizeMenuExpanded,
+      onDismissRequest = { sizeMenuExpanded = false },
+      onSizeChange = { newSize ->
+        drawingCanvasViewModel.changeBrushSize(newSize)
+        sizeMenuExpanded = false
+      },
+    )
 
-        ColorPickerDialog(
-            showDialog = showColorPicker,
-            onDismissRequest = { showColorPicker = false },
-            onColorSelected = { color ->
-                drawingCanvasViewModel.changeBrushColor(color)
-                showColorPicker = false
-            }
-        )
-    }
+    ColorPickerDialog(
+      showDialog = showColorPicker,
+      onDismissRequest = { showColorPicker = false },
+      onColorSelected = { color ->
+        drawingCanvasViewModel.changeBrushColor(color)
+        showColorPicker = false
+      },
+    )
+  }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DrawingSurfaceWithTarget(
-    drawingCanvasViewModel: DrawingCanvasViewModel,
-    modifier: Modifier = Modifier,
+  drawingCanvasViewModel: DrawingCanvasViewModel,
+  modifier: Modifier = Modifier,
 ) {
-    val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
-    val exportedUri by drawingCanvasViewModel.exportedImageUri.collectAsStateWithLifecycle()
-    val currentBrush by drawingCanvasViewModel.currentBrush.collectAsStateWithLifecycle()
-    val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
-    val strokes = remember { mutableStateListOf<Stroke>() }
-    val textureStore = LocalTextureStore.current
-    val cacheGen by textureStore.generation.collectAsState()
-    val canvasStrokeRenderer = remember(cacheGen) {
-        CanvasStrokeRenderer.create(textureStore = textureStore)
-    }
-    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
-    val view = LocalView.current
-    val activity = LocalActivity.current as ComponentActivity
+  val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
+  val exportedUri by drawingCanvasViewModel.exportedImageUri.collectAsStateWithLifecycle()
+  val currentBrush by drawingCanvasViewModel.currentBrush.collectAsStateWithLifecycle()
+  val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
+  val strokes = remember { mutableStateListOf<Stroke>() }
+  val textureStore = LocalTextureStore.current
+  val cacheGen by textureStore.generation.collectAsState()
+  val canvasStrokeRenderer =
+    remember(cacheGen) { CanvasStrokeRenderer.create(textureStore = textureStore) }
+  var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+  val view = LocalView.current
+  val activity = LocalActivity.current as ComponentActivity
 
-    val dropTarget = remember {
-        createDropTarget(activity) { uri, permissions ->
-            drawingCanvasViewModel.handleDroppedUri(uri, permissions)
-        }
+  val dropTarget = remember {
+    createDropTarget(activity) { uri, permissions ->
+      drawingCanvasViewModel.handleDroppedUri(uri, permissions)
     }
+  }
 
-    LaunchedEffect(uiState.strokes) {
-        if (strokes != uiState.strokes) {
-            strokes.clear()
-            strokes.addAll(uiState.strokes)
-        }
+  LaunchedEffect(uiState.strokes) {
+    if (strokes != uiState.strokes) {
+      strokes.clear()
+      strokes.addAll(uiState.strokes)
     }
+  }
 
-    LaunchedEffect(
-        uiState.strokes,
-        uiState.note.imageUriList,
-        canvasSize
-    )
-    {
-        if (canvasSize != IntSize.Zero) {
-            drawingCanvasViewModel.createExportedBitmap(
-                canvasSize.width,
-                canvasSize.height
-            )
-        }
+  LaunchedEffect(uiState.strokes, uiState.note.imageUriList, canvasSize) {
+    if (canvasSize != IntSize.Zero) {
+      drawingCanvasViewModel.createExportedBitmap(canvasSize.width, canvasSize.height)
     }
+  }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .onSizeChanged { canvasSize = it }
-            .dragAndDropTarget(
-                shouldStartDragAndDrop = { event ->
-                    event.mimeTypes().any { it.startsWith("image/") }
-                },
-                target = dropTarget
-            )
-    ) {
-        DrawingSurface(
-            strokes = strokes,
-            canvasStrokeRenderer = canvasStrokeRenderer,
-            onStrokesFinished = { newStrokes ->
-                strokes.addAll(newStrokes)
-                drawingCanvasViewModel.onStrokesFinished(newStrokes)
-            },
-            onErase = drawingCanvasViewModel::erase,
-            onEraseStart = drawingCanvasViewModel::startErase,
-            onEraseEnd = drawingCanvasViewModel::endErase,
-            onStartDrag = {
-                exportedUri?.let { uri ->
-                    val clipData = ClipData(
-                        ClipDescription(
-                            "Image",
-                            arrayOf(
-                                "image/png"
-                            )
-                        ),
-                        ClipData.Item(uri)
-                    )
-                    val dragShadowBuilder = View.DragShadowBuilder(view)
-                    // While Jetpack Compose offers the `dragAndDropSource`
-                    // modifier, a custom implementation using the Android View
-                    // system's `startDragAndDrop` is necessary here. This is
-                    // because the Ink API's drawing gestures conflict with the
-                    // long-press-to-drag gesture when using the standard Compose
-                    // modifier, preventing drag detection. This approach allows
-                    // for a custom gesture detector to coexist with the Ink API
-                    // and manually initiate the drag for seamless interoperability.
-                    view.startDragAndDrop(
-                        clipData,
-                        dragShadowBuilder,
-                        null,
-                        View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ
-                    )
-                }
-            },
-            currentBrush = currentBrush,
-            onGetNextBrush = drawingCanvasViewModel::getCurrentBrush,
-            isEraserMode = isEraserMode,
-            backgroundImageUri = uiState.note.imageUriList?.firstOrNull(),
-            modifier = Modifier.fillMaxSize()
+  Box(
+    modifier =
+      modifier
+        .fillMaxSize()
+        .onSizeChanged { canvasSize = it }
+        .dragAndDropTarget(
+          shouldStartDragAndDrop = { event -> event.mimeTypes().any { it.startsWith("image/") } },
+          target = dropTarget,
         )
-    }
+  ) {
+    DrawingSurface(
+      strokes = strokes,
+      canvasStrokeRenderer = canvasStrokeRenderer,
+      onStrokesFinished = { newStrokes ->
+        strokes.addAll(newStrokes)
+        drawingCanvasViewModel.onStrokesFinished(newStrokes)
+      },
+      onErase = drawingCanvasViewModel::erase,
+      onEraseStart = drawingCanvasViewModel::startErase,
+      onEraseEnd = drawingCanvasViewModel::endErase,
+      onStartDrag = {
+        exportedUri?.let { uri ->
+          val clipData =
+            ClipData(ClipDescription("Image", arrayOf("image/png")), ClipData.Item(uri))
+          val dragShadowBuilder = View.DragShadowBuilder(view)
+          // While Jetpack Compose offers the `dragAndDropSource`
+          // modifier, a custom implementation using the Android View
+          // system's `startDragAndDrop` is necessary here. This is
+          // because the Ink API's drawing gestures conflict with the
+          // long-press-to-drag gesture when using the standard Compose
+          // modifier, preventing drag detection. This approach allows
+          // for a custom gesture detector to coexist with the Ink API
+          // and manually initiate the drag for seamless interoperability.
+          view.startDragAndDrop(
+            clipData,
+            dragShadowBuilder,
+            null,
+            View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ,
+          )
+        }
+      },
+      currentBrush = currentBrush,
+      onGetNextBrush = drawingCanvasViewModel::getCurrentBrush,
+      isEraserMode = isEraserMode,
+      backgroundImageUri = uiState.note.imageUriList?.firstOrNull(),
+      modifier = Modifier.fillMaxSize(),
+    )
+  }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun DrawingCanvasPreview() {
-    CahierAppTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .imePadding()
+  CahierAppTheme {
+    Column(
+      modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()
+    ) {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        // TODO(b/573149579)
+        @Suppress("DEPRECATION")
+        TextField(
+          value = "Drawing Title",
+          onValueChange = {},
+          placeholder = { Text(text = stringResource(R.string.drawing_title)) },
+          modifier = Modifier.weight(1f),
+          singleLine = true,
+        )
+      }
+      Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+          modifier = Modifier.fillMaxSize().background(Color.LightGray),
+          contentAlignment = Alignment.Center,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextField(
-                    value = "Drawing Title",
-                    onValueChange = { },
-                    placeholder = { Text(text = stringResource(R.string.drawing_title)) },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                )
-            }
-            Box(modifier = Modifier.fillMaxSize()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Drawing Surface")
-                }
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(8.dp)
-                        .background(
-                            MaterialTheme.colorScheme.surfaceVariant,
-                            shape = MaterialTheme.shapes.medium
-                        )
-                ) {
-                    Text("Toolbox Placeholder", modifier = Modifier.padding(8.dp))
-                }
-            }
+          Text("Drawing Surface")
         }
+        Box(
+          modifier =
+            Modifier.align(Alignment.TopCenter)
+              .padding(8.dp)
+              .background(
+                MaterialTheme.colorScheme.surfaceVariant,
+                shape = MaterialTheme.shapes.medium,
+              )
+        ) {
+          Text("Toolbox Placeholder", modifier = Modifier.padding(8.dp))
+        }
+      }
     }
+  }
 }

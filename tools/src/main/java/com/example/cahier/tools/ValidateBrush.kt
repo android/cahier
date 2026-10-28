@@ -19,8 +19,8 @@ package com.example.cahier.tools
 import androidx.ink.brush.BrushFamily
 import androidx.ink.storage.decode
 import com.example.cahier.aibd.core.ValidationException
-import ink.proto.BrushFamily as BrushFamilyProto
 import com.google.protobuf.TextFormat
+import ink.proto.BrushFamily as BrushFamilyProto
 import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
 import java.util.zip.GZIPOutputStream

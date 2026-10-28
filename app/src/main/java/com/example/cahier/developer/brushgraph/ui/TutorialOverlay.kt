@@ -50,80 +50,73 @@ import com.example.cahier.developer.brushgraph.data.TutorialStep
 
 @Composable
 fun TutorialOverlay(
-    step: TutorialStep,
-    onNext: () -> Unit,
-    onClose: () -> Unit,
-    modifier: Modifier = Modifier,
-    onBack: (() -> Unit)? = null,
+  step: TutorialStep,
+  onNext: () -> Unit,
+  onClose: () -> Unit,
+  modifier: Modifier = Modifier,
+  onBack: (() -> Unit)? = null,
 ) {
-    Box(
-        modifier = modifier
-            .width(400.dp)
-            .wrapContentHeight()
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.95f))
-            .padding(16.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { /* Do nothing, just swallow the click */ }
-    ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(step.title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier
-                        .padding(vertical = 4.dp)
-                        .weight(1f)
-                )
-                IconButton(onClick = onClose) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.bg_cd_close_pane),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-            Text(
-                text = stringResource(step.message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                if (onBack != null) {
-                    OutlinedButton(
-                        onClick = onBack,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ),
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
-                        )
-                    ) {
-                        Text(stringResource(R.string.bg_back))
-                    }
-                } else {
-                    Spacer(modifier = Modifier.width(1.dp))
-                }
-                Button(onClick = onNext) {
-                    Text(
-                        if (step.actionRequired == TutorialAction.CLICK_NEXT) stringResource(R.string.bg_next) else stringResource(
-                            R.string.bg_got_it
-                        )
-                    )
-                }
-            }
+  Box(
+    modifier =
+      modifier
+        .width(400.dp)
+        .wrapContentHeight()
+        .clip(MaterialTheme.shapes.medium)
+        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.95f))
+        .padding(16.dp)
+        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+          /* Do nothing, just swallow the click */
         }
+  ) {
+    Column {
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(
+          text = stringResource(step.title),
+          style = MaterialTheme.typography.titleMedium,
+          color = MaterialTheme.colorScheme.onPrimaryContainer,
+          modifier = Modifier.padding(vertical = 4.dp).weight(1f),
+        )
+        IconButton(onClick = onClose) {
+          Icon(
+            imageVector = Icons.Default.Close,
+            contentDescription = stringResource(R.string.bg_cd_close_pane),
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+          )
+        }
+      }
+      Text(
+        text = stringResource(step.message),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onPrimaryContainer,
+        modifier = Modifier.padding(vertical = 8.dp),
+      )
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        if (onBack != null) {
+          OutlinedButton(
+            onClick = onBack,
+            colors =
+              ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+              ),
+            border =
+              BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)),
+          ) {
+            Text(stringResource(R.string.bg_back))
+          }
+        } else {
+          Spacer(modifier = Modifier.width(1.dp))
+        }
+        Button(onClick = onNext) {
+          Text(
+            if (step.actionRequired == TutorialAction.CLICK_NEXT) stringResource(R.string.bg_next)
+            else stringResource(R.string.bg_got_it)
+          )
+        }
+      }
     }
+  }
 }

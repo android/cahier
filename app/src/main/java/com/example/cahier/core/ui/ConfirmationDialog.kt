@@ -11,37 +11,29 @@ import com.example.cahier.R
 
 @Composable
 fun ConfirmationDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    title: String,
-    text: String,
-    modifier: Modifier = Modifier
+  onConfirm: () -> Unit,
+  onDismiss: () -> Unit,
+  title: String,
+  text: String,
+  modifier: Modifier = Modifier,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(text) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.dismiss))
-            }
-        },
-        modifier = modifier
-    )
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = { Text(title) },
+    text = { Text(text) },
+    confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.confirm)) } },
+    dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.dismiss)) } },
+    modifier = modifier,
+  )
 }
 
 @Preview
 @Composable
 fun ConfirmationDialogPreview() {
-    ConfirmationDialog(
-        onConfirm = {},
-        onDismiss = {},
-        title = "Confirm",
-        text = "Confirm you want to perform this action."
-    )
+  ConfirmationDialog(
+    onConfirm = {},
+    onDismiss = {},
+    title = "Confirm",
+    text = "Confirm you want to perform this action.",
+  )
 }

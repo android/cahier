@@ -1,19 +1,17 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  * Copyright 2025 Google LLC. All rights reserved.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.example.cahier.core.ui
@@ -35,6 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.withSaveLayer
@@ -54,130 +54,123 @@ import com.example.cahier.core.utils.pointerInputWithSiblingFallthrough
 @SuppressLint("RestrictedApi", "VisibleForTests")
 @Composable
 fun DrawingSurface(
-    strokes: List<Stroke>,
-    canvasStrokeRenderer: CanvasStrokeRenderer,
-    onStrokesFinished: (List<Stroke>) -> Unit,
-    onErase: (offsetX: Float, offsetY: Float) -> Unit,
-    onEraseStart: () -> Unit,
-    onEraseEnd: () -> Unit,
-    currentBrush: Brush,
-    onGetNextBrush: () -> Brush,
-    isEraserMode: Boolean,
-    backgroundImageUri: String?,
-    onStartDrag: () -> Unit,
-    modifier: Modifier = Modifier,
-    maskPath: Path? = null,
+  strokes: List<Stroke>,
+  canvasStrokeRenderer: CanvasStrokeRenderer,
+  onStrokesFinished: (List<Stroke>) -> Unit,
+  onErase: (offsetX: Float, offsetY: Float) -> Unit,
+  onEraseStart: () -> Unit,
+  onEraseEnd: () -> Unit,
+  currentBrush: Brush,
+  onGetNextBrush: () -> Brush,
+  isEraserMode: Boolean,
+  backgroundImageUri: String?,
+  onStartDrag: () -> Unit,
+  modifier: Modifier = Modifier,
+  maskPath: Path? = null,
 ) {
-    val textureStore = LocalTextureStore.current
-    Box(modifier = modifier) {
-        backgroundImageUri?.let {
-            AsyncImage(
-                model = it,
-                contentDescription = "Background Image",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
-
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val canvas = drawContext.canvas.nativeCanvas
-            strokes.forEach { stroke ->
-                val blendMode = if (stroke.brush.family == StockBrushes.highlighter()) {
-                    BlendMode.Multiply
-                } else {
-                    BlendMode.SrcOver
-                }
-                drawContext.canvas.withSaveLayer(
-                    drawContext.size.toRect(),
-                    androidx.compose.ui.graphics.Paint()
-                        .apply { this.blendMode = blendMode }) {
-                    canvas.withSave {
-                        canvasStrokeRenderer.draw(
-                            stroke = stroke,
-                            canvas = this,
-                            strokeToScreenTransform = Matrix()
-                        )
-                    }
-                }
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInputWithSiblingFallthrough {
-                    detectDragGesturesAfterLongPress(
-                        onDragStart = {
-                            onStartDrag()
-                        },
-                        onDrag = { change, _ ->
-                            change.consume()
-                        },
-                        onDragEnd = {
-                            // Do nothing.
-                        }
-                    )
-                }
-        )
-
-        if (isEraserMode) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDragStart = { onEraseStart() },
-                            onDragEnd = { onEraseEnd() }
-                        ) { change, _ ->
-                            onErase(change.position.x, change.position.y)
-                            change.consume()
-                        }
-                    }
-            )
-        } else {
-            val cacheGen by textureStore.generation.collectAsState()
-            key(cacheGen) {
-                InProgressStrokes(
-                    defaultBrush = currentBrush,
-                    nextBrush = onGetNextBrush,
-                    onStrokesFinished = onStrokesFinished,
-                    textureBitmapStore = textureStore,
-                    maskPath = maskPath
-                )
-            }
-        }
-
+  val textureStore = LocalTextureStore.current
+  Box(modifier = modifier) {
+    backgroundImageUri?.let {
+      AsyncImage(
+        model = it,
+        contentDescription = "Background Image",
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop,
+      )
     }
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+      val canvas = drawContext.canvas.nativeCanvas
+      for (stroke in strokes) {
+        val blendMode =
+          if (stroke.brush.family == StockBrushes.highlighter()) {
+            BlendMode.Multiply
+          } else {
+            BlendMode.SrcOver
+          }
+        drawContext.canvas.withSaveLayer(
+          drawContext.size.toRect(),
+          Paint().apply { this.blendMode = blendMode },
+        ) {
+          canvas.withSave {
+            canvasStrokeRenderer.draw(
+              stroke = stroke,
+              canvas = this,
+              strokeToScreenTransform = Matrix(),
+            )
+          }
+        }
+      }
+    }
+
+    Box(
+      modifier =
+        Modifier.fillMaxSize().pointerInputWithSiblingFallthrough {
+          detectDragGesturesAfterLongPress(
+            onDragStart = { onStartDrag() },
+            onDrag = { change, _ -> change.consume() },
+            onDragEnd = {
+              // Do nothing.
+            },
+          )
+        }
+    )
+
+    if (isEraserMode) {
+      Box(
+        modifier =
+          Modifier.fillMaxSize().pointerInput(Unit) {
+            detectDragGestures(onDragStart = { onEraseStart() }, onDragEnd = { onEraseEnd() }) {
+              change,
+              _ ->
+              onErase(change.position.x, change.position.y)
+              change.consume()
+            }
+          }
+      )
+    } else {
+      val cacheGen by textureStore.generation.collectAsState()
+      key(cacheGen) {
+        InProgressStrokes(
+          defaultBrush = currentBrush,
+          nextBrush = onGetNextBrush,
+          onStrokesFinished = onStrokesFinished,
+          textureBitmapStore = textureStore,
+          maskPath = maskPath,
+        )
+      }
+    }
+  }
 }
 
 @Preview
 @Composable
 fun DrawingSurfacePreview() {
-    val textureStore = LocalTextureStore.current
-    val cacheGen by textureStore.generation.collectAsState()
-    val canvasStrokeRenderer = remember(cacheGen) { CanvasStrokeRenderer.create(textureStore) }
-    var currentBrush by remember {
-        mutableStateOf(
-            Brush.createWithComposeColor(
-                family = StockBrushes.highlighter(),
-                color = androidx.compose.ui.graphics.Color.Blue,
-                size = 10F,
-                epsilon = 0.01F
-            )
-        )
-    }
-
-    DrawingSurface(
-        strokes = emptyList(),
-        canvasStrokeRenderer = canvasStrokeRenderer,
-        onStrokesFinished = {},
-        onErase = { _, _ -> },
-        onEraseStart = {},
-        onEraseEnd = {},
-        currentBrush = currentBrush,
-        onGetNextBrush = { currentBrush },
-        isEraserMode = false,
-        backgroundImageUri = null,
-        onStartDrag = {}
+  val textureStore = LocalTextureStore.current
+  val cacheGen by textureStore.generation.collectAsState()
+  val canvasStrokeRenderer = remember(cacheGen) { CanvasStrokeRenderer.create(textureStore) }
+  var currentBrush by remember {
+    mutableStateOf(
+      Brush.createWithComposeColor(
+        family = StockBrushes.highlighter(),
+        color = Color.Blue,
+        size = 10F,
+        epsilon = 0.01F,
+      )
     )
+  }
+
+  DrawingSurface(
+    strokes = emptyList(),
+    canvasStrokeRenderer = canvasStrokeRenderer,
+    onStrokesFinished = {},
+    onErase = { _, _ -> },
+    onEraseStart = {},
+    onEraseEnd = {},
+    currentBrush = currentBrush,
+    onGetNextBrush = { currentBrush },
+    isEraserMode = false,
+    backgroundImageUri = null,
+    onStartDrag = {},
+  )
 }

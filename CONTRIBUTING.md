@@ -1,7 +1,7 @@
 # How to contribute
 
-We'd love to accept your patches and contributions to this project. 
-Please create a bug report before you begin work on large code changes. 
+We'd love to accept your patches and contributions to this project. Please
+create a bug report before you begin work on large code changes.
 
 ## Before you begin
 

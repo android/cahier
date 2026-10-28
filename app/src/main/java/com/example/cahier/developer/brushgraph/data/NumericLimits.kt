@@ -29,53 +29,48 @@ import kotlin.math.PI
  * @param unitScale multiplier to convert real value → display value
  */
 class NumericLimits(
-    val min: Float,
-    val max: Float,
-    val step: Float = 0.01f,
-    val displayUnit: String = "",
-    val unitScale: Float = 1.0f,
+  val min: Float,
+  val max: Float,
+  val step: Float = 0.01f,
+  val displayUnit: String = "",
+  val unitScale: Float = 1.0f,
 ) {
-    /** Convert a display value back to the real value as described by [unitScale]. */
-    fun toRealValue(displayValue: Float): Float = displayValue / unitScale
+  /** Convert a display value back to the real value as described by [unitScale]. */
+  fun toRealValue(displayValue: Float): Float = displayValue / unitScale
 
-    /** Convert a real value to the display value as described by [unitScale]. */
-    fun fromRealValue(realValue: Float): Float = realValue * unitScale
+  /** Convert a real value to the display value as described by [unitScale]. */
+  fun fromRealValue(realValue: Float): Float = realValue * unitScale
 
-    /** Format a display value with its unit suffix. */
-    fun format(displayValue: Float): String {
-        val formatted = if (displayValue == displayValue.toLong().toFloat()) {
-            displayValue.toLong().toString()
-        } else {
-            String.format(Locale.US, "%.2f", displayValue)
-        }
-        return "$formatted$displayUnit"
-    }
+  /** Format a display value with its unit suffix. */
+  fun format(displayValue: Float): String {
+    val formatted =
+      if (displayValue == displayValue.toLong().toFloat()) {
+        displayValue.toLong().toString()
+      } else {
+        String.format(Locale.US, "%.2f", displayValue)
+      }
+    return "$formatted$displayUnit"
+  }
 
-    companion object {
-        /** Values stored as 0..1 shown as 0..100% */
-        fun floatShownAsPercent(
-            minPercent: Float = 0f,
-            maxPercent: Float = 100f,
-        ): NumericLimits =
-            NumericLimits(
-                min = minPercent,
-                max = maxPercent,
-                step = 1f,
-                displayUnit = "%",
-                unitScale = 100f
-            )
+  companion object {
+    /** Values stored as 0..1 shown as 0..100% */
+    fun floatShownAsPercent(minPercent: Float = 0f, maxPercent: Float = 100f): NumericLimits =
+      NumericLimits(
+        min = minPercent,
+        max = maxPercent,
+        step = 1f,
+        displayUnit = "%",
+        unitScale = 100f,
+      )
 
-        /** Values stored in radians, shown in degrees */
-        fun radiansShownAsDegrees(
-            minDegrees: Float,
-            maxDegrees: Float,
-        ): NumericLimits =
-            NumericLimits(
-                min = minDegrees,
-                max = maxDegrees,
-                step = 1f,
-                displayUnit = "°",
-                unitScale = (180f / PI.toFloat())
-            )
-    }
+    /** Values stored in radians, shown in degrees */
+    fun radiansShownAsDegrees(minDegrees: Float, maxDegrees: Float): NumericLimits =
+      NumericLimits(
+        min = minDegrees,
+        max = maxDegrees,
+        step = 1f,
+        displayUnit = "°",
+        unitScale = (180f / PI.toFloat()),
+      )
+  }
 }

@@ -21,11 +21,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
 import android.net.Uri
 import android.util.Log
+import android.view.DragAndDropPermissions
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.ink.brush.Brush
@@ -51,6 +54,7 @@ import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
+import com.example.cahier.R
 import com.example.cahier.core.data.AUTOSAVE_KEY
 import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.CustomBrush
@@ -61,9 +65,13 @@ import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.ui.CahierUiState
 import com.example.cahier.core.utils.FileHelper
-import ink.proto.BrushFamily as ProtoBrushFamily
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import ink.proto.BrushFamily as ProtoBrushFamily
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.zip.GZIPInputStream
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,499 +80,459 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayInputStream
-import java.util.zip.GZIPInputStream
-import javax.inject.Inject
 
 @HiltViewModel
-class DrawingCanvasViewModel @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    savedStateHandle: SavedStateHandle,
-    private val noteRepository: NotesRepository,
-    val fileHelper: FileHelper,
-    private val imageLoader: ImageLoader,
-    private val customBrushDao: CustomBrushDao,
-    val textureStore: CahierTextureBitmapStore,
+class DrawingCanvasViewModel
+@Inject
+constructor(
+  @param:ApplicationContext private val context: Context,
+  savedStateHandle: SavedStateHandle,
+  private val noteRepository: NotesRepository,
+  val fileHelper: FileHelper,
+  private val imageLoader: ImageLoader,
+  private val customBrushDao: CustomBrushDao,
+  val textureStore: CahierTextureBitmapStore,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(CahierUiState())
-    val uiState: StateFlow<CahierUiState> = _uiState.asStateFlow()
+  private val _uiState = MutableStateFlow(CahierUiState())
+  val uiState: StateFlow<CahierUiState> = _uiState.asStateFlow()
 
-    private val noteId: Long = savedStateHandle[DrawingCanvasDestination.NOTE_ID_ARG] ?: 0L
+  private val noteId: Long = savedStateHandle[DrawingCanvasDestination.NOTE_ID_ARG] ?: 0L
 
-    private val currentNightMode = AppCompatDelegate.getDefaultNightMode()
+  private val currentNightMode = AppCompatDelegate.getDefaultNightMode()
 
-    private val heartHighlighter =
-        StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true)
-    private val poopHighlighter =
-        StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true)
-    private val starHighlighter =
-        StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true)
-    private val highlighter = StockBrushes.highlighter()
+  private val heartHighlighter =
+    StockBrushes.emojiHighlighter("emoji-heart", showMiniEmojiTrail = true)
+  private val poopHighlighter =
+    StockBrushes.emojiHighlighter("emoji-poop", showMiniEmojiTrail = true)
+  private val starHighlighter =
+    StockBrushes.emojiHighlighter("emoji-star", showMiniEmojiTrail = true)
+  private val highlighter = StockBrushes.highlighter()
 
-    private val _defaultBrush = MutableStateFlow(
-        Brush.createWithComposeColor(
-            family = StockBrushes.pressurePen(),
-            color = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES)
-                Color.White else Color.Gray,
-            size = 5F,
-            epsilon = 0.1F
-        )
+  private val _defaultBrush =
+    MutableStateFlow(
+      Brush.createWithComposeColor(
+        family = StockBrushes.pressurePen(),
+        color =
+          if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) ComposeColor.White
+          else ComposeColor.Gray,
+        size = 5F,
+        epsilon = 0.1F,
+      )
     )
 
-    private val _selectedBrush = MutableStateFlow(_defaultBrush.value)
-    val currentBrush = _selectedBrush.asStateFlow()
+  private val _selectedBrush = MutableStateFlow(_defaultBrush.value)
+  val currentBrush: StateFlow<Brush> = _selectedBrush.asStateFlow()
 
-    private val _isEraserMode = MutableStateFlow(false)
-    val isEraserMode: StateFlow<Boolean> = _isEraserMode.asStateFlow()
+  private val _isEraserMode = MutableStateFlow(false)
+  val isEraserMode: StateFlow<Boolean> = _isEraserMode.asStateFlow()
 
-    private var previousPoint: MutableVec? = null
-    private val eraserPadding = 50f
+  private var previousPoint: MutableVec? = null
+  private val eraserPadding = 50f
 
-    private val history = mutableListOf<List<Stroke>>()
-    private var historyIndex = -1
-    private val _canUndo = MutableStateFlow(false)
-    val canUndo: StateFlow<Boolean> = _canUndo.asStateFlow()
-    private val _canRedo = MutableStateFlow(false)
-    val canRedo: StateFlow<Boolean> = _canRedo.asStateFlow()
+  private val history = mutableListOf<List<Stroke>>()
+  private var historyIndex = -1
+  private val _canUndo = MutableStateFlow(false)
+  val canUndo: StateFlow<Boolean> = _canUndo.asStateFlow()
+  private val _canRedo = MutableStateFlow(false)
+  val canRedo: StateFlow<Boolean> = _canRedo.asStateFlow()
 
-    private val _exportedImageUri = MutableStateFlow<Uri?>(null)
-    val exportedImageUri: StateFlow<Uri?> = _exportedImageUri.asStateFlow()
+  private val _exportedImageUri = MutableStateFlow<Uri?>(null)
+  val exportedImageUri: StateFlow<Uri?> = _exportedImageUri.asStateFlow()
 
-    private val _customBrushes = MutableStateFlow<List<CustomBrush>>(emptyList())
-    val customBrushes: StateFlow<List<CustomBrush>> = _customBrushes.asStateFlow()
+  private val _customBrushes = MutableStateFlow<List<CustomBrush>>(emptyList())
+  val customBrushes: StateFlow<List<CustomBrush>> = _customBrushes.asStateFlow()
 
-    private var isBrushSelectedInSession = false
+  private var isBrushSelectedInSession = false
 
-    init {
-        viewModelScope.launch {
-            noteRepository.getNoteStream(noteId)
-                .filterNotNull()
-                .collect { note ->
-                    val initialStrokes = if (note.strokesData != null) {
-                        noteRepository.getNoteStrokes(note.id)
-                    } else {
-                        emptyList()
-                    }
+  init {
+    viewModelScope.launch {
+      noteRepository.getNoteStream(noteId).filterNotNull().collect { note ->
+        val initialStrokes =
+          if (note.strokesData != null) {
+            noteRepository.getNoteStrokes(note.id)
+          } else {
+            emptyList()
+          }
 
-                    note.clientBrushFamilyId?.let { id ->
-                        if (!isBrushSelectedInSession) {
-                            val customBrush = customBrushes.value.find {
-                                it.name == id
-                            }
-                            customBrush?.let {
-                                _selectedBrush.value =
-                                    _selectedBrush.value.copy(family = it.brushFamily)
-                            }
-                        }
-                    }
-
-                    _uiState.update {
-                        it.copy(note = note, strokes = initialStrokes)
-                    }
-                    if (history.isEmpty()) {
-                        history.clear()
-                        history.add(initialStrokes)
-                        historyIndex = 0
-                        updateUndoRedoState()
-                    } else {
-                        if (historyIndex >= 0 && historyIndex < history.size) {
-                            _uiState.update { it.copy(strokes = history[historyIndex]) }
-                        }
-                        updateUndoRedoState()
-                    }
-                }
+        note.clientBrushFamilyId?.let { id ->
+          if (!isBrushSelectedInSession) {
+            val customBrush = customBrushes.value.find { it.name == id }
+            customBrush?.let {
+              _selectedBrush.value = _selectedBrush.value.copy(family = it.brushFamily)
+            }
+          }
         }
 
-        loadCustomBrushes()
-    }
-
-    fun addImageWithLocalUri(localUri: Uri?) {
-        if (localUri == null) return
-        val newImageUri = localUri.toString()
-        val updatedNote = _uiState.value.note.copy(imageUriList = listOf(newImageUri))
-        viewModelScope.launch {
-            noteRepository.updateNote(updatedNote)
-        }
-    }
-
-    private fun updateStrokes(newStrokes: List<Stroke>) {
-        if (historyIndex < history.size - 1) {
-            history.subList(historyIndex + 1, history.size).clear()
-        }
-        history.add(newStrokes)
-        historyIndex++
-
-        _uiState.update { it.copy(strokes = newStrokes) }
-        updateUndoRedoState()
-    }
-
-    private fun updateUndoRedoState() {
-        _canUndo.value = historyIndex > 0
-        _canRedo.value = historyIndex < history.size - 1
-    }
-
-    fun undo() {
-        if (canUndo.value) {
-            historyIndex--
-            _uiState.update { it.copy(strokes = history[historyIndex]) }
-            updateUndoRedoState()
-            viewModelScope.launch { saveStrokes() }
-        }
-    }
-
-    fun redo() {
-        if (canRedo.value) {
-            historyIndex++
-            _uiState.update { it.copy(strokes = history[historyIndex]) }
-            updateUndoRedoState()
-            viewModelScope.launch { saveStrokes() }
-        }
-    }
-
-    fun toggleFavorite() {
-        viewModelScope.launch {
-            noteRepository.toggleFavorite(noteId)
-        }
-    }
-
-    fun processAndAddImageFromPicker(uri: Uri?) {
-        viewModelScope.launch {
-            processAndAddImage(uri)
-        }
-    }
-
-    suspend fun processAndAddImage(uri: Uri?) {
-        if (uri == null) return
-        val localFileUri = fileHelper.copyUriToInternalStorage(uri)
-        addImageWithLocalUri(localFileUri)
-    }
-
-    fun replaceImage(uri: Uri?) {
-        viewModelScope.launch {
-            processAndAddImage(uri)
-        }
-    }
-
-    @SuppressLint("RestrictedApi")
-    suspend fun createExportedBitmap(width: Int, height: Int) {
-        val backgroundImageUri = _uiState.value.note.imageUriList?.firstOrNull()
-        val strokes = _uiState.value.strokes
-
-        val backgroundBitmap = if (backgroundImageUri != null) {
-            val request = ImageRequest.Builder(context)
-                .data(backgroundImageUri.toUri())
-                .allowHardware(false)
-                .build()
-            imageLoader.execute(request).image?.toBitmap()
+        _uiState.update { it.copy(note = note, strokes = initialStrokes) }
+        if (history.isEmpty()) {
+          history.clear()
+          history.add(initialStrokes)
+          historyIndex = 0
+          updateUndoRedoState()
         } else {
+          if (historyIndex >= 0 && historyIndex < history.size) {
+            _uiState.update { it.copy(strokes = history[historyIndex]) }
+          }
+          updateUndoRedoState()
+        }
+      }
+    }
+
+    loadCustomBrushes()
+  }
+
+  fun addImageWithLocalUri(localUri: Uri?) {
+    if (localUri == null) return
+    val newImageUri = localUri.toString()
+    val updatedNote = _uiState.value.note.copy(imageUriList = listOf(newImageUri))
+    viewModelScope.launch { noteRepository.updateNote(updatedNote) }
+  }
+
+  private fun updateStrokes(newStrokes: List<Stroke>) {
+    if (historyIndex < history.size - 1) {
+      history.subList(historyIndex + 1, history.size).clear()
+    }
+    history.add(newStrokes)
+    historyIndex++
+
+    _uiState.update { it.copy(strokes = newStrokes) }
+    updateUndoRedoState()
+  }
+
+  private fun updateUndoRedoState() {
+    _canUndo.value = historyIndex > 0
+    _canRedo.value = historyIndex < history.size - 1
+  }
+
+  fun undo() {
+    if (canUndo.value) {
+      historyIndex--
+      _uiState.update { it.copy(strokes = history[historyIndex]) }
+      updateUndoRedoState()
+      viewModelScope.launch { saveStrokes() }
+    }
+  }
+
+  fun redo() {
+    if (canRedo.value) {
+      historyIndex++
+      _uiState.update { it.copy(strokes = history[historyIndex]) }
+      updateUndoRedoState()
+      viewModelScope.launch { saveStrokes() }
+    }
+  }
+
+  fun toggleFavorite() {
+    viewModelScope.launch { noteRepository.toggleFavorite(noteId) }
+  }
+
+  fun processAndAddImageFromPicker(uri: Uri?) {
+    viewModelScope.launch { processAndAddImage(uri) }
+  }
+
+  suspend fun processAndAddImage(uri: Uri?) {
+    if (uri == null) return
+    val localFileUri = fileHelper.copyUriToInternalStorage(uri)
+    addImageWithLocalUri(localFileUri)
+  }
+
+  fun replaceImage(uri: Uri?) {
+    viewModelScope.launch { processAndAddImage(uri) }
+  }
+
+  @SuppressLint("RestrictedApi")
+  suspend fun createExportedBitmap(width: Int, height: Int) {
+    val backgroundImageUri = _uiState.value.note.imageUriList?.firstOrNull()
+    val strokes = _uiState.value.strokes
+
+    val backgroundBitmap =
+      if (backgroundImageUri != null) {
+        val request =
+          ImageRequest.Builder(context)
+            .data(backgroundImageUri.toUri())
+            .allowHardware(false)
+            .build()
+        imageLoader.execute(request).image?.toBitmap()
+      } else {
+        null
+      }
+
+    val exportBitmap = createBitmap(width, height)
+    val canvas = Canvas(exportBitmap)
+
+    val backgroundColor =
+      if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
+        Color.BLACK
+      } else {
+        Color.WHITE
+      }
+    canvas.drawColor(backgroundColor)
+
+    backgroundBitmap?.let { bmp ->
+      val canvasWidth = width.toFloat()
+      val canvasHeight = height.toFloat()
+      val bmpWidth = bmp.width.toFloat()
+      val bmpHeight = bmp.height.toFloat()
+
+      val scaleX = canvasWidth / bmpWidth
+      val scaleY = canvasHeight / bmpHeight
+
+      val scale = maxOf(scaleX, scaleY)
+
+      val dx = (canvasWidth - bmpWidth * scale) / 2f
+      val dy = (canvasHeight - bmpHeight * scale) / 2f
+
+      val matrix = Matrix()
+      matrix.setScale(scale, scale)
+      matrix.postTranslate(dx, dy)
+
+      canvas.drawBitmap(bmp, matrix, null)
+    }
+
+    val strokeRenderer = CanvasStrokeRenderer.create(textureStore = textureStore)
+    strokes.forEach { stroke -> strokeRenderer.draw(canvas, stroke, Matrix()) }
+    _exportedImageUri.value = fileHelper.saveBitmapToCache(exportBitmap)
+  }
+
+  suspend fun saveStrokes() {
+    if (historyIndex >= 0 && historyIndex < history.size) {
+      val strokesToSave = history[historyIndex]
+      val currentBrushFamily = strokesToSave.lastOrNull()?.brush?.family
+      val clientBrushFamilyId =
+        _customBrushes.value.find { it.brushFamily == currentBrushFamily }?.name
+      noteRepository.updateNoteStrokes(noteId, strokesToSave, clientBrushFamilyId)
+    } else if (history.isEmpty()) {
+      noteRepository.updateNoteStrokes(noteId, emptyList(), null)
+    }
+  }
+
+  fun onTitleChanged(newTitle: String) {
+    viewModelScope.launch { updateNoteTitle(newTitle) }
+  }
+
+  suspend fun updateNoteTitle(newTitle: String) {
+    val updatedNote = _uiState.value.note.copy(title = newTitle)
+    noteRepository.updateNote(updatedNote)
+  }
+
+  @UiThread
+  fun onStrokesFinished(finishedStrokes: List<Stroke>) {
+    val currentStrokes = history.getOrElse(historyIndex) { emptyList() }
+    val newStrokes = currentStrokes + finishedStrokes
+    updateStrokes(newStrokes)
+    viewModelScope.launch { saveStrokes() }
+  }
+
+  fun startErase() {
+    previousPoint = null
+  }
+
+  fun endErase() {
+    previousPoint = null
+    viewModelScope.launch { saveStrokes() }
+  }
+
+  fun erase(x: Float, y: Float) {
+    val strokesBeforeErase = history.getOrElse(historyIndex) { emptyList() }
+    val strokesAfterErase = eraseIntersectingStrokes(x, y, strokesBeforeErase)
+
+    if (strokesAfterErase.size != strokesBeforeErase.size) {
+      updateStrokes(strokesAfterErase)
+    }
+  }
+
+  @SuppressLint("RestrictedApi")
+  private fun eraseIntersectingStrokes(
+    currentX: Float,
+    currentY: Float,
+    currentStrokes: List<Stroke>,
+  ): List<Stroke> {
+    val prev = previousPoint
+    previousPoint = MutableVec(currentX, currentY)
+
+    if (prev == null) return currentStrokes
+
+    val segment = MutableSegment(prev, MutableVec(currentX, currentY))
+    val parallelogram = MutableParallelogram().populateFromSegmentAndPadding(segment, eraserPadding)
+
+    val strokesToRemove = currentStrokes.filter { stroke ->
+      stroke.shape.intersects(parallelogram, AffineTransform.IDENTITY)
+    }
+
+    return if (strokesToRemove.isNotEmpty()) {
+      currentStrokes - strokesToRemove.toSet()
+    } else {
+      currentStrokes
+    }
+  }
+
+  fun changeBrush(brushFamily: BrushFamily) {
+    setEraserMode(false)
+    isBrushSelectedInSession = true
+    _selectedBrush.update { currentBrush ->
+      val newBrush = currentBrush.copy(family = brushFamily)
+      val colorToApply =
+        when (newBrush.family) {
+          highlighter -> newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
+          heartHighlighter -> ComposeColor(0xFFFF45CA).copy(alpha = HIGHLIGHTER_ALPHA)
+          poopHighlighter -> ComposeColor(0xFF783013).copy(alpha = HIGHLIGHTER_ALPHA)
+          starHighlighter -> ComposeColor(0xFFFFE100).copy(alpha = HIGHLIGHTER_ALPHA)
+          else -> newBrush.composeColor.copy(alpha = 1f)
+        }
+      newBrush.copyWithComposeColor(colorToApply)
+    }
+  }
+
+  fun changeBrushAndSize(brushFamily: BrushFamily, size: Float) {
+    isBrushSelectedInSession = true
+    _selectedBrush.update { currentBrush ->
+      val newBrush = currentBrush.copy(family = brushFamily, size = size)
+      val colorToApply =
+        when (newBrush.family) {
+          highlighter -> newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
+          heartHighlighter -> ComposeColor(0xFFFF45CA).copy(alpha = HIGHLIGHTER_ALPHA)
+          poopHighlighter -> ComposeColor(0xFF783013).copy(alpha = HIGHLIGHTER_ALPHA)
+          starHighlighter -> ComposeColor(0xFFFFE100).copy(alpha = HIGHLIGHTER_ALPHA)
+          else -> newBrush.composeColor.copy(alpha = 1f)
+        }
+      newBrush.copyWithComposeColor(colorToApply)
+    }
+  }
+
+  fun changeBrushColor(color: ComposeColor) {
+    isBrushSelectedInSession = true
+    _selectedBrush.update { currentBrush ->
+      val colorToApply =
+        when (currentBrush.family) {
+          heartHighlighter,
+          poopHighlighter,
+          starHighlighter,
+          highlighter -> color.copy(alpha = HIGHLIGHTER_ALPHA)
+
+          else -> color.copy(alpha = 1f)
+        }
+      currentBrush.copyWithComposeColor(color = colorToApply)
+    }
+  }
+
+  fun changeBrushSize(size: Float) {
+    isBrushSelectedInSession = true
+    _selectedBrush.update { currentBrush -> currentBrush.copy(size = size) }
+  }
+
+  fun setEraserMode(enabled: Boolean) {
+    _isEraserMode.update { enabled }
+  }
+
+  fun clearStrokes() {
+    if (_uiState.value.strokes.isNotEmpty()) {
+      updateStrokes(emptyList())
+      viewModelScope.launch { saveStrokes() }
+    }
+  }
+
+  fun clearImages() {
+    val updatedNote = _uiState.value.note.copy(imageUriList = emptyList())
+    viewModelScope.launch { noteRepository.updateNote(updatedNote) }
+  }
+
+  fun clearScreen() {
+    clearStrokes()
+    clearImages()
+  }
+
+  fun handleDroppedUri(uri: Uri, permissions: DragAndDropPermissions?) {
+    viewModelScope.launch {
+      try {
+        val localUri = fileHelper.copyUriToInternalStorage(uri)
+        addImageWithLocalUri(localUri)
+      } finally {
+        permissions?.release()
+      }
+    }
+  }
+
+  fun getCurrentBrush(): Brush {
+    return _selectedBrush.value
+  }
+
+  suspend fun saveCurrentBrushToAutosave() {
+    withContext(Dispatchers.IO) {
+      try {
+        val stream = ByteArrayOutputStream()
+        _selectedBrush.value.family.encode(stream, textureStore)
+        val encodedBrushFamily = stream.toByteArray()
+        customBrushDao.saveCustomBrush(CustomBrushEntity(AUTOSAVE_KEY, encodedBrushFamily))
+        Log.d(TAG, "Auto saved brush to database successfully")
+      } catch (e: Exception) {
+        Log.e(TAG, "Error auto saving brush to database", e)
+      }
+    }
+  }
+
+  private fun loadCustomBrushes() {
+    viewModelScope.launch(Dispatchers.IO) {
+      val builtInBrushes = CustomBrushes.getBrushes(context, textureStore)
+
+      val decodedCache = mutableMapOf<String, CustomBrush>()
+
+      customBrushDao.getAllCustomBrushes().collect { dbBrushes ->
+        val currentNames = dbBrushes.map { it.name }.toSet()
+        decodedCache.keys.retainAll(currentNames)
+
+        val userBrushes = dbBrushes.mapNotNull { entity ->
+          decodedCache[entity.name]?.let {
+            return@mapNotNull it
+          }
+
+          try {
+            GZIPInputStream(ByteArrayInputStream(entity.brushBytes)).use { gzip ->
+              val rawProtoBytes = gzip.readBytes()
+              val proto = ProtoBrushFamily.parseFrom(rawProtoBytes)
+
+              proto.textureIdToBitmapMap.forEach { (id, byteString) ->
+                val bitmapBytes = byteString.toByteArray()
+                val bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.size)
+                if (bitmap != null) {
+                  textureStore.loadTexture(id, bitmap)
+                }
+              }
+            }
+
+            ByteArrayInputStream(entity.brushBytes).use { inputStream ->
+              val family =
+                BrushFamily.decode(inputStream, maxVersion = Version.DEVELOPMENT) {
+                  id: String,
+                  bitmap: Bitmap? ->
+                  bitmap?.let { textureStore.loadTexture(id, bitmap) }
+                  id
+                }
+              CustomBrush(
+                  name = entity.name,
+                  icon = R.drawable.edit_24px,
+                  brushFamily = family,
+                  isRemovable = true,
+                )
+                .also { decodedCache[entity.name] = it }
+            }
+          } catch (e: Exception) {
+            Log.e(TAG, "Error loading textures/brush ${entity.name}", e)
             null
+          }
         }
 
-        val exportBitmap = createBitmap(width, height)
-        val canvas = Canvas(exportBitmap)
-
-        val backgroundColor = if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
-            android.graphics.Color.BLACK
-        } else {
-            android.graphics.Color.WHITE
-        }
-        canvas.drawColor(backgroundColor)
-
-        backgroundBitmap?.let { bmp ->
-            val canvasWidth = width.toFloat()
-            val canvasHeight = height.toFloat()
-            val bmpWidth = bmp.width.toFloat()
-            val bmpHeight = bmp.height.toFloat()
-
-            val scaleX = canvasWidth / bmpWidth
-            val scaleY = canvasHeight / bmpHeight
-
-            val scale = maxOf(scaleX, scaleY)
-
-            val dx = (canvasWidth - bmpWidth * scale) / 2f
-            val dy = (canvasHeight - bmpHeight * scale) / 2f
-
-            val matrix = android.graphics.Matrix()
-            matrix.setScale(scale, scale)
-            matrix.postTranslate(dx, dy)
-
-            canvas.drawBitmap(bmp, matrix, null)
-        }
-
-        val strokeRenderer = CanvasStrokeRenderer.create(
-            textureStore = textureStore
-        )
-        strokes.forEach { stroke ->
-            strokeRenderer.draw(canvas, stroke, android.graphics.Matrix())
-        }
-        _exportedImageUri.value = fileHelper.saveBitmapToCache(exportBitmap)
+        withContext(Dispatchers.Main) { _customBrushes.value = builtInBrushes + userBrushes }
+      }
     }
+  }
 
-    suspend fun saveStrokes() {
-        if (historyIndex >= 0 && historyIndex < history.size) {
-            val strokesToSave = history[historyIndex]
-            val currentBrushFamily = strokesToSave.lastOrNull()?.brush?.family
-            val clientBrushFamilyId = _customBrushes.value
-                .find { it.brushFamily == currentBrushFamily }?.name
-            noteRepository.updateNoteStrokes(noteId, strokesToSave, clientBrushFamilyId)
-        } else if (history.isEmpty()) {
-            noteRepository.updateNoteStrokes(noteId, emptyList(), null)
-        }
-    }
+  override fun onCleared() {
+    viewModelScope.launch { saveStrokes() }
+  }
 
-    fun onTitleChanged(newTitle: String) {
-        viewModelScope.launch {
-            updateNoteTitle(newTitle)
-        }
-    }
-
-    suspend fun updateNoteTitle(newTitle: String) {
-        val updatedNote = _uiState.value.note.copy(title = newTitle)
-        noteRepository.updateNote(updatedNote)
-    }
-
-    @UiThread
-    fun onStrokesFinished(finishedStrokes: List<Stroke>) {
-        val currentStrokes = history.getOrElse(historyIndex) { emptyList() }
-        val newStrokes = currentStrokes + finishedStrokes
-        updateStrokes(newStrokes)
-        viewModelScope.launch {
-            saveStrokes()
-        }
-    }
-
-    fun startErase() {
-        previousPoint = null
-    }
-
-    fun endErase() {
-        previousPoint = null
-        viewModelScope.launch { saveStrokes() }
-    }
-
-
-    fun erase(x: Float, y: Float) {
-        val strokesBeforeErase = history.getOrElse(historyIndex) { emptyList() }
-        val strokesAfterErase = eraseIntersectingStrokes(
-            x, y, strokesBeforeErase
-        )
-
-        if (strokesAfterErase.size != strokesBeforeErase.size) {
-            updateStrokes(strokesAfterErase)
-        }
-    }
-
-    @SuppressLint("RestrictedApi")
-    private fun eraseIntersectingStrokes(
-        currentX: Float,
-        currentY: Float,
-        currentStrokes: List<Stroke>,
-    ): List<Stroke> {
-        val prev = previousPoint
-        previousPoint = MutableVec(currentX, currentY)
-
-        if (prev == null) return currentStrokes
-
-        val segment = MutableSegment(prev, MutableVec(currentX, currentY))
-        val parallelogram = MutableParallelogram()
-            .populateFromSegmentAndPadding(segment, eraserPadding)
-
-        val strokesToRemove = currentStrokes.filter { stroke ->
-            stroke.shape.intersects(parallelogram, AffineTransform.IDENTITY)
-        }
-
-        return if (strokesToRemove.isNotEmpty()) {
-            currentStrokes - strokesToRemove.toSet()
-        } else {
-            currentStrokes
-        }
-    }
-
-    fun changeBrush(brushFamily: BrushFamily) {
-        setEraserMode(false)
-        isBrushSelectedInSession = true
-        _selectedBrush.update { currentBrush ->
-            val newBrush = currentBrush.copy(family = brushFamily)
-            val colorToApply = when (newBrush.family) {
-                highlighter -> newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
-                heartHighlighter -> Color(0xFFFF45CA).copy(alpha = HIGHLIGHTER_ALPHA)
-                poopHighlighter -> Color(0xFF783013).copy(alpha = HIGHLIGHTER_ALPHA)
-                starHighlighter -> Color(0xFFFFE100).copy(alpha = HIGHLIGHTER_ALPHA)
-                else -> newBrush.composeColor.copy(alpha = 1f)
-            }
-            newBrush.copyWithComposeColor(colorToApply)
-        }
-    }
-
-    fun changeBrushAndSize(brushFamily: BrushFamily, size: Float) {
-        isBrushSelectedInSession = true
-        _selectedBrush.update { currentBrush ->
-            val newBrush = currentBrush.copy(family = brushFamily, size = size)
-            val colorToApply = when (newBrush.family) {
-                highlighter -> newBrush.composeColor.copy(alpha = HIGHLIGHTER_ALPHA)
-                heartHighlighter -> Color(0xFFFF45CA).copy(alpha = HIGHLIGHTER_ALPHA)
-                poopHighlighter -> Color(0xFF783013).copy(alpha = HIGHLIGHTER_ALPHA)
-                starHighlighter -> Color(0xFFFFE100).copy(alpha = HIGHLIGHTER_ALPHA)
-                else -> newBrush.composeColor.copy(alpha = 1f)
-            }
-            newBrush.copyWithComposeColor(colorToApply)
-        }
-    }
-
-    fun changeBrushColor(color: Color) {
-        isBrushSelectedInSession = true
-        _selectedBrush.update { currentBrush ->
-            val colorToApply = when (currentBrush.family) {
-                heartHighlighter,
-                poopHighlighter,
-                starHighlighter,
-                highlighter,
-                    -> color.copy(alpha = HIGHLIGHTER_ALPHA)
-
-                else -> color.copy(alpha = 1f)
-            }
-            currentBrush.copyWithComposeColor(color = colorToApply)
-        }
-    }
-
-    fun changeBrushSize(size: Float) {
-        isBrushSelectedInSession = true
-        _selectedBrush.update { currentBrush ->
-            currentBrush.copy(size = size)
-        }
-    }
-
-    fun setEraserMode(enabled: Boolean) {
-        _isEraserMode.update { enabled }
-    }
-
-    fun clearStrokes() {
-        if (_uiState.value.strokes.isNotEmpty()) {
-            updateStrokes(emptyList())
-            viewModelScope.launch { saveStrokes() }
-        }
-    }
-
-    fun clearImages() {
-        val updatedNote = _uiState.value.note.copy(imageUriList = emptyList())
-        viewModelScope.launch {
-            noteRepository.updateNote(updatedNote)
-        }
-    }
-
-    fun clearScreen() {
-        clearStrokes()
-        clearImages()
-    }
-
-    fun handleDroppedUri(uri: Uri, permissions: android.view.DragAndDropPermissions?) {
-        viewModelScope.launch {
-            try {
-                val localUri = fileHelper.copyUriToInternalStorage(uri)
-                addImageWithLocalUri(localUri)
-            } finally {
-                permissions?.release()
-            }
-        }
-    }
-
-    fun getCurrentBrush(): Brush {
-        return _selectedBrush.value
-    }
-
-    suspend fun saveCurrentBrushToAutosave() {
-        withContext(Dispatchers.IO) {
-            try {
-                val stream = java.io.ByteArrayOutputStream()
-                _selectedBrush.value.family.encode(
-                    stream,
-                    textureStore
-                )
-                val encodedBrushFamily = stream.toByteArray()
-                customBrushDao.saveCustomBrush(
-                    CustomBrushEntity(
-                        AUTOSAVE_KEY,
-                        encodedBrushFamily
-                    )
-                )
-                Log.d(TAG, "Auto saved brush to database successfully")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error auto saving brush to database", e)
-            }
-        }
-    }
-
-    private fun loadCustomBrushes() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val builtInBrushes = CustomBrushes.getBrushes(context, textureStore)
-
-            val decodedCache = mutableMapOf<String, CustomBrush>()
-
-            customBrushDao.getAllCustomBrushes().collect { dbBrushes ->
-                val currentNames = dbBrushes.map { it.name }.toSet()
-                decodedCache.keys.retainAll(currentNames)
-
-                val userBrushes = dbBrushes.mapNotNull { entity ->
-                    decodedCache[entity.name]?.let { return@mapNotNull it }
-
-                    try {
-                        GZIPInputStream(ByteArrayInputStream(entity.brushBytes))
-                            .use { gzip ->
-                                val rawProtoBytes = gzip.readBytes()
-                                val proto = ProtoBrushFamily.parseFrom(rawProtoBytes)
-
-                                proto.textureIdToBitmapMap.forEach { (id, byteString) ->
-                                    val bitmapBytes = byteString.toByteArray()
-                                    val bitmap =
-                                        BitmapFactory.decodeByteArray(
-                                            bitmapBytes,
-                                            0,
-                                            bitmapBytes.size
-                                        )
-                                    if (bitmap != null) {
-                                        textureStore.loadTexture(id, bitmap)
-                                    }
-                                }
-                            }
-
-                        ByteArrayInputStream(entity.brushBytes).use { inputStream ->
-                            val family =
-                                BrushFamily.decode(
-                                    inputStream,
-                                    maxVersion = Version.DEVELOPMENT
-                                ) { id: String, bitmap: Bitmap? ->
-                                    bitmap?.let { textureStore.loadTexture(id, bitmap) }
-                                    id
-                                }
-                            CustomBrush(
-                                name = entity.name,
-                                icon = com.example.cahier.R.drawable.edit_24px,
-                                brushFamily = family,
-                                isRemovable = true
-                            ).also { decodedCache[entity.name] = it }
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error loading textures/brush ${entity.name}", e)
-                        null
-                    }
-                }
-
-                withContext(Dispatchers.Main) {
-                    _customBrushes.value = builtInBrushes + userBrushes
-                }
-            }
-        }
-    }
-
-    override fun onCleared() {
-        viewModelScope.launch {
-            saveStrokes()
-        }
-    }
-
-    companion object {
-        private const val TAG = "DrawingCanvasViewModel"
-        private const val HIGHLIGHTER_ALPHA = 0.3f
-    }
+  companion object {
+    private const val TAG = "DrawingCanvasViewModel"
+    private const val HIGHLIGHTER_ALPHA = 0.3f
+  }
 }

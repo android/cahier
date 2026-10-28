@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.example.cahier.core.data
 
 import android.content.Context
@@ -24,54 +23,56 @@ import androidx.annotation.DrawableRes
 import androidx.ink.brush.TextureBitmapStore
 import com.example.cahier.R
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 @Singleton
 class CahierTextureBitmapStore @Inject constructor(@ApplicationContext context: Context) :
-    TextureBitmapStore {
-    private val resources = context.resources
+  TextureBitmapStore {
+  private val resources = context.resources
 
-    private val textureResources: Map<String, Int> = mapOf(
-        "music-clef-g" to R.drawable.music_clef_g,
-        "music-note-sixteenth" to R.drawable.music_note_sixteenth,
-        "pencil" to R.drawable.pencil,
-        "emoji-heart" to R.drawable.emoji_heart,
-        "emoji-star" to R.drawable.emoji_star,
-        "emoji-poop" to R.drawable.emoji_poop,
+  private val textureResources: Map<String, Int> =
+    mapOf(
+      "music-clef-g" to R.drawable.music_clef_g,
+      "music-note-sixteenth" to R.drawable.music_note_sixteenth,
+      "pencil" to R.drawable.pencil,
+      "emoji-heart" to R.drawable.emoji_heart,
+      "emoji-star" to R.drawable.emoji_star,
+      "emoji-poop" to R.drawable.emoji_poop,
     )
 
-    private val loadedBitmaps = mutableMapOf<String, Bitmap>()
+  private val loadedBitmaps = mutableMapOf<String, Bitmap>()
 
-    private val _generation = MutableStateFlow(0)
-    val generation = _generation.asStateFlow()
+  private val _generation = MutableStateFlow(0)
+  val generation: StateFlow<Int> = _generation.asStateFlow()
 
-    override operator fun get(clientTextureId: String): Bitmap? {
-        val id = getShortName(clientTextureId)
-        return loadedBitmaps.getOrPut(id) {
-            textureResources[id]?.let { loadBitmap(it) } ?: return null
-        }
+  override operator fun get(clientTextureId: String): Bitmap? {
+    val id = getShortName(clientTextureId)
+    return loadedBitmaps.getOrPut(id) {
+      textureResources[id]?.let { loadBitmap(it) } ?: return null
     }
+  }
 
-    /** Returns all available texture IDs. */
-    fun getAllIds(): Set<String> {
-        return textureResources.keys + loadedBitmaps.keys
-    }
+  /** Returns all available texture IDs. */
+  fun getAllIds(): Set<String> {
+    return textureResources.keys + loadedBitmaps.keys
+  }
 
-    private fun getShortName(clientTextureId: String): String =
-        clientTextureId.removePrefix("ink://ink").removePrefix("/texture:")
+  private fun getShortName(clientTextureId: String): String =
+    clientTextureId.removePrefix("ink://ink").removePrefix("/texture:")
 
-    private fun loadBitmap(@DrawableRes drawable: Int): Bitmap {
-        return BitmapFactory.decodeResource(resources, drawable)
-            ?: throw IllegalStateException("Could not load bitmap for resource $drawable")
-    }
+  private fun loadBitmap(@DrawableRes drawable: Int): Bitmap {
+    return BitmapFactory.decodeResource(resources, drawable)
+      ?: throw IllegalStateException("Could not load bitmap for resource $drawable")
+  }
 
-    fun loadTexture(textureId: String, bitmap: Bitmap) {
-        val id = getShortName(textureId)
-        loadedBitmaps[id] = bitmap
-        _generation.update { it + 1 }
-    }
+  fun loadTexture(textureId: String, bitmap: Bitmap) {
+    val id = getShortName(textureId)
+    loadedBitmaps[id] = bitmap
+    _generation.update { it + 1 }
+  }
 }

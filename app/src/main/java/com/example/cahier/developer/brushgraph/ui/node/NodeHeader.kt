@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
+import com.example.cahier.developer.brushgraph.data.BrushFamilyConverter
 import com.example.cahier.developer.brushgraph.data.BrushGraph
 import com.example.cahier.developer.brushgraph.data.GraphNode
 import com.example.cahier.developer.brushgraph.data.NodeData
@@ -50,91 +51,73 @@ import ink.proto.BrushCoat as ProtoBrushCoat
 
 @Composable
 fun NodeHeader(
-    node: GraphNode,
-    graph: BrushGraph,
-    strokeRenderer: CanvasStrokeRenderer,
-    textColor: Color,
-    modifier: Modifier = Modifier,
+  node: GraphNode,
+  graph: BrushGraph,
+  strokeRenderer: CanvasStrokeRenderer,
+  textColor: Color,
+  modifier: Modifier = Modifier,
 ) {
-    val data = node.data
-    Column(modifier = modifier) {
-        Row(
-            modifier = Modifier
-                .height(with(LocalDensity.current) { data.titleHeight().toDp() })
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                Text(
-                    text = stringResource(data.title()),
-                    color = textColor,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                for (subtitle in data.subtitles()) {
-                    val subtitleText = subtitle.asString()
-                    Text(
-                        text = subtitleText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = textColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-
-            // Previews for Tip and Coat nodes.
-            if (data is NodeData.Tip) {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .padding(4.dp)
-                ) {
-                    TipPreviewWidget(data.tip, strokeRenderer)
-                }
-            } else if (data is NodeData.Coat) {
-                val coat = remember(node, graph) {
-                    try {
-                        com.example.cahier.developer.brushgraph.data.BrushFamilyConverter.createCoat(
-                            node,
-                            graph
-                        )
-                    } catch (e: Exception) {
-                        ProtoBrushCoat.getDefaultInstance()
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .padding(4.dp)
-                ) {
-                    CoatPreviewWidget(coat, strokeRenderer)
-                }
-            }
+  val data = node.data
+  Column(modifier = modifier) {
+    Row(
+      modifier =
+        Modifier.height(with(LocalDensity.current) { data.titleHeight().toDp() })
+          .padding(horizontal = 8.dp, vertical = 4.dp)
+          .fillMaxWidth(),
+      verticalAlignment = Alignment.Top,
+      horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+      Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+        Text(
+          text = stringResource(data.title()),
+          color = textColor,
+          style = MaterialTheme.typography.titleSmall,
+          fontWeight = FontWeight.Bold,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+        for (subtitle in data.subtitles()) {
+          val subtitleText = subtitle.asString()
+          Text(
+            text = subtitleText,
+            style = MaterialTheme.typography.bodySmall,
+            color = textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
         }
+      }
 
-        if (data is NodeData.ColorFunction) {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .padding(4.dp)
-            ) {
-                ColorFunctionPreviewWidget(data.function, strokeRenderer)
-            }
+      // Previews for Tip and Coat nodes.
+      if (data is NodeData.Tip) {
+        Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
+          TipPreviewWidget(data.tip, strokeRenderer)
         }
-        if (data is NodeData.TextureLayer) {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .padding(4.dp)
-            ) {
-                TextureLayerPreviewWidget(data.layer, strokeRenderer)
+      } else if (data is NodeData.Coat) {
+        val coat =
+          remember(node, graph) {
+            try {
+              BrushFamilyConverter.createCoat(node, graph)
+            } catch (e: Exception) {
+              ProtoBrushCoat.getDefaultInstance()
             }
+          }
+
+        Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
+          CoatPreviewWidget(coat, strokeRenderer)
         }
+      }
     }
+
+    if (data is NodeData.ColorFunction) {
+      Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
+        ColorFunctionPreviewWidget(data.function, strokeRenderer)
+      }
+    }
+    if (data is NodeData.TextureLayer) {
+      Box(modifier = Modifier.size(60.dp).padding(4.dp)) {
+        TextureLayerPreviewWidget(data.layer, strokeRenderer)
+      }
+    }
+  }
 }

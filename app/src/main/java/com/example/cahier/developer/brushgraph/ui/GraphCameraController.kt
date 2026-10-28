@@ -36,102 +36,103 @@ private const val TUTORIAL_TARGET_Y = 280f
 
 @Composable
 fun GraphCameraController(
-    offset: Offset,
-    tutorialStep: TutorialStep?,
-    focusTrigger: Int,
-    graph: BrushGraph,
-    zoom: Float,
-    previewHeight: Dp,
-    selectedNodeId: String?,
-    updateOffset: (Offset) -> Unit,
-    viewportSize: Size,
-    isWideScreen: Boolean,
-    maxWidthDp: Dp,
-    nodeRegistry: NodeRegistry,
+  offset: Offset,
+  tutorialStep: TutorialStep?,
+  focusTrigger: Int,
+  graph: BrushGraph,
+  zoom: Float,
+  previewHeight: Dp,
+  selectedNodeId: String?,
+  updateOffset: (Offset) -> Unit,
+  viewportSize: Size,
+  isWideScreen: Boolean,
+  maxWidthDp: Dp,
+  nodeRegistry: NodeRegistry,
 ) {
-    val animatableOffset = remember { Animatable(offset, Offset.VectorConverter) }
-    val density = LocalDensity.current.density
+  val animatableOffset = remember { Animatable(offset, Offset.VectorConverter) }
+  val density = LocalDensity.current.density
 
-    // Auto-pan to node in tutorial
-    LaunchedEffect(tutorialStep) {
-        if (tutorialStep != null && tutorialStep.anchor == TutorialAnchor.NODE_CANVAS) {
-            val node = tutorialStep.getTargetNode(graph)
-            if (node != null) {
-                val targetY = TUTORIAL_TARGET_Y * density
-                val targetX = maxWidthDp.value * density / 2f
+  // Auto-pan to node in tutorial
+  LaunchedEffect(tutorialStep) {
+    if (tutorialStep != null && tutorialStep.anchor == TutorialAnchor.NODE_CANVAS) {
+      val node = tutorialStep.getTargetNode(graph)
+      if (node != null) {
+        val targetY = TUTORIAL_TARGET_Y * density
+        val targetX = maxWidthDp.value * density / 2f
 
-                val newOffset = calculateFocusOffset(
-                    node = node,
-                    position = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero,
-                    zoom = zoom,
-                    targetScreenPos = Offset(targetX, targetY)
-                )
+        val newOffset =
+          calculateFocusOffset(
+            node = node,
+            position = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero,
+            zoom = zoom,
+            targetScreenPos = Offset(targetX, targetY),
+          )
 
-                animatableOffset.snapTo(offset)
-                animatableOffset.animateTo(newOffset, animationSpec = tween(500)) {
-                    updateOffset(this.value)
-                }
-            }
+        animatableOffset.snapTo(offset)
+        animatableOffset.animateTo(newOffset, animationSpec = tween(500)) {
+          updateOffset(this.value)
         }
+      }
     }
+  }
 
-    // Listen for ViewModel events (e.g. center on node)
-    LaunchedEffect(focusTrigger) {
-        if (focusTrigger > 0) {
-            selectedNodeId?.let { nodeId ->
-                val node = graph.nodes.find { it.id == nodeId }
-                if (node != null) {
-                    val newOffset = calculateFocusOffset(
-                        node = node,
-                        position = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero,
-                        zoom = zoom,
-                        viewportSize = viewportSize,
-                        density = density,
-                        isWideScreen = isWideScreen,
-                        previewHeight = previewHeight
-                    )
-                    animatableOffset.snapTo(offset)
-                    animatableOffset.animateTo(newOffset, animationSpec = tween(500)) {
-                        updateOffset(this.value)
-                    }
-                }
-            }
+  // Listen for ViewModel events (e.g. center on node)
+  LaunchedEffect(focusTrigger) {
+    if (focusTrigger > 0) {
+      selectedNodeId?.let { nodeId ->
+        val node = graph.nodes.find { it.id == nodeId }
+        if (node != null) {
+          val newOffset =
+            calculateFocusOffset(
+              node = node,
+              position = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero,
+              zoom = zoom,
+              viewportSize = viewportSize,
+              density = density,
+              isWideScreen = isWideScreen,
+              previewHeight = previewHeight,
+            )
+          animatableOffset.snapTo(offset)
+          animatableOffset.animateTo(newOffset, animationSpec = tween(500)) {
+            updateOffset(this.value)
+          }
         }
+      }
     }
+  }
 }
 
 private fun calculateFocusOffset(
-    node: GraphNode,
-    position: Offset,
-    zoom: Float,
-    viewportSize: Size = Size.Zero,
-    density: Float = 1f,
-    isWideScreen: Boolean = false,
-    previewHeight: Dp = Dp.Unspecified,
-    targetScreenPos: Offset? = null,
+  node: GraphNode,
+  position: Offset,
+  zoom: Float,
+  viewportSize: Size = Size.Zero,
+  density: Float = 1f,
+  isWideScreen: Boolean = false,
+  previewHeight: Dp = Dp.Unspecified,
+  targetScreenPos: Offset? = null,
 ): Offset {
-    val nodeCenterX = position.x + node.data.width() / 2f
-    val nodeCenterY = position.y + node.data.height() / 2f
+  val nodeCenterX = position.x + node.data.width() / 2f
+  val nodeCenterY = position.y + node.data.height() / 2f
 
-    val targetPos = if (targetScreenPos != null) {
-        Pair(targetScreenPos.x, targetScreenPos.y)
+  val targetPos =
+    if (targetScreenPos != null) {
+      Pair(targetScreenPos.x, targetScreenPos.y)
     } else {
-        val previewHeightPx = previewHeight.value * density
-        val safeSize = if (isWideScreen) {
-            val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
-            Pair(viewportSize.width - inspectorWidthPx, viewportSize.height - previewHeightPx)
+      val previewHeightPx = previewHeight.value * density
+      val safeSize =
+        if (isWideScreen) {
+          val inspectorWidthPx = INSPECTOR_WIDTH_LANDSCAPE * density
+          Pair(viewportSize.width - inspectorWidthPx, viewportSize.height - previewHeightPx)
         } else {
-            val inspectorHeightPx = INSPECTOR_HEIGHT_PORTRAIT * density
-            Pair(
-                viewportSize.width,
-                viewportSize.height - maxOf(inspectorHeightPx, previewHeightPx)
-            )
+          val inspectorHeightPx = INSPECTOR_HEIGHT_PORTRAIT * density
+          Pair(viewportSize.width, viewportSize.height - maxOf(inspectorHeightPx, previewHeightPx))
         }
-        Pair(safeSize.first / 2f, safeSize.second / 2f)
+      Pair(safeSize.first / 2f, safeSize.second / 2f)
     }
 
-    val targetX = targetPos.first
-    val targetY = targetPos.second
+  val targetX = targetPos.first
+  val targetY = targetPos.second
 
-    return Offset(targetX - nodeCenterX * zoom, targetY - nodeCenterY * zoom)
+  return Offset(targetX - nodeCenterX * zoom, targetY - nodeCenterY * zoom)
 }

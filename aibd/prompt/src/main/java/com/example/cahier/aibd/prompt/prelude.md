@@ -13,6 +13,7 @@
 ---- See the License for the specific language governing permissions and
 ---- limitations under the License.
  -->
+
 # Overview
 
 ## Objective
@@ -79,6 +80,6 @@ output a valid textproto of a `BrushFamily` representing this description.
     provided examples is similar to the brush you are trying to design.
 
 -   `SELF_OVERLAP_DISCARD` is incompatible with any `BrushBehavior` with a
-    `TargetNode` targeting color (hue, lightness, chroma) or opacity. NEVER
-    use `SELF_OVERLAP_DISCARD` on the same `BrushCoat` as a `BrushBehavior`
+    `TargetNode` targeting color (hue, lightness, chroma) or opacity. NEVER use
+    `SELF_OVERLAP_DISCARD` on the same `BrushCoat` as a `BrushBehavior`
     targeting color or opacity.

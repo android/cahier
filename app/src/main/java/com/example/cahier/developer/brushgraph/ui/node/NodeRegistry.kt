@@ -31,102 +31,102 @@ import com.example.cahier.developer.brushgraph.ui.width
 data class PortKey(val nodeId: String, val portId: String)
 
 class NodeRegistry {
-    private val portPositions = mutableStateMapOf<PortKey, Offset>()
-    private val nodePositions = mutableStateMapOf<String, Offset>()
+  private val portPositions = mutableStateMapOf<PortKey, Offset>()
+  private val nodePositions = mutableStateMapOf<String, Offset>()
 
-    fun updatePort(nodeId: String, portId: String, position: Offset) {
-        portPositions[PortKey(nodeId, portId)] = position
+  fun updatePort(nodeId: String, portId: String, position: Offset) {
+    portPositions[PortKey(nodeId, portId)] = position
+  }
+
+  fun updateNodePosition(nodeId: String, position: Offset) {
+    nodePositions[nodeId] = position
+  }
+
+  fun getNodePosition(nodeId: String): Offset? {
+    return nodePositions[nodeId]
+  }
+
+  fun getPortPosition(
+    nodeId: String,
+    portId: String,
+    graph: BrushGraph,
+    useFallbackOnly: Boolean = false,
+  ): Offset {
+    val stored = portPositions[PortKey(nodeId, portId)]
+    if (stored != null && !useFallbackOnly) return stored
+
+    val node = graph.nodes.find { it.id == nodeId } ?: return Offset.Zero
+
+    // Special handling for output port which is not in visiblePorts
+    val nodePos = nodePositions[nodeId] ?: Offset.Zero
+    if (portId == "output") {
+      val w = node.data.width()
+      val yOffset = NODE_PADDING_VERTICAL + node.data.titleHeight() + 0.5f * INPUT_ROW_HEIGHT
+      return Offset(nodePos.x + w, nodePos.y + yOffset)
     }
 
-    fun updateNodePosition(nodeId: String, position: Offset) {
-        nodePositions[nodeId] = position
-    }
+    val visiblePorts = node.getVisiblePorts(graph)
+    val port = visiblePorts.find { it.id == portId } ?: return Offset.Zero
+    val sameSidePorts = visiblePorts.filter { it.side == port.side }
+    val index = sameSidePorts.indexOf(port)
 
-    fun getNodePosition(nodeId: String): Offset? {
-        return nodePositions[nodeId]
-    }
+    val w = node.data.width()
+    val yOffset =
+      NODE_PADDING_VERTICAL + node.data.titleHeight() + (index + 0.5f) * INPUT_ROW_HEIGHT
 
-    fun getPortPosition(
-      nodeId: String,
-      portId: String,
-      graph: BrushGraph,
-      useFallbackOnly: Boolean = false,
-    ): Offset {
-        val stored = portPositions[PortKey(nodeId, portId)]
-        if (stored != null && !useFallbackOnly) return stored
+    val relativeOffset =
+      when (port.side) {
+        PortSide.INPUT -> Offset(0f, yOffset)
+        PortSide.OUTPUT -> Offset(w, yOffset)
+      }
 
-        val node = graph.nodes.find { it.id == nodeId } ?: return Offset.Zero
+    val nodeOffset = nodePos
+    return nodeOffset + relativeOffset
+  }
 
-        // Special handling for output port which is not in visiblePorts
-        val nodePos = nodePositions[nodeId] ?: Offset.Zero
-        if (portId == "output") {
-            val w = node.data.width()
-            val yOffset = NODE_PADDING_VERTICAL + node.data.titleHeight() + 0.5f * INPUT_ROW_HEIGHT
-            return Offset(nodePos.x + w, nodePos.y + yOffset)
+  fun findNearestPort(pos: Offset, fromNodeId: String, graph: BrushGraph): Port? {
+    val thresholdSq = 3000f
+    var nearestPort: Port? = null
+    var minDistanceSq = thresholdSq
+
+    for (node in graph.nodes) {
+      val visiblePorts = node.getVisiblePorts(graph)
+      visiblePorts.forEachIndexed { _, port ->
+        // Only snap to input ports.
+        if (port.side == PortSide.INPUT) {
+          // Ignore occupied ports (unless it's the same edge being edited).
+          val existingEdge =
+            graph.edges.find { it.toNodeId == port.nodeId && it.toPortId == port.id }
+          if (existingEdge != null && existingEdge.fromNodeId != fromNodeId) {
+            return@forEachIndexed // Occupied by another node's edge!
+          }
+
+          val portPos = getPortPosition(port.nodeId, port.id, graph)
+
+          val distSq = (pos - portPos).getDistanceSquared()
+
+          if (distSq < minDistanceSq) {
+            minDistanceSq = distSq
+            nearestPort = port
+          }
         }
-
-        val visiblePorts = node.getVisiblePorts(graph)
-        val port = visiblePorts.find { it.id == portId } ?: return Offset.Zero
-        val sameSidePorts = visiblePorts.filter { it.side == port.side }
-        val index = sameSidePorts.indexOf(port)
-
-        val w = node.data.width()
-        val yOffset = NODE_PADDING_VERTICAL +
-                node.data.titleHeight() +
-                (index + 0.5f) * INPUT_ROW_HEIGHT
-
-        val relativeOffset = when (port.side) {
-            PortSide.INPUT -> Offset(0f, yOffset)
-            PortSide.OUTPUT -> Offset(w, yOffset)
-        }
-
-        val nodeOffset = nodePos
-        return nodeOffset + relativeOffset
+      }
     }
+    return nearestPort
+  }
 
-    fun findNearestPort(pos: Offset, fromNodeId: String, graph: BrushGraph): Port? {
-        val thresholdSq = 3000f
-        var nearestPort: Port? = null
-        var minDistanceSq = thresholdSq
+  fun deletePort(nodeId: String, portId: String) {
+    portPositions.remove(PortKey(nodeId, portId))
+  }
 
-        for (node in graph.nodes) {
-            val visiblePorts = node.getVisiblePorts(graph)
-            visiblePorts.forEachIndexed { index, port ->
-                // Only snap to input ports.
-                if (port.side == PortSide.INPUT) {
-                    // Ignore occupied ports (unless it's the same edge being edited).
-                    val existingEdge =
-                        graph.edges.find { it.toNodeId == port.nodeId && it.toPortId == port.id }
-                    if (existingEdge != null && existingEdge.fromNodeId != fromNodeId) {
-                        return@forEachIndexed // Occupied by another node's edge!
-                    }
+  fun clearNode(nodeId: String) {
+    val keysToRemove = portPositions.keys.filter { it.nodeId == nodeId }
+    keysToRemove.forEach { portPositions.remove(it) }
+    nodePositions.remove(nodeId)
+  }
 
-                    val portPos = getPortPosition(port.nodeId, port.id, graph)
-
-                    val distSq = (pos - portPos).getDistanceSquared()
-
-                    if (distSq < minDistanceSq) {
-                        minDistanceSq = distSq
-                        nearestPort = port
-                    }
-                }
-            }
-        }
-        return nearestPort
-    }
-
-    fun deletePort(nodeId: String, portId: String) {
-        portPositions.remove(PortKey(nodeId, portId))
-    }
-
-    fun clearNode(nodeId: String) {
-        val keysToRemove = portPositions.keys.filter { it.nodeId == nodeId }
-        keysToRemove.forEach { portPositions.remove(it) }
-        nodePositions.remove(nodeId)
-    }
-
-    fun clear() {
-        portPositions.clear()
-        nodePositions.clear()
-    }
+  fun clear() {
+    portPositions.clear()
+    nodePositions.clear()
+  }
 }

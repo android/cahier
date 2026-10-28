@@ -582,4 +582,28 @@ class HarnessTest {
     assertThat(harness.activeConversation.manifest.titleSource)
       .isEqualTo(TitleSource.USER_SPECIFIED)
   }
+
+  @Test
+  fun changeModel_changesModelForActiveConversation() {
+    val testBaseDir: File = tempFolder.newFolder("ink_test_root_change_model")
+    val storage = DesktopStorage(testBaseDir)
+    val fakeChat = FakeChat(scriptedResponses = emptyList())
+    val fakeClient = FakeClient(FakeChats(fakeChat))
+    val harness =
+      Harness(
+        client = fakeClient,
+        modelName = "fake-model",
+        storage = storage,
+        imageConverter = FakeImageConverter(),
+        deployer = FakeDeployer(),
+      )
+
+    assertThat(harness.getCurrentModel()).isEqualTo("fake-model")
+    assertThat(fakeChat.model).isEqualTo("fake-model")
+
+    harness.changeModel("new-model")
+
+    assertThat(harness.getCurrentModel()).isEqualTo("new-model")
+    assertThat(fakeChat.model).isEqualTo("new-model")
+  }
 }

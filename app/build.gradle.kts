@@ -119,6 +119,7 @@ dependencies {
     testImplementation(libs.roborazzi.rule)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.testparameterinjector)
 
     // Android Testing - For instrumented tests
     androidTestImplementation(libs.androidx.junit)

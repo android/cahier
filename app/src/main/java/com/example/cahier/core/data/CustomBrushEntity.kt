@@ -22,24 +22,24 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "custom_brushes")
 data class CustomBrushEntity(
-    @PrimaryKey val name: String,
-    @ColumnInfo(typeAffinity = ColumnInfo.BLOB) val brushBytes: ByteArray,
+  @PrimaryKey val name: String,
+  @ColumnInfo(typeAffinity = ColumnInfo.BLOB) val brushBytes: ByteArray,
 ) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
 
-        other as CustomBrushEntity
+    other as CustomBrushEntity
 
-        if (name != other.name) return false
-        if (!brushBytes.contentEquals(other.brushBytes)) return false
+    if (name != other.name) return false
+    if (!brushBytes.contentEquals(other.brushBytes)) return false
 
-        return true
-    }
+    return true
+  }
 
-    override fun hashCode(): Int {
-        var result = name.hashCode()
-        result = 31 * result + brushBytes.contentHashCode()
-        return result
-    }
+  override fun hashCode(): Int {
+    var result = name.hashCode()
+    result = 31 * result + brushBytes.contentHashCode()
+    return result
+  }
 }

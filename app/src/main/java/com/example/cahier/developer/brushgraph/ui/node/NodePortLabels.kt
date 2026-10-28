@@ -51,94 +51,87 @@ import com.example.cahier.developer.brushgraph.ui.asString
 
 @Composable
 fun NodePortLabels(
-    node: GraphNode,
-    graph: BrushGraph,
-    visiblePorts: List<Port>,
-    isSelectionMode: Boolean,
-    onPortClick: (String, Port) -> Unit,
-    textColor: Color,
-    addButtonColor: Color,
-    addButtonTextColor: Color,
-    modifier: Modifier = Modifier,
+  node: GraphNode,
+  graph: BrushGraph,
+  visiblePorts: List<Port>,
+  isSelectionMode: Boolean,
+  onPortClick: (String, Port) -> Unit,
+  textColor: Color,
+  addButtonColor: Color,
+  addButtonTextColor: Color,
+  modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
-    val occupiedPortIds = remember(node.id, graph.edges) {
-        graph.edges.filter { it.toNodeId == node.id }.map { it.toPortId }.toSet()
+  val density = LocalDensity.current
+  val occupiedPortIds =
+    remember(node.id, graph.edges) {
+      graph.edges.filter { it.toNodeId == node.id }.map { it.toPortId }.toSet()
     }
-    Box(modifier = modifier.fillMaxWidth()) {
-        Column {
-            for ((index, port) in visiblePorts.withIndex()) {
-                with(density) {
-                    val isPortEmpty = port.id !in occupiedPortIds
-                    Box(
-                        modifier =
-                            Modifier.height(INPUT_ROW_HEIGHT.toDp())
-                                .fillMaxWidth()
-                                .padding(
-                                    start = 8.dp,
-                                    end = if (index == 0 && node.data.hasOutput()) 48.dp else 8.dp
-                                )
-                                .let {
-                                    if (isPortEmpty) {
-                                        it
-                                            .clickable(enabled = !isSelectionMode) {
-                                                onPortClick(
-                                                    node.id,
-                                                    port
-                                                )
-                                            }
-                                            .background(
-                                                addButtonColor, RoundedCornerShape(4.dp)
-                                            )
-                                    } else {
-                                        it
-                                    }
-                                },
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        ) {
-                            if (isPortEmpty) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = stringResource(R.string.bg_cd_add),
-                                    tint = addButtonTextColor,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                            }
-                            Text(
-                                text = port.label?.asString() ?: "",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (isPortEmpty) addButtonTextColor else textColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
+  Box(modifier = modifier.fillMaxWidth()) {
+    Column {
+      for ((index, port) in visiblePorts.withIndex()) {
+        with(density) {
+          val isPortEmpty = port.id !in occupiedPortIds
+          Box(
+            modifier =
+              Modifier.height(INPUT_ROW_HEIGHT.toDp())
+                .fillMaxWidth()
+                .padding(
+                  start = 8.dp,
+                  end = if (index == 0 && node.data.hasOutput()) 48.dp else 8.dp,
+                )
+                .let {
+                  if (isPortEmpty) {
+                    it
+                      .clickable(enabled = !isSelectionMode) { onPortClick(node.id, port) }
+                      .background(addButtonColor, RoundedCornerShape(4.dp))
+                  } else {
+                    it
+                  }
+                },
+            contentAlignment = Alignment.CenterStart,
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.padding(horizontal = 4.dp),
+            ) {
+              if (isPortEmpty) {
+                Icon(
+                  imageVector = Icons.Default.Add,
+                  contentDescription = stringResource(R.string.bg_cd_add),
+                  tint = addButtonTextColor,
+                  modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+              }
+              Text(
+                text = port.label?.asString() ?: "",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isPortEmpty) addButtonTextColor else textColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+              )
             }
+          }
         }
-        // Output label on the right, aligned with the first input row.
-        if (node.data.hasOutput()) {
-            with(density) {
-                Box(
-                    modifier =
-                        Modifier
-                            .height(INPUT_ROW_HEIGHT.toDp())
-                            .align(Alignment.TopEnd)
-                            .padding(horizontal = 4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.bg_label_out),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = textColor,
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                    )
-                }
-            }
-        }
+      }
     }
+    // Output label on the right, aligned with the first input row.
+    if (node.data.hasOutput()) {
+      with(density) {
+        Box(
+          modifier =
+            Modifier.height(INPUT_ROW_HEIGHT.toDp())
+              .align(Alignment.TopEnd)
+              .padding(horizontal = 4.dp)
+        ) {
+          Text(
+            text = stringResource(R.string.bg_label_out),
+            style = MaterialTheme.typography.labelSmall,
+            color = textColor,
+            modifier = Modifier.align(Alignment.CenterEnd),
+          )
+        }
+      }
+    }
+  }
 }

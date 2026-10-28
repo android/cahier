@@ -57,159 +57,139 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    navigateToBrushGraph: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: SettingsViewModel = hiltViewModel(),
+  navigateToBrushGraph: () -> Unit,
+  modifier: Modifier = Modifier,
+  viewModel: SettingsViewModel = hiltViewModel(),
 ) {
-    val isRoleAvailable by viewModel.isRoleAvailable.collectAsStateWithLifecycle()
-    val isRoleHeld by viewModel.isRoleHeld.collectAsStateWithLifecycle()
-    LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+  val isRoleAvailable by viewModel.isRoleAvailable.collectAsStateWithLifecycle()
+  val isRoleHeld by viewModel.isRoleHeld.collectAsStateWithLifecycle()
+  LocalContext.current
+  val coroutineScope = rememberCoroutineScope()
 
-    val requestRoleLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
+  val requestRoleLauncher =
+    rememberLauncherForActivityResult(
+      contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        viewModel.updateRoleHeldStatus()
+      viewModel.updateRoleHeldStatus()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings)) },
-            )
-        },
-        modifier = modifier
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Constrain content width on wide screens
-            Column(
-                modifier = Modifier.widthIn(max = 600.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+  Scaffold(
+    topBar = { TopAppBar(title = { Text(stringResource(R.string.settings)) }) },
+    modifier = modifier,
+  ) { paddingValues ->
+    Column(
+      modifier =
+        Modifier.fillMaxSize()
+          .padding(paddingValues)
+          .verticalScroll(rememberScrollState())
+          .padding(horizontal = 16.dp, vertical = 16.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+      // Constrain content width on wide screens
+      Column(
+        modifier = Modifier.widthIn(max = 600.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+      ) {
+        // ── Default Notes App ──
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+          Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                // ── Default Notes App ──
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.settings_24px),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = stringResource(R.string.notes_role_setting_title),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                        Text(
-                            text = stringResource(R.string.notes_role_setting_description),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = when {
-                                    !isRoleAvailable -> stringResource(
-                                        R.string.notes_role_not_available
-                                    )
-
-                                    isRoleHeld -> stringResource(R.string.notes_role_held)
-                                    else -> stringResource(R.string.notes_role_not_held)
-                                },
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            FilledTonalButton(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        viewModel.requestNotesRole(requestRoleLauncher)
-                                    }
-                                },
-                                enabled = isRoleAvailable && !isRoleHeld
-                            ) {
-                                Text(stringResource(R.string.set_as_default_notes_app))
-                            }
-                        }
-                    }
-                }
-
-                // ── Developer Tools ──
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.brush_24px),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.settings_developer_tools),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    text = stringResource(
-                                        R.string
-                                            .settings_developer_tools_description
-                                    ),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.settings_brush_designer_title),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Text(
-                                    text = stringResource(
-                                        R.string
-                                            .settings_brush_designer_description
-                                    ),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            FilledTonalButton(
-                                onClick = {
-                                    navigateToBrushGraph()
-                                }
-                            ) {
-                                Text(stringResource(R.string.settings_launch))
-                            }
-                        }
-                    }
-                }
+              Icon(
+                painterResource(R.drawable.settings_24px),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+              )
+              Text(
+                text = stringResource(R.string.notes_role_setting_title),
+                style = MaterialTheme.typography.titleMedium,
+              )
             }
+            Text(
+              text = stringResource(R.string.notes_role_setting_description),
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+              Text(
+                text =
+                  when {
+                    !isRoleAvailable -> stringResource(R.string.notes_role_not_available)
+
+                    isRoleHeld -> stringResource(R.string.notes_role_held)
+                    else -> stringResource(R.string.notes_role_not_held)
+                  },
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+              )
+
+              FilledTonalButton(
+                onClick = {
+                  coroutineScope.launch { viewModel.requestNotesRole(requestRoleLauncher) }
+                },
+                enabled = isRoleAvailable && !isRoleHeld,
+              ) {
+                Text(stringResource(R.string.set_as_default_notes_app))
+              }
+            }
+          }
         }
+
+        // ── Developer Tools ──
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+          Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+              Icon(
+                painterResource(R.drawable.brush_24px),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+              )
+              Column {
+                Text(
+                  text = stringResource(R.string.settings_developer_tools),
+                  style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                  text = stringResource(R.string.settings_developer_tools_description),
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+              Column(modifier = Modifier.weight(1f)) {
+                Text(
+                  text = stringResource(R.string.settings_brush_designer_title),
+                  style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                  text = stringResource(R.string.settings_brush_designer_description),
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
+
+              FilledTonalButton(onClick = { navigateToBrushGraph() }) {
+                Text(stringResource(R.string.settings_launch))
+              }
+            }
+          }
+        }
+      }
     }
+  }
 }

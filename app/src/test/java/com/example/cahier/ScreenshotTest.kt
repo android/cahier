@@ -1,6 +1,5 @@
 package com.example.cahier
 
-
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
@@ -20,35 +19,34 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 class ScreenshotTest {
 
-    @get:Rule
-    val composeTestRule = createComposeRule()
+  @get:Rule val composeTestRule = createComposeRule()
 
-    private val fakeViewModel = HomeScreenViewModel(FakeNotesRepository())
+  private val fakeViewModel = HomeScreenViewModel(FakeNotesRepository())
 
-    @Composable
-    private fun HomeContent() {
-        HomePane(
-            navigateToCanvas = { _ -> },
-            navigateToDrawingCanvas = { _ -> },
-            navigateToBrushGraph = {},
-            navigateUp = {},
-            homeScreenViewModel = fakeViewModel
-        )
-    }
+  @Composable
+  private fun HomeContent() {
+    HomePane(
+      navigateToCanvas = { _ -> },
+      navigateToDrawingCanvas = { _ -> },
+      navigateToBrushGraph = {},
+      navigateUp = {},
+      homeScreenViewModel = fakeViewModel,
+    )
+  }
 
-    @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet)
-    @Test
-    fun globalNavigation_showNavRail() {
-        composeTestRule.setContent { HomeContent() }
+  @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet)
+  @Test
+  fun globalNavigation_showNavRail() {
+    composeTestRule.setContent { HomeContent() }
 
-        composeTestRule.onRoot().captureRoboImage("reference_screenshot_navrail.png")
-    }
+    composeTestRule.onRoot().captureRoboImage("reference_screenshot_navrail.png")
+  }
 
-    @Config(qualifiers = RobolectricDeviceQualifiers.Pixel7Pro)
-    @Test
-    fun globalNavigation_showBottomNavBar() {
-        composeTestRule.setContent { HomeContent() }
+  @Config(qualifiers = RobolectricDeviceQualifiers.Pixel7Pro)
+  @Test
+  fun globalNavigation_showBottomNavBar() {
+    composeTestRule.setContent { HomeContent() }
 
-        composeTestRule.onRoot().captureRoboImage("reference_screenshot_bottomnavbar.png")
-    }
+    composeTestRule.onRoot().captureRoboImage("reference_screenshot_bottomnavbar.png")
+  }
 }

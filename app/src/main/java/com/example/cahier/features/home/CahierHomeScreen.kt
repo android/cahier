@@ -77,347 +77,317 @@ import kotlinx.coroutines.launch
 
 private val MinPaneWidth = 250.dp
 
-
 // The layout modifier implements a minimum width for the pane while
 // allowing it to report its original width to the scaffold, preventing
 // content from being overly compressed during resizing.
-private fun Modifier.minimumWidthLayout(minWidth: Dp): Modifier = this
-    .clipToBounds()
-    .layout { measurable, constraints ->
-        if (constraints.maxWidth == 0) {
-            layout(0, 0) {}
-        } else {
-            val fixedWidth = minWidth.roundToPx()
-            val placeable = measurable.measure(
-                constraints.copy(
-                    minWidth = fixedWidth,
-                    maxWidth = maxOf(fixedWidth, constraints.maxWidth)
-                )
-            )
-            val reportedWidth = constraints.maxWidth
-            layout(reportedWidth, placeable.height) {
-                placeable.placeRelative(0, 0)
-            }
-        }
+private fun Modifier.minimumWidthLayout(minWidth: Dp): Modifier =
+  this.clipToBounds().layout { measurable, constraints ->
+    if (constraints.maxWidth == 0) {
+      layout(0, 0) {}
+    } else {
+      val fixedWidth = minWidth.roundToPx()
+      val placeable =
+        measurable.measure(
+          constraints.copy(
+            minWidth = fixedWidth,
+            maxWidth = maxOf(fixedWidth, constraints.maxWidth),
+          )
+        )
+      val reportedWidth = constraints.maxWidth
+      layout(reportedWidth, placeable.height) { placeable.placeRelative(0, 0) }
     }
+  }
 
 object HomeDestination : NavigationDestination {
-    override val route = "home"
+  override val route = "home"
 }
 
 enum class AppDestinations(
-    @param:StringRes val label: Int,
-    @param:DrawableRes val icon: Int,
-    @param:StringRes val contentDescription: Int,
+  @param:StringRes val label: Int,
+  @param:DrawableRes val icon: Int,
+  @param:StringRes val contentDescription: Int,
 ) {
-    Home(
-        label = R.string.home,
-        icon = R.drawable.home_24px,
-        contentDescription = R.string.home
-    ),
-    Settings(
-        label = R.string.settings,
-        icon = R.drawable.settings_24px,
-        contentDescription = R.string.settings
-    ),
+  Home(label = R.string.home, icon = R.drawable.home_24px, contentDescription = R.string.home),
+  Settings(
+    label = R.string.settings,
+    icon = R.drawable.settings_24px,
+    contentDescription = R.string.settings,
+  ),
 }
 
-
 @SuppressLint("NewApi")
-@OptIn(
-    ExperimentalMaterial3AdaptiveApi::class,
-    ExperimentalMaterial3WindowSizeClassApi::class
-)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun HomePane(
-    navigateToCanvas: (Long) -> Unit,
-    navigateToDrawingCanvas: (Long) -> Unit,
-    navigateToBrushGraph: () -> Unit = {},
-    navigateUp: () -> Unit,
-    modifier: Modifier = Modifier,
-    forceCompact: Boolean? = null,
-    homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
+  navigateToCanvas: (Long) -> Unit,
+  navigateToDrawingCanvas: (Long) -> Unit,
+  navigateToBrushGraph: () -> Unit,
+  navigateUp: () -> Unit,
+  modifier: Modifier = Modifier,
+  forceCompact: Boolean? = null,
+  homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.Home) }
-    val navigator = rememberListDetailPaneScaffoldNavigator<Note>()
-    val noteList by homeScreenViewModel.noteList.collectAsStateWithLifecycle()
-    val selectedNoteUIState by homeScreenViewModel.uiState.collectAsStateWithLifecycle()
-    val coroutineScope = rememberCoroutineScope()
-    val activity = LocalActivity.current
-    val windowSizeClass = activity?.let { calculateWindowSizeClass(it) }
-    val paneExpansionState = rememberPaneExpansionState(
-        keyProvider = navigator.scaffoldValue,
-        anchors = listOf(
-            // 1. Fully collapsed state (0% screen fraction)
-            PaneExpansionAnchor.Proportion(proportion = 0f),
+  var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.Home) }
+  val navigator = rememberListDetailPaneScaffoldNavigator<Note>()
+  val noteList by homeScreenViewModel.noteList.collectAsStateWithLifecycle()
+  val selectedNoteUIState by homeScreenViewModel.uiState.collectAsStateWithLifecycle()
+  val coroutineScope = rememberCoroutineScope()
+  val activity = LocalActivity.current
+  val windowSizeClass = activity?.let { calculateWindowSizeClass(it) }
+  val paneExpansionState =
+    rememberPaneExpansionState(
+      keyProvider = navigator.scaffoldValue,
+      anchors =
+        listOf(
+          // 1. Fully collapsed state (0% screen fraction)
+          PaneExpansionAnchor.Proportion(proportion = 0f),
 
-            // 2. The 25 % minimum width snapping boundary anchor
-            PaneExpansionAnchor.Proportion(proportion = 0.25f),
+          // 2. The 25 % minimum width snapping boundary anchor
+          PaneExpansionAnchor.Proportion(proportion = 0.25f),
 
-            // 3. Middle split state (50% screen fraction)
-            PaneExpansionAnchor.Proportion(proportion = 0.5f),
+          // 3. Middle split state (50% screen fraction)
+          PaneExpansionAnchor.Proportion(proportion = 0.5f),
 
-            // 4. Fully expanded list state (100% screen fraction, detail collapsed)
-            PaneExpansionAnchor.Proportion(proportion = 1f)
-        )
+          // 4. Fully expanded list state (100% screen fraction, detail collapsed)
+          PaneExpansionAnchor.Proportion(proportion = 1f),
+        ),
     )
-    var hasSetInitialProportion by rememberSaveable {
-        mutableStateOf(false)
-    }
-    val isCompact = forceCompact
-        ?: (windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact)
-    val context = LocalContext.current
+  var hasSetInitialProportion by rememberSaveable { mutableStateOf(false) }
+  val isCompact = forceCompact ?: (windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact)
+  val context = LocalContext.current
 
-
-    LaunchedEffect(Unit) {
-        homeScreenViewModel.newWindowEvent.collect { (noteType, noteId) ->
-            val componentName = activity?.componentName ?: return@collect
-            val intent = Intent.makeMainActivity(componentName).apply {
-                putExtra(AppArgs.NOTE_TYPE_KEY, noteType)
-                putExtra(AppArgs.NOTE_ID_KEY, noteId)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
-                        Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-            }
-            context.startActivity(intent)
+  LaunchedEffect(Unit) {
+    homeScreenViewModel.newWindowEvent.collect { (noteType, noteId) ->
+      val componentName = activity?.componentName ?: return@collect
+      val intent =
+        Intent.makeMainActivity(componentName).apply {
+          putExtra(AppArgs.NOTE_TYPE_KEY, noteType)
+          putExtra(AppArgs.NOTE_ID_KEY, noteId)
+          flags =
+            Intent.FLAG_ACTIVITY_NEW_TASK or
+              Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+              Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
         }
+      context.startActivity(intent)
     }
+  }
 
-    LaunchedEffect(isCompact) {
-        if (isCompact) {
-            homeScreenViewModel.clearSelection()
-            navigator.navigateTo(ListDetailPaneScaffoldRole.List)
-        }
+  LaunchedEffect(isCompact) {
+    if (isCompact) {
+      homeScreenViewModel.clearSelection()
+      navigator.navigateTo(ListDetailPaneScaffoldRole.List)
     }
+  }
 
-    LaunchedEffect(isCompact, noteList) {
-        if (!isCompact && noteList.noteList.isNotEmpty() && selectedNoteUIState.note.id == 0L) {
-            homeScreenViewModel.selectNote(noteList.noteList.first().id)
-        }
+  LaunchedEffect(isCompact, noteList) {
+    if (!isCompact && noteList.noteList.isNotEmpty() && selectedNoteUIState.note.id == 0L) {
+      homeScreenViewModel.selectNote(noteList.noteList.first().id)
     }
+  }
 
-    LaunchedEffect(isCompact, hasSetInitialProportion) {
-        if (!isCompact && !hasSetInitialProportion) {
-            paneExpansionState.setFirstPaneProportion(0.5f)
-            hasSetInitialProportion = true
-        }
+  LaunchedEffect(isCompact, hasSetInitialProportion) {
+    if (!isCompact && !hasSetInitialProportion) {
+      paneExpansionState.setFirstPaneProportion(0.5f)
+      hasSetInitialProportion = true
     }
+  }
 
-    BackHandler(navigator.canNavigateBack()) {
-        coroutineScope.launch {
-            navigator.navigateBack()
-        }
-    }
+  BackHandler(navigator.canNavigateBack()) { coroutineScope.launch { navigator.navigateBack() } }
 
-    CahierNavigationSuite(
-        modifier = modifier,
-        currentDestination = currentDestination,
-        onDestinationChanged = { newDestination -> currentDestination = newDestination },
-        navigator = navigator,
-        homeScreenViewModel = homeScreenViewModel,
-        paneExpansionState = paneExpansionState,
-        noteList = noteList,
-        isCompact = isCompact,
-        selectedNoteUIState = selectedNoteUIState,
-        navigateToCanvas = navigateToCanvas,
-        navigateToDrawingCanvas = navigateToDrawingCanvas,
-        navigateToBrushGraph = navigateToBrushGraph,
-        navigateUp = navigateUp
-    )
+  CahierNavigationSuite(
+    modifier = modifier,
+    currentDestination = currentDestination,
+    onDestinationChanged = { newDestination -> currentDestination = newDestination },
+    navigator = navigator,
+    homeScreenViewModel = homeScreenViewModel,
+    paneExpansionState = paneExpansionState,
+    noteList = noteList,
+    isCompact = isCompact,
+    selectedNoteUIState = selectedNoteUIState,
+    navigateToCanvas = navigateToCanvas,
+    navigateToDrawingCanvas = navigateToDrawingCanvas,
+    navigateToBrushGraph = navigateToBrushGraph,
+    navigateUp = navigateUp,
+  )
 }
 
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun CahierNavigationSuite(
-    modifier: Modifier = Modifier,
-    currentDestination: AppDestinations,
-    onDestinationChanged: (AppDestinations) -> Unit,
-    navigator: ThreePaneScaffoldNavigator<Note>,
-    homeScreenViewModel: HomeScreenViewModel,
-    paneExpansionState: PaneExpansionState,
-    noteList: NoteListUiState,
-    isCompact: Boolean,
-    selectedNoteUIState: CahierUiState,
-    navigateToCanvas: (Long) -> Unit,
-    navigateToDrawingCanvas: (Long) -> Unit,
-    navigateToBrushGraph: () -> Unit,
-    navigateUp: () -> Unit,
+  modifier: Modifier = Modifier,
+  currentDestination: AppDestinations,
+  onDestinationChanged: (AppDestinations) -> Unit,
+  navigator: ThreePaneScaffoldNavigator<Note>,
+  homeScreenViewModel: HomeScreenViewModel,
+  paneExpansionState: PaneExpansionState,
+  noteList: NoteListUiState,
+  isCompact: Boolean,
+  selectedNoteUIState: CahierUiState,
+  navigateToCanvas: (Long) -> Unit,
+  navigateToDrawingCanvas: (Long) -> Unit,
+  navigateToBrushGraph: () -> Unit,
+  navigateUp: () -> Unit,
 ) {
-    NavigationSuiteScaffold(
-        modifier = modifier,
-        navigationItems = {
-            AppDestinations.entries.forEach { destination ->
-                val isSelected = currentDestination == destination
-                NavigationSuiteItem(
-                    icon = {
-                        Icon(
-                            painter = painterResource(id = destination.icon),
-                            contentDescription = stringResource(
-                                destination.contentDescription
-                            )
-                        )
-                    },
-                    label = { Text(stringResource(destination.label)) },
-                    selected = isSelected,
-                    onClick = {
-                        if (currentDestination != destination) {
-                            onDestinationChanged(destination)
-                            if (destination != AppDestinations.Home
-                                && navigator.currentDestination?.pane ==
-                                ListDetailPaneScaffoldRole.Detail
-                            ) {
-                                homeScreenViewModel.clearSelection()
-                            }
-                        }
+  NavigationSuiteScaffold(
+    modifier = modifier,
+    navigationItems = {
+      for (destination in AppDestinations.entries) {
+        val isSelected = currentDestination == destination
+        NavigationSuiteItem(
+          icon = {
+            Icon(
+              painter = painterResource(id = destination.icon),
+              contentDescription = stringResource(destination.contentDescription),
+            )
+          },
+          label = { Text(stringResource(destination.label)) },
+          selected = isSelected,
+          onClick = {
+            if (currentDestination != destination) {
+              onDestinationChanged(destination)
+              if (
+                destination != AppDestinations.Home &&
+                  navigator.currentDestination?.pane == ListDetailPaneScaffoldRole.Detail
+              ) {
+                homeScreenViewModel.clearSelection()
+              }
+            }
+          },
+        )
+      }
+    },
+    navigationItemVerticalArrangement = Arrangement.Center,
+    content = {
+      when (currentDestination) {
+        AppDestinations.Home -> {
+          ListDetailPaneScaffold(
+            modifier = Modifier.fillMaxSize(),
+            directive = navigator.scaffoldDirective,
+            value = navigator.scaffoldValue,
+            paneExpansionState = paneExpansionState,
+            paneExpansionDragHandle = { state ->
+              val interactionSource = remember { MutableInteractionSource() }
+              VerticalDragHandle(
+                modifier =
+                  Modifier.paneExpansionDraggable(
+                      state,
+                      LocalMinimumInteractiveComponentSize.current,
+                      interactionSource,
+                    )
+                    .zIndex(
+                      2f
+                    ) // Specify z-index to ensure the drag handle is drawn on top of the panes
+              )
+            },
+            listPane = {
+              ListPaneContent(
+                modifier = Modifier.fillMaxSize().minimumWidthLayout(MinPaneWidth),
+                noteList = noteList.noteList,
+                isCompact = isCompact,
+                selectedNoteId = if (isCompact) null else selectedNoteUIState.note.id,
+                onNoteClick = {
+                  if (isCompact) {
+                    if (it.type == NoteType.Drawing) {
+                      navigateToDrawingCanvas(it.id)
+                    } else {
+                      navigateToCanvas(it.id)
                     }
-                )
-            }
-        },
-        navigationItemVerticalArrangement = Arrangement.Center,
-        content = {
-            when (currentDestination) {
-                AppDestinations.Home -> {
-                    ListDetailPaneScaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        directive = navigator.scaffoldDirective,
-                        value = navigator.scaffoldValue,
-                        paneExpansionState = paneExpansionState,
-                        paneExpansionDragHandle = { state ->
-                            val interactionSource = remember { MutableInteractionSource() }
-                            VerticalDragHandle(
-                                modifier =
-                                    Modifier
-                                        .paneExpansionDraggable(
-                                            state,
-                                            LocalMinimumInteractiveComponentSize
-                                                .current,
-                                            interactionSource,
-                                        )
-                                        .zIndex(2f), // Specify z-index to ensure the drag handle is drawn on top of the panes
-                            )
-                        },
-                        listPane = {
-                            ListPaneContent(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .minimumWidthLayout(MinPaneWidth),
-                                noteList = noteList.noteList,
-                                isCompact = isCompact,
-                                selectedNoteId = if (isCompact) null
-                                else selectedNoteUIState.note.id,
-                                onNoteClick = {
-                                    if (isCompact) {
-                                        if (it.type == NoteType.Drawing) {
-                                            navigateToDrawingCanvas(it.id)
-                                        } else {
-                                            navigateToCanvas(it.id)
-                                        }
-                                    } else {
-                                        homeScreenViewModel.selectNote(it.id)
-                                    }
-                                },
-                                onAddNewTextNote = {
-                                    homeScreenViewModel.addNote { noteId ->
-                                        navigateToCanvas(noteId)
-                                    }
-                                },
-                                onAddNewDrawingNote = {
-                                    homeScreenViewModel.addDrawingNote { noteId ->
-                                        navigateToDrawingCanvas(noteId)
-                                    }
-                                },
-                                onDeleteNote = { note ->
-                                    homeScreenViewModel.deleteNote(note)
-                                    navigateUp()
-                                },
-                                onToggleFavorite = { noteId ->
-                                    homeScreenViewModel.toggleFavorite(noteId)
-                                },
-                                onNewWindow = { note ->
-                                    homeScreenViewModel.openInNewWindow(note)
-                                },
-                            )
-                        },
-                        detailPane = {
-                            if (!isCompact) {
-                                selectedNoteUIState.note.let { note ->
-                                    DetailPaneContent(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            // Specify z-index to ensure the detail pane content is correctly layered
-                                            .zIndex(1f)
-                                            .minimumWidthLayout(MinPaneWidth),
-                                        note = note,
-                                        strokes = selectedNoteUIState.strokes,
-                                        onClickToEdit = {
-                                            if (note.type == NoteType.Text) {
-                                                navigateToCanvas(note.id)
-                                            } else {
-                                                navigateToDrawingCanvas(note.id)
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    )
+                  } else {
+                    homeScreenViewModel.selectNote(it.id)
+                  }
+                },
+                onAddNewTextNote = {
+                  homeScreenViewModel.addNote { noteId -> navigateToCanvas(noteId) }
+                },
+                onAddNewDrawingNote = {
+                  homeScreenViewModel.addDrawingNote { noteId -> navigateToDrawingCanvas(noteId) }
+                },
+                onDeleteNote = { note ->
+                  homeScreenViewModel.deleteNote(note)
+                  navigateUp()
+                },
+                onToggleFavorite = { noteId -> homeScreenViewModel.toggleFavorite(noteId) },
+                onNewWindow = { note -> homeScreenViewModel.openInNewWindow(note) },
+              )
+            },
+            detailPane = {
+              if (!isCompact) {
+                selectedNoteUIState.note.let { note ->
+                  DetailPaneContent(
+                    modifier =
+                      Modifier.fillMaxSize()
+                        // Specify z-index to ensure the detail pane content is correctly layered
+                        .zIndex(1f)
+                        .minimumWidthLayout(MinPaneWidth),
+                    note = note,
+                    strokes = selectedNoteUIState.strokes,
+                    onClickToEdit = {
+                      if (note.type == NoteType.Text) {
+                        navigateToCanvas(note.id)
+                      } else {
+                        navigateToDrawingCanvas(note.id)
+                      }
+                    },
+                  )
                 }
-
-                AppDestinations.Settings -> {
-                    SettingsScreen(
-                        navigateToBrushGraph = navigateToBrushGraph,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-
+              }
+            },
+          )
         }
-    )
-}
 
+        AppDestinations.Settings -> {
+          SettingsScreen(
+            navigateToBrushGraph = navigateToBrushGraph,
+            modifier = Modifier.fillMaxSize(),
+          )
+        }
+      }
+    },
+  )
+}
 
 @Composable
 private fun ListPaneContent(
-    noteList: List<Note>,
-    isCompact: Boolean,
-    selectedNoteId: Long?,
-    onNoteClick: (Note) -> Unit,
-    onAddNewTextNote: () -> Unit,
-    onAddNewDrawingNote: () -> Unit,
-    onToggleFavorite: (Long) -> Unit,
-    modifier: Modifier = Modifier,
-    onDeleteNote: (Note) -> Unit,
-    onNewWindow: (Note) -> Unit,
+  noteList: List<Note>,
+  isCompact: Boolean,
+  selectedNoteId: Long?,
+  onNoteClick: (Note) -> Unit,
+  onAddNewTextNote: () -> Unit,
+  onAddNewDrawingNote: () -> Unit,
+  onToggleFavorite: (Long) -> Unit,
+  modifier: Modifier = Modifier,
+  onDeleteNote: (Note) -> Unit,
+  onNewWindow: (Note) -> Unit,
 ) {
-    val (favorites, others) = noteList.partition { it.isFavorite }
+  val (favorites, others) = noteList.partition { it.isFavorite }
 
-    NoteList(
-        favorites = favorites,
-        otherNotes = others,
-        isCompact = isCompact,
-        selectedNoteId = selectedNoteId,
-        onNoteClick = onNoteClick,
-        onAddNewTextNote = onAddNewTextNote,
-        onAddNewDrawingNote = onAddNewDrawingNote,
-        onDeleteNote = onDeleteNote,
-        onToggleFavorite = onToggleFavorite,
-        onNewWindow = onNewWindow,
-        modifier = modifier.testTag("List")
-    )
+  NoteList(
+    favorites = favorites,
+    otherNotes = others,
+    isCompact = isCompact,
+    selectedNoteId = selectedNoteId,
+    onNoteClick = onNoteClick,
+    onAddNewTextNote = onAddNewTextNote,
+    onAddNewDrawingNote = onAddNewDrawingNote,
+    onDeleteNote = onDeleteNote,
+    onToggleFavorite = onToggleFavorite,
+    onNewWindow = onNewWindow,
+    modifier = modifier.testTag("List"),
+  )
 }
 
 @Composable
 private fun DetailPaneContent(
-    note: Note,
-    strokes: List<Stroke>,
-    onClickToEdit: (Note) -> Unit,
-    modifier: Modifier = Modifier,
+  note: Note,
+  strokes: List<Stroke>,
+  onClickToEdit: (Note) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    NoteDetail(
-        note = note,
-        strokes = strokes,
-        onClickToEdit = onClickToEdit,
-        modifier = modifier.testTag("Detail")
-    )
+  NoteDetail(
+    note = note,
+    strokes = strokes,
+    onClickToEdit = onClickToEdit,
+    modifier = modifier.testTag("Detail"),
+  )
 }

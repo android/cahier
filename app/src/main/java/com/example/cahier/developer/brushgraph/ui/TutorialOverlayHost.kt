@@ -43,124 +43,106 @@ import com.example.cahier.developer.brushgraph.ui.node.NodeRegistry
 
 @Composable
 fun BoxScope.TutorialOverlayHost(
-    tutorialStep: TutorialStep?,
-    graph: BrushGraph,
-    zoom: Float,
-    offset: Offset,
-    selectedNodeId: String?,
-    selectedEdge: GraphEdge?,
-    currentStepIndex: Int,
-    isWideScreen: Boolean,
-    previewHeight: Dp,
-    onAdvanceTutorial: (TutorialAction) -> Unit,
-    onRegressTutorial: () -> Unit,
-    onCloseTutorial: () -> Unit,
-    nodeRegistry: NodeRegistry,
-    modifier: Modifier = Modifier,
+  tutorialStep: TutorialStep?,
+  graph: BrushGraph,
+  zoom: Float,
+  offset: Offset,
+  selectedNodeId: String?,
+  selectedEdge: GraphEdge?,
+  currentStepIndex: Int,
+  isWideScreen: Boolean,
+  previewHeight: Dp,
+  onAdvanceTutorial: (TutorialAction) -> Unit,
+  onRegressTutorial: () -> Unit,
+  onCloseTutorial: () -> Unit,
+  nodeRegistry: NodeRegistry,
+  modifier: Modifier = Modifier,
 ) {
-    tutorialStep?.let { step ->
-        val density = LocalDensity.current
-        val isInspectorOpen = (selectedNodeId != null || selectedEdge != null)
-        var overlaySize by remember { mutableStateOf(IntSize.Zero) }
+  tutorialStep?.let { step ->
+    val density = LocalDensity.current
+    val isInspectorOpen = (selectedNodeId != null || selectedEdge != null)
+    var overlaySize by remember { mutableStateOf(IntSize.Zero) }
 
-        val tutorialModifier = when (step.anchor) {
-            TutorialAnchor.SCREEN_CENTER -> Modifier.align(Alignment.Center)
+    val tutorialModifier =
+      when (step.anchor) {
+        TutorialAnchor.SCREEN_CENTER -> Modifier.align(Alignment.Center)
 
-            TutorialAnchor.FAB -> {
-                if (isInspectorOpen) {
-                    if (isWideScreen) {
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(bottom = 80.dp, end = (INSPECTOR_WIDTH_LANDSCAPE + 80).dp)
-                    } else {
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(bottom = (INSPECTOR_HEIGHT_PORTRAIT + 16).dp, end = 80.dp)
-                    }
-                } else {
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(bottom = 80.dp, end = 80.dp)
-                }
+        TutorialAnchor.FAB -> {
+          if (isInspectorOpen) {
+            if (isWideScreen) {
+              Modifier.align(Alignment.BottomEnd)
+                .padding(bottom = 80.dp, end = (INSPECTOR_WIDTH_LANDSCAPE + 80).dp)
+            } else {
+              Modifier.align(Alignment.BottomEnd)
+                .padding(bottom = (INSPECTOR_HEIGHT_PORTRAIT + 16).dp, end = 80.dp)
             }
+          } else {
+            Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp, end = 80.dp)
+          }
+        }
 
-            TutorialAnchor.NODE_CANVAS -> {
-                val node = step.getTargetNode(graph)
-                if (node != null) {
-                    val nodePos = nodeRegistry.getNodePosition(node.id)
-                        ?: Offset.Zero
-                    val nodeCenterX = nodePos.x + node.data.width() / 2f
-                    val nodeTopY = nodePos.y
+        TutorialAnchor.NODE_CANVAS -> {
+          val node = step.getTargetNode(graph)
+          if (node != null) {
+            val nodePos = nodeRegistry.getNodePosition(node.id) ?: Offset.Zero
+            val nodeCenterX = nodePos.x + node.data.width() / 2f
+            val nodeTopY = nodePos.y
 
-                    val screenX = nodeCenterX * zoom + offset.x
-                    val screenY = nodeTopY * zoom + offset.y
+            val screenX = nodeCenterX * zoom + offset.x
+            val screenY = nodeTopY * zoom + offset.y
 
-                    val paddingPx = with(density) { 16.dp.toPx() }
-                    Modifier.offset {
-                        IntOffset(
-                            (screenX - overlaySize.width / 2).toInt(),
-                            (screenY - overlaySize.height - paddingPx).toInt()
-                        )
-                    }
-                } else {
-                    Modifier.align(Alignment.Center)
-                }
+            val paddingPx = with(density) { 16.dp.toPx() }
+            Modifier.offset {
+              IntOffset(
+                (screenX - overlaySize.width / 2).toInt(),
+                (screenY - overlaySize.height - paddingPx).toInt(),
+              )
             }
+          } else {
+            Modifier.align(Alignment.Center)
+          }
+        }
 
-            TutorialAnchor.INSPECTOR -> {
-                if (isWideScreen) {
-                    Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = (INSPECTOR_WIDTH_LANDSCAPE + 16).dp)
-                } else {
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = (INSPECTOR_HEIGHT_PORTRAIT + 16).dp)
-                }
-            }
+        TutorialAnchor.INSPECTOR -> {
+          if (isWideScreen) {
+            Modifier.align(Alignment.CenterEnd).padding(end = (INSPECTOR_WIDTH_LANDSCAPE + 16).dp)
+          } else {
+            Modifier.align(Alignment.BottomCenter)
+              .padding(bottom = (INSPECTOR_HEIGHT_PORTRAIT + 16).dp)
+          }
+        }
 
-            TutorialAnchor.TEST_CANVAS -> {
-                if (isInspectorOpen && !isWideScreen) {
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(
-                            bottom = maxOf(
-                                INSPECTOR_HEIGHT_PORTRAIT.dp,
-                                previewHeight
-                            ) + 16.dp
-                        )
-                } else {
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = previewHeight + 16.dp)
-                }
-            }
+        TutorialAnchor.TEST_CANVAS -> {
+          if (isInspectorOpen && !isWideScreen) {
+            Modifier.align(Alignment.BottomCenter)
+              .padding(bottom = maxOf(INSPECTOR_HEIGHT_PORTRAIT.dp, previewHeight) + 16.dp)
+          } else {
+            Modifier.align(Alignment.BottomCenter).padding(bottom = previewHeight + 16.dp)
+          }
+        }
 
-            TutorialAnchor.ACTION_BAR -> Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 80.dp, start = 16.dp)
+        TutorialAnchor.ACTION_BAR ->
+          Modifier.align(Alignment.TopStart).padding(top = 80.dp, start = 16.dp)
 
-            TutorialAnchor.NOTIFICATION_ICON -> {
-                val indicatorPaddingEnd =
-                    if (isWideScreen && isInspectorOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp
-                Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 80.dp, end = indicatorPaddingEnd)
-            }
-        }.zIndex(20f)
+        TutorialAnchor.NOTIFICATION_ICON -> {
+          val indicatorPaddingEnd =
+            if (isWideScreen && isInspectorOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp
+          Modifier.align(Alignment.TopEnd).padding(top = 80.dp, end = indicatorPaddingEnd)
+        }
+      }.zIndex(20f)
 
-        TutorialOverlay(
-            step = step,
-            onNext = { onAdvanceTutorial(step.actionRequired) },
-            onBack = if (currentStepIndex > 0) {
-                { onRegressTutorial() }
-            } else null,
-            onClose = onCloseTutorial,
-            modifier = modifier
-                .then(tutorialModifier)
-                .onGloballyPositioned { coordinates ->
-                    overlaySize = coordinates.size
-                }
-        )
-    }
+    TutorialOverlay(
+      step = step,
+      onNext = { onAdvanceTutorial(step.actionRequired) },
+      onBack =
+        if (currentStepIndex > 0) {
+          { onRegressTutorial() }
+        } else null,
+      onClose = onCloseTutorial,
+      modifier =
+        modifier.then(tutorialModifier).onGloballyPositioned { coordinates ->
+          overlaySize = coordinates.size
+        },
+    )
+  }
 }

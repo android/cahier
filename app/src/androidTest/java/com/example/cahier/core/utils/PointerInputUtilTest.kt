@@ -1,23 +1,18 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  *
- *  *  * Copyright 2025 Google LLC. All rights reserved.
- *  *  *
- *  *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  *  * you may not use this file except in compliance with the License.
- *  *  * You may obtain a copy of the License at
- *  *  *
- *  *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *  *
- *  *  * Unless required by applicable law or agreed to in writing, software
- *  *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  * See the License for the specific language governing permissions and
- *  *  * limitations under the License.
- *  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 
 package com.example.cahier.core.utils
 
@@ -43,90 +38,61 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 class PointerInputUtilTest {
 
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+  @get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 1)
-    val composeTestRule = createComposeRule()
+  @get:Rule(order = 1) val composeTestRule = createComposeRule()
 
-    @Test
-    fun pointerInputWithSiblingFallthrough_allowsEventToPassToSibling() {
-        var bottomBoxWasClicked = false
-        var topBoxWasClicked = false
+  @Test
+  fun pointerInputWithSiblingFallthrough_allowsEventToPassToSibling() {
+    var bottomBoxWasClicked = false
+    var topBoxWasClicked = false
 
-        composeTestRule.setContent {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .testTag("root")
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                bottomBoxWasClicked = true
-                            }
-                        }
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInputWithSiblingFallthrough {
-                            topBoxWasClicked = true
-                        }
-                )
+    composeTestRule.setContent {
+      Box(modifier = Modifier.fillMaxSize().testTag("root")) {
+        Box(
+          modifier =
+            Modifier.fillMaxSize().pointerInput(Unit) {
+              detectTapGestures { bottomBoxWasClicked = true }
             }
-        }
-
-        composeTestRule.onNodeWithTag("root").performClick()
-
-
-        assertTrue("Top box should have been clicked", topBoxWasClicked)
-        assertTrue(
-            "Bottom box should have received the fallthrough click",
-            bottomBoxWasClicked
         )
+        Box(
+          modifier =
+            Modifier.fillMaxSize().pointerInputWithSiblingFallthrough { topBoxWasClicked = true }
+        )
+      }
     }
 
-    @Test
-    fun standardPointerInput_doesNotAllowEventToPassToSibling() {
-        var bottomBoxWasClicked = false
-        var topBoxWasClicked = false
+    composeTestRule.onNodeWithTag("root").performClick()
 
-        composeTestRule.setContent {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .testTag("root")
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                bottomBoxWasClicked = true
-                            }
-                        }
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                topBoxWasClicked = true
-                            }
-                        }
-                )
+    assertTrue("Top box should have been clicked", topBoxWasClicked)
+    assertTrue("Bottom box should have received the fallthrough click", bottomBoxWasClicked)
+  }
+
+  @Test
+  fun standardPointerInput_doesNotAllowEventToPassToSibling() {
+    var bottomBoxWasClicked = false
+    var topBoxWasClicked = false
+
+    composeTestRule.setContent {
+      Box(modifier = Modifier.fillMaxSize().testTag("root")) {
+        Box(
+          modifier =
+            Modifier.fillMaxSize().pointerInput(Unit) {
+              detectTapGestures { bottomBoxWasClicked = true }
             }
-        }
-
-        composeTestRule.onNodeWithTag("root").performClick()
-
-        assertTrue("Top box should have been clicked", topBoxWasClicked)
-        assertFalse(
-            "Bottom box should NOT have received the click",
-            bottomBoxWasClicked
         )
+        Box(
+          modifier =
+            Modifier.fillMaxSize().pointerInput(Unit) {
+              detectTapGestures { topBoxWasClicked = true }
+            }
+        )
+      }
     }
+
+    composeTestRule.onNodeWithTag("root").performClick()
+
+    assertTrue("Top box should have been clicked", topBoxWasClicked)
+    assertFalse("Bottom box should NOT have received the click", bottomBoxWasClicked)
+  }
 }
