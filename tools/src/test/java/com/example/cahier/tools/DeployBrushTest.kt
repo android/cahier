@@ -195,7 +195,7 @@ class DeployBrushTest {
           "--user",
           "1",
           "-n",
-          "com.example.cahier/.MainActivity",
+          "com.example.cahier/com.example.cahier.MainActivity",
           "-a",
           "com.example.cahier.intent.action.IMPORT_BRUSH",
           "-d",
