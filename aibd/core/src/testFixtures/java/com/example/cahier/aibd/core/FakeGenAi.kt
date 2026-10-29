@@ -25,6 +25,7 @@ class FakeChat(
   var history: MutableList<Content> = mutableListOf(),
   var shouldThrowError: Boolean = false,
 ) : Chat {
+  var model: String = "fake-model"
   var responseIndex = 0
   val sentRequests = mutableListOf<Any>()
 
@@ -61,7 +62,10 @@ class FakeChat(
 }
 
 class FakeChats(val fakeChat: FakeChat) : Chats {
-  override fun create(model: String, config: GenerateContentConfig): Chat = fakeChat
+  override fun create(model: String, config: GenerateContentConfig): Chat {
+    fakeChat.model = model
+    return fakeChat
+  }
 }
 
 class FakeClient(val fakeChats: FakeChats) : Client {

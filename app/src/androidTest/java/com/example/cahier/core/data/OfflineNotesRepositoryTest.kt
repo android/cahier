@@ -29,75 +29,73 @@ import org.mockito.kotlin.whenever
 @ExperimentalCoroutinesApi
 class OfflineNotesRepositoryTest {
 
-    @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
+  @get:Rule val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private val testDispatcher = UnconfinedTestDispatcher()
-    private lateinit var repository: OfflineNotesRepository
-    private val noteDao: NoteDao = mock()
-    private val customBrushDao: CustomBrushDao = mock()
+  private val testDispatcher = UnconfinedTestDispatcher()
+  private lateinit var repository: OfflineNotesRepository
+  private val noteDao: NoteDao = mock()
+  private val customBrushDao: CustomBrushDao = mock()
 
-    @Before
-    fun setup() = runTest {
-        Dispatchers.setMain(testDispatcher)
-        whenever(customBrushDao.getAllCustomBrushesSync(any())).thenReturn(emptyList())
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        repository =
-            OfflineNotesRepository(noteDao, context, customBrushDao, CahierTextureBitmapStore(context))
-    }
+  @Before
+  fun setup() = runTest {
+    Dispatchers.setMain(testDispatcher)
+    whenever(customBrushDao.getAllCustomBrushesSync(any())).thenReturn(emptyList())
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    repository =
+      OfflineNotesRepository(noteDao, context, customBrushDao, CahierTextureBitmapStore(context))
+  }
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+  @After
+  fun tearDown() {
+    Dispatchers.resetMain()
+  }
 
-    @Test
-    fun getNoteStrokes_deserializes_strokes_correctly() = runTest {
-        val brush = Brush(StockBrushes.marker(), 1f, 1f)
-        val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
-        val serializedStroke = Converters().serializeStroke(stroke, emptyList())
-        val strokesJson = Json.encodeToString(listOf(serializedStroke))
-        val note = Note(id = 1, strokesData = strokesJson)
+  @Test
+  fun getNoteStrokes_deserializes_strokes_correctly() = runTest {
+    val brush = Brush(StockBrushes.marker(), 1f, 1f)
+    val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    val serializedStroke = Converters().serializeStroke(stroke, emptyList())
+    val strokesJson = Json.encodeToString(listOf(serializedStroke))
+    val note = Note(id = 1, strokesData = strokesJson)
 
-        whenever(noteDao.getNoteById(1L)).thenReturn(note)
+    whenever(noteDao.getNoteById(1L)).thenReturn(note)
 
-        val resultStrokes = repository.getNoteStrokes(1L)
+    val resultStrokes = repository.getNoteStrokes(1L)
 
-        assertEquals(1, resultStrokes.size)
-    }
+    assertEquals(1, resultStrokes.size)
+  }
 
-    @Test
-    fun updateNoteStrokes_calls_DAO_with_serialized_strokes() = runTest {
-        val noteId = 1L
-        val brush = Brush(StockBrushes.marker(), 1f, 1f)
-        val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
-        val note = Note(id = noteId, title = "Test")
-        whenever(noteDao.getNoteById(noteId)).thenReturn(note)
+  @Test
+  fun updateNoteStrokes_calls_DAO_with_serialized_strokes() = runTest {
+    val noteId = 1L
+    val brush = Brush(StockBrushes.marker(), 1f, 1f)
+    val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    val note = Note(id = noteId, title = "Test")
+    whenever(noteDao.getNoteById(noteId)).thenReturn(note)
 
-        repository.updateNoteStrokes(noteId, listOf(stroke), null)
+    repository.updateNoteStrokes(noteId, listOf(stroke), null)
 
-        verify(noteDao).updateNote(any())
-    }
+    verify(noteDao).updateNote(any())
+  }
 
-    @Test
-    fun toggleFavorite_updates_the_note_correctly() = runTest {
-        val note = Note(id = 1L, isFavorite = false)
-        whenever(noteDao.getNoteById(1L)).thenReturn(note)
+  @Test
+  fun toggleFavorite_updates_the_note_correctly() = runTest {
+    val note = Note(id = 1L, isFavorite = false)
+    whenever(noteDao.getNoteById(1L)).thenReturn(note)
 
-        repository.toggleFavorite(1L)
+    repository.toggleFavorite(1L)
 
-        verify(noteDao).updateNote(note.copy(isFavorite = true))
-    }
+    verify(noteDao).updateNote(note.copy(isFavorite = true))
+  }
 
+  @Test
+  fun getAllNotesStream_returns_flow_from_DAO() = runTest {
+    val notes = listOf(Note(id = 1), Note(id = 2))
+    whenever(noteDao.getAllNotes()).thenReturn(flowOf(notes))
 
-    @Test
-    fun getAllNotesStream_returns_flow_from_DAO() = runTest {
-        val notes = listOf(Note(id = 1), Note(id = 2))
-        whenever(noteDao.getAllNotes()).thenReturn(flowOf(notes))
+    val result = repository.getAllNotesStream().first()
 
-        val result = repository.getAllNotesStream().first()
-
-        assertEquals(2, result.size)
-        verify(noteDao).getAllNotes()
-    }
+    assertEquals(2, result.size)
+    verify(noteDao).getAllNotes()
+  }
 }

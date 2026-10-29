@@ -23,12 +23,10 @@ import androidx.compose.ui.res.stringResource
 import com.example.cahier.R
 
 @Composable
-fun CoatNodeFields(
-  modifier: Modifier = Modifier,
-) {
-    Text(
-        modifier = modifier,
-        text = stringResource(R.string.bg_coat_node_description),
-        style = MaterialTheme.typography.bodySmall,
-    )
+fun CoatNodeFields(modifier: Modifier = Modifier) {
+  Text(
+    modifier = modifier,
+    text = stringResource(R.string.bg_coat_node_description),
+    style = MaterialTheme.typography.bodySmall,
+  )
 }

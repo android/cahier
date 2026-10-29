@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -77,297 +78,269 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun NotificationPane(
-    isWideScreen: Boolean,
-    viewModel: BrushGraphViewModel,
-    modifier: Modifier = Modifier,
+  isWideScreen: Boolean,
+  viewModel: BrushGraphViewModel,
+  modifier: Modifier = Modifier,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val issues = uiState.graphIssues
-    val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
-    val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val issues = uiState.graphIssues
+  val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
+  val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
 
-    AnimatedVisibility(
-        visible = uiState.isErrorPaneOpen,
-        enter =
-            if (isWideScreen) {
-                slideInHorizontally(initialOffsetX = { it })
-            } else {
-                slideInVertically(initialOffsetY = { it })
-            },
-        exit =
-            if (isWideScreen) {
-                slideOutHorizontally(targetOffsetX = { it })
-            } else {
-                slideOutVertically(targetOffsetY = { it })
-            },
-        modifier = modifier.zIndex(10f),
+  AnimatedVisibility(
+    visible = uiState.isErrorPaneOpen,
+    enter =
+      if (isWideScreen) {
+        slideInHorizontally(initialOffsetX = { it })
+      } else {
+        slideInVertically(initialOffsetY = { it })
+      },
+    exit =
+      if (isWideScreen) {
+        slideOutHorizontally(targetOffsetX = { it })
+      } else {
+        slideOutVertically(targetOffsetY = { it })
+      },
+    modifier = modifier.zIndex(10f),
+  ) {
+    Surface(
+      modifier =
+        if (isWideScreen) {
+          Modifier.fillMaxHeight().width(INSPECTOR_WIDTH_LANDSCAPE.dp)
+        } else {
+          Modifier.fillMaxWidth().height(INSPECTOR_HEIGHT_PORTRAIT.dp)
+        },
+      tonalElevation = 8.dp,
+      shadowElevation = 8.dp,
+      color = MaterialTheme.colorScheme.surface,
     ) {
-        Surface(
-            modifier =
-                if (isWideScreen) {
-                    Modifier
-                        .fillMaxHeight()
-                        .width(INSPECTOR_WIDTH_LANDSCAPE.dp)
-                } else {
-                    Modifier
-                        .fillMaxWidth()
-                        .height(INSPECTOR_HEIGHT_PORTRAIT.dp)
-                },
-            tonalElevation = 8.dp,
-            shadowElevation = 8.dp,
-            color = MaterialTheme.colorScheme.surface,
-        ) {
-            Column {
-                // Title bar with close button
-                val headerColor =
-                    when {
-                        hasErrors -> MaterialTheme.colorScheme.error
-                        hasWarnings -> MaterialTheme.extendedColorScheme.warning
-                        else -> MaterialTheme.colorScheme.primary
-                    }
-                val iconColor =
-                    when {
-                        hasErrors -> MaterialTheme.colorScheme.onError
-                        hasWarnings -> MaterialTheme.extendedColorScheme.onWarning
-                        else -> MaterialTheme.colorScheme.onPrimary
-                    }
-                val headerIcon =
-                    when {
-                        hasErrors -> Icons.Default.Error
-                        hasWarnings -> Icons.Default.Warning
-                        else -> Icons.Default.Info
-                    }
+      Column {
+        // Title bar with close button
+        val headerColor =
+          when {
+            hasErrors -> MaterialTheme.colorScheme.error
+            hasWarnings -> MaterialTheme.extendedColorScheme.warning
+            else -> MaterialTheme.colorScheme.primary
+          }
+        val iconColor =
+          when {
+            hasErrors -> MaterialTheme.colorScheme.onError
+            hasWarnings -> MaterialTheme.extendedColorScheme.onWarning
+            else -> MaterialTheme.colorScheme.onPrimary
+          }
+        val headerIcon =
+          when {
+            hasErrors -> Icons.Default.Error
+            hasWarnings -> Icons.Default.Warning
+            else -> Icons.Default.Info
+          }
 
-                Surface(color = headerColor, tonalElevation = 2.dp) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .fillMaxWidth(),
-                    ) {
-                        Icon(headerIcon, contentDescription = null, tint = iconColor)
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.bg_notifications_count, issues.size),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f),
-                            color = iconColor,
-                        )
-                        IconButton(onClick = { viewModel.toggleErrorPane() }) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = stringResource(R.string.bg_cd_close_pane),
-                                tint = iconColor
-                            )
-                        }
-                    }
-                }
-                LazyColumn(modifier = Modifier.padding(16.dp)) {
-                    val errors = issues.filter { it.severity == ValidationSeverity.ERROR }
-                    val warnings = issues.filter { it.severity == ValidationSeverity.WARNING }
-                    val debugs = issues.filter { it.severity == ValidationSeverity.DEBUG }
-
-                    if (errors.isNotEmpty()) {
-                        item {
-                            NotificationGroup(
-                                title = stringResource(R.string.bg_errors),
-                                issues = errors,
-                                icon = Icons.Default.Error,
-                                color = MaterialTheme.colorScheme.error,
-                                viewModel = viewModel,
-                                isWideScreen = isWideScreen,
-                            )
-                        }
-                    }
-                    if (warnings.isNotEmpty()) {
-                        item {
-                            NotificationGroup(
-                                title = stringResource(R.string.bg_warnings),
-                                issues = warnings,
-                                icon = Icons.Default.Warning,
-                                color = MaterialTheme.extendedColorScheme.warning,
-                                viewModel = viewModel,
-                                isWideScreen = isWideScreen,
-                            )
-                        }
-                    }
-                    if (debugs.isNotEmpty()) {
-                        item {
-                            NotificationGroup(
-                                title = stringResource(R.string.bg_debug),
-                                issues = debugs,
-                                icon = Icons.Default.Info,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                viewModel = viewModel,
-                                isWideScreen = isWideScreen,
-                            )
-                        }
-                    }
-                }
+        Surface(color = headerColor, tonalElevation = 2.dp) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+          ) {
+            Icon(headerIcon, contentDescription = null, tint = iconColor)
+            Spacer(Modifier.width(8.dp))
+            Text(
+              text = stringResource(R.string.bg_notifications_count, issues.size),
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.Bold,
+              modifier = Modifier.weight(1f),
+              color = iconColor,
+            )
+            IconButton(onClick = { viewModel.toggleErrorPane() }) {
+              Icon(
+                Icons.Default.Close,
+                contentDescription = stringResource(R.string.bg_cd_close_pane),
+                tint = iconColor,
+              )
             }
+          }
         }
+        LazyColumn(modifier = Modifier.padding(16.dp)) {
+          val errors = issues.filter { it.severity == ValidationSeverity.ERROR }
+          val warnings = issues.filter { it.severity == ValidationSeverity.WARNING }
+          val debugs = issues.filter { it.severity == ValidationSeverity.DEBUG }
+
+          if (errors.isNotEmpty()) {
+            item {
+              NotificationGroup(
+                title = stringResource(R.string.bg_errors),
+                issues = errors,
+                icon = Icons.Default.Error,
+                color = MaterialTheme.colorScheme.error,
+                viewModel = viewModel,
+                isWideScreen = isWideScreen,
+              )
+            }
+          }
+          if (warnings.isNotEmpty()) {
+            item {
+              NotificationGroup(
+                title = stringResource(R.string.bg_warnings),
+                issues = warnings,
+                icon = Icons.Default.Warning,
+                color = MaterialTheme.extendedColorScheme.warning,
+                viewModel = viewModel,
+                isWideScreen = isWideScreen,
+              )
+            }
+          }
+          if (debugs.isNotEmpty()) {
+            item {
+              NotificationGroup(
+                title = stringResource(R.string.bg_debug),
+                issues = debugs,
+                icon = Icons.Default.Info,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                viewModel = viewModel,
+                isWideScreen = isWideScreen,
+              )
+            }
+          }
+        }
+      }
     }
+  }
 }
 
 @Composable
 fun NotificationGroup(
-    title: String,
-    issues: List<GraphValidationException>,
-    icon: ImageVector,
-    color: Color,
-    viewModel: BrushGraphViewModel,
-    isWideScreen: Boolean,
+  title: String,
+  issues: List<GraphValidationException>,
+  icon: ImageVector,
+  color: Color,
+  viewModel: BrushGraphViewModel,
+  isWideScreen: Boolean,
 ) {
-    var expanded by remember { mutableStateOf(true) }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
+  var expanded by remember { mutableStateOf(true) }
+  Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    Surface(
+      modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
+      color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+      shape = RoundedCornerShape(8.dp),
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded },
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            shape = RoundedCornerShape(8.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            ) {
-                Icon(
-                    if (expanded) {
-                        Icons.Default.KeyboardArrowDown
-                    } else {
-                        Icons.Default.ChevronRight
-                    },
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "$title (${issues.size})",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = color,
-                )
-            }
-        }
-        if (expanded) {
-            Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp)) {
-                for (issue in issues) {
-                    val density = LocalDensity.current.density
-                    val message = issue.displayMessage.asString()
-                    LaunchedEffect(issue) {
-                        Log.d("NotificationPane", message)
-                    }
-                    Surface(
-                        modifier =
-                            Modifier.fillMaxWidth().padding(vertical = 4.dp).let {
-                                if (issue.nodeId != null) {
-                                    it.clickable {
-                                        viewModel.onIssueClick(
-                                            issue,
-                                            isWideScreen,
-                                            density
-                                        )
-                                    }
-                                } else {
-                                    it
-                                }
-                            },
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(4.dp),
-                    ) {
-                        Text(
-                            text = message,
-                            modifier = Modifier.padding(8.dp),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = color,
-                        )
-                    }
-                }
-            }
-        }
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+      ) {
+        Icon(
+          if (expanded) {
+            Icons.Default.KeyboardArrowDown
+          } else {
+            Icons.Default.ChevronRight
+          },
+          contentDescription = null,
+          modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(
+          text = "$title (${issues.size})",
+          style = MaterialTheme.typography.titleSmall,
+          fontWeight = FontWeight.Bold,
+          color = color,
+        )
+      }
     }
+    if (expanded) {
+      Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp)) {
+        for (issue in issues) {
+          val density = LocalDensity.current.density
+          val message = issue.displayMessage.asString()
+          LaunchedEffect(issue) { Log.d("NotificationPane", message) }
+          Surface(
+            modifier =
+              Modifier.fillMaxWidth().padding(vertical = 4.dp).let {
+                if (issue.nodeId != null) {
+                  it.clickable { viewModel.onIssueClick(issue, isWideScreen, density) }
+                } else {
+                  it
+                }
+              },
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(4.dp),
+          ) {
+            Text(
+              text = message,
+              modifier = Modifier.padding(8.dp),
+              style = MaterialTheme.typography.bodySmall,
+              color = color,
+            )
+          }
+        }
+      }
+    }
+  }
 }
 
 @Composable
 fun NotificationIcon(
-    issues: List<GraphValidationException>,
-    indicatorPaddingEnd: androidx.compose.ui.unit.Dp,
-    onToggleErrorPane: () -> Unit,
-    modifier: Modifier = Modifier,
+  issues: List<GraphValidationException>,
+  indicatorPaddingEnd: Dp,
+  onToggleErrorPane: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    val scale = remember { Animatable(1f) }
-    val rotation = remember { Animatable(0f) }
-    val coroutineScope = rememberCoroutineScope()
+  val scale = remember { Animatable(1f) }
+  val rotation = remember { Animatable(0f) }
+  val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(issues) {
-        coroutineScope.launch {
-            rotation.animateTo(10f, tween(100))
-            rotation.animateTo(-10f, tween(100))
-            rotation.animateTo(5f, tween(75))
-            rotation.animateTo(-5f, tween(75))
-            rotation.animateTo(0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium))
-        }
-        coroutineScope.launch {
-            scale.animateTo(
-                targetValue = 1.25f,
-                animationSpec = tween(durationMillis = 150)
-            )
-            scale.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            )
-        }
+  LaunchedEffect(issues) {
+    coroutineScope.launch {
+      rotation.animateTo(10f, tween(100))
+      rotation.animateTo(-10f, tween(100))
+      rotation.animateTo(5f, tween(75))
+      rotation.animateTo(-5f, tween(75))
+      rotation.animateTo(0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium))
     }
-
-    if (issues.isNotEmpty()) {
-        val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
-        val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
-        val icon =
-            when {
-                hasErrors -> Icons.Default.Error
-                hasWarnings -> Icons.Default.Warning
-                else -> Icons.Default.Info
-            }
-        val containerColor =
-            when {
-                hasErrors -> MaterialTheme.colorScheme.error
-                hasWarnings -> MaterialTheme.extendedColorScheme.warning
-                else -> MaterialTheme.colorScheme.secondary
-            }
-        val contentColor =
-            when {
-                hasErrors -> MaterialTheme.colorScheme.onError
-                hasWarnings -> MaterialTheme.extendedColorScheme.onWarning
-                else -> MaterialTheme.colorScheme.onSecondary
-            }
-
-        IconButton(
-            onClick = onToggleErrorPane,
-            modifier = modifier
-                .padding(top = 16.dp, end = indicatorPaddingEnd)
-                .zIndex(2f)
-                .graphicsLayer(
-                    rotationZ = rotation.value,
-                    scaleX = scale.value,
-                    scaleY = scale.value
-                ),
-            colors =
-                IconButtonDefaults.iconButtonColors(
-                    containerColor = containerColor,
-                    contentColor = contentColor,
-                ),
-        ) {
-            Icon(icon, contentDescription = stringResource(R.string.bg_cd_show_notifications))
-        }
+    coroutineScope.launch {
+      scale.animateTo(targetValue = 1.25f, animationSpec = tween(durationMillis = 150))
+      scale.animateTo(
+        targetValue = 1f,
+        animationSpec =
+          spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+      )
     }
+  }
+
+  if (issues.isNotEmpty()) {
+    val hasErrors = issues.any { it.severity == ValidationSeverity.ERROR }
+    val hasWarnings = issues.any { it.severity == ValidationSeverity.WARNING }
+    val icon =
+      when {
+        hasErrors -> Icons.Default.Error
+        hasWarnings -> Icons.Default.Warning
+        else -> Icons.Default.Info
+      }
+    val containerColor =
+      when {
+        hasErrors -> MaterialTheme.colorScheme.error
+        hasWarnings -> MaterialTheme.extendedColorScheme.warning
+        else -> MaterialTheme.colorScheme.secondary
+      }
+    val contentColor =
+      when {
+        hasErrors -> MaterialTheme.colorScheme.onError
+        hasWarnings -> MaterialTheme.extendedColorScheme.onWarning
+        else -> MaterialTheme.colorScheme.onSecondary
+      }
+
+    IconButton(
+      onClick = onToggleErrorPane,
+      modifier =
+        modifier
+          .padding(top = 16.dp, end = indicatorPaddingEnd)
+          .zIndex(2f)
+          .graphicsLayer(rotationZ = rotation.value, scaleX = scale.value, scaleY = scale.value),
+      colors =
+        IconButtonDefaults.iconButtonColors(
+          containerColor = containerColor,
+          contentColor = contentColor,
+        ),
+    ) {
+      Icon(icon, contentDescription = stringResource(R.string.bg_cd_show_notifications))
+    }
+  }
 }

@@ -23,6 +23,7 @@ class FakeAdb(
   val installedApps: Set<String> = emptySet(),
   val logcatOutput: String = "",
   val nextResult: CommandResult = CommandResult(0, "", ""),
+  val currentUser: String = "0",
 ) : Adb {
   val commandsRun = mutableListOf<List<String>>()
 
@@ -33,20 +34,18 @@ class FakeAdb(
     if (redirectOutput != null) {
       redirectOutput.writeText("fake screenshot content")
     }
-    if (args.isNotEmpty()) {
-      if (args.contains("logcat")) {
-        return CommandResult(0, logcatOutput, "")
-      }
-      if (args.contains("date")) {
-        return CommandResult(0, "06-29 06:31:41.000\n", "")
-      }
+    return when {
+      args.isEmpty() -> nextResult
+      "logcat" in args -> CommandResult(0, logcatOutput, "")
+      "date" in args -> CommandResult(0, "06-29 06:31:41.000\n", "")
+      "am" in args && "get-current-user" in args -> CommandResult(0, currentUser, "")
+      else -> nextResult
     }
-    return nextResult
   }
 
   override fun findDevice() {
     if (device == null) {
-      throw IllegalStateException("No connected Android devices found via ADB.")
+      error("No connected Android devices found via ADB.")
     }
   }
 

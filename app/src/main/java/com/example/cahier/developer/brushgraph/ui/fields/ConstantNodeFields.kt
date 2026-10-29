@@ -27,25 +27,27 @@ import ink.proto.BrushBehavior as ProtoBrushBehavior
 
 @Composable
 fun ConstantNodeFields(
-    constantNode: ProtoBrushBehavior.ConstantNode,
-    behaviorNode: ProtoBrushBehavior.Node,
-    onUpdate: (NodeData) -> Unit,
-    onFieldEditComplete: () -> Unit,
-    modifier: Modifier = Modifier,
+  constantNode: ProtoBrushBehavior.ConstantNode,
+  behaviorNode: ProtoBrushBehavior.Node,
+  onUpdate: (NodeData) -> Unit,
+  onFieldEditComplete: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    NumericField(
-        modifier = modifier,
-        title = stringResource(R.string.bg_port_value),
-        value = constantNode.value,
-        limits = NumericLimits(-100f, 100f, 0.01f),
-        onValueChanged = {
-            onUpdate(
-                NodeData.Behavior(
-                    behaviorNode.toBuilder()
-                        .setConstantNode(constantNode.toBuilder().setValue(it).build()).build()
-                )
-            )
-        },
-        onValueChangeFinished = onFieldEditComplete
-    )
+  NumericField(
+    modifier = modifier,
+    title = stringResource(R.string.bg_port_value),
+    value = constantNode.value,
+    limits = NumericLimits(-100f, 100f, 0.01f),
+    onValueChanged = {
+      onUpdate(
+        NodeData.Behavior(
+          behaviorNode
+            .toBuilder()
+            .setConstantNode(constantNode.toBuilder().setValue(it).build())
+            .build()
+        )
+      )
+    },
+    onValueChangeFinished = onFieldEditComplete,
+  )
 }

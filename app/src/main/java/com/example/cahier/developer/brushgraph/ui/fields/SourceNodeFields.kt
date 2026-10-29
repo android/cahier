@@ -56,208 +56,226 @@ import ink.proto.BrushBehavior as ProtoBrushBehavior
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SourceNodeFields(
-    sourceNode: ProtoBrushBehavior.SourceNode,
-    behaviorNode: ProtoBrushBehavior.Node,
-    onUpdate: (NodeData) -> Unit,
-    onDropdownEditComplete: () -> Unit,
-    onFieldEditComplete: () -> Unit,
-    modifier: Modifier = Modifier,
+  sourceNode: ProtoBrushBehavior.SourceNode,
+  behaviorNode: ProtoBrushBehavior.Node,
+  onUpdate: (NodeData) -> Unit,
+  onDropdownEditComplete: () -> Unit,
+  onFieldEditComplete: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    val limits = sourceNode.source.getNumericLimits()
-    var expandedSource by remember { mutableStateOf(false) }
-    var showSourceTooltip by remember { mutableStateOf(false) }
+  val limits = sourceNode.source.getNumericLimits()
+  var expandedSource by remember { mutableStateOf(false) }
+  var showSourceTooltip by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+  Column(modifier = modifier) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+      ExposedDropdownMenuBox(
+        expanded = expandedSource,
+        onExpandedChange = { expandedSource = it },
+        modifier = Modifier.weight(1f),
+      ) {
+        // TODO(b/573149579)
+        @Suppress("DEPRECATION")
+        OutlinedTextField(
+          value = stringResource(sourceNode.source.displayStringRId()),
+          onValueChange = {},
+          readOnly = true,
+          label = { Text(stringResource(R.string.bg_source)) },
+          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
+          modifier =
+            Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+        )
+        ExposedDropdownMenu(
+          expanded = expandedSource,
+          onDismissRequest = { expandedSource = false },
         ) {
-            ExposedDropdownMenuBox(
-                expanded = expandedSource,
-                onExpandedChange = { expandedSource = it },
-                modifier = Modifier.weight(1f)
+          @Composable
+          fun SourceSection(
+            label: String,
+            sources: List<ProtoBrushBehavior.Source>,
+            modifier: Modifier = Modifier,
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp),
             ) {
-                OutlinedTextField(
-                    value = stringResource(sourceNode.source.displayStringRId()),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.bg_source)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSource) },
-                    modifier = Modifier
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = expandedSource,
-                    onDismissRequest = { expandedSource = false }
-                ) {
-                    @Composable
-                    fun SourceSection(
-                        label: String,
-                        sources: List<ProtoBrushBehavior.Source>,
-                        modifier: Modifier = Modifier,
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp)
-                        ) {
-                            HorizontalDivider(modifier = Modifier.weight(1f))
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.outline,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            HorizontalDivider(modifier = Modifier.weight(1f))
-                        }
-                        sources.forEach { source ->
-                            DropdownMenuItem(
-                                text = { Text(stringResource(source.displayStringRId())) },
-                                onClick = {
-                                    val currentDisplayStart =
-                                        if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble())
-                                            .toFloat() else sourceNode.sourceValueRangeStart
-                                    val currentDisplayEnd =
-                                        if (sourceNode.source.isAngle()) Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble())
-                                            .toFloat() else sourceNode.sourceValueRangeEnd
-
-                                    val newLimits = source.getNumericLimits()
-                                    val clampedDisplayStart =
-                                        currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
-                                    val clampedDisplayEnd =
-                                        currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
-
-                                    val newProtoStart =
-                                        if (source.isAngle()) Math.toRadians(clampedDisplayStart.toDouble())
-                                            .toFloat() else clampedDisplayStart
-                                    val newProtoEnd =
-                                        if (source.isAngle()) Math.toRadians(clampedDisplayEnd.toDouble())
-                                            .toFloat() else clampedDisplayEnd
-
-                                    val needsClamp = source.isTimeSince()
-                                    val newOor =
-                                        if (needsClamp) ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP else sourceNode.sourceOutOfRangeBehavior
-
-                                    onUpdate(
-                                        NodeData.Behavior(
-                                            behaviorNode.toBuilder()
-                                                .setSourceNode(
-                                                    sourceNode.toBuilder()
-                                                        .setSource(source)
-                                                        .setSourceOutOfRangeBehavior(newOor)
-                                                        .setSourceValueRangeStart(newProtoStart)
-                                                        .setSourceValueRangeEnd(newProtoEnd)
-                                                        .build()
-                                                )
-                                                .build()
-                                        )
-                                    )
-                                    onDropdownEditComplete()
-                                    expandedSource = false
-                                }
-                            )
-                        }
+              HorizontalDivider(modifier = Modifier.weight(1f))
+              Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(horizontal = 8.dp),
+              )
+              HorizontalDivider(modifier = Modifier.weight(1f))
+            }
+            for (source in sources) {
+              DropdownMenuItem(
+                text = { Text(stringResource(source.displayStringRId())) },
+                onClick = {
+                  val currentDisplayStart =
+                    if (sourceNode.source.isAngle()) {
+                      Math.toDegrees(sourceNode.sourceValueRangeStart.toDouble()).toFloat()
+                    } else {
+                      sourceNode.sourceValueRangeStart
+                    }
+                  val currentDisplayEnd =
+                    if (sourceNode.source.isAngle()) {
+                      Math.toDegrees(sourceNode.sourceValueRangeEnd.toDouble()).toFloat()
+                    } else {
+                      sourceNode.sourceValueRangeEnd
                     }
 
-                    SourceSection(stringResource(R.string.bg_section_input), SOURCES_INPUT)
-                    SourceSection(stringResource(R.string.bg_section_movement), SOURCES_MOVEMENT)
-                    SourceSection(stringResource(R.string.bg_section_distance), SOURCES_DISTANCE)
-                    SourceSection(stringResource(R.string.bg_section_time), SOURCES_TIME)
-                    SourceSection(
-                        stringResource(R.string.bg_section_acceleration),
-                        SOURCES_ACCELERATION
-                    )
-                }
-            }
-            IconButton(onClick = { showSourceTooltip = true }) {
-                Icon(
-                    Icons.AutoMirrored.Filled.Help,
-                    contentDescription = stringResource(R.string.bg_cd_help)
-                )
-            }
-        }
+                  val newLimits = source.getNumericLimits()
+                  val clampedDisplayStart =
+                    currentDisplayStart.coerceIn(newLimits.min, newLimits.max)
+                  val clampedDisplayEnd = currentDisplayEnd.coerceIn(newLimits.min, newLimits.max)
 
-        if (showSourceTooltip) {
-            TooltipDialog(
-                title = stringResource(
-                    R.string.bg_title_source_format,
-                    stringResource(sourceNode.source.displayStringRId())
-                ),
-                text = stringResource(sourceNode.source.getTooltip()),
-                onDismiss = { showSourceTooltip = false }
-            )
-        }
-        NumericField(
-            title = stringResource(R.string.bg_label_range_start),
-            value = sourceNode.sourceValueRangeStart,
-            limits = limits,
-            onValueChanged = {
-                onUpdate(
+                  val newProtoStart =
+                    if (source.isAngle()) {
+                      Math.toRadians(clampedDisplayStart.toDouble()).toFloat()
+                    } else {
+                      clampedDisplayStart
+                    }
+                  val newProtoEnd =
+                    if (source.isAngle()) {
+                      Math.toRadians(clampedDisplayEnd.toDouble()).toFloat()
+                    } else {
+                      clampedDisplayEnd
+                    }
+
+                  val needsClamp = source.isTimeSince()
+                  val newOor =
+                    if (needsClamp) {
+                      ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP
+                    } else {
+                      sourceNode.sourceOutOfRangeBehavior
+                    }
+
+                  onUpdate(
                     NodeData.Behavior(
-                        behaviorNode.toBuilder().setSourceNode(
-                            sourceNode.toBuilder().setSourceValueRangeStart(it).build()
-                        ).build()
-                    )
-                )
-            },
-            onValueChangeFinished = onFieldEditComplete
-        )
-        NumericField(
-            title = stringResource(R.string.bg_label_range_end),
-            value = sourceNode.sourceValueRangeEnd,
-            limits = limits,
-            onValueChanged = {
-                onUpdate(
-                    NodeData.Behavior(
-                        behaviorNode.toBuilder().setSourceNode(
-                            sourceNode.toBuilder().setSourceValueRangeEnd(it).build()
-                        ).build()
-                    )
-                )
-            },
-            onValueChangeFinished = onFieldEditComplete
-        )
-        val isTimeSinceSource = sourceNode.source.isTimeSince()
-        FieldWithTooltip(
-            tooltipTitle = stringResource(
-                R.string.bg_title_out_of_range_behavior_format,
-                stringResource(sourceNode.sourceOutOfRangeBehavior.displayStringRId())
-            ),
-            tooltipText = stringResource(sourceNode.sourceOutOfRangeBehavior.getTooltip())
-        ) {
-            EnumDropdown(
-                label = stringResource(R.string.bg_out_of_range_behavior),
-                currentValue = sourceNode.sourceOutOfRangeBehavior,
-                values = if (isTimeSinceSource) {
-                    listOf(ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
-                } else {
-                    ALL_OUT_OF_RANGE.toList()
-                },
-                displayName = { stringResource(it.displayStringRId()) },
-                onSelected = { oor ->
-                    onUpdate(
-                        NodeData.Behavior(
-                            behaviorNode.toBuilder().setSourceNode(
-                                sourceNode.toBuilder().setSourceOutOfRangeBehavior(oor).build()
-                            ).build()
+                      behaviorNode
+                        .toBuilder()
+                        .setSourceNode(
+                          sourceNode
+                            .toBuilder()
+                            .setSource(source)
+                            .setSourceOutOfRangeBehavior(newOor)
+                            .setSourceValueRangeStart(newProtoStart)
+                            .setSourceValueRangeEnd(newProtoEnd)
+                            .build()
                         )
+                        .build()
                     )
-                    onDropdownEditComplete()
-                }
-            )
+                  )
+                  onDropdownEditComplete()
+                  expandedSource = false
+                },
+              )
+            }
+          }
+
+          SourceSection(stringResource(R.string.bg_section_input), SOURCES_INPUT)
+          SourceSection(stringResource(R.string.bg_section_movement), SOURCES_MOVEMENT)
+          SourceSection(stringResource(R.string.bg_section_distance), SOURCES_DISTANCE)
+          SourceSection(stringResource(R.string.bg_section_time), SOURCES_TIME)
+          SourceSection(stringResource(R.string.bg_section_acceleration), SOURCES_ACCELERATION)
         }
-        if (isTimeSinceSource) {
-            Text(
-                text = stringResource(R.string.bg_msg_source_clamp_only),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
+      }
+      IconButton(onClick = { showSourceTooltip = true }) {
+        Icon(
+          Icons.AutoMirrored.Filled.Help,
+          contentDescription = stringResource(R.string.bg_cd_help),
+        )
+      }
     }
+
+    if (showSourceTooltip) {
+      TooltipDialog(
+        title =
+          stringResource(
+            R.string.bg_title_source_format,
+            stringResource(sourceNode.source.displayStringRId()),
+          ),
+        text = stringResource(sourceNode.source.getTooltip()),
+        onDismiss = { showSourceTooltip = false },
+      )
+    }
+    NumericField(
+      title = stringResource(R.string.bg_label_range_start),
+      value = sourceNode.sourceValueRangeStart,
+      limits = limits,
+      onValueChanged = {
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode
+              .toBuilder()
+              .setSourceNode(sourceNode.toBuilder().setSourceValueRangeStart(it).build())
+              .build()
+          )
+        )
+      },
+      onValueChangeFinished = onFieldEditComplete,
+    )
+    NumericField(
+      title = stringResource(R.string.bg_label_range_end),
+      value = sourceNode.sourceValueRangeEnd,
+      limits = limits,
+      onValueChanged = {
+        onUpdate(
+          NodeData.Behavior(
+            behaviorNode
+              .toBuilder()
+              .setSourceNode(sourceNode.toBuilder().setSourceValueRangeEnd(it).build())
+              .build()
+          )
+        )
+      },
+      onValueChangeFinished = onFieldEditComplete,
+    )
+    val isTimeSinceSource = sourceNode.source.isTimeSince()
+    FieldWithTooltip(
+      tooltipTitle =
+        stringResource(
+          R.string.bg_title_out_of_range_behavior_format,
+          stringResource(sourceNode.sourceOutOfRangeBehavior.displayStringRId()),
+        ),
+      tooltipText = stringResource(sourceNode.sourceOutOfRangeBehavior.getTooltip()),
+    ) {
+      EnumDropdown(
+        label = stringResource(R.string.bg_out_of_range_behavior),
+        currentValue = sourceNode.sourceOutOfRangeBehavior,
+        values =
+          if (isTimeSinceSource) {
+            listOf(ProtoBrushBehavior.OutOfRange.OUT_OF_RANGE_CLAMP)
+          } else {
+            ALL_OUT_OF_RANGE.toList()
+          },
+        displayName = { stringResource(it.displayStringRId()) },
+        onSelected = { oor ->
+          onUpdate(
+            NodeData.Behavior(
+              behaviorNode
+                .toBuilder()
+                .setSourceNode(sourceNode.toBuilder().setSourceOutOfRangeBehavior(oor).build())
+                .build()
+            )
+          )
+          onDropdownEditComplete()
+        },
+      )
+    }
+    if (isTimeSinceSource) {
+      Text(
+        text = stringResource(R.string.bg_msg_source_clamp_only),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.secondary,
+        modifier = Modifier.padding(top = 4.dp),
+      )
+    }
+  }
 }
 
 private fun ProtoBrushBehavior.Source.isTimeSince(): Boolean {
-    return this == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
-            this == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
+  return this == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_INPUT_IN_SECONDS ||
+    this == ProtoBrushBehavior.Source.SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS
 }

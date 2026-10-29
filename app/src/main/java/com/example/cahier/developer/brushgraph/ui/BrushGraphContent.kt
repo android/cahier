@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// TODO(b/573579005)
+@file:Suppress("DEPRECATION")
 
 package com.example.cahier.developer.brushgraph.ui
 
@@ -34,63 +36,62 @@ import androidx.window.core.layout.WindowWidthSizeClass
 
 @Composable
 fun BrushGraphContent(
-    isNodeSelected: Boolean,
-    isEdgeSelected: Boolean,
-    isErrorPaneOpen: Boolean,
-    previewHeight: Dp,
-    viewportSize: Size,
-    onViewportSizeChange: (Size) -> Unit,
-    canvasSlot: @Composable (trashPaddingBottom: Dp) -> Unit,
-    inspectorSlot: @Composable () -> Unit,
-    notificationPaneSlot: @Composable () -> Unit,
-    notificationIconSlot: @Composable (indicatorPaddingEnd: Dp) -> Unit,
-    previewSlot: @Composable () -> Unit,
-    menuSlot: @Composable () -> Unit,
-    fabSlot: @Composable (viewportSize: Size) -> Unit,
-    tutorialSlot: @Composable () -> Unit,
-    dialogSlot: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
+  isNodeSelected: Boolean,
+  isEdgeSelected: Boolean,
+  isErrorPaneOpen: Boolean,
+  previewHeight: Dp,
+  viewportSize: Size,
+  onViewportSizeChange: (Size) -> Unit,
+  canvasSlot: @Composable (trashPaddingBottom: Dp) -> Unit,
+  inspectorSlot: @Composable () -> Unit,
+  notificationPaneSlot: @Composable () -> Unit,
+  notificationIconSlot: @Composable (indicatorPaddingEnd: Dp) -> Unit,
+  previewSlot: @Composable () -> Unit,
+  menuSlot: @Composable () -> Unit,
+  fabSlot: @Composable (viewportSize: Size) -> Unit,
+  tutorialSlot: @Composable () -> Unit,
+  dialogSlot: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    dialogSlot()
+  dialogSlot()
 
-    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    val isWideScreen = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
+  val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+  val isWideScreen = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
 
-    val isSidePaneOpen = isWideScreen && (isNodeSelected || isEdgeSelected || isErrorPaneOpen)
-    val indicatorPaddingEnd by animateDpAsState(
-        targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
-        label = "indicatorPaddingEnd",
+  val isSidePaneOpen = isWideScreen && (isNodeSelected || isEdgeSelected || isErrorPaneOpen)
+  val indicatorPaddingEnd by
+    animateDpAsState(
+      targetValue = if (isSidePaneOpen) (INSPECTOR_WIDTH_LANDSCAPE + 16).dp else 16.dp,
+      label = "indicatorPaddingEnd",
     )
-    val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
+  val isAnySidePaneOpen = isNodeSelected || isEdgeSelected || isErrorPaneOpen
 
-    val trashPaddingBottom by animateDpAsState(
-        targetValue =
-            if (!isWideScreen && isAnySidePaneOpen) {
-                maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT.dp) + 16.dp
-            } else {
-                previewHeight + 16.dp
-            },
-        label = "trashPaddingBottom",
+  val trashPaddingBottom by
+    animateDpAsState(
+      targetValue =
+        if (!isWideScreen && isAnySidePaneOpen) {
+          maxOf(previewHeight, INSPECTOR_HEIGHT_PORTRAIT.dp) + 16.dp
+        } else {
+          previewHeight + 16.dp
+        },
+      label = "trashPaddingBottom",
     )
 
-    Scaffold(modifier = modifier.fillMaxSize()) { paddingValues ->
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .onGloballyPositioned { coordinates ->
-                        onViewportSizeChange(coordinates.size.toSize())
-                    }
-        ) {
-            canvasSlot(trashPaddingBottom)
-            inspectorSlot()
-            notificationPaneSlot()
-            notificationIconSlot(indicatorPaddingEnd)
-            previewSlot()
-            menuSlot()
-            fabSlot(viewportSize)
-            tutorialSlot()
+  Scaffold(modifier = modifier.fillMaxSize()) { paddingValues ->
+    Box(
+      modifier =
+        Modifier.fillMaxSize().padding(paddingValues).onGloballyPositioned { coordinates ->
+          onViewportSizeChange(coordinates.size.toSize())
         }
+    ) {
+      canvasSlot(trashPaddingBottom)
+      inspectorSlot()
+      notificationPaneSlot()
+      notificationIconSlot(indicatorPaddingEnd)
+      previewSlot()
+      menuSlot()
+      fabSlot(viewportSize)
+      tutorialSlot()
     }
+  }
 }

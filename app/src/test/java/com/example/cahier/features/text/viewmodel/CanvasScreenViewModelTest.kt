@@ -1,23 +1,18 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  *
- *  *  * Copyright 2025 Google LLC. All rights reserved.
- *  *  *
- *  *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  *  * you may not use this file except in compliance with the License.
- *  *  * You may obtain a copy of the License at
- *  *  *
- *  *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *  *
- *  *  * Unless required by applicable law or agreed to in writing, software
- *  *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  * See the License for the specific language governing permissions and
- *  *  * limitations under the License.
- *  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 
 package com.example.cahier.features.text.viewmodel
 
@@ -50,65 +45,60 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class CanvasScreenViewModelTest {
 
-    @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
+  @get:Rule val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private val testDispatcher = UnconfinedTestDispatcher()
-    private lateinit var viewModel: CanvasScreenViewModel
-    private lateinit var notesRepository: FakeNotesRepository
-    private lateinit var fileHelper: FileHelper
-    private var noteId: Long = 0L
+  private val testDispatcher = UnconfinedTestDispatcher()
+  private lateinit var viewModel: CanvasScreenViewModel
+  private lateinit var notesRepository: FakeNotesRepository
+  private lateinit var fileHelper: FileHelper
+  private var noteId: Long = 0L
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        fileHelper = FileHelper(ApplicationProvider.getApplicationContext<Context>())
-        notesRepository = FakeNotesRepository()
-        noteId = runBlocking {
-            notesRepository.addNote(Note(title = "Initial Title", text = "Initial Text"))
-        }
-        val savedStateHandle = SavedStateHandle(
-            mapOf(TextCanvasDestination.NOTE_ID_ARG to noteId)
-        )
-        viewModel = CanvasScreenViewModel(
-            savedStateHandle, notesRepository, fileHelper
-        )
+  @Before
+  fun setup() {
+    Dispatchers.setMain(testDispatcher)
+    fileHelper = FileHelper(ApplicationProvider.getApplicationContext<Context>())
+    notesRepository = FakeNotesRepository()
+    noteId = runBlocking {
+      notesRepository.addNote(Note(title = "Initial Title", text = "Initial Text"))
     }
+    val savedStateHandle = SavedStateHandle(mapOf(TextCanvasDestination.NOTE_ID_ARG to noteId))
+    viewModel = CanvasScreenViewModel(savedStateHandle, notesRepository, fileHelper)
+  }
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
+  @After
+  fun tearDown() {
+    Dispatchers.resetMain()
+  }
+
+  @Test
+  fun updateNoteTitle_updates_note_in_repository() = runTest {
+    val newTitle = "Updated Title"
+    viewModel.updateNoteTitle(newTitle)
+
+    notesRepository.getNoteStream(noteId).test {
+      assertEquals(newTitle, awaitItem()!!.title)
+      cancelAndIgnoreRemainingEvents()
     }
+  }
 
-    @Test
-    fun updateNoteTitle_updates_note_in_repository() = runTest {
-        val newTitle = "Updated Title"
-        viewModel.updateNoteTitle(newTitle)
+  @Test
+  fun updateNoteText_updates_note_in_repository() = runTest {
+    val newText = "Updated text."
+    viewModel.updateNoteText(newText)
 
-        notesRepository.getNoteStream(noteId).test {
-            assertEquals(newTitle, awaitItem()!!.title)
-            cancelAndIgnoreRemainingEvents()
-        }
+    notesRepository.getNoteStream(noteId).test {
+      assertEquals(newText, awaitItem()!!.text)
+      cancelAndIgnoreRemainingEvents()
     }
+  }
 
-    @Test
-    fun updateNoteText_updates_note_in_repository() = runTest {
-        val newText = "Updated text."
-        viewModel.updateNoteText(newText)
+  @Test
+  fun toggleFavorite_toggles_favorite_status_in_repository() = runTest {
+    viewModel.toggleFavorite()
 
-        notesRepository.getNoteStream(noteId).test {
-            assertEquals(newText, awaitItem()!!.text)
-            cancelAndIgnoreRemainingEvents()
-        }
+    notesRepository.getNoteStream(noteId).test {
+      assertTrue(awaitItem()!!.isFavorite)
+      cancelAndIgnoreRemainingEvents()
     }
-
-    @Test
-    fun toggleFavorite_toggles_favorite_status_in_repository() = runTest {
-        viewModel.toggleFavorite()
-
-        notesRepository.getNoteStream(noteId).test {
-            assertTrue(awaitItem()!!.isFavorite)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
+  }
 }

@@ -34,9 +34,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,290 +73,271 @@ import kotlin.math.roundToInt
 
 @Composable
 fun NodeWidget(
-    node: GraphNode,
-    position: Offset,
-    graph: BrushGraph,
-    isActiveSource: Boolean,
-    zoom: Float, strokeRenderer: CanvasStrokeRenderer,
-    brush: Brush,
-    onMove: (Offset) -> Unit,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    canvasCoordinates: LayoutCoordinates? = null,
-    isSelected: Boolean = false,
-    isSelectionMode: Boolean = false,
-    isInSelectedSet: Boolean = false,
-    onDragStart: () -> Unit = {},
-    onDrag: (PointerInputChange) -> Unit = {},
-    onDragEnd: () -> Unit = {},
-    onPortDrag: (PortSide, String, Boolean) -> Unit = { _, _, _ -> },
-    onPortDragUpdate: (Offset) -> Unit = {},
-    onPortDragEnd: () -> Unit = {},
-    onReorderPorts: (String, Int, Int) -> Unit = { _, _, _ -> },
-    onPortClick: (String, Port) -> Unit = { _, _ -> },
-    getPortPosition: (String, Boolean) -> Offset,
-    onPortPositioned: (String, Offset) -> Unit,
-    onClearNodeCache: () -> Unit,
-    onLongPress: () -> Unit = {},
+  node: GraphNode,
+  position: Offset,
+  graph: BrushGraph,
+  isActiveSource: Boolean,
+  zoom: Float,
+  strokeRenderer: CanvasStrokeRenderer,
+  brush: Brush,
+  onMove: (Offset) -> Unit,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  canvasCoordinates: LayoutCoordinates? = null,
+  isSelected: Boolean = false,
+  isSelectionMode: Boolean = false,
+  isInSelectedSet: Boolean = false,
+  onDragStart: () -> Unit = {},
+  onDrag: (PointerInputChange) -> Unit = {},
+  onDragEnd: () -> Unit = {},
+  onPortDrag: (PortSide, String, Boolean) -> Unit = { _, _, _ -> },
+  onPortDragUpdate: (Offset) -> Unit = {},
+  onPortDragEnd: () -> Unit = {},
+  onReorderPorts: (String, Int, Int) -> Unit = { _, _, _ -> },
+  onPortClick: (String, Port) -> Unit = { _, _ -> },
+  getPortPosition: (String, Boolean) -> Offset,
+  onPortPositioned: (String, Offset) -> Unit,
+  onClearNodeCache: () -> Unit,
+  onLongPress: () -> Unit = {},
 ) {
-    var isPressed by remember { mutableStateOf(false) }
-    val density = LocalDensity.current
-    val visiblePorts = remember(node.data, graph) { node.getVisiblePorts(graph) }
+  var isPressed by remember { mutableStateOf(false) }
+  val density = LocalDensity.current
+  val visiblePorts = remember(node.data, graph) { node.getVisiblePorts(graph) }
 
-    androidx.compose.runtime.DisposableEffect(node.id) {
-        onDispose {
-            onClearNodeCache()
-        }
+  DisposableEffect(node.id) { onDispose { onClearNodeCache() } }
+
+  val currentOnMove by rememberUpdatedState(onMove)
+  val currentOnDragStart by rememberUpdatedState(onDragStart)
+  val currentOnDragEnd by rememberUpdatedState(onDragEnd)
+  val currentOnDragUpdate by rememberUpdatedState(onDrag)
+
+  val w = node.data.width()
+  val h = node.data.height(visiblePorts.size)
+
+  data class NodeColorsByNodeData(
+    val backgroundColor: Color,
+    val textColor: Color,
+    val addButtonColor: Color,
+    val addButtonTextColor: Color,
+  )
+
+  val (
+    backgroundColorByNodeData,
+    textColorByNodeData,
+    addButtonColorByNodeData,
+    addButtonTextColorByNodeData) =
+    when (node.data) {
+      is NodeData.Coat,
+      is NodeData.Tip,
+      is NodeData.Paint ->
+        NodeColorsByNodeData(
+          MaterialTheme.colorScheme.secondaryContainer,
+          MaterialTheme.colorScheme.onSecondaryContainer,
+          MaterialTheme.colorScheme.surface,
+          MaterialTheme.colorScheme.onSurface,
+        )
+
+      is NodeData.Family ->
+        NodeColorsByNodeData(
+          MaterialTheme.colorScheme.tertiaryContainer,
+          MaterialTheme.colorScheme.onTertiaryContainer,
+          MaterialTheme.colorScheme.surfaceVariant,
+          MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+      is NodeData.TextureLayer,
+      is NodeData.ColorFunction ->
+        NodeColorsByNodeData(
+          MaterialTheme.colorScheme.surfaceVariant,
+          MaterialTheme.colorScheme.onSurfaceVariant,
+          MaterialTheme.colorScheme.secondaryContainer,
+          MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+
+      else ->
+        NodeColorsByNodeData(
+          MaterialTheme.colorScheme.surfaceDim,
+          MaterialTheme.colorScheme.onSurface,
+          MaterialTheme.colorScheme.tertiaryContainer,
+          MaterialTheme.colorScheme.onTertiaryContainer,
+        )
     }
 
-    val currentOnMove by androidx.compose.runtime.rememberUpdatedState(onMove)
-    val currentOnDragStart by androidx.compose.runtime.rememberUpdatedState(onDragStart)
-    val currentOnDragEnd by androidx.compose.runtime.rememberUpdatedState(onDragEnd)
-    val currentOnDragUpdate by androidx.compose.runtime.rememberUpdatedState(onDrag)
+  data class NodeColors(
+    val backgroundColor: Color,
+    val outlineWeight: Dp,
+    val outlineColor: Color,
+    val textColor: Color,
+    val addButtonColor: Color,
+    val addButtonTextColor: Color,
+  )
+  val (
+    backgroundColor, outlineWeight, outlineColor, textColor, addButtonColor, addButtonTextColor) =
+    when {
+      node.isDisabled ->
+        NodeColors(
+          MaterialTheme.colorScheme.surfaceDim,
+          1.dp,
+          MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
+          MaterialTheme.colorScheme.onSurface,
+          addButtonColorByNodeData,
+          addButtonTextColorByNodeData,
+        )
 
-    val w = node.data.width()
-    val h = node.data.height(visiblePorts.size)
+      isActiveSource || isPressed || isSelected || isInSelectedSet ->
+        NodeColors(
+          MaterialTheme.colorScheme.primaryContainer,
+          2.dp,
+          MaterialTheme.colorScheme.primary,
+          MaterialTheme.colorScheme.onPrimaryContainer,
+          MaterialTheme.colorScheme.primary,
+          MaterialTheme.colorScheme.onPrimary,
+        )
 
-    data class NodeColorsByNodeData(
-        val backgroundColor: Color,
-        val textColor: Color,
-        val addButtonColor: Color,
-        val addButtonTextColor: Color,
-    )
+      node.hasError ->
+        NodeColors(
+          MaterialTheme.colorScheme.errorContainer,
+          2.dp,
+          MaterialTheme.colorScheme.error,
+          MaterialTheme.colorScheme.onErrorContainer,
+          MaterialTheme.colorScheme.error,
+          MaterialTheme.colorScheme.onError,
+        )
 
-    val (backgroundColorByNodeData, textColorByNodeData, addButtonColorByNodeData, addButtonTextColorByNodeData) =
-        when (node.data) {
-            is NodeData.Coat,
-            is NodeData.Tip,
-            is NodeData.Paint,
-                -> NodeColorsByNodeData(
-                MaterialTheme.colorScheme.secondaryContainer,
-                MaterialTheme.colorScheme.onSecondaryContainer,
-                MaterialTheme.colorScheme.surface,
-                MaterialTheme.colorScheme.onSurface,
-            )
+      node.hasWarning ->
+        NodeColors(
+          MaterialTheme.extendedColorScheme.warningContainer,
+          2.dp,
+          MaterialTheme.extendedColorScheme.warning,
+          MaterialTheme.extendedColorScheme.onWarningContainer,
+          MaterialTheme.extendedColorScheme.warning,
+          MaterialTheme.extendedColorScheme.onWarning,
+        )
 
-            is NodeData.Family -> NodeColorsByNodeData(
-                MaterialTheme.colorScheme.tertiaryContainer,
-                MaterialTheme.colorScheme.onTertiaryContainer,
-                MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            is NodeData.TextureLayer,
-            is NodeData.ColorFunction,
-                -> NodeColorsByNodeData(
-                MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                MaterialTheme.colorScheme.secondaryContainer,
-                MaterialTheme.colorScheme.onSecondaryContainer
-            )
-
-            else -> NodeColorsByNodeData(
-                MaterialTheme.colorScheme.surfaceDim,
-                MaterialTheme.colorScheme.onSurface,
-                MaterialTheme.colorScheme.tertiaryContainer,
-                MaterialTheme.colorScheme.onTertiaryContainer
-            )
-        }
-
-    data class NodeColors(
-        val backgroundColor: Color,
-        val outlineWeight: Dp,
-        val outlineColor: Color,
-        val textColor: Color,
-        val addButtonColor: Color,
-        val addButtonTextColor: Color,
-    )
-    val (backgroundColor, outlineWeight, outlineColor, textColor, addButtonColor, addButtonTextColor) = when {
-        node.isDisabled ->
-            NodeColors(
-                MaterialTheme.colorScheme.surfaceDim,
-                1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
-                MaterialTheme.colorScheme.onSurface,
-                addButtonColorByNodeData,
-                addButtonTextColorByNodeData
-            )
-
-        isActiveSource || isPressed || isSelected || isInSelectedSet ->
-            NodeColors(
-                MaterialTheme.colorScheme.primaryContainer,
-                2.dp,
-                MaterialTheme.colorScheme.primary,
-                MaterialTheme.colorScheme.onPrimaryContainer,
-                MaterialTheme.colorScheme.primary,
-                MaterialTheme.colorScheme.onPrimary,
-            )
-
-        node.hasError ->
-            NodeColors(
-                MaterialTheme.colorScheme.errorContainer,
-                2.dp,
-                MaterialTheme.colorScheme.error,
-                MaterialTheme.colorScheme.onErrorContainer,
-                MaterialTheme.colorScheme.error,
-                MaterialTheme.colorScheme.onError,
-            )
-
-        node.hasWarning ->
-            NodeColors(
-                MaterialTheme.extendedColorScheme.warningContainer,
-                2.dp,
-                MaterialTheme.extendedColorScheme.warning,
-                MaterialTheme.extendedColorScheme.onWarningContainer,
-                MaterialTheme.extendedColorScheme.warning,
-                MaterialTheme.extendedColorScheme.onWarning,
-            )
-
-        else ->
-            NodeColors(
-                backgroundColorByNodeData,
-                1.dp,
-                MaterialTheme.colorScheme.outline,
-                textColorByNodeData,
-                addButtonColorByNodeData,
-                addButtonTextColorByNodeData
-            )
+      else ->
+        NodeColors(
+          backgroundColorByNodeData,
+          1.dp,
+          MaterialTheme.colorScheme.outline,
+          textColorByNodeData,
+          addButtonColorByNodeData,
+          addButtonTextColorByNodeData,
+        )
     }
-    Box(
-        modifier =
-            modifier
-                .zIndex(if (isSelected) 1f else 0f)
-                .offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }
-                .pointerInput(node.id, isSelected, isSelectionMode) {
-                    detectTapGestures(
-                        onPress = {
-                            isPressed = true
-                            try {
-                                awaitRelease()
-                            } finally {
-                                isPressed = false
-                            }
-                        },
-                        onTap = { onClick() },
-                        onLongPress = { onLongPress() }
-                    )
-                }
-                .pointerInput(node.id, isSelected) {
-                    detectDragGestures(
-                        onDragStart = { currentOnDragStart() },
-                        onDragEnd = { currentOnDragEnd() },
-                        onDragCancel = { currentOnDragEnd() },
-                        onDrag = { change, dragAmount ->
-                            change.consume()
-                            currentOnMove(dragAmount)
-                            currentOnDragUpdate(change)
-                        },
-                    )
-                }
-                .then(
-                    with(density) {
-                        Modifier
-                            .width(w.toDp())
-                            .height(h.toDp())
-                            .background(
-                                backgroundColor,
-                                RoundedCornerShape(8.dp),
-                            )
-                            .border(
-                                outlineWeight,
-                                outlineColor,
-                                RoundedCornerShape(8.dp),
-                            )
-                    }
-                )
-    ) {
+  Box(
+    modifier =
+      modifier
+        .zIndex(if (isSelected) 1f else 0f)
+        .offset { IntOffset(position.x.roundToInt(), position.y.roundToInt()) }
+        .pointerInput(node.id, isSelected, isSelectionMode) {
+          detectTapGestures(
+            onPress = {
+              isPressed = true
+              try {
+                awaitRelease()
+              } finally {
+                isPressed = false
+              }
+            },
+            onTap = { onClick() },
+            onLongPress = { onLongPress() },
+          )
+        }
+        .pointerInput(node.id, isSelected) {
+          detectDragGestures(
+            onDragStart = { currentOnDragStart() },
+            onDragEnd = { currentOnDragEnd() },
+            onDragCancel = { currentOnDragEnd() },
+            onDrag = { change, dragAmount ->
+              change.consume()
+              currentOnMove(dragAmount)
+              currentOnDragUpdate(change)
+            },
+          )
+        }
+        .then(
+          with(density) {
+            Modifier.width(w.toDp())
+              .height(h.toDp())
+              .background(backgroundColor, RoundedCornerShape(8.dp))
+              .border(outlineWeight, outlineColor, RoundedCornerShape(8.dp))
+          }
+        )
+  ) {
+    Box(modifier = Modifier.fillMaxSize().alpha(if (node.isDisabled) 0.38f else 1f)) {
+      Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) {
+        val nodeWidthDp = with(density) { NODE_WIDTH.toDp() }
+        val topPaddingDp = with(density) { NODE_PADDING_VERTICAL.toDp() }
+        val bottomPaddingDp = with(density) { NODE_PADDING_BOTTOM.toDp() }
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .alpha(if (node.isDisabled) 0.38f else 1f)
+          modifier = Modifier.width(nodeWidthDp).fillMaxHeight().padding(bottom = bottomPaddingDp)
         ) {
-            Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) {
-                val nodeWidthDp = with(density) { NODE_WIDTH.toDp() }
-                val topPaddingDp = with(density) { NODE_PADDING_VERTICAL.toDp() }
-                val bottomPaddingDp = with(density) { NODE_PADDING_BOTTOM.toDp() }
-                Box(
-                    modifier = Modifier
-                        .width(nodeWidthDp)
-                        .fillMaxHeight()
-                        .padding(bottom = bottomPaddingDp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = topPaddingDp)
-                    ) {
-                        NodeHeader(
-                            node = node,
-                            graph = graph,
-                            strokeRenderer = strokeRenderer,
-                            textColor = textColor,
-                        )
+          Column(modifier = Modifier.fillMaxSize().padding(top = topPaddingDp)) {
+            NodeHeader(
+              node = node,
+              graph = graph,
+              strokeRenderer = strokeRenderer,
+              textColor = textColor,
+            )
 
-                        NodePortLabels(
-                            node = node,
-                            graph = graph,
-                            visiblePorts = visiblePorts,
-                            isSelectionMode = isSelectionMode,
-                            onPortClick = onPortClick,
-                            textColor = textColor,
-                            addButtonColor = addButtonColor,
-                            addButtonTextColor = addButtonTextColor
-                        )
-                    }
+            NodePortLabels(
+              node = node,
+              graph = graph,
+              visiblePorts = visiblePorts,
+              isSelectionMode = isSelectionMode,
+              onPortClick = onPortClick,
+              textColor = textColor,
+              addButtonColor = addButtonColor,
+              addButtonTextColor = addButtonTextColor,
+            )
+          }
 
-                    NodePortDots(
-                        node = node,
-                        position = position,
-                        graph = graph,
-                        visiblePorts = visiblePorts,
-                        zoom = zoom,
-                        onPortDrag = onPortDrag,
-                        onPortDragUpdate = onPortDragUpdate,
-                        onPortDragEnd = onPortDragEnd,
-                        getPortPosition = getPortPosition,
-                        onPortPositioned = onPortPositioned,
-                        canvasCoordinates = canvasCoordinates,
-                        onReorderPorts = onReorderPorts
-                    )
-                }
-
-                if (node.data is NodeData.Family) {
-                    // Division Line
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .width(2.dp)
-                            .background(outlineColor)
-                    )
-
-                    SineWavePreview(
-                        brush = brush,
-                        strokeRenderer = strokeRenderer,
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .background(MaterialTheme.colorScheme.surface)
-                                .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)),
-                    )
-                }
-            }
-
-            if (isSelectionMode && node.data !is NodeData.Family) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 6.dp, y = (-6).dp)
-                        .size(16.dp)
-                        .background(
-                            if (isInSelectedSet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                            CircleShape
-                        )
-                        .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                )
-            }
+          NodePortDots(
+            node = node,
+            position = position,
+            graph = graph,
+            visiblePorts = visiblePorts,
+            zoom = zoom,
+            onPortDrag = onPortDrag,
+            onPortDragUpdate = onPortDragUpdate,
+            onPortDragEnd = onPortDragEnd,
+            getPortPosition = getPortPosition,
+            onPortPositioned = onPortPositioned,
+            canvasCoordinates = canvasCoordinates,
+            onReorderPorts = onReorderPorts,
+          )
         }
+
+        if (node.data is NodeData.Family) {
+          // Division Line
+          Box(modifier = Modifier.fillMaxHeight().width(2.dp).background(outlineColor))
+
+          SineWavePreview(
+            brush = brush,
+            strokeRenderer = strokeRenderer,
+            modifier =
+              Modifier.weight(1f)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.surface)
+                .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)),
+          )
+        }
+      }
+
+      if (isSelectionMode && node.data !is NodeData.Family) {
+        Box(
+          modifier =
+            Modifier.align(Alignment.TopEnd)
+              .offset(x = 6.dp, y = (-6).dp)
+              .size(16.dp)
+              .background(
+                if (isInSelectedSet) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surface,
+                CircleShape,
+              )
+              .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
+        )
+      }
     }
+  }
 }

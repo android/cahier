@@ -1,19 +1,17 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  * Copyright 2025 Google LLC. All rights reserved.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.example.cahier.features.drawing
@@ -41,59 +39,44 @@ import com.example.cahier.core.ui.LocalTextureStore
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DrawingDetailThumbnail(
-    strokes: List<Stroke>,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    backgroundImageUri: String? = null,
+  strokes: List<Stroke>,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  backgroundImageUri: String? = null,
 ) {
-    val textureStore = LocalTextureStore.current
-    val cacheGen by textureStore.generation.collectAsState()
-    val canvasStrokeRenderer = remember(cacheGen) {
-        CanvasStrokeRenderer.create(textureStore)
-    }
+  val textureStore = LocalTextureStore.current
+  val cacheGen by textureStore.generation.collectAsState()
+  val canvasStrokeRenderer = remember(cacheGen) { CanvasStrokeRenderer.create(textureStore) }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .clickable(
-                onClick = onClick,
-                role = Role.Button,
-            ),
-    ) {
-        backgroundImageUri?.let {
-            AsyncImage(
-                model = it,
-                contentDescription = "Background Image",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
-        }
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize(),
-        ) {
-            val canvas = drawContext.canvas.nativeCanvas
-            strokes.forEach { stroke ->
-                canvasStrokeRenderer.draw(
-                    stroke = stroke,
-                    canvas = canvas,
-                    strokeToScreenTransform = Matrix(),
-                )
-            }
-        }
+  Box(modifier = modifier.fillMaxSize().clickable(onClick = onClick, role = Role.Button)) {
+    backgroundImageUri?.let {
+      AsyncImage(
+        model = it,
+        contentDescription = "Background Image",
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop,
+      )
     }
+    Canvas(modifier = Modifier.fillMaxSize()) {
+      val canvas = drawContext.canvas.nativeCanvas
+      strokes.forEach { stroke ->
+        canvasStrokeRenderer.draw(
+          stroke = stroke,
+          canvas = canvas,
+          strokeToScreenTransform = Matrix(),
+        )
+      }
+    }
+  }
 }
 
 @Preview
 @Composable
-fun DrawingDetailThumbnailPreview(
-    modifier: Modifier = Modifier,
-) {
-    DrawingDetailThumbnail(
-        modifier = modifier
-            .fillMaxSize(),
-        strokes = emptyList(),
-        onClick = {},
-        backgroundImageUri = null,
-    )
+fun DrawingDetailThumbnailPreview(modifier: Modifier = Modifier) {
+  DrawingDetailThumbnail(
+    modifier = modifier.fillMaxSize(),
+    strokes = emptyList(),
+    onClick = {},
+    backgroundImageUri = null,
+  )
 }

@@ -50,137 +50,115 @@ import com.godaddy.android.colorpicker.ClassicColorPicker
 import com.godaddy.android.colorpicker.HsvColor
 import java.util.Locale
 
-/**
- * A reusable slider control for brush property editing.
- */
+/** A reusable slider control for brush property editing. */
 @Composable
 internal fun BrushSliderControl(
-    label: String,
-    value: Float,
-    valueRange: ClosedFloatingPointRange<Float>,
-    onValueChange: (Float) -> Unit,
+  label: String,
+  value: Float,
+  valueRange: ClosedFloatingPointRange<Float>,
+  onValueChange: (Float) -> Unit,
 ) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = label, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = String.format(Locale.US, "%.2f", value),
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            valueRange = valueRange
-        )
+  Column(modifier = Modifier.padding(vertical = 8.dp)) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+      Text(text = label, style = MaterialTheme.typography.bodyMedium)
+      Text(
+        text = String.format(Locale.US, "%.2f", value),
+        style = MaterialTheme.typography.bodySmall,
+      )
     }
+    // TODO(b/573585033)
+    @Suppress("DEPRECATION")
+    Slider(value = value, onValueChange = onValueChange, valueRange = valueRange)
+  }
 }
 
-/**
- * A dialog for picking a custom color using a classic HSV color picker.
- */
+/** A dialog for picking a custom color using a classic HSV color picker. */
 @Composable
 fun CustomColorPickerDialog(
-    initialColor: Color,
-    onColorSelected: (Color) -> Unit,
-    onDismissRequest: () -> Unit,
+  initialColor: Color,
+  onColorSelected: (Color) -> Unit,
+  onDismissRequest: () -> Unit,
 ) {
-    var currentColor by remember { mutableStateOf(HsvColor.from(initialColor)) }
+  var currentColor by remember { mutableStateOf(HsvColor.from(initialColor)) }
 
-    AlertDialog(
-        onDismissRequest = {
-            onColorSelected(currentColor.toColor())
-            onDismissRequest()
-        },
-        title = { Text(stringResource(R.string.brush_designer_pick_color)) },
-        text = {
-            Column(horizontalAlignment = Alignment.End) {
-                ClassicColorPicker(
-                    color = currentColor,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp),
-                    onColorChanged = { hsvColor: HsvColor ->
-                        currentColor = hsvColor
-                    }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+  AlertDialog(
+    onDismissRequest = {
+      onColorSelected(currentColor.toColor())
+      onDismissRequest()
+    },
+    title = { Text(stringResource(R.string.brush_designer_pick_color)) },
+    text = {
+      Column(horizontalAlignment = Alignment.End) {
+        ClassicColorPicker(
+          color = currentColor,
+          modifier = Modifier.fillMaxWidth().height(300.dp),
+          onColorChanged = { hsvColor: HsvColor -> currentColor = hsvColor },
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-                val hexString =
-                    String.format(Locale.US, "%08x", currentColor.toColor().toArgb())
-                Text(
-                    text = hexString,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onColorSelected(currentColor.toColor())
-                    onDismissRequest()
-                }
-            ) {
-                Text(stringResource(R.string.done))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismissRequest) {
-                Text(stringResource(R.string.bg_cancel))
-            }
+        val hexString = String.format(Locale.US, "%08x", currentColor.toColor().toArgb())
+        Text(
+          text = hexString,
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    },
+    confirmButton = {
+      TextButton(
+        onClick = {
+          onColorSelected(currentColor.toColor())
+          onDismissRequest()
         }
-    )
+      ) {
+        Text(stringResource(R.string.done))
+      }
+    },
+    dismissButton = {
+      TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.bg_cancel)) }
+    },
+  )
 }
 
-/**
- * A generic [ExposedDropdownMenuBox] for selecting from enum-like value lists.
- */
+/** A generic [ExposedDropdownMenuBox] for selecting from enum-like value lists. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun <T> EnumDropdown(
-    label: String,
-    currentValue: T,
-    values: List<T>,
-    displayName: @Composable (T) -> String,
-    onSelected: (T) -> Unit,
-    modifier: Modifier = Modifier,
+  label: String,
+  currentValue: T,
+  values: List<T>,
+  displayName: @Composable (T) -> String,
+  onSelected: (T) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+  var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = displayName(currentValue),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth()
+  ExposedDropdownMenuBox(
+    expanded = expanded,
+    onExpandedChange = { expanded = it },
+    modifier = modifier,
+  ) {
+    // TODO(b/573149579)
+    @Suppress("DEPRECATION")
+    OutlinedTextField(
+      value = displayName(currentValue),
+      onValueChange = {},
+      readOnly = true,
+      label = { Text(label) },
+      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+      modifier =
+        Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+    )
+    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+      for (value in values) {
+        DropdownMenuItem(
+          text = { Text(displayName(value)) },
+          onClick = {
+            onSelected(value)
+            expanded = false
+          },
         )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            values.forEach { value ->
-                DropdownMenuItem(
-                    text = { Text(displayName(value)) },
-                    onClick = {
-                        onSelected(value)
-                        expanded = false
-                    }
-                )
-            }
-        }
+      }
     }
+  }
 }

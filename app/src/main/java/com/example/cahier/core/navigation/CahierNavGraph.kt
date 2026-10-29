@@ -17,18 +17,17 @@
 package com.example.cahier.core.navigation
 
 object TextCanvasDestination : NavigationDestination {
-    override val route = "note_canvas"
-    const val NOTE_ID_ARG = "noteId"
-    val routeWithArgs = "$route/{$NOTE_ID_ARG}"
+  override val route = "note_canvas"
+  const val NOTE_ID_ARG = "noteId"
+  val routeWithArgs = "$route/{$NOTE_ID_ARG}"
 }
 
-
 object DrawingCanvasDestination : NavigationDestination {
-    override val route = "drawing_canvas"
-    const val NOTE_ID_ARG = "noteId"
-    val routeWithArgs = "$route/{$NOTE_ID_ARG}"
+  override val route = "drawing_canvas"
+  const val NOTE_ID_ARG = "noteId"
+  val routeWithArgs = "$route/{$NOTE_ID_ARG}"
 }
 
 object BrushGraphDestination : NavigationDestination {
-    override val route = "brush_graph"
+  override val route = "brush_graph"
 }

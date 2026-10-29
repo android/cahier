@@ -38,45 +38,43 @@ fun ToolTypeFilterNodeFields(
   onUpdate: (NodeData) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            stringResource(R.string.bg_enabled_tool_types),
-            style = MaterialTheme.typography.bodySmall
+  Column(modifier = modifier) {
+    Text(stringResource(R.string.bg_enabled_tool_types), style = MaterialTheme.typography.bodySmall)
+    for (toolType in ALL_TOOL_TYPES) {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        val bitIndex = toolTypeBitIndex(toolType)
+        Checkbox(
+          checked = (filterNode.enabledToolTypes and (1 shl bitIndex)) != 0,
+          onCheckedChange = { checked ->
+            val newMask =
+              if (checked) {
+                filterNode.enabledToolTypes or (1 shl bitIndex)
+              } else {
+                filterNode.enabledToolTypes and (1 shl bitIndex).inv()
+              }
+            onUpdate(
+              NodeData.Behavior(
+                behaviorNode
+                  .toBuilder()
+                  .setToolTypeFilterNode(
+                    filterNode.toBuilder().setEnabledToolTypes(newMask).build()
+                  )
+                  .build()
+              )
+            )
+          },
         )
-        ALL_TOOL_TYPES.forEach { toolType ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val bitIndex = toolTypeBitIndex(toolType)
-                Checkbox(
-                    checked = (filterNode.enabledToolTypes and (1 shl bitIndex)) != 0,
-                    onCheckedChange = { checked ->
-                        val newMask =
-                            if (checked) {
-                                filterNode.enabledToolTypes or (1 shl bitIndex)
-                            } else {
-                                filterNode.enabledToolTypes and (1 shl bitIndex).inv()
-                            }
-                        onUpdate(
-                            NodeData.Behavior(
-                                behaviorNode.toBuilder()
-                                    .setToolTypeFilterNode(
-                                        filterNode.toBuilder().setEnabledToolTypes(newMask).build()
-                                    )
-                                    .build()
-                            )
-                        )
-                    }
-                )
-                Text(stringResource(toolType.displayStringRId()))
-            }
-        }
+        Text(stringResource(toolType.displayStringRId()))
+      }
     }
+  }
 }
 
 private fun toolTypeBitIndex(toolType: InputToolType): Int =
-    when (toolType) {
-        InputToolType.UNKNOWN -> 0
-        InputToolType.MOUSE -> 1
-        InputToolType.TOUCH -> 2
-        InputToolType.STYLUS -> 3
-        else -> 0
-    }
+  when (toolType) {
+    InputToolType.UNKNOWN -> 0
+    InputToolType.MOUSE -> 1
+    InputToolType.TOUCH -> 2
+    InputToolType.STYLUS -> 3
+    else -> 0
+  }

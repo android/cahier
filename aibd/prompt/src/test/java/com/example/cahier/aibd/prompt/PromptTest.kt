@@ -17,8 +17,8 @@
 package com.example.cahier.aibd.prompt
 
 import com.google.common.truth.Truth.assertThat
-import ink.proto.BrushFamily as BrushFamilyProto
 import com.google.protobuf.TextFormat
+import ink.proto.BrushFamily as BrushFamilyProto
 import java.io.File
 import org.junit.Test
 import org.junit.runner.RunWith

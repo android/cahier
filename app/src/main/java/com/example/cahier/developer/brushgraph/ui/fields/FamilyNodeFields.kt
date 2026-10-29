@@ -39,123 +39,123 @@ import ink.proto.BrushFamily as ProtoBrushFamily
 
 @Composable
 fun FamilyNodeFields(
-    data: NodeData.Family,
-    onUpdate: (NodeData) -> Unit,
-    onDropdownEditComplete: () -> Unit,
-    textFieldsLocked: Boolean,
-    modifier: Modifier = Modifier,
+  data: NodeData.Family,
+  onUpdate: (NodeData) -> Unit,
+  onDropdownEditComplete: () -> Unit,
+  textFieldsLocked: Boolean,
+  modifier: Modifier = Modifier,
 ) {
 
-    Column(modifier = modifier) {
-        OutlinedTextField(
-            value = data.name,
-            onValueChange = { onUpdate(data.copy(name = it)) },
-            label = { Text(stringResource(R.string.bg_brush_family_name)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            singleLine = true,
-            enabled = !textFieldsLocked,
-        )
-        OutlinedTextField(
-            value = data.developerComment,
-            onValueChange = { onUpdate(data.copy(developerComment = it)) },
-            label = { Text(stringResource(R.string.bg_brush_developer_comment)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            minLines = 3,
-            enabled = !textFieldsLocked,
-        )
+  Column(modifier = modifier) {
+    // TODO(b/573149579)
+    @Suppress("DEPRECATION")
+    OutlinedTextField(
+      value = data.name,
+      onValueChange = { onUpdate(data.copy(name = it)) },
+      label = { Text(stringResource(R.string.bg_brush_family_name)) },
+      modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+      singleLine = true,
+      enabled = !textFieldsLocked,
+    )
+    // TODO(b/573149579)
+    @Suppress("DEPRECATION")
+    OutlinedTextField(
+      value = data.developerComment,
+      onValueChange = { onUpdate(data.copy(developerComment = it)) },
+      label = { Text(stringResource(R.string.bg_brush_developer_comment)) },
+      modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+      minLines = 3,
+      enabled = !textFieldsLocked,
+    )
 
-        FieldWithTooltip(
-            tooltipTitle = stringResource(
-                R.string.bg_title_input_model_format,
-                stringResource(data.inputModel.displayStringRId())
-            ),
-            tooltipText = stringResource(getInputModelTooltip(data.inputModel.displayStringRId()))
-        ) {
-            EnumDropdown(
-                label = stringResource(R.string.bg_input_model),
-                currentValue = data.inputModel.displayStringRId(),
-                values = listOf(R.string.bg_model_sliding_window, R.string.bg_model_passthrough),
-                displayName = { stringResource(it) },
-                onSelected = { modelResId ->
-                    val newModel =
-                        when (modelResId) {
-                            R.string.bg_model_passthrough ->
-                                ProtoBrushFamily.InputModel.newBuilder()
-                                    .setPassthroughModel(
-                                        ProtoBrushFamily.PassthroughModel.getDefaultInstance()
-                                    )
-                                    .build()
+    FieldWithTooltip(
+      tooltipTitle =
+        stringResource(
+          R.string.bg_title_input_model_format,
+          stringResource(data.inputModel.displayStringRId()),
+        ),
+      tooltipText = stringResource(getInputModelTooltip(data.inputModel.displayStringRId())),
+    ) {
+      EnumDropdown(
+        label = stringResource(R.string.bg_input_model),
+        currentValue = data.inputModel.displayStringRId(),
+        values = listOf(R.string.bg_model_sliding_window, R.string.bg_model_passthrough),
+        displayName = { stringResource(it) },
+        onSelected = { modelResId ->
+          val newModel =
+            when (modelResId) {
+              R.string.bg_model_passthrough ->
+                ProtoBrushFamily.InputModel.newBuilder()
+                  .setPassthroughModel(ProtoBrushFamily.PassthroughModel.getDefaultInstance())
+                  .build()
 
-                            R.string.bg_model_sliding_window ->
-                                ProtoBrushFamily.InputModel.newBuilder()
-                                    .setSlidingWindowModel(
-                                        ProtoBrushFamily.SlidingWindowModel.newBuilder()
-                                            .setWindowSizeSeconds(0.02f)
-                                            .setExperimentalUpsamplingPeriodSeconds(0.005f)
-                                    )
-                                    .build()
+              R.string.bg_model_sliding_window ->
+                ProtoBrushFamily.InputModel.newBuilder()
+                  .setSlidingWindowModel(
+                    ProtoBrushFamily.SlidingWindowModel.newBuilder()
+                      .setWindowSizeSeconds(0.02f)
+                      .setExperimentalUpsamplingPeriodSeconds(0.005f)
+                  )
+                  .build()
 
-                            else ->
-                                ProtoBrushFamily.InputModel.newBuilder()
-                                    .setSlidingWindowModel(
-                                        ProtoBrushFamily.SlidingWindowModel.newBuilder()
-                                            .setWindowSizeSeconds(0.02f)
-                                            .setExperimentalUpsamplingPeriodSeconds(0.005f)
-                                    )
-                                    .build()
-                        }
-                    onUpdate(data.copy(inputModel = newModel))
-                    onDropdownEditComplete()
-                }
-            )
-        }
-
-        val inputModel = data.inputModel
-        if (inputModel.hasSlidingWindowModel() || !inputModel.hasPassthroughModel()) {
-            val swModel = inputModel.slidingWindowModel
-            val windowMs =
-                if (swModel.hasWindowSizeSeconds()) (swModel.windowSizeSeconds * 1000).toLong() else 20L
-            val upsamplingHz = if (swModel.hasExperimentalUpsamplingPeriodSeconds()) {
-                val period = swModel.experimentalUpsamplingPeriodSeconds
-                if (period == Float.POSITIVE_INFINITY || period == 0f) 0 else (1f / period).toInt()
-            } else 180
-
-            Spacer(Modifier.height(16.dp))
-
-            NumericField(
-                title = stringResource(R.string.brush_designer_window_size_ms),
-                value = windowMs.toFloat(),
-                limits = NumericLimits(1f, 100f, 1f),
-                onValueChanged = { newValue ->
-                    val newModel = inputModel.toBuilder()
-                        .setSlidingWindowModel(
-                            swModel.toBuilder()
-                                .setWindowSizeSeconds(newValue / 1000f)
-                        )
-                        .build()
-                    onUpdate(data.copy(inputModel = newModel))
-                }
-            )
-
-            NumericField(
-                title = stringResource(R.string.brush_designer_upsampling_frequency_hz),
-                value = upsamplingHz.toFloat(),
-                limits = NumericLimits(0f, 500f, 1f),
-                onValueChanged = { newValue ->
-                    val newPeriod = if (newValue == 0f) Float.POSITIVE_INFINITY else 1f / newValue
-                    val newModel = inputModel.toBuilder()
-                        .setSlidingWindowModel(
-                            swModel.toBuilder()
-                                .setExperimentalUpsamplingPeriodSeconds(newPeriod)
-                        )
-                        .build()
-                    onUpdate(data.copy(inputModel = newModel))
-                }
-            )
-        }
+              else ->
+                ProtoBrushFamily.InputModel.newBuilder()
+                  .setSlidingWindowModel(
+                    ProtoBrushFamily.SlidingWindowModel.newBuilder()
+                      .setWindowSizeSeconds(0.02f)
+                      .setExperimentalUpsamplingPeriodSeconds(0.005f)
+                  )
+                  .build()
+            }
+          onUpdate(data.copy(inputModel = newModel))
+          onDropdownEditComplete()
+        },
+      )
     }
+
+    val inputModel = data.inputModel
+    if (inputModel.hasSlidingWindowModel() || !inputModel.hasPassthroughModel()) {
+      val swModel = inputModel.slidingWindowModel
+      val windowMs =
+        if (swModel.hasWindowSizeSeconds()) (swModel.windowSizeSeconds * 1000).toLong() else 20L
+      val upsamplingHz =
+        if (swModel.hasExperimentalUpsamplingPeriodSeconds()) {
+          val period = swModel.experimentalUpsamplingPeriodSeconds
+          if (period == Float.POSITIVE_INFINITY || period == 0f) 0 else (1f / period).toInt()
+        } else 180
+
+      Spacer(Modifier.height(16.dp))
+
+      NumericField(
+        title = stringResource(R.string.brush_designer_window_size_ms),
+        value = windowMs.toFloat(),
+        limits = NumericLimits(1f, 100f, 1f),
+        onValueChanged = { newValue ->
+          val newModel =
+            inputModel
+              .toBuilder()
+              .setSlidingWindowModel(swModel.toBuilder().setWindowSizeSeconds(newValue / 1000f))
+              .build()
+          onUpdate(data.copy(inputModel = newModel))
+        },
+      )
+
+      NumericField(
+        title = stringResource(R.string.brush_designer_upsampling_frequency_hz),
+        value = upsamplingHz.toFloat(),
+        limits = NumericLimits(0f, 500f, 1f),
+        onValueChanged = { newValue ->
+          val newPeriod = if (newValue == 0f) Float.POSITIVE_INFINITY else 1f / newValue
+          val newModel =
+            inputModel
+              .toBuilder()
+              .setSlidingWindowModel(
+                swModel.toBuilder().setExperimentalUpsamplingPeriodSeconds(newPeriod)
+              )
+              .build()
+          onUpdate(data.copy(inputModel = newModel))
+        },
+      )
+    }
+  }
 }

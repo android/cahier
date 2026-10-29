@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.example.cahier
 
 import androidx.compose.runtime.Composable
@@ -37,62 +36,49 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
 class CahierListDetailTest {
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+  @get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 1)
-    val composeTestRule = createComposeRule()
+  @get:Rule(order = 1) val composeTestRule = createComposeRule()
 
-    private val fakeViewModel = HomeScreenViewModel(FakeNotesRepository())
+  private val fakeViewModel = HomeScreenViewModel(FakeNotesRepository())
 
-    @Test
-    fun homeScreen_showListOnly() {
-        composeTestRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.ForcedSize(compatWidthWindow)
-            ) {
-                HomeContent(forceCompact = true)
-            }
-        }
-
-        composeTestRule.onNodeWithTag("List").assertExists()
-        composeTestRule.onNodeWithTag("Detail").assertDoesNotExist()
+  @Test
+  fun homeScreen_showListOnly() {
+    composeTestRule.setContent {
+      DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(compatWidthWindow)) {
+        HomeContent(forceCompact = true)
+      }
     }
 
-    @Test
-    fun homeScreen_showListAndDetail() {
-        composeTestRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.ForcedSize(mediumWidthWindow)
-            ) {
-                HomeContent(forceCompact = false)
-            }
-        }
+    composeTestRule.onNodeWithTag("List").assertExists()
+    composeTestRule.onNodeWithTag("Detail").assertDoesNotExist()
+  }
 
-        composeTestRule.onNodeWithTag("List").assertExists()
-        composeTestRule.onNodeWithTag("Detail").assertExists()
+  @Test
+  fun homeScreen_showListAndDetail() {
+    composeTestRule.setContent {
+      DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(mediumWidthWindow)) {
+        HomeContent(forceCompact = false)
+      }
     }
 
+    composeTestRule.onNodeWithTag("List").assertExists()
+    composeTestRule.onNodeWithTag("Detail").assertExists()
+  }
 
-    private val mediumWidthWindow = DpSize(
-        width = 1200.dp,
-        height = 900.dp
+  private val mediumWidthWindow = DpSize(width = 1200.dp, height = 900.dp)
+
+  private val compatWidthWindow = DpSize(width = 400.dp, height = 900.dp)
+
+  @Composable
+  private fun HomeContent(forceCompact: Boolean) {
+    HomePane(
+      navigateToCanvas = { _ -> },
+      navigateToDrawingCanvas = { _ -> },
+      navigateToBrushGraph = {},
+      navigateUp = {},
+      forceCompact = forceCompact,
+      homeScreenViewModel = fakeViewModel,
     )
-
-    private val compatWidthWindow = DpSize(
-        width = 400.dp,
-        height = 900.dp
-    )
-
-    @Composable
-    private fun HomeContent(forceCompact: Boolean) {
-        HomePane(
-            navigateToCanvas = { _ -> },
-            navigateToDrawingCanvas = { _ -> },
-            navigateToBrushGraph = {},
-            navigateUp = {},
-            forceCompact = forceCompact,
-            homeScreenViewModel = fakeViewModel
-        )
-    }
+  }
 }

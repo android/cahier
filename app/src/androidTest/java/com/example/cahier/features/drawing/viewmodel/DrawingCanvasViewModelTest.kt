@@ -1,23 +1,18 @@
 /*
+ * Copyright 2025 Google LLC. All rights reserved.
  *
- *  *
- *  *  * Copyright 2025 Google LLC. All rights reserved.
- *  *  *
- *  *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  *  * you may not use this file except in compliance with the License.
- *  *  * You may obtain a copy of the License at
- *  *  *
- *  *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *  *
- *  *  * Unless required by applicable law or agreed to in writing, software
- *  *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  * See the License for the specific language governing permissions and
- *  *  * limitations under the License.
- *  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 
 package com.example.cahier.features.drawing.viewmodel
 
@@ -35,11 +30,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import coil3.ImageLoader
 import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.FakeNotesRepository
+import com.example.cahier.core.data.Note
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.utils.FileHelper
 import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -56,167 +53,151 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
 class DrawingCanvasViewModelTest {
 
-    @get:Rule
-    var hiltRule = HiltAndroidRule(this)
+  @get:Rule var hiltRule = HiltAndroidRule(this)
 
-    @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
+  @get:Rule val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private val testDispatcher = UnconfinedTestDispatcher()
+  private val testDispatcher = UnconfinedTestDispatcher()
 
-    @Inject
-    lateinit var fileHelper: FileHelper
+  @Inject lateinit var fileHelper: FileHelper
 
-    @Inject
-    lateinit var imageLoader: ImageLoader
+  @Inject lateinit var imageLoader: ImageLoader
 
-    private lateinit var notesRepository: FakeNotesRepository
-    private lateinit var viewModel: DrawingCanvasViewModel
-    private var noteId: Long = 0L
+  private lateinit var notesRepository: FakeNotesRepository
+  private lateinit var viewModel: DrawingCanvasViewModel
+  private var noteId: Long = 0L
 
-    @Before
-    fun setup() {
-        hiltRule.inject()
-        Dispatchers.setMain(testDispatcher)
-        notesRepository = FakeNotesRepository()
-        noteId = runBlocking {
-            notesRepository.addNote(com.example.cahier.core.data.Note(title = "Drawing Test"))
-        }
+  @Before
+  fun setup() {
+    hiltRule.inject()
+    Dispatchers.setMain(testDispatcher)
+    notesRepository = FakeNotesRepository()
+    noteId = runBlocking { notesRepository.addNote(Note(title = "Drawing Test")) }
 
-        val savedStateHandle = SavedStateHandle(
-            mapOf(DrawingCanvasDestination.NOTE_ID_ARG to noteId)
-        )
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        viewModel = DrawingCanvasViewModel(
-            context, savedStateHandle, notesRepository, fileHelper, imageLoader,
-            customBrushDao = FakeCustomBrushDao(),
-            CahierTextureBitmapStore(context)
-        )
-    }
+    val savedStateHandle = SavedStateHandle(mapOf(DrawingCanvasDestination.NOTE_ID_ARG to noteId))
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    viewModel =
+      DrawingCanvasViewModel(
+        context,
+        savedStateHandle,
+        notesRepository,
+        fileHelper,
+        imageLoader,
+        customBrushDao = FakeCustomBrushDao(),
+        CahierTextureBitmapStore(context),
+      )
+  }
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+  @After
+  fun tearDown() {
+    Dispatchers.resetMain()
+  }
 
-    @Test
-    fun initial_state_is_correct() = runTest {
-        assertEquals("Drawing Test", viewModel.uiState.value.note.title)
-        assertFalse(viewModel.isEraserMode.value)
-        assertFalse(viewModel.canUndo.value)
-        assertFalse(viewModel.canRedo.value)
-    }
+  @Test
+  fun initial_state_is_correct() = runTest {
+    assertEquals("Drawing Test", viewModel.uiState.value.note.title)
+    assertFalse(viewModel.isEraserMode.value)
+    assertFalse(viewModel.canUndo.value)
+    assertFalse(viewModel.canRedo.value)
+  }
 
-    @Test
-    fun setEraserMode_updates_isEraserMode_state() = runTest {
-        viewModel.setEraserMode(true)
-        assertTrue(viewModel.isEraserMode.value)
+  @Test
+  fun setEraserMode_updates_isEraserMode_state() = runTest {
+    viewModel.setEraserMode(true)
+    assertTrue(viewModel.isEraserMode.value)
 
-        viewModel.setEraserMode(false)
-        assertFalse(viewModel.isEraserMode.value)
-    }
+    viewModel.setEraserMode(false)
+    assertFalse(viewModel.isEraserMode.value)
+  }
 
-    @Test
-    fun changeBrush_updates_selectedBrush_state() = runTest {
-        val initialBrush = viewModel.getCurrentBrush()
-        viewModel.changeBrushAndSize(StockBrushes.highlighter(), 20f)
+  @Test
+  fun changeBrush_updates_selectedBrush_state() = runTest {
+    val initialBrush = viewModel.getCurrentBrush()
+    viewModel.changeBrushAndSize(StockBrushes.highlighter(), 20f)
 
-        val newBrush = viewModel.getCurrentBrush()
-        assertNotEquals(initialBrush.family, newBrush.family)
-        assertEquals(StockBrushes.highlighter(), newBrush.family)
-        assertEquals(20f, newBrush.size, 0.01f)
-        assertTrue(newBrush.composeColor.alpha < 1.0f)
-    }
+    val newBrush = viewModel.getCurrentBrush()
+    assertNotEquals(initialBrush.family, newBrush.family)
+    assertEquals(StockBrushes.highlighter(), newBrush.family)
+    assertEquals(20f, newBrush.size, 0.01f)
+    assertTrue(newBrush.composeColor.alpha < 1.0f)
+  }
 
-    @Test
-    fun changeBrushColor_updates_selectedBrush_state() = runTest {
-        viewModel.changeBrushColor(Color.Red)
-        assertEquals(
-            Color.Red.value,
-            viewModel.getCurrentBrush().composeColor.value
-        )
-    }
+  @Test
+  fun changeBrushColor_updates_selectedBrush_state() = runTest {
+    viewModel.changeBrushColor(Color.Red)
+    assertEquals(Color.Red.value, viewModel.getCurrentBrush().composeColor.value)
+  }
 
-    @Test
-    fun changeBrushSize_updates_selectedBrush_state() = runTest {
-        viewModel.changeBrushSize(15f)
-        assertEquals(15f, viewModel.getCurrentBrush().size, 0.01f)
-    }
+  @Test
+  fun changeBrushSize_updates_selectedBrush_state() = runTest {
+    viewModel.changeBrushSize(15f)
+    assertEquals(15f, viewModel.getCurrentBrush().size, 0.01f)
+  }
 
-    @Test
-    fun highlighter_brush_has_reduced_alpha() = runTest {
-        viewModel.changeBrushAndSize(StockBrushes.highlighter(), 20f)
-        val highlighterBrush = viewModel.getCurrentBrush()
-        assertTrue(highlighterBrush.composeColor.alpha < 1.0f)
+  @Test
+  fun highlighter_brush_has_reduced_alpha() = runTest {
+    viewModel.changeBrushAndSize(StockBrushes.highlighter(), 20f)
+    val highlighterBrush = viewModel.getCurrentBrush()
+    assertTrue(highlighterBrush.composeColor.alpha < 1.0f)
 
-        viewModel.changeBrushAndSize(StockBrushes.marker(), 10f)
-        val markerBrush = viewModel.getCurrentBrush()
-        assertEquals(1.0f, markerBrush.composeColor.alpha, 0.01f)
-    }
+    viewModel.changeBrushAndSize(StockBrushes.marker(), 10f)
+    val markerBrush = viewModel.getCurrentBrush()
+    assertEquals(1.0f, markerBrush.composeColor.alpha, 0.01f)
+  }
 
-    @Test
-    fun undo_restores_previous_strokes() = runTest {
-        val brush = Brush(StockBrushes.marker(), 10f, 1f)
-        val stroke1 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+  @Test
+  fun undo_restores_previous_strokes() = runTest {
+    val brush = Brush(StockBrushes.marker(), 10f, 1f)
+    val stroke1 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
 
-        viewModel.onStrokesFinished(listOf(stroke1))
+    viewModel.onStrokesFinished(listOf(stroke1))
 
-        assertTrue(viewModel.canUndo.value)
-        assertFalse(viewModel.canRedo.value)
-        assertEquals(1, viewModel.uiState.value.strokes.size)
+    assertTrue(viewModel.canUndo.value)
+    assertFalse(viewModel.canRedo.value)
+    assertEquals(1, viewModel.uiState.value.strokes.size)
 
-        viewModel.undo()
+    viewModel.undo()
 
-        assertFalse(viewModel.canUndo.value)
-        assertTrue(viewModel.canRedo.value)
-        assertEquals(0, viewModel.uiState.value.strokes.size)
+    assertFalse(viewModel.canUndo.value)
+    assertTrue(viewModel.canRedo.value)
+    assertEquals(0, viewModel.uiState.value.strokes.size)
 
-        viewModel.redo()
+    viewModel.redo()
 
-        assertTrue(viewModel.canUndo.value)
-        assertFalse(viewModel.canRedo.value)
-        assertEquals(1, viewModel.uiState.value.strokes.size)
-    }
+    assertTrue(viewModel.canUndo.value)
+    assertFalse(viewModel.canRedo.value)
+    assertEquals(1, viewModel.uiState.value.strokes.size)
+  }
 
-    @Test
-    fun clearStrokes_clears_and_saves_empty_strokes() = runTest {
-        val brush = Brush(StockBrushes.marker(), 10f, 1f)
-        val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
-        viewModel.onStrokesFinished(listOf(stroke))
+  @Test
+  fun clearStrokes_clears_and_saves_empty_strokes() = runTest {
+    val brush = Brush(StockBrushes.marker(), 10f, 1f)
+    val stroke = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    viewModel.onStrokesFinished(listOf(stroke))
 
-        assertEquals(1, viewModel.uiState.value.strokes.size)
-        assertEquals(1, notesRepository.getNoteStrokes(noteId).size)
+    assertEquals(1, viewModel.uiState.value.strokes.size)
+    assertEquals(1, notesRepository.getNoteStrokes(noteId).size)
 
-        viewModel.clearStrokes()
+    viewModel.clearStrokes()
 
-        assertEquals(0, viewModel.uiState.value.strokes.size)
-        val repoStrokes = notesRepository.getNoteStrokes(noteId)
-        assertTrue(
-            "Strokes should have been cleared from the repository.",
-            repoStrokes.isEmpty()
-        )
-    }
+    assertEquals(0, viewModel.uiState.value.strokes.size)
+    val repoStrokes = notesRepository.getNoteStrokes(noteId)
+    assertTrue("Strokes should have been cleared from the repository.", repoStrokes.isEmpty())
+  }
 
-    @Test
-    fun changeBrush_disables_eraserMode() = runTest {
-        viewModel.setEraserMode(true)
-        assertTrue(
-            "Precondition failed: Eraser mode should be enabled.",
-            viewModel.isEraserMode.value
-        )
+  @Test
+  fun changeBrush_disables_eraserMode() = runTest {
+    viewModel.setEraserMode(true)
+    assertTrue("Precondition failed: Eraser mode should be enabled.", viewModel.isEraserMode.value)
 
-        viewModel.changeBrush(StockBrushes.marker())
+    viewModel.changeBrush(StockBrushes.marker())
 
-        assertFalse(
-            "Calling changeBrush should disable eraser mode.",
-            viewModel.isEraserMode.value
-        )
-    }
+    assertFalse("Calling changeBrush should disable eraser mode.", viewModel.isEraserMode.value)
+  }
 }

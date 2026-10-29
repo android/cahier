@@ -16,9 +16,9 @@
 
 package com.example.cahier.aibd.prompt
 
-import ink.proto.BrushFamily as BrushFamilyProto
 import com.google.protobuf.ByteString
 import com.google.protobuf.TextFormat
+import ink.proto.BrushFamily as BrushFamilyProto
 import java.io.File
 import java.util.concurrent.Callable
 import java.util.zip.GZIPInputStream
@@ -184,16 +184,10 @@ class PromptCommand : Callable<Int> {
   lateinit var outputFile: File
 
   override fun call(): Int {
-    val preludeFile =
-      File(
-        "aibd/prompt/src/main/java/com/example/cahier/aibd/prompt/prelude.md"
-      )
+    val preludeFile = File("aibd/prompt/src/main/java/com/example/cahier/aibd/prompt/prelude.md")
     val brushProtoFile = File("ink-proto/src/main/proto/brush_family.proto")
     val colorProtoFile = File("ink-proto/src/main/proto/color.proto")
-    val examplesDir =
-      File(
-        "aibd/prompt/src/main/java/com/example/cahier/aibd/prompt/examples"
-      )
+    val examplesDir = File("aibd/prompt/src/main/java/com/example/cahier/aibd/prompt/examples")
 
     val content =
       Prompt.generatePromptContent(preludeFile, brushProtoFile, colorProtoFile, examplesDir)

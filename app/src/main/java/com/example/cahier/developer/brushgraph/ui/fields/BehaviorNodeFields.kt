@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -42,226 +43,209 @@ import com.example.cahier.developer.brushgraph.data.NodeData
 import com.example.cahier.developer.brushgraph.data.displayStringRId
 import ink.proto.BrushBehavior as ProtoBrushBehavior
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BehaviorNodeFields(
-    data: NodeData.Behavior,
-    onUpdate: (NodeData) -> Unit,
-    onDropdownEditComplete: () -> Unit,
-    onFieldEditComplete: () -> Unit,
-    textFieldsLocked: Boolean,
-    modifier: Modifier = Modifier,
+  data: NodeData.Behavior,
+  onUpdate: (NodeData) -> Unit,
+  onDropdownEditComplete: () -> Unit,
+  onFieldEditComplete: () -> Unit,
+  textFieldsLocked: Boolean,
+  modifier: Modifier = Modifier,
 ) {
-    val behaviorNode = data.node
-    val nodeCase = behaviorNode.nodeCase
-    var expandedNodeTypes by remember { mutableStateOf(false) }
+  val behaviorNode = data.node
+  val nodeCase = behaviorNode.nodeCase
+  var expandedNodeTypes by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier) {
-        // Node Type Selector
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+  Column(modifier = modifier) {
+    // Node Type Selector
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+      ExposedDropdownMenuBox(
+        expanded = expandedNodeTypes,
+        onExpandedChange = { expandedNodeTypes = it },
+        modifier = Modifier.weight(1f),
+      ) {
+        // TODO(b/573149579)
+        @Suppress("DEPRECATION")
+        OutlinedTextField(
+          value = stringResource(nodeCase.displayStringRId()),
+          onValueChange = {},
+          readOnly = true,
+          label = { Text(stringResource(R.string.bg_node_type)) },
+          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNodeTypes) },
+          modifier =
+            Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+        )
+        ExposedDropdownMenu(
+          expanded = expandedNodeTypes,
+          onDismissRequest = { expandedNodeTypes = false },
         ) {
-            ExposedDropdownMenuBox(
-                expanded = expandedNodeTypes,
-                onExpandedChange = { expandedNodeTypes = it },
-                modifier = Modifier.weight(1f)
+          @Composable
+          fun DropdownSection(
+            label: String,
+            types: List<ProtoBrushBehavior.Node.NodeCase>,
+            modifier: Modifier = Modifier,
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp),
             ) {
-                OutlinedTextField(
-                    value = stringResource(nodeCase.displayStringRId()),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.bg_node_type)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNodeTypes) },
-                    modifier = Modifier
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = expandedNodeTypes,
-                    onDismissRequest = { expandedNodeTypes = false }
-                ) {
-                    @Composable
-                    fun DropdownSection(
-                        label: String,
-                        types: List<ProtoBrushBehavior.Node.NodeCase>,
-                        modifier: Modifier = Modifier,
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = modifier.padding(vertical = 4.dp, horizontal = 8.dp)
-                        ) {
-                            HorizontalDivider(modifier = Modifier.weight(1f))
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.outline,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            HorizontalDivider(modifier = Modifier.weight(1f))
-                        }
-                        types.forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(stringResource(type.displayStringRId())) },
-                                onClick = {
-                                    if (type != nodeCase) {
-                                        onUpdate(createDefaultNode(type))
-                                        onDropdownEditComplete()
-                                    }
-                                    expandedNodeTypes = false
-                                }
-                            )
-                        }
-                    }
-
-                    DropdownSection(
-                        stringResource(R.string.bg_section_start_nodes),
-                        NODE_TYPES_START
-                    )
-                    DropdownSection(
-                        stringResource(R.string.bg_section_operator_nodes),
-                        NODE_TYPES_OPERATOR
-                    )
-                    DropdownSection(
-                        stringResource(R.string.bg_section_terminal_nodes),
-                        NODE_TYPES_TERMINAL
-                    )
-                }
+              HorizontalDivider(modifier = Modifier.weight(1f))
+              Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(horizontal = 8.dp),
+              )
+              HorizontalDivider(modifier = Modifier.weight(1f))
             }
-        }
-
-        // Developer Comment
-        if (nodeCase == ProtoBrushBehavior.Node.NodeCase.TARGET_NODE ||
-            nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE
-        ) {
-            OutlinedTextField(
-                value = data.developerComment,
-                onValueChange = {
-                    onUpdate(data.copy(developerComment = it))
+            for (type in types) {
+              DropdownMenuItem(
+                text = { Text(stringResource(type.displayStringRId())) },
+                onClick = {
+                  if (type != nodeCase) {
+                    onUpdate(createDefaultNode(type))
+                    onDropdownEditComplete()
+                  }
+                  expandedNodeTypes = false
                 },
-                label = { Text(stringResource(R.string.bg_developer_comment)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                minLines = 2,
-                enabled = !textFieldsLocked,
-            )
+              )
+            }
+          }
+
+          DropdownSection(stringResource(R.string.bg_section_start_nodes), NODE_TYPES_START)
+          DropdownSection(stringResource(R.string.bg_section_operator_nodes), NODE_TYPES_OPERATOR)
+          DropdownSection(stringResource(R.string.bg_section_terminal_nodes), NODE_TYPES_TERMINAL)
         }
-
-        // Dispatch to specific node fields
-        when (nodeCase) {
-            ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> {
-                SourceNodeFields(
-                    sourceNode = behaviorNode.sourceNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate,
-                    onDropdownEditComplete = onDropdownEditComplete,
-                    onFieldEditComplete = onFieldEditComplete,
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> {
-                ConstantNodeFields(
-                    constantNode = behaviorNode.constantNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate,
-                    onFieldEditComplete = onFieldEditComplete
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.NOISE_NODE -> {
-                NoiseNodeFields(
-                    noiseNode = behaviorNode.noiseNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate,
-                    onFieldEditComplete = onFieldEditComplete,
-                    onDropdownEditComplete = onDropdownEditComplete,
-                    textFieldsLocked = textFieldsLocked
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {
-                ToolTypeFilterNodeFields(
-                    filterNode = behaviorNode.toolTypeFilterNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> {
-                DampingNodeFields(
-                    dampingNode = behaviorNode.dampingNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate,
-                    onFieldEditComplete = onFieldEditComplete,
-                    onDropdownEditComplete = onDropdownEditComplete
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> {
-                ResponseNodeFields(
-                    responseNode = behaviorNode.responseNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE -> {
-                IntegralNodeFields(
-                    integralNode = behaviorNode.integralNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate,
-                    onFieldEditComplete = onFieldEditComplete,
-                    onDropdownEditComplete = onDropdownEditComplete
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
-                BinaryOpNodeFields(
-                    binaryNode = behaviorNode.binaryOpNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate,
-                    onDropdownEditComplete = onDropdownEditComplete
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
-                InterpolationNodeFields(
-                    interpNode = behaviorNode.interpolationNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.TARGET_NODE -> {
-                TargetNodeFields(
-                    targetNode = behaviorNode.targetNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate,
-                    onFieldEditComplete = onFieldEditComplete,
-                    onDropdownEditComplete = onDropdownEditComplete
-                )
-            }
-
-            ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
-                PolarTargetNodeFields(
-                    polarNode = behaviorNode.polarTargetNode,
-                    behaviorNode = behaviorNode,
-                    onUpdate = onUpdate,
-                    onFieldEditComplete = onFieldEditComplete,
-                    onDropdownEditComplete = onDropdownEditComplete
-                )
-            }
-
-            else -> {
-                // Fallback or empty view for unsupported nodes
-                Text(
-                    stringResource(
-                        R.string.bg_err_unsupported_behavior_node_type,
-                        nodeCase.toString()
-                    )
-                )
-            }
-        }
+      }
     }
+
+    // Developer Comment
+    if (
+      nodeCase == ProtoBrushBehavior.Node.NodeCase.TARGET_NODE ||
+        nodeCase == ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE
+    ) {
+      // TODO(b/573149579)
+      @Suppress("DEPRECATION")
+      OutlinedTextField(
+        value = data.developerComment,
+        onValueChange = { onUpdate(data.copy(developerComment = it)) },
+        label = { Text(stringResource(R.string.bg_developer_comment)) },
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        minLines = 2,
+        enabled = !textFieldsLocked,
+      )
+    }
+
+    // Dispatch to specific node fields
+    when (nodeCase) {
+      ProtoBrushBehavior.Node.NodeCase.SOURCE_NODE -> {
+        SourceNodeFields(
+          sourceNode = behaviorNode.sourceNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+          onDropdownEditComplete = onDropdownEditComplete,
+          onFieldEditComplete = onFieldEditComplete,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.CONSTANT_NODE -> {
+        ConstantNodeFields(
+          constantNode = behaviorNode.constantNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+          onFieldEditComplete = onFieldEditComplete,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.NOISE_NODE -> {
+        NoiseNodeFields(
+          noiseNode = behaviorNode.noiseNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+          onFieldEditComplete = onFieldEditComplete,
+          onDropdownEditComplete = onDropdownEditComplete,
+          textFieldsLocked = textFieldsLocked,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.TOOL_TYPE_FILTER_NODE -> {
+        ToolTypeFilterNodeFields(
+          filterNode = behaviorNode.toolTypeFilterNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.DAMPING_NODE -> {
+        DampingNodeFields(
+          dampingNode = behaviorNode.dampingNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+          onFieldEditComplete = onFieldEditComplete,
+          onDropdownEditComplete = onDropdownEditComplete,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.RESPONSE_NODE -> {
+        ResponseNodeFields(
+          responseNode = behaviorNode.responseNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.INTEGRAL_NODE -> {
+        IntegralNodeFields(
+          integralNode = behaviorNode.integralNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+          onFieldEditComplete = onFieldEditComplete,
+          onDropdownEditComplete = onDropdownEditComplete,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.BINARY_OP_NODE -> {
+        BinaryOpNodeFields(
+          binaryNode = behaviorNode.binaryOpNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+          onDropdownEditComplete = onDropdownEditComplete,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.INTERPOLATION_NODE -> {
+        InterpolationNodeFields(
+          interpNode = behaviorNode.interpolationNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.TARGET_NODE -> {
+        TargetNodeFields(
+          targetNode = behaviorNode.targetNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+          onFieldEditComplete = onFieldEditComplete,
+          onDropdownEditComplete = onDropdownEditComplete,
+        )
+      }
+
+      ProtoBrushBehavior.Node.NodeCase.POLAR_TARGET_NODE -> {
+        PolarTargetNodeFields(
+          polarNode = behaviorNode.polarTargetNode,
+          behaviorNode = behaviorNode,
+          onUpdate = onUpdate,
+          onFieldEditComplete = onFieldEditComplete,
+          onDropdownEditComplete = onDropdownEditComplete,
+        )
+      }
+
+      else -> {
+        // Fallback or empty view for unsupported nodes
+        Text(stringResource(R.string.bg_err_unsupported_behavior_node_type, nodeCase.toString()))
+      }
+    }
+  }
 }

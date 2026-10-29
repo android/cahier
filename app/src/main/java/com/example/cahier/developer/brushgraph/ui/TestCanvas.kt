@@ -16,6 +16,7 @@
 
 package com.example.cahier.developer.brushgraph.ui
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,6 +64,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush as ComposeBrush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
@@ -95,600 +97,551 @@ import com.example.cahier.developer.brushgraph.data.ValidationSeverity
 
 @Composable
 private fun TestCanvas(
-    isInvertedCanvas: Boolean,
-    strokeList: List<Stroke>,
-    strokeRenderer: CanvasStrokeRenderer,
-    brush: Brush,
-    modifier: Modifier = Modifier,
-    maskPath: Path? = null,
-    onGetNextBrush: () -> Brush,
-    onStrokesAdded: (List<Stroke>) -> Unit,
+  isInvertedCanvas: Boolean,
+  strokeList: List<Stroke>,
+  strokeRenderer: CanvasStrokeRenderer,
+  brush: Brush,
+  modifier: Modifier = Modifier,
+  maskPath: Path? = null,
+  onGetNextBrush: () -> Brush,
+  onStrokesAdded: (List<Stroke>) -> Unit,
 ) {
-    Box(modifier = modifier) {
-        Text(
-            stringResource(R.string.bg_test_canvas_draw_prompt),
-            modifier = Modifier.align(Alignment.Center),
-            style = MaterialTheme.typography.labelMedium,
-            color =
-                if (isInvertedCanvas) {
-                    MaterialTheme.colorScheme.inverseOnSurface
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-        )
-        DrawingSurface(
-            strokes = strokeList,
-            canvasStrokeRenderer = strokeRenderer,
-            onStrokesFinished = onStrokesAdded,
-            onErase = { _, _ -> },
-            onEraseStart = {},
-            onEraseEnd = {},
-            currentBrush = brush,
-            onGetNextBrush = onGetNextBrush,
-            isEraserMode = false,
-            backgroundImageUri = null,
-            onStartDrag = {},
-            modifier = Modifier.fillMaxSize(),
-            maskPath = maskPath,
-        )
-    }
+  Box(modifier = modifier) {
+    Text(
+      stringResource(R.string.bg_test_canvas_draw_prompt),
+      modifier = Modifier.align(Alignment.Center),
+      style = MaterialTheme.typography.labelMedium,
+      color =
+        if (isInvertedCanvas) {
+          MaterialTheme.colorScheme.inverseOnSurface
+        } else {
+          MaterialTheme.colorScheme.onSurface
+        },
+    )
+    DrawingSurface(
+      strokes = strokeList,
+      canvasStrokeRenderer = strokeRenderer,
+      onStrokesFinished = onStrokesAdded,
+      onErase = { _, _ -> },
+      onEraseStart = {},
+      onEraseEnd = {},
+      currentBrush = brush,
+      onGetNextBrush = onGetNextBrush,
+      isEraserMode = false,
+      backgroundImageUri = null,
+      onStartDrag = {},
+      modifier = Modifier.fillMaxSize(),
+      maskPath = maskPath,
+    )
+  }
 }
-
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun CollapsiblePreviewPane(
-    isPreviewExpanded: Boolean,
-    isInvertedCanvas: Boolean,
-    testAutoUpdateStrokes: Boolean,
-    brushColor: Color,
-    brushSize: Float,
-    brush: Brush,
-    strokeList: List<Stroke>,
-    strokeRenderer: CanvasStrokeRenderer,
-    topIssue: GraphValidationException?,
-    currentHeight: Dp,
-    onHeightDrag: (Dp) -> Unit,
-    modifier: Modifier = Modifier,
-    exclusionRects: List<Rect> = emptyList(),
-    onGetNextBrush: () -> Brush,
-    onTogglePreviewExpanded: () -> Unit,
-    onClearStrokes: () -> Unit,
-    onToggleCanvasTheme: () -> Unit,
-    onSetTestAutoUpdateStrokes: (Boolean) -> Unit,
-    onUpdateTestBrushColor: (Color) -> Unit,
-    onUpdateTestBrushSize: (Float) -> Unit,
-    onStrokesAdded: (List<Stroke>) -> Unit,
-    onChooseColor: (Color, (Color) -> Unit) -> Unit,
-    onToggleNotificationPane: () -> Unit,
+  isPreviewExpanded: Boolean,
+  isInvertedCanvas: Boolean,
+  testAutoUpdateStrokes: Boolean,
+  brushColor: Color,
+  brushSize: Float,
+  brush: Brush,
+  strokeList: List<Stroke>,
+  strokeRenderer: CanvasStrokeRenderer,
+  topIssue: GraphValidationException?,
+  currentHeight: Dp,
+  onHeightDrag: (Dp) -> Unit,
+  modifier: Modifier = Modifier,
+  exclusionRects: List<Rect> = emptyList(),
+  onGetNextBrush: () -> Brush,
+  onTogglePreviewExpanded: () -> Unit,
+  onClearStrokes: () -> Unit,
+  onToggleCanvasTheme: () -> Unit,
+  onSetTestAutoUpdateStrokes: (Boolean) -> Unit,
+  onUpdateTestBrushColor: (Color) -> Unit,
+  onUpdateTestBrushSize: (Float) -> Unit,
+  onStrokesAdded: (List<Stroke>) -> Unit,
+  onChooseColor: (Color, (Color) -> Unit) -> Unit,
+  onToggleNotificationPane: () -> Unit,
 ) {
-    val density = LocalDensity.current
-    val onHeightDragState = rememberUpdatedState(onHeightDrag)
-    val currentHeightState = rememberUpdatedState(currentHeight)
-    var isDragging by remember { mutableStateOf(false) }
+  val density = LocalDensity.current
+  val onHeightDragState = rememberUpdatedState(onHeightDrag)
+  val currentHeightState = rememberUpdatedState(currentHeight)
+  var isDragging by remember { mutableStateOf(false) }
 
-    // Mutable state to synchronously track height during a drag gesture
-    val dragHeightState = remember { mutableStateOf(currentHeight) }
+  // Mutable state to synchronously track height during a drag gesture
+  val dragHeightState = remember { mutableStateOf(currentHeight) }
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        // Toggle Tab (always visible, draggable only when expanded)
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .then(
-                    if (isPreviewExpanded) {
-                        Modifier.pointerInput(Unit) {
-                            detectDragGestures(
-                                onDragStart = {
-                                    isDragging = true
-                                    dragHeightState.value = currentHeightState.value
-                                },
-                                onDragEnd = {
-                                    isDragging = false
-                                },
-                                onDragCancel = {
-                                    isDragging = false
-                                },
-                                onDrag = { change, dragAmount ->
-                                    change.consume()
-                                    val deltaDp = with(density) { (-dragAmount.y).toDp() }
-                                    val newHeight =
-                                        (dragHeightState.value + deltaDp).coerceIn(120.dp, 500.dp)
-                                    dragHeightState.value = newHeight
-                                    onHeightDragState.value(newHeight)
-                                }
-                            )
-                        }
-                    } else {
-                        Modifier
-                    }
+  Column(modifier = modifier.fillMaxWidth()) {
+    // Toggle Tab (always visible, draggable only when expanded)
+    Surface(
+      modifier =
+        Modifier.fillMaxWidth()
+          .height(40.dp)
+          .then(
+            if (isPreviewExpanded) {
+              Modifier.pointerInput(Unit) {
+                detectDragGestures(
+                  onDragStart = {
+                    isDragging = true
+                    dragHeightState.value = currentHeightState.value
+                  },
+                  onDragEnd = { isDragging = false },
+                  onDragCancel = { isDragging = false },
+                  onDrag = { change, dragAmount ->
+                    change.consume()
+                    val deltaDp = with(density) { (-dragAmount.y).toDp() }
+                    val newHeight = (dragHeightState.value + deltaDp).coerceIn(120.dp, 500.dp)
+                    dragHeightState.value = newHeight
+                    onHeightDragState.value(newHeight)
+                  },
                 )
-                .clickable { onTogglePreviewExpanded() },
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            tonalElevation = 4.dp,
-            shadowElevation = 8.dp,
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterStart),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        if (isPreviewExpanded) {
-                            Icons.Default.KeyboardArrowDown
-                        } else {
-                            Icons.Default.KeyboardArrowUp
-                        },
-                        contentDescription = if (isPreviewExpanded) stringResource(R.string.bg_test_canvas_collapse) else stringResource(
-                            R.string.bg_test_canvas_expand
-                        ),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        stringResource(R.string.bg_test_canvas_title),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    if (isPreviewExpanded) {
-                        AdaptivePreviewControlsLayout(
-                            badgeMinWidth = 160.dp,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                        ) {
-                            val scrollState = rememberScrollState()
-                            val showLeftFade = scrollState.canScrollBackward
-                            val showRightFade = scrollState.canScrollForward
-
-                            Box(
-                                modifier = Modifier.fillMaxHeight(),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .horizontalScroll(scrollState)
-                                        .padding(horizontal = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        stringResource(R.string.bg_test_canvas_reset),
-                                        modifier = Modifier.clickable { onClearStrokes() },
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    Spacer(Modifier.width(16.dp))
-                                    Text(
-                                        stringResource(R.string.bg_test_canvas_invert),
-                                        modifier = Modifier.clickable { onToggleCanvasTheme() },
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    Spacer(Modifier.width(16.dp))
-
-                                    // Auto-update toggle
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(
-                                            checked = testAutoUpdateStrokes,
-                                            onCheckedChange = { onSetTestAutoUpdateStrokes(it) }
-                                        )
-                                        Spacer(Modifier.width(4.dp))
-                                        Text(
-                                            stringResource(R.string.bg_auto_update),
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    }
-                                    Spacer(Modifier.width(16.dp))
-
-                                    // Color picker
-                                    var colorMenuExpanded by remember { mutableStateOf(false) }
-                                    val colors = remember {
-                                        listOf(
-                                            R.string.brush_designer_color_black to BrushBlack,
-                                            R.string.brush_designer_color_red to BrushRed,
-                                            R.string.brush_designer_color_blue to BrushBlue,
-                                            R.string.brush_designer_color_green to BrushGreen,
-                                            R.string.brush_designer_color_yellow to BrushYellow
-                                        )
-                                    }
-                                    Box {
-                                        val iconTint =
-                                            if (brushColor.luminance() < 0.5f) Color.White else Color.Black
-
-                                        Box(
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .background(brushColor, shape = CircleShape)
-                                                .border(
-                                                    1.dp,
-                                                    MaterialTheme.colorScheme.outline,
-                                                    shape = CircleShape
-                                                )
-                                                .clip(CircleShape)
-                                                .clickable { colorMenuExpanded = true },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.palette_24px),
-                                                contentDescription = stringResource(R.string.color),
-                                                tint = iconTint,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-
-                                        DropdownMenu(
-                                            expanded = colorMenuExpanded,
-                                            onDismissRequest = { colorMenuExpanded = false }
-                                        ) {
-                                            colors.forEach { (nameRes, color) ->
-                                                val name = stringResource(nameRes)
-                                                DropdownMenuItem(
-                                                    text = { Text(name) },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.circle_24px),
-                                                            contentDescription = name,
-                                                            tint = color
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        onUpdateTestBrushColor(color)
-                                                        colorMenuExpanded = false
-                                                    }
-                                                )
-                                            }
-                                            HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
-                                            DropdownMenuItem(
-                                                text = { Text(stringResource(R.string.brush_designer_custom_color)) },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.palette_24px),
-                                                        contentDescription = stringResource(R.string.brush_designer_custom_color),
-                                                        tint = MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                },
-                                                onClick = {
-                                                    colorMenuExpanded = false
-                                                    onChooseColor(brushColor) { newColor ->
-                                                        onUpdateTestBrushColor(newColor)
-                                                    }
-                                                }
-                                            )
-                                        }
-                                    }
-                                    Spacer(Modifier.width(16.dp))
-
-                                    // Size selector
-                                    var sizeExpanded by remember { mutableStateOf(false) }
-                                    ExposedDropdownMenuBox(
-                                        expanded = sizeExpanded,
-                                        onExpandedChange = { sizeExpanded = it },
-                                        modifier = Modifier.width(80.dp)
-                                    ) {
-                                        Text(
-                                            text = "${brushSize.toInt()}px",
-                                            modifier = Modifier
-                                                .menuAnchor(
-                                                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                                                    enabled = true
-                                                )
-                                                .clickable { sizeExpanded = true },
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                        ExposedDropdownMenu(
-                                            expanded = sizeExpanded,
-                                            onDismissRequest = { sizeExpanded = false }
-                                        ) {
-                                            for (size in (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)) {
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            stringResource(
-                                                                R.string.bg_size_px,
-                                                                size
-                                                            )
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        onUpdateTestBrushSize(size.toFloat())
-                                                        sizeExpanded = false
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Scroll fades
-                                if (showLeftFade) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxHeight()
-                                            .width(16.dp)
-                                            .background(
-                                                androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                                    colors = listOf(
-                                                        MaterialTheme.colorScheme.surfaceVariant,
-                                                        Color.Transparent
-                                                    )
-                                                )
-                                            )
-                                            .align(Alignment.CenterStart)
-                                    )
-                                }
-                                if (showRightFade) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxHeight()
-                                            .width(16.dp)
-                                            .background(
-                                                androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                                    colors = listOf(
-                                                        Color.Transparent,
-                                                        MaterialTheme.colorScheme.surfaceVariant
-                                                    )
-                                                )
-                                            )
-                                            .align(Alignment.CenterEnd)
-                                    )
-                                }
-                            }
-
-                            // Top issue, if one is present
-                            if (topIssue != null) {
-                                val isError = topIssue.severity == ValidationSeverity.ERROR
-                                Surface(
-                                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.extendedColorScheme.warning,
-                                    tonalElevation = 2.dp,
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .clickable { onToggleNotificationPane() }
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(horizontal = 16.dp),
-                                        contentAlignment = Alignment.CenterStart
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                imageVector = if (isError) Icons.Default.Error else Icons.Default.Warning,
-                                                contentDescription = null,
-                                                tint = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Spacer(Modifier.width(8.dp))
-                                            Text(
-                                                text = stringResource(
-                                                    if (isError) R.string.bg_error else R.string.bg_warning,
-                                                    topIssue.displayMessage.asString()
-                                                ),
-                                                style = MaterialTheme.typography.labelLarge,
-                                                color = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.extendedColorScheme.onWarning,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Drag handle pill centered at the very top of the bar (only visible when expanded)
-                if (isPreviewExpanded) {
-                    val handleScale by androidx.compose.animation.core.animateFloatAsState(
-                        targetValue = if (isDragging) 1.2f else 1.0f,
-                        label = "handleScale"
-                    )
-                    val handleAlpha by androidx.compose.animation.core.animateFloatAsState(
-                        targetValue = if (isDragging) 0.8f else 0.4f,
-                        label = "handleAlpha"
-                    )
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(top = 4.dp)
-                            .graphicsLayer(scaleX = handleScale, scaleY = handleScale)
-                            .size(width = 36.dp, height = 4.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = handleAlpha),
-                                shape = CircleShape
-                            )
-                    )
-                }
-            }
-        }
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                // The drawer height is smoothly driven by currentHeight (animatedPreviewHeight)
-                // minus the 40.dp tab header. We coerce it to >= 0.dp.
-                .height((currentHeight - 40.dp).coerceAtLeast(0.dp)),
-            tonalElevation = 8.dp,
-            color = if (isInvertedCanvas) {
-                MaterialTheme.colorScheme.inverseSurface
+              }
             } else {
-                MaterialTheme.colorScheme.surface
-            },
+              Modifier
+            }
+          )
+          .clickable { onTogglePreviewExpanded() },
+      color = MaterialTheme.colorScheme.surfaceVariant,
+      tonalElevation = 4.dp,
+      shadowElevation = 8.dp,
+    ) {
+      Box(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+        Row(
+          modifier = Modifier.fillMaxWidth().align(Alignment.CenterStart),
+          verticalAlignment = Alignment.CenterVertically,
         ) {
-            var containerPositionInWindow by remember { mutableStateOf(Offset.Zero) }
-            var containerSize by remember { mutableStateOf(IntSize.Zero) }
-            var canvasPositionInWindow by remember { mutableStateOf(Offset.Zero) }
-            var canvasSize by remember { mutableStateOf(IntSize.Zero) }
-
-            val maskPath = remember(
-                containerPositionInWindow,
-                containerSize,
-                canvasPositionInWindow,
-                canvasSize,
-                exclusionRects
+          Icon(
+            if (isPreviewExpanded) {
+              Icons.Default.KeyboardArrowDown
+            } else {
+              Icons.Default.KeyboardArrowUp
+            },
+            contentDescription =
+              if (isPreviewExpanded) {
+                stringResource(R.string.bg_test_canvas_collapse)
+              } else {
+                stringResource(R.string.bg_test_canvas_expand)
+              },
+          )
+          Spacer(Modifier.width(8.dp))
+          Text(
+            stringResource(R.string.bg_test_canvas_title),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+          )
+          if (isPreviewExpanded) {
+            AdaptivePreviewControlsLayout(
+              badgeMinWidth = 160.dp,
+              modifier = Modifier.weight(1f).fillMaxHeight(),
             ) {
-                createMaskPath(
-                    containerPositionInWindow,
-                    containerSize,
-                    canvasPositionInWindow,
-                    canvasSize,
-                    exclusionRects
-                )
-            }
+              val scrollState = rememberScrollState()
+              val showLeftFade = scrollState.canScrollBackward
+              val showRightFade = scrollState.canScrollForward
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clipToBounds()
-                    .onGloballyPositioned { coordinates ->
-                        containerPositionInWindow = coordinates.positionInWindow()
-                        containerSize = coordinates.size
-                    },
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                TestCanvas(
-                    strokeList = strokeList,
-                    strokeRenderer = strokeRenderer,
-                    brush = brush,
-                    isInvertedCanvas = isInvertedCanvas,
-                    maskPath = maskPath,
-                    onGetNextBrush = onGetNextBrush,
-                    onStrokesAdded = onStrokesAdded,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .requiredHeight(500.dp)
-                        .onGloballyPositioned { coordinates ->
-                            canvasPositionInWindow = coordinates.positionInWindow()
-                            canvasSize = coordinates.size
-                        }
-                )
+              Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+                Row(
+                  modifier =
+                    Modifier.fillMaxHeight()
+                      .horizontalScroll(scrollState)
+                      .padding(horizontal = 12.dp),
+                  verticalAlignment = Alignment.CenterVertically,
+                ) {
+                  Text(
+                    stringResource(R.string.bg_test_canvas_reset),
+                    modifier = Modifier.clickable { onClearStrokes() },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                  )
+                  Spacer(Modifier.width(16.dp))
+                  Text(
+                    stringResource(R.string.bg_test_canvas_invert),
+                    modifier = Modifier.clickable { onToggleCanvasTheme() },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                  )
+                  Spacer(Modifier.width(16.dp))
+
+                  // Auto-update toggle
+                  Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                      checked = testAutoUpdateStrokes,
+                      onCheckedChange = { onSetTestAutoUpdateStrokes(it) },
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                      stringResource(R.string.bg_auto_update),
+                      style = MaterialTheme.typography.labelLarge,
+                    )
+                  }
+                  Spacer(Modifier.width(16.dp))
+
+                  // Color picker
+                  var colorMenuExpanded by remember { mutableStateOf(false) }
+                  val colors = remember {
+                    listOf(
+                      R.string.brush_designer_color_black to BrushBlack,
+                      R.string.brush_designer_color_red to BrushRed,
+                      R.string.brush_designer_color_blue to BrushBlue,
+                      R.string.brush_designer_color_green to BrushGreen,
+                      R.string.brush_designer_color_yellow to BrushYellow,
+                    )
+                  }
+                  Box {
+                    val iconTint = if (brushColor.luminance() < 0.5f) Color.White else Color.Black
+
+                    Box(
+                      modifier =
+                        Modifier.size(32.dp)
+                          .background(brushColor, shape = CircleShape)
+                          .border(1.dp, MaterialTheme.colorScheme.outline, shape = CircleShape)
+                          .clip(CircleShape)
+                          .clickable { colorMenuExpanded = true },
+                      contentAlignment = Alignment.Center,
+                    ) {
+                      Icon(
+                        painter = painterResource(R.drawable.palette_24px),
+                        contentDescription = stringResource(R.string.color),
+                        tint = iconTint,
+                        modifier = Modifier.size(20.dp),
+                      )
+                    }
+
+                    DropdownMenu(
+                      expanded = colorMenuExpanded,
+                      onDismissRequest = { colorMenuExpanded = false },
+                    ) {
+                      for ((nameRes, color) in colors) {
+                        val name = stringResource(nameRes)
+                        DropdownMenuItem(
+                          text = { Text(name) },
+                          leadingIcon = {
+                            Icon(
+                              painter = painterResource(R.drawable.circle_24px),
+                              contentDescription = name,
+                              tint = color,
+                            )
+                          },
+                          onClick = {
+                            onUpdateTestBrushColor(color)
+                            colorMenuExpanded = false
+                          },
+                        )
+                      }
+                      HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+
+                      DropdownMenuItem(
+                        text = { Text(stringResource(R.string.brush_designer_custom_color)) },
+                        leadingIcon = {
+                          Icon(
+                            painter = painterResource(R.drawable.palette_24px),
+                            contentDescription =
+                              stringResource(R.string.brush_designer_custom_color),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                          )
+                        },
+                        onClick = {
+                          colorMenuExpanded = false
+                          onChooseColor(brushColor) { newColor -> onUpdateTestBrushColor(newColor) }
+                        },
+                      )
+                    }
+                  }
+                  Spacer(Modifier.width(16.dp))
+
+                  // Size selector
+                  var sizeExpanded by remember { mutableStateOf(false) }
+                  ExposedDropdownMenuBox(
+                    expanded = sizeExpanded,
+                    onExpandedChange = { sizeExpanded = it },
+                    modifier = Modifier.width(80.dp),
+                  ) {
+                    Text(
+                      text = "${brushSize.toInt()}px",
+                      modifier =
+                        Modifier.menuAnchor(
+                            type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                            enabled = true,
+                          )
+                          .clickable { sizeExpanded = true },
+                      style = MaterialTheme.typography.labelLarge,
+                      color = MaterialTheme.colorScheme.primary,
+                      fontWeight = FontWeight.Bold,
+                    )
+                    ExposedDropdownMenu(
+                      expanded = sizeExpanded,
+                      onDismissRequest = { sizeExpanded = false },
+                    ) {
+                      for (size in
+                        (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)) {
+                        DropdownMenuItem(
+                          text = { Text(stringResource(R.string.bg_size_px, size)) },
+                          onClick = {
+                            onUpdateTestBrushSize(size.toFloat())
+                            sizeExpanded = false
+                          },
+                        )
+                      }
+                    }
+                  }
+                }
+
+                // Scroll fades
+                if (showLeftFade) {
+                  Box(
+                    modifier =
+                      Modifier.fillMaxHeight()
+                        .width(16.dp)
+                        .background(
+                          ComposeBrush.horizontalGradient(
+                            colors =
+                              listOf(MaterialTheme.colorScheme.surfaceVariant, Color.Transparent)
+                          )
+                        )
+                        .align(Alignment.CenterStart)
+                  )
+                }
+                if (showRightFade) {
+                  Box(
+                    modifier =
+                      Modifier.fillMaxHeight()
+                        .width(16.dp)
+                        .background(
+                          ComposeBrush.horizontalGradient(
+                            colors =
+                              listOf(Color.Transparent, MaterialTheme.colorScheme.surfaceVariant)
+                          )
+                        )
+                        .align(Alignment.CenterEnd)
+                  )
+                }
+              }
+
+              // Top issue, if one is present
+              if (topIssue != null) {
+                val isError = topIssue.severity == ValidationSeverity.ERROR
+                Surface(
+                  color =
+                    if (isError) MaterialTheme.colorScheme.error
+                    else MaterialTheme.extendedColorScheme.warning,
+                  tonalElevation = 2.dp,
+                  modifier = Modifier.fillMaxHeight().clickable { onToggleNotificationPane() },
+                ) {
+                  Box(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterStart,
+                  ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                      Icon(
+                        imageVector = if (isError) Icons.Default.Error else Icons.Default.Warning,
+                        contentDescription = null,
+                        tint =
+                          if (isError) MaterialTheme.colorScheme.onError
+                          else MaterialTheme.extendedColorScheme.onWarning,
+                        modifier = Modifier.size(20.dp),
+                      )
+                      Spacer(Modifier.width(8.dp))
+                      Text(
+                        text =
+                          stringResource(
+                            if (isError) R.string.bg_error else R.string.bg_warning,
+                            topIssue.displayMessage.asString(),
+                          ),
+                        style = MaterialTheme.typography.labelLarge,
+                        color =
+                          if (isError) MaterialTheme.colorScheme.onError
+                          else MaterialTheme.extendedColorScheme.onWarning,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                      )
+                    }
+                  }
+                }
+              }
             }
+          }
         }
+
+        // Drag handle pill centered at the very top of the bar (only visible when expanded)
+        if (isPreviewExpanded) {
+          val handleScale by
+            animateFloatAsState(targetValue = if (isDragging) 1.2f else 1.0f, label = "handleScale")
+          val handleAlpha by
+            animateFloatAsState(targetValue = if (isDragging) 0.8f else 0.4f, label = "handleAlpha")
+          Box(
+            modifier =
+              Modifier.align(Alignment.TopCenter)
+                .padding(top = 4.dp)
+                .graphicsLayer(scaleX = handleScale, scaleY = handleScale)
+                .size(width = 36.dp, height = 4.dp)
+                .background(
+                  color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = handleAlpha),
+                  shape = CircleShape,
+                )
+          )
+        }
+      }
     }
+
+    Surface(
+      modifier =
+        Modifier.fillMaxWidth()
+          // The drawer height is smoothly driven by currentHeight (animatedPreviewHeight)
+          // minus the 40.dp tab header. We coerce it to >= 0.dp.
+          .height((currentHeight - 40.dp).coerceAtLeast(0.dp)),
+      tonalElevation = 8.dp,
+      color =
+        if (isInvertedCanvas) {
+          MaterialTheme.colorScheme.inverseSurface
+        } else {
+          MaterialTheme.colorScheme.surface
+        },
+    ) {
+      var containerPositionInWindow by remember { mutableStateOf(Offset.Zero) }
+      var containerSize by remember { mutableStateOf(IntSize.Zero) }
+      var canvasPositionInWindow by remember { mutableStateOf(Offset.Zero) }
+      var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+
+      val maskPath =
+        remember(
+          containerPositionInWindow,
+          containerSize,
+          canvasPositionInWindow,
+          canvasSize,
+          exclusionRects,
+        ) {
+          createMaskPath(
+            containerPositionInWindow,
+            containerSize,
+            canvasPositionInWindow,
+            canvasSize,
+            exclusionRects,
+          )
+        }
+
+      Box(
+        modifier =
+          Modifier.fillMaxSize().clipToBounds().onGloballyPositioned { coordinates ->
+            containerPositionInWindow = coordinates.positionInWindow()
+            containerSize = coordinates.size
+          },
+        contentAlignment = Alignment.BottomCenter,
+      ) {
+        TestCanvas(
+          strokeList = strokeList,
+          strokeRenderer = strokeRenderer,
+          brush = brush,
+          isInvertedCanvas = isInvertedCanvas,
+          maskPath = maskPath,
+          onGetNextBrush = onGetNextBrush,
+          onStrokesAdded = onStrokesAdded,
+          modifier =
+            Modifier.fillMaxWidth().requiredHeight(500.dp).onGloballyPositioned { coordinates ->
+              canvasPositionInWindow = coordinates.positionInWindow()
+              canvasSize = coordinates.size
+            },
+        )
+      }
+    }
+  }
 }
 
 @Composable
 private fun AdaptivePreviewControlsLayout(
-    badgeMinWidth: Dp,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
+  badgeMinWidth: Dp,
+  modifier: Modifier = Modifier,
+  content: @Composable () -> Unit,
 ) {
-    Layout(
-        content = content,
-        modifier = modifier
-    ) { measurables, constraints ->
-        if (measurables.size == 1) {
-            val placeable = measurables[0].measure(constraints)
-            layout(placeable.width, placeable.height) {
-                placeable.placeRelative(0, 0)
-            }
-        } else if (measurables.size >= 2) {
-            val controlsMeasurable = measurables[0]
-            val badgeMeasurable = measurables[1]
+  Layout(content = content, modifier = modifier) { measurables, constraints ->
+    if (measurables.size == 1) {
+      val placeable = measurables[0].measure(constraints)
+      layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
+    } else if (measurables.size >= 2) {
+      val controlsMeasurable = measurables[0]
+      val badgeMeasurable = measurables[1]
 
-            val minBadgePx = badgeMinWidth.roundToPx()
-            val controlsMaxWidth = maxOf(0, constraints.maxWidth - minBadgePx)
+      val minBadgePx = badgeMinWidth.roundToPx()
+      val controlsMaxWidth = maxOf(0, constraints.maxWidth - minBadgePx)
 
-            // Measure controls first up to available width minus minimum badge width
-            val controlsPlaceable = controlsMeasurable.measure(
-                constraints.copy(minWidth = 0, maxWidth = controlsMaxWidth)
-            )
+      // Measure controls first up to available width minus minimum badge width
+      val controlsPlaceable =
+        controlsMeasurable.measure(constraints.copy(minWidth = 0, maxWidth = controlsMaxWidth))
 
-            // Badge takes all the remaining space
-            val badgeWidth = maxOf(minBadgePx, constraints.maxWidth - controlsPlaceable.width)
-            val badgePlaceable = badgeMeasurable.measure(
-                constraints.copy(minWidth = badgeWidth, maxWidth = badgeWidth)
-            )
+      // Badge takes all the remaining space
+      val badgeWidth = maxOf(minBadgePx, constraints.maxWidth - controlsPlaceable.width)
+      val badgePlaceable =
+        badgeMeasurable.measure(constraints.copy(minWidth = badgeWidth, maxWidth = badgeWidth))
 
-            val totalWidth =
-                minOf(constraints.maxWidth, controlsPlaceable.width + badgePlaceable.width)
-            val height = maxOf(controlsPlaceable.height, badgePlaceable.height)
+      val totalWidth = minOf(constraints.maxWidth, controlsPlaceable.width + badgePlaceable.width)
+      val height = maxOf(controlsPlaceable.height, badgePlaceable.height)
 
-            layout(totalWidth, height) {
-                controlsPlaceable.placeRelative(0, (height - controlsPlaceable.height) / 2)
-                badgePlaceable.placeRelative(
-                    controlsPlaceable.width,
-                    (height - badgePlaceable.height) / 2
-                )
-            }
-        } else {
-            layout(0, 0) {}
-        }
+      layout(totalWidth, height) {
+        controlsPlaceable.placeRelative(0, (height - controlsPlaceable.height) / 2)
+        badgePlaceable.placeRelative(controlsPlaceable.width, (height - badgePlaceable.height) / 2)
+      }
+    } else {
+      layout(0, 0) {}
     }
+  }
 }
 
 private fun createMaskPath(
-    containerPositionInWindow: Offset,
-    containerSize: IntSize,
-    canvasPositionInWindow: Offset,
-    canvasSize: IntSize,
-    exclusionRects: List<Rect>,
+  containerPositionInWindow: Offset,
+  containerSize: IntSize,
+  canvasPositionInWindow: Offset,
+  canvasSize: IntSize,
+  exclusionRects: List<Rect>,
 ): Path? {
-    if (containerSize == IntSize.Zero || canvasSize == IntSize.Zero) return null
+  if (containerSize == IntSize.Zero || canvasSize == IntSize.Zero) return null
 
-    val yContainerTop = containerPositionInWindow.y
-    val yCanvasTop = canvasPositionInWindow.y
-    val yContainerBottom = yContainerTop + containerSize.height
+  val yContainerTop = containerPositionInWindow.y
+  val yCanvasTop = canvasPositionInWindow.y
+  val yContainerBottom = yContainerTop + containerSize.height
 
-    val yVisibleTopLocal = (yContainerTop - yCanvasTop).coerceAtLeast(0f)
-    val yVisibleBottomLocal =
-        (yContainerBottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+  val yVisibleTopLocal = (yContainerTop - yCanvasTop).coerceAtLeast(0f)
+  val yVisibleBottomLocal =
+    (yContainerBottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
 
-    val hasTopMask = yVisibleTopLocal > 0f
-    val hasBottomMask = yVisibleBottomLocal < canvasSize.height.toFloat()
+  val hasTopMask = yVisibleTopLocal > 0f
+  val hasBottomMask = yVisibleBottomLocal < canvasSize.height.toFloat()
 
-    val xCanvasLeft = canvasPositionInWindow.x
-    val activeExclusionRects = exclusionRects.mapNotNull { rect ->
-        val localLeft = (rect.left - xCanvasLeft).coerceAtLeast(0f)
-        val localTop = (rect.top - yCanvasTop).coerceAtLeast(0f)
-        val localRight = (rect.right - xCanvasLeft).coerceAtMost(canvasSize.width.toFloat())
-        val localBottom = (rect.bottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
-        if (localLeft < localRight && localTop < localBottom) {
-            Rect(localLeft, localTop, localRight, localBottom)
-        } else {
-            null
-        }
+  val xCanvasLeft = canvasPositionInWindow.x
+  val activeExclusionRects = exclusionRects.mapNotNull { rect ->
+    val localLeft = (rect.left - xCanvasLeft).coerceAtLeast(0f)
+    val localTop = (rect.top - yCanvasTop).coerceAtLeast(0f)
+    val localRight = (rect.right - xCanvasLeft).coerceAtMost(canvasSize.width.toFloat())
+    val localBottom = (rect.bottom - yCanvasTop).coerceAtMost(canvasSize.height.toFloat())
+    if (localLeft < localRight && localTop < localBottom) {
+      Rect(localLeft, localTop, localRight, localBottom)
+    } else {
+      null
     }
+  }
 
-    if (!hasTopMask && !hasBottomMask && activeExclusionRects.isEmpty()) {
-        return null
-    }
+  if (!hasTopMask && !hasBottomMask && activeExclusionRects.isEmpty()) {
+    return null
+  }
 
-    return Path().apply {
-        if (hasTopMask) {
-            addRect(
-                Rect(
-                    left = 0f,
-                    top = 0f,
-                    right = canvasSize.width.toFloat(),
-                    bottom = yVisibleTopLocal
-                )
-            )
-        }
-        if (hasBottomMask) {
-            addRect(
-                Rect(
-                    left = 0f,
-                    top = yVisibleBottomLocal,
-                    right = canvasSize.width.toFloat(),
-                    bottom = canvasSize.height.toFloat()
-                )
-            )
-        }
-        activeExclusionRects.forEach { localRect ->
-            addRect(localRect)
-        }
+  return Path().apply {
+    if (hasTopMask) {
+      addRect(
+        Rect(left = 0f, top = 0f, right = canvasSize.width.toFloat(), bottom = yVisibleTopLocal)
+      )
     }
+    if (hasBottomMask) {
+      addRect(
+        Rect(
+          left = 0f,
+          top = yVisibleBottomLocal,
+          right = canvasSize.width.toFloat(),
+          bottom = canvasSize.height.toFloat(),
+        )
+      )
+    }
+    for (localRect in activeExclusionRects) {
+      addRect(localRect)
+    }
+  }
 }

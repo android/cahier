@@ -42,127 +42,138 @@ import kotlin.math.roundToInt
 
 @Composable
 fun BoxScope.NodePortDots(
-    node: GraphNode,
-    position: Offset,
-    graph: BrushGraph,
-    visiblePorts: List<Port>,
-    zoom: Float,
-    canvasCoordinates: LayoutCoordinates?,
-    onPortDrag: (PortSide, String, Boolean) -> Unit,
-    onPortDragUpdate: (Offset) -> Unit,
-    onPortDragEnd: () -> Unit,
-    getPortPosition: (String, Boolean) -> Offset,
-    onPortPositioned: (String, Offset) -> Unit,
-    onReorderPorts: (String, Int, Int) -> Unit,
-    modifier: Modifier = Modifier,
+  node: GraphNode,
+  position: Offset,
+  graph: BrushGraph,
+  visiblePorts: List<Port>,
+  zoom: Float,
+  canvasCoordinates: LayoutCoordinates?,
+  onPortDrag: (PortSide, String, Boolean) -> Unit,
+  onPortDragUpdate: (Offset) -> Unit,
+  onPortDragEnd: () -> Unit,
+  getPortPosition: (String, Boolean) -> Offset,
+  onPortPositioned: (String, Offset) -> Unit,
+  onReorderPorts: (String, Int, Int) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    var activeReorderPortIndex by remember { mutableStateOf<Int?>(null) }
-    var cumulativeDeltaY by remember { mutableFloatStateOf(0f) }
-    val hasAddPort = visiblePorts.any { it.isAddPort }
-    val data = node.data
+  var activeReorderPortIndex by remember { mutableStateOf<Int?>(null) }
+  var cumulativeDeltaY by remember { mutableFloatStateOf(0f) }
+  val hasAddPort = visiblePorts.any { it.isAddPort }
+  val data = node.data
 
-    val portCounts = remember(graph.edges, graph.nodes, node.id) {
-        if (data is NodeData.Paint) {
-            val nodesById = graph.nodes.associateBy { it.id }
-            val textureCount = graph.edges.count { edge ->
-                edge.toNodeId == node.id && nodesById[edge.fromNodeId]?.data is NodeData.TextureLayer
+  val portCounts =
+    remember(graph.edges, graph.nodes, node.id) {
+      if (data is NodeData.Paint) {
+        val nodesById = graph.nodes.associateBy { it.id }
+        val textureCount =
+          graph.edges.count { edge ->
+            edge.toNodeId == node.id && nodesById[edge.fromNodeId]?.data is NodeData.TextureLayer
+          }
+        val colorCount =
+          graph.edges.count { edge ->
+            edge.toNodeId == node.id && nodesById[edge.fromNodeId]?.data is NodeData.ColorFunction
+          }
+        Pair(textureCount, colorCount)
+      } else {
+        Pair(0, 0)
+      }
+    }
+  val T = portCounts.first
+  val C = portCounts.second
+
+  for ((index, port) in visiblePorts.withIndex()) {
+    val edge = graph.edges.find { it.toNodeId == node.id && it.toPortId == port.id }
+    val portKey = edge?.let { "${it.fromNodeId}_${port.id}" } ?: "port_${port.id}"
+    key(portKey) {
+      PortDot(
+        modifier = modifier.align(Alignment.TopStart),
+        port = port,
+        zoom = zoom,
+        onDrag = onPortDrag,
+        onDragUpdate = onPortDragUpdate,
+        onDragEnd = onPortDragEnd,
+        onPortPositioned = { pos -> onPortPositioned(port.id, pos) },
+        canvasCoordinates = canvasCoordinates,
+        portPosition = getPortPosition(port.id, true) - position,
+        isReorderable = data.isPortReorderable(port, index, hasAddPort),
+        isLargeHandle =
+          data is NodeData.Behavior &&
+            data.node.nodeCase == ProtoNodeCase.POLAR_TARGET_NODE &&
+            index % 2 == 0,
+        onReorderUpdate = { deltaY ->
+          if (activeReorderPortIndex != index) {
+            activeReorderPortIndex = index
+            cumulativeDeltaY = 0f
+          }
+          cumulativeDeltaY += deltaY
+
+          val originalY = getPortPosition(port.id, true).y - position.y
+          var maxValidIndex = visiblePorts.size - 2 // Exclude add port
+          var minValidIndex = if (data is NodeData.Coat) 1 else 0
+
+          if (data is NodeData.Paint) {
+            if (index in 0 until T) {
+              minValidIndex = 0
+              maxValidIndex = T - 1
+            } else if (index in (T + 1) until (T + 1 + C)) {
+              minValidIndex = T + 1
+              maxValidIndex = T + 1 + C - 1
             }
-            val colorCount = graph.edges.count { edge ->
-                edge.toNodeId == node.id && nodesById[edge.fromNodeId]?.data is NodeData.ColorFunction
+          }
+
+          val minDragY = NODE_PADDING_VERTICAL + data.titleHeight() + (0 + 0.5f) * INPUT_ROW_HEIGHT
+          val maxDragY =
+            NODE_PADDING_VERTICAL +
+              data.titleHeight() +
+              (visiblePorts.size - 1 + 0.5f) * INPUT_ROW_HEIGHT
+
+          val requestedY = originalY + cumulativeDeltaY
+
+          val isPolarTarget =
+            data is NodeData.Behavior && data.node.nodeCase == ProtoNodeCase.POLAR_TARGET_NODE
+
+          val targetIndex =
+            if (isPolarTarget) {
+              val setSize = 2
+              val currentSet =
+                ((requestedY - NODE_PADDING_VERTICAL - data.titleHeight()) /
+                    (INPUT_ROW_HEIGHT * setSize) - 0.5f)
+                  .roundToInt()
+              currentSet * setSize
+            } else {
+              ((requestedY - NODE_PADDING_VERTICAL - data.titleHeight()) / INPUT_ROW_HEIGHT - 0.5f)
+                .roundToInt()
             }
-            Pair(textureCount, colorCount)
-        } else {
-            Pair(0, 0)
-        }
+
+          val currentY = requestedY.coerceIn(minDragY, maxDragY)
+          cumulativeDeltaY = currentY - originalY
+
+          if (targetIndex in minValidIndex..maxValidIndex && targetIndex != index) {
+            onReorderPorts(node.id, index, targetIndex)
+            cumulativeDeltaY -= (targetIndex - index) * INPUT_ROW_HEIGHT
+            activeReorderPortIndex = targetIndex
+          }
+        },
+        onReorderEnd = {
+          activeReorderPortIndex = null
+          cumulativeDeltaY = 0f
+        },
+        isDragging = index == activeReorderPortIndex,
+        dragOffset = if (index == activeReorderPortIndex) cumulativeDeltaY else 0f,
+      )
     }
-    val T = portCounts.first
-    val C = portCounts.second
-
-    for ((index, port) in visiblePorts.withIndex()) {
-        val edge = graph.edges.find { it.toNodeId == node.id && it.toPortId == port.id }
-        val portKey = edge?.let { "${it.fromNodeId}_${port.id}" } ?: "port_${port.id}"
-        key(portKey) {
-            PortDot(
-                modifier = modifier.align(Alignment.TopStart),
-                port = port,
-                zoom = zoom,
-                onDrag = onPortDrag,
-                onDragUpdate = onPortDragUpdate,
-                onDragEnd = onPortDragEnd,
-                onPortPositioned = { pos -> onPortPositioned(port.id, pos) },
-                canvasCoordinates = canvasCoordinates,
-                portPosition = getPortPosition(port.id, true) - position,
-                isReorderable = data.isPortReorderable(port, index, hasAddPort),
-                isLargeHandle = data is NodeData.Behavior && data.node.nodeCase == ProtoNodeCase.POLAR_TARGET_NODE && index % 2 == 0,
-                onReorderUpdate = { deltaY ->
-                    if (activeReorderPortIndex != index) {
-                        activeReorderPortIndex = index
-                        cumulativeDeltaY = 0f
-                    }
-                    cumulativeDeltaY += deltaY
-
-                    val originalY = getPortPosition(port.id, true).y - position.y
-                    var maxValidIndex = visiblePorts.size - 2 // Exclude add port
-                    var minValidIndex = if (data is NodeData.Coat) 1 else 0
-
-                    if (data is NodeData.Paint) {
-                        if (index in 0 until T) {
-                            minValidIndex = 0
-                            maxValidIndex = T - 1
-                        } else if (index in (T + 1) until (T + 1 + C)) {
-                            minValidIndex = T + 1
-                            maxValidIndex = T + 1 + C - 1
-                        }
-                    }
-
-                    val minDragY =
-                        NODE_PADDING_VERTICAL + data.titleHeight() + (0 + 0.5f) * INPUT_ROW_HEIGHT
-                    val maxDragY =
-                        NODE_PADDING_VERTICAL + data.titleHeight() + (visiblePorts.size - 1 + 0.5f) * INPUT_ROW_HEIGHT
-
-                    val requestedY = originalY + cumulativeDeltaY
-
-                    val isPolarTarget =
-                        data is NodeData.Behavior && data.node.nodeCase == ProtoNodeCase.POLAR_TARGET_NODE
-
-                    val targetIndex = if (isPolarTarget) {
-                        val setSize = 2
-                        val currentSet =
-                            ((requestedY - NODE_PADDING_VERTICAL - data.titleHeight()) / (INPUT_ROW_HEIGHT * setSize) - 0.5f).roundToInt()
-                        currentSet * setSize
-                    } else {
-                        ((requestedY - NODE_PADDING_VERTICAL - data.titleHeight()) / INPUT_ROW_HEIGHT - 0.5f).roundToInt()
-                    }
-
-                    val currentY = requestedY.coerceIn(minDragY, maxDragY)
-                    cumulativeDeltaY = currentY - originalY
-
-                    if (targetIndex in minValidIndex..maxValidIndex && targetIndex != index) {
-                        onReorderPorts(node.id, index, targetIndex)
-                        cumulativeDeltaY -= (targetIndex - index) * INPUT_ROW_HEIGHT
-                        activeReorderPortIndex = targetIndex
-                    }
-                },
-                onReorderEnd = {
-                    activeReorderPortIndex = null
-                    cumulativeDeltaY = 0f
-                },
-                isDragging = index == activeReorderPortIndex,
-                dragOffset = if (index == activeReorderPortIndex) cumulativeDeltaY else 0f
-            )
-        }
-    }
-    if (data.hasOutput()) {
-        PortDot(
-            modifier = modifier.align(Alignment.TopEnd),
-            port = Port.Output(node.id, "output"),
-            zoom = zoom,
-            onDrag = onPortDrag,
-            onDragUpdate = onPortDragUpdate,
-            onDragEnd = onPortDragEnd,
-            onPortPositioned = { pos -> onPortPositioned("output", pos) },
-            canvasCoordinates = canvasCoordinates,
-            portPosition = getPortPosition("output", true) - position,
-        )
-    }
+  }
+  if (data.hasOutput()) {
+    PortDot(
+      modifier = modifier.align(Alignment.TopEnd),
+      port = Port.Output(node.id, "output"),
+      zoom = zoom,
+      onDrag = onPortDrag,
+      onDragUpdate = onPortDragUpdate,
+      onDragEnd = onPortDragEnd,
+      onPortPositioned = { pos -> onPortPositioned("output", pos) },
+      canvasCoordinates = canvasCoordinates,
+      portPosition = getPortPosition("output", true) - position,
+    )
+  }
 }
