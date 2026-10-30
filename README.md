@@ -197,10 +197,30 @@ Known Limitations:
 
 Here's how to get started:
 
-*   Connect your Android device to your computer using your cable.
-*   Establish a connection between your computer and your Android device. This
-    can be tested by running `adb devices` on the command line.
-*   Ensure you have Cahier installed on the Android device.
+*   In a terminal, clone this repo, e.g.:
+    `git clone https://github.com/android/cahier.git`
+*   Navigate to the repository directory: `cd cahier`
+*   Establish a connection between your computer and your Android device.
+    *   If using a USB cable:
+        *   Ensure it is connecting the two devices.
+        *   Enable USB Debugging on your Android device, in the settings menu.
+            You may need to enable Developer Options first by tapping "Build
+            Number" in "About phone" seven times.
+        *   When prompted on your device, allow debugging from your computer.
+    *   If using a wireless connection (e.g. to connect a Googlebook to itself):
+        *   Ensure both devices are on the same network.
+        *   Enable Wireless Debugging in Developer Options.
+        *   Select "Pair device with pairing code". Note the IP address, port
+            numbers, and passcode.
+        *   Run `adb pair <IP>:<pair_port>` in your terminal, and enter the
+            passcode when prompted.
+        *   Run `adb connect <IP>:<main_port>` in your terminal.
+*   Test your connection with `adb devices` in the command line.
+*   If working in a fresh developer environment, run
+    `sudo apt-get update && sudo apt install git adb openjdk-25-jdk -y` to
+    install necessary dependencies.
+*   Ensure you have Cahier installed on the Android device. If you don't, please
+    run `./gradlew :app:installDebug` to install it.
 *   Get a Gemini API key. If you don't have one, go to
     https://ai.google.dev/gemini-api/docs/api-key to create one.
 *   Run `export GOOGLE_API_KEY=<insert_api_key_here>` to put the API key in your
