@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -52,8 +55,69 @@ jobs:
           arch: x86_64
           script: ./gradlew :app:connectedAndroidTest
 
-      - name: Run Roborazzi
-        id: verify-test
+  screenshots:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Pushes recorded screenshots to roborazzi/<PR branch>.
+    env:
+      HEAD_REF: ${{ github.head_ref }}
+      # Copybara opens these PRs for pending changes in Google's internal repository.
+      COPYBARA_PR: ${{ github.event.pull_request.user.login == 'copybara-service[bot]' && startsWith(github.head_ref, 'test_') }}
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v6
+        with:
+          # The PR head rather than the merge commit, so recorded screenshots sit right on top of it.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set Up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Verify screenshots
+        id: verify
+        continue-on-error: true
+        # Records a new golden for each screenshot that doesn't match.
+        run: ./gradlew app:verifyAndRecordRoborazziDebug --stacktrace
+
+      - name: Collect recorded screenshots
+        id: collect
         run: |
-          # If there is a difference between the screenshots, the test will fail.
-          ./gradlew app:verifyRoborazziDebug --stacktrace
+          git add -- screenshots/ ':(exclude)screenshots/*_compare.png' ':(exclude)screenshots/*_actual.png'
+          if git diff --cached --quiet; then
+            echo "recorded=false" >> "${GITHUB_OUTPUT}"
+          else
+            git diff --cached --stat
+            echo "recorded=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Publish recorded screenshots
+        if: steps.collect.outputs.recorded == 'true' && env.COPYBARA_PR == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -qm "Recorded screenshots for ${HEAD_REF}"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/roborazzi/${HEAD_REF}"
+          echo "Pushed recorded screenshots to branch roborazzi/${HEAD_REF}."
+
+      - name: Fail on screenshot mismatch
+        if: steps.verify.outcome == 'failure' || steps.collect.outputs.recorded == 'true'
+        env:
+          RECORDED: ${{ steps.collect.outputs.recorded }}
+        run: |
+          if [[ "${RECORDED}" == 'true' ]]; then
+            echo "Screenshots don't match. Run ./gradlew app:recordRoborazziDebug and commit screenshots/."
+          else
+            echo "Screenshot verification failed before recording anything. See 'Verify screenshots'."
+          fi
+          exit 1
