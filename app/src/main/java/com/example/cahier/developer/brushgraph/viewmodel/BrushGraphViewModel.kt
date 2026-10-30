@@ -34,6 +34,7 @@ import com.example.cahier.R
 import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.CustomBrushDao
 import com.example.cahier.core.data.CustomBrushEntity
+import com.example.cahier.core.di.IoDispatcher
 import com.example.cahier.developer.brushgraph.data.BrushGraphRepository
 import com.example.cahier.developer.brushgraph.data.DisplayText
 import com.example.cahier.developer.brushgraph.data.GraphEdge
@@ -51,6 +52,7 @@ import ink.proto.ColorFunction as ProtoColorFunction
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -71,6 +73,7 @@ constructor(
   private val customBrushDao: CustomBrushDao,
   private val textureStore: CahierTextureBitmapStore,
   private val repository: BrushGraphRepository,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
   /** Saved brushes in the palette. */
@@ -194,7 +197,7 @@ constructor(
       }
     }
 
-    viewModelScope.launch(Dispatchers.IO) {
+    viewModelScope.launch(ioDispatcher) {
       val success = repository.loadAutoSaveBrush()
       if (success) {
         withContext(Dispatchers.Main) {
@@ -585,7 +588,7 @@ constructor(
   }
 
   fun saveToPalette(brushName: String) {
-    viewModelScope.launch(Dispatchers.IO) {
+    viewModelScope.launch(ioDispatcher) {
       try {
         val baos = ByteArrayOutputStream()
         brush.value.family.encode(baos, textureStore)
@@ -603,7 +606,7 @@ constructor(
   }
 
   fun deleteFromPalette(name: String) {
-    viewModelScope.launch(Dispatchers.IO) { customBrushDao.deleteCustomBrush(name) }
+    viewModelScope.launch(ioDispatcher) { customBrushDao.deleteCustomBrush(name) }
   }
 
   fun loadTexture(id: String, bitmap: Bitmap) {
@@ -612,7 +615,7 @@ constructor(
   }
 
   fun loadFromPalette(entity: CustomBrushEntity) {
-    viewModelScope.launch(Dispatchers.IO) {
+    viewModelScope.launch(ioDispatcher) {
       try {
         val family =
           BrushFamily.decode(

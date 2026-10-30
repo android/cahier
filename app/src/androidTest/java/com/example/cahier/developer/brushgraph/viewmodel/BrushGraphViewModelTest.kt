@@ -39,7 +39,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -77,7 +76,8 @@ class BrushGraphViewModelTest {
 
     val repoScope = CoroutineScope(SupervisorJob() + testDispatcher)
     repository = DefaultBrushGraphRepository(fakeDao, mockTextureStore, repoScope, context)
-    viewModel = BrushGraphViewModel(fakeDao, mockTextureStore, repository)
+    viewModel =
+      BrushGraphViewModel(fakeDao, mockTextureStore, repository, ioDispatcher = testDispatcher)
   }
 
   @After
@@ -396,8 +396,7 @@ class BrushGraphViewModelTest {
 
     viewModel.saveToPalette(brushName)
 
-    // Wait for the IO coroutine to finish on the device
-    delay(500)
+    testScope.advanceUntilIdle()
 
     val savedBrushes = fakeDao.getAllCustomBrushes().first()
     assertTrue(savedBrushes.any { it.name == brushName })
@@ -411,8 +410,7 @@ class BrushGraphViewModelTest {
 
     viewModel.deleteFromPalette(brushName)
 
-    // Wait for the IO coroutine to finish on the device
-    delay(500)
+    testScope.advanceUntilIdle()
 
     val savedBrushes = fakeDao.getAllCustomBrushes().first()
     assertFalse(savedBrushes.any { it.name == brushName })
