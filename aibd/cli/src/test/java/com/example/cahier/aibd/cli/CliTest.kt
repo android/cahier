@@ -31,6 +31,8 @@ import com.example.cahier.aibd.core.ImagePayloadConverter
 import com.example.cahier.tools.CommandResult
 import com.example.cahier.tools.FakeAdb
 import com.google.common.truth.Truth.assertThat
+import com.google.genai.errors.ClientException
+import com.google.genai.errors.ServerException
 import com.google.genai.types.GenerateContentResponse
 import com.google.genai.types.Part
 import java.io.ByteArrayOutputStream
@@ -446,5 +448,41 @@ class CliTest {
     command.run()
 
     assertThat(capturedOut.toString()).contains("Current model: test-model")
+  }
+
+  @Test
+  fun runWithSpinnerAndCancel_clientError_printsFailureAndReturnsNull() {
+    val terminal = createMockTerminal()
+
+    val result =
+      runWithSpinnerAndCancel<String>(
+        harness,
+        terminal,
+        LoadingSpinner(Dispatchers.Unconfined, terminal),
+        Dispatchers.Unconfined,
+      ) {
+        throw ClientException(429, "RESOURCE_EXHAUSTED", "Quota exceeded.")
+      }
+
+    assertThat(result).isNull()
+    assertThat(capturedOut.toString()).contains("429 RESOURCE_EXHAUSTED. Quota exceeded.")
+  }
+
+  @Test
+  fun runWithSpinnerAndCancel_serverError_printsFailureAndReturnsNull() {
+    val terminal = createMockTerminal()
+
+    val result =
+      runWithSpinnerAndCancel<String>(
+        harness,
+        terminal,
+        LoadingSpinner(Dispatchers.Unconfined, terminal),
+        Dispatchers.Unconfined,
+      ) {
+        throw ServerException(503, "UNAVAILABLE", "The model is overloaded.")
+      }
+
+    assertThat(result).isNull()
+    assertThat(capturedOut.toString()).contains("503 UNAVAILABLE. The model is overloaded.")
   }
 }

@@ -20,7 +20,7 @@ import com.example.cahier.aibd.core.ImagePayloadConverter
 import com.example.cahier.tools.Adb
 import com.example.cahier.tools.DesktopDeployer
 import com.example.cahier.tools.RealAdb
-import com.google.genai.errors.ClientException
+import com.google.genai.errors.ApiException
 import com.google.genai.errors.GenAiIOException
 import com.google.genai.types.Part
 import java.io.File
@@ -151,7 +151,9 @@ fun <R> runWithSpinnerAndCancel(
     val result = runBlocking { deferred.await() }
     spinner.stop(true)
     return result
-  } catch (e: ClientException) {
+  } catch (e: ApiException) {
+    // Covers both client errors (4xx, e.g. exhausted quota) and server errors (5xx, e.g. an
+    // overloaded model), so that a failed request doesn't end the CLI session.
     spinner.stop(false)
     harness.revertChatState()
     println(
