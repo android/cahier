@@ -23,6 +23,7 @@ import androidx.ink.storage.decode
 import com.google.genai.Client as SdkClient
 import com.google.genai.types.Content
 import com.google.genai.types.GenerateContentConfig
+import com.google.genai.types.GenerateContentResponse
 import com.google.genai.types.HttpOptions
 import com.google.genai.types.Part
 import java.io.File
@@ -75,6 +76,12 @@ interface BrushFamilyDeployer {
    */
   fun deploy(format: BrushFamilyInputFormat, targetPath: String, log: (String) -> Unit)
 }
+
+/**
+ * Prefix for the log line that records the token usage of each Gemini response, so that these lines
+ * can be grepped out of the logs.
+ */
+const val TOKEN_USAGE_LOG_TAG = "[TOKEN_USAGE]"
 
 /**
  * Platform-agnostic harness for interacting with Gemini and managing brush design conversations.
@@ -259,7 +266,11 @@ class Harness<T>(
   fun sendText(prompt: String): String? {
     log("User prompt: $prompt")
 
-    return activeConversation.chat.sendMessage(prompt).text()?.let { stageBrushFamilyContent(it) }
+    return activeConversation.chat
+      .sendMessage(prompt)
+      .also { logTokenUsage(it) }
+      .text()
+      ?.let { stageBrushFamilyContent(it) }
   }
 
   /**
@@ -271,8 +282,25 @@ class Harness<T>(
 
     return activeConversation.chat
       .sendMessage(Content.fromParts(Part.fromText(prompt), imageConverter.convert(imagePayload)))
+      .also { logTokenUsage(it) }
       .text()
       ?.let { stageBrushFamilyContent(it) }
+  }
+
+  /**
+   * Logs the token counts reported for [response], prefixed with [TOKEN_USAGE_LOG_TAG]. Counts that
+   * the API omits, such as cached tokens when nothing was cached, are logged as 0.
+   */
+  private fun logTokenUsage(response: GenerateContentResponse) {
+    val usage = response.usageMetadata().getOrNull() ?: return
+    log(
+      "$TOKEN_USAGE_LOG_TAG model=$modelName" +
+        " prompt=${usage.promptTokenCount().getOrNull() ?: 0}" +
+        " cached=${usage.cachedContentTokenCount().getOrNull() ?: 0}" +
+        " thoughts=${usage.thoughtsTokenCount().getOrNull() ?: 0}" +
+        " output=${usage.candidatesTokenCount().getOrNull() ?: 0}" +
+        " total=${usage.totalTokenCount().getOrNull() ?: 0}"
+    )
   }
 
   /** Attempts to restore the active chat session to the last state saved to storage. */

@@ -606,4 +606,95 @@ class HarnessTest {
     assertThat(harness.getCurrentModel()).isEqualTo("new-model")
     assertThat(fakeChat.model).isEqualTo("new-model")
   }
+
+  @Test
+  fun sendText_logsTokenUsageWithTag() {
+    val testBaseDir: File = tempFolder.newFolder("ink_test_root_token_usage")
+    val storage = DesktopStorage(testBaseDir)
+
+    val fakeResponse =
+      GenerateContentResponse.fromJsonString(
+        """{
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Sample"
+                    }
+                  ],
+                  "role": "model"
+                }
+              }
+            ],
+            "usageMetadata": {
+              "promptTokenCount": 75000,
+              "cachedContentTokenCount": 70000,
+              "thoughtsTokenCount": 1200,
+              "candidatesTokenCount": 300,
+              "totalTokenCount": 76500
+            }
+          }""",
+        GenerateContentResponse::class.java,
+      )
+
+    val harness =
+      Harness(
+        client = FakeClient(FakeChats(FakeChat(scriptedResponses = listOf(fakeResponse)))),
+        modelName = "fake-model",
+        storage = storage,
+        imageConverter = FakeImageConverter(),
+        deployer = FakeDeployer(),
+      )
+
+    assertThat(harness.sendText("Hi")).isEqualTo("Sample")
+
+    val conversationLog =
+      File(testBaseDir, "conversations/${harness.activeConversation.uuid}/execution.log")
+    assertThat(conversationLog.readText())
+      .contains(
+        "$TOKEN_USAGE_LOG_TAG model=fake-model prompt=75000 cached=70000 thoughts=1200 " +
+          "output=300 total=76500"
+      )
+  }
+
+  @Test
+  fun sendText_noUsageMetadata_doesNotLogTokenUsage() {
+    val testBaseDir: File = tempFolder.newFolder("ink_test_root_no_token_usage")
+    val storage = DesktopStorage(testBaseDir)
+
+    val fakeResponse =
+      GenerateContentResponse.fromJsonString(
+        """{
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "Sample"
+                    }
+                  ],
+                  "role": "model"
+                }
+              }
+            ]
+          }""",
+        GenerateContentResponse::class.java,
+      )
+
+    val harness =
+      Harness(
+        client = FakeClient(FakeChats(FakeChat(scriptedResponses = listOf(fakeResponse)))),
+        modelName = "fake-model",
+        storage = storage,
+        imageConverter = FakeImageConverter(),
+        deployer = FakeDeployer(),
+      )
+
+    assertThat(harness.sendText("Hi")).isEqualTo("Sample")
+
+    val conversationLog =
+      File(testBaseDir, "conversations/${harness.activeConversation.uuid}/execution.log")
+    assertThat(conversationLog.readText()).doesNotContain(TOKEN_USAGE_LOG_TAG)
+  }
 }
