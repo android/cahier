@@ -363,8 +363,8 @@ class Harness<T>(
    *
    * @param maxAttempts The number of times to try to deploy the brush family before giving up.
    * @param validationRetryCallback The callback to use when a validation error is encountered.
-   *   Takes in the error message from the failed deployment and returns the response from Gemini,
-   *   or null if the retry should not be attempted.
+   *   Takes in the error message from the failed deployment, followed by the messages of its
+   *   causes, and returns the response from Gemini, or null if the retry should not be attempted.
    */
   fun deployWithRetries(maxAttempts: Int = 4, validationRetryCallback: (String) -> String?) {
     for (attempt in 1..maxAttempts) {
@@ -374,7 +374,7 @@ class Harness<T>(
       } catch (e: ValidationException) {
         if (attempt < maxAttempts) {
           logAndPrint("Found a validation error! Sending to Gemini.")
-          validationRetryCallback(e.message ?: "Validation failed.")?.let {
+          validationRetryCallback(e.messageWithCauses().ifEmpty { "Validation failed." })?.let {
             log("Gemini (retry $attempt): $it")
           } ?: logAndPrint("Gemini (retry $attempt) failed to respond.")
         } else {
@@ -505,3 +505,10 @@ class Harness<T>(
       ?: return "Brush design prompt $turnIndex"
   }
 }
+
+/**
+ * Returns the message of this exception, followed by the messages of its causes, which often say
+ * what went wrong, e.g. why a brush family failed to parse.
+ */
+private fun Throwable.messageWithCauses(): String =
+  generateSequence(this) { it.cause }.mapNotNull { it.message }.joinToString(": ")

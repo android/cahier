@@ -345,6 +345,45 @@ class HarnessTest {
   }
 
   @Test
+  fun deployWithRetries_validationErrorWithCause_sendsCauseToGemini() {
+    val testBaseDir: File = tempFolder.newFolder("ink_test_root_deploy_cause")
+
+    class FailDeployer : BrushFamilyDeployer {
+      override fun deploy(
+        format: BrushFamilyInputFormat,
+        targetPath: String,
+        log: (String) -> Unit,
+      ) {
+        throw ValidationException(
+          "Validation failed during decoding",
+          IllegalArgumentException("All texture layers must use the same mapping mode."),
+        )
+      }
+    }
+
+    val harness =
+      Harness(
+        client = FakeClient(FakeChats(FakeChat(scriptedResponses = emptyList()))),
+        modelName = "fake-model",
+        storage = DesktopStorage(testBaseDir),
+        imageConverter = FakeImageConverter(),
+        deployer = FailDeployer(),
+      )
+    harness.storage.stageBrushFamilyContent(harness.activeConversation.uuid, "asdf")
+
+    val retryMessages = mutableListOf<String>()
+    harness.deployWithRetries(maxAttempts = 2) { message ->
+      retryMessages += message
+      "Retry reply"
+    }
+
+    assertThat(retryMessages)
+      .containsExactly(
+        "Validation failed during decoding: All texture layers must use the same mapping mode."
+      )
+  }
+
+  @Test
   fun createAndReloadConversation_manifestSaved() {
     val testBaseDir: File = tempFolder.newFolder("ink_test_root")
     val storage = DesktopStorage(testBaseDir)
