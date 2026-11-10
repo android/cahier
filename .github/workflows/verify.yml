@@ -51,7 +51,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 33
-          device: desktop_large
+          profile: desktop_large
           arch: x86_64
           script: ./gradlew :app:connectedAndroidTest
 
