@@ -62,6 +62,7 @@ import com.example.cahier.core.data.CustomBrushDao
 import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.data.CustomBrushes
 import com.example.cahier.core.data.NotesRepository
+import com.example.cahier.core.di.IoDispatcher
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.ui.CahierUiState
 import com.example.cahier.core.utils.FileHelper
@@ -72,7 +73,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,6 +93,7 @@ constructor(
   private val imageLoader: ImageLoader,
   private val customBrushDao: CustomBrushDao,
   val textureStore: CahierTextureBitmapStore,
+  @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(CahierUiState())
@@ -458,7 +460,7 @@ constructor(
   }
 
   suspend fun saveCurrentBrushToAutosave() {
-    withContext(Dispatchers.IO) {
+    withContext(ioDispatcher) {
       try {
         val stream = ByteArrayOutputStream()
         _selectedBrush.value.family.encode(stream, textureStore)
@@ -472,7 +474,7 @@ constructor(
   }
 
   private fun loadCustomBrushes() {
-    viewModelScope.launch(Dispatchers.IO) {
+    viewModelScope.launch(ioDispatcher) {
       val builtInBrushes = CustomBrushes.getBrushes(context, textureStore)
 
       val decodedCache = mutableMapOf<String, CustomBrush>()
@@ -522,7 +524,7 @@ constructor(
           }
         }
 
-        withContext(Dispatchers.Main) { _customBrushes.value = builtInBrushes + userBrushes }
+        _customBrushes.value = builtInBrushes + userBrushes
       }
     }
   }

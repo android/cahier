@@ -91,6 +91,7 @@ class DrawingCanvasViewModelTest {
         imageLoader,
         customBrushDao = FakeCustomBrushDao(),
         CahierTextureBitmapStore(context),
+        ioDispatcher = testDispatcher,
       )
   }
 
