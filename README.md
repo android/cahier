@@ -208,14 +208,26 @@ Here's how to get started:
             Number" in "About phone" seven times.
         *   When prompted on your device, allow debugging from your computer.
     *   If using a wireless connection (e.g. to connect a Googlebook to itself):
-        *   Ensure both devices are on the same network.
-        *   Enable Wireless Debugging in Developer Options.
-        *   Select "Pair device with pairing code". Note the IP address, port
-            numbers, and passcode.
-        *   Run `adb pair <IP>:<pair_port>` in your terminal, and enter the
-            passcode when prompted.
-        *   Run `adb connect <IP>:<main_port>` in your terminal.
+        *   You can use wireless debugging:
+            *   Ensure both devices are on the same network.
+            *   Enable Wireless Debugging in Developer Options.
+            *   Select "Pair device with pairing code". Note the IP address,
+                port numbers, and passcode.
+            *   Run `adb pair <IP>:<pair_port>` in your terminal, and enter the
+                passcode when prompted.
+            *   Run `adb connect <IP>:<main_port>` in your terminal.
+        *   Or, connect a device to itself with a `vsock` (requires root):
+            *   Open the 'ADB Terminal' app.
+            *   Run `su 0 setprop service.adb.listen_addrs
+                tcp:localhost:5555,vsock:5555`
+            *   Run `su 0 setprop ctl.restart adbd`
+            *   Now the terminal is configured to listen on a `vsock`. These two
+                commands only need to be run once, until the device is rebooted.
+            *   Open the 'Terminal' app.
+            *   Run `adb connect vsock:2:5555`
 *   Test your connection with `adb devices` in the command line.
+    *   Tip: If the connection fails, try running `adb kill-server` and retrying
+        the connection steps.
 *   If working in a fresh developer environment, run
     `sudo apt-get update && sudo apt install git adb openjdk-25-jdk -y` to
     install necessary dependencies.
@@ -225,6 +237,8 @@ Here's how to get started:
     https://ai.google.dev/gemini-api/docs/api-key to create one.
 *   Run `export GOOGLE_API_KEY=<insert_api_key_here>` to put the API key in your
     environment.
+    *   Tip: If you want to set this permanently, add this line to your shell
+        configuration file (e.g. `.bashrc` or `.zshrc`).
 *   Compile AIBD with `./gradlew :aibd:cli:installDist`
 *   Run it with `./aibd/cli/build/install/cli/bin/cli`
 *   Type in your brush description and hit enter to send it to Gemini.
