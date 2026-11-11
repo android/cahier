@@ -1,0 +1,25 @@
+name: Delete recorded screenshot branches
+
+# Separate from verify.yml because a `closed` trigger there would also run its
+# build and test jobs every time a PR closes.
+on:
+  pull_request:
+    types: [ closed ]
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  delete:
+    # Only PRs that Copybara opens for pending changes in Google's internal
+    # repository get a roborazzi/<PR branch> branch (see verify.yml).
+    if: github.event.pull_request.user.login == 'copybara-service[bot]' && startsWith(github.head_ref, 'test_')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete roborazzi/<PR branch>
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.head_ref }}
+        # Most PRs never get one, so a missing branch isn't an error.
+        run: gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/roborazzi/${HEAD_REF}" || true
