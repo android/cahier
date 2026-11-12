@@ -1,6 +1,24 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "local>android/.github:renovate-config"
+  "description": [
+    "Google's internal repository is the source of truth for this project. Copybara exports every change to GitHub, and imports approved pull requests so they can be reviewed internally.",
+    "Renovate only opens pull requests: once one is approved here, Copybara imports it, and the pull request closes when the change is exported back."
+  ],
+  "extends": ["local>android/.github:renovate-config", "schedule:monthly"],
+  "separateMajorMinor": true,
+  "rebaseWhen": "conflicted",
+  "updateNotScheduled": false,
+  "packageRules": [
+    {
+      "description": "Major updates wait for approval on the Dependency Dashboard, with one pull request each.",
+      "matchUpdateTypes": ["major"],
+      "groupName": null,
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Never merge on GitHub: the next export from Google's repository would undo it.",
+      "matchPackageNames": ["*"],
+      "automerge": false
+    }
   ]
 }
