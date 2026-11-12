@@ -25,7 +25,7 @@ plugins {
 
 android {
     namespace = "com.example.cahier"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.cahier"
