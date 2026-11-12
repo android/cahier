@@ -24,6 +24,71 @@ and implement:
 *   Clean architecture principles with MVVM and Hilt.
 *   Integration with the Android ecosystem (e.g. Notes Role, etc...).
 
+## Getting Started
+
+### Prerequisites
+
+*   Android Studio (latest stable version recommended)
+*   Android SDK compatible with `compileSdk` and `minSdk` in
+    `app/build.gradle.kts`
+*   Gradle version specified in `gradle/wrapper/gradle-wrapper.properties`
+
+### Connectivity
+
+Installation of Cahier, as well as the AIBD CLI, requires connecting to an
+Android device. There are several ways to do this:
+
+*   If using a USB cable:
+    *   Ensure it is connecting the two devices.
+    *   Enable USB Debugging on your Android device, in the settings menu. You
+        may need to enable Developer Options first by tapping "Build Number" in
+        "About phone" seven times.
+    *   When prompted on your device, allow debugging from your computer.
+*   If using a wireless connection (e.g. to connect a Googlebook's VM to
+    itself):
+    *   You can use wireless debugging:
+        *   Ensure both devices are on the same network.
+        *   Enable Wireless Debugging in Developer Options.
+        *   Select "Pair device with pairing code". Note the IP address, port
+            numbers, and passcode.
+        *   Run `adb pair <IP>:<pair_port>` in your terminal, and enter the
+            passcode when prompted.
+        *   Run `adb connect <IP>:<main_port>` in your terminal.
+    *   Or, connect a device to itself with a `vsock` (requires root):
+        *   Open the 'ADB Terminal' app.
+        *   Run `su 0 setprop service.adb.listen_addrs
+            tcp:localhost:5555,vsock:5555`
+        *   Run `su 0 setprop ctl.restart adbd`
+        *   Now the terminal is configured to listen on a `vsock`. These two
+            commands only need to be run once, until the device is rebooted.
+        *   Open the 'Terminal' app.
+        *   Run `adb connect vsock:2:5555`
+
+After either connection method, test your connection with `adb devices` in the
+command line. If the connection fails, try running `adb kill-server` and
+retrying the connection steps.
+
+### Installation
+
+*   Clone the repository:
+
+    ```sh
+    git clone https://github.com/android/cahier
+    ```
+
+*   with Android Studio:
+
+    1.  Open the project in Android Studio.
+    2.  Let Android Studio sync Gradle dependencies.
+    3.  Run the app on an Android device or emulator (API 26+). For testing the
+        Notes Role feature, use a device/emulator running Android 14 (API 34) or
+        higher.
+
+*   without Android Studio:
+
+    1.  Connect to your Android device (see [above](#connectivity)).
+    2.  Run `./gradlew installDebug` in the terminal.
+
 ## Features
 
 *   **Versatile Note Creation:**
@@ -200,39 +265,13 @@ Here's how to get started:
 *   In a terminal, clone this repo, e.g.:
     `git clone https://github.com/android/cahier.git`
 *   Navigate to the repository directory: `cd cahier`
-*   Establish a connection between your computer and your Android device.
-    *   If using a USB cable:
-        *   Ensure it is connecting the two devices.
-        *   Enable USB Debugging on your Android device, in the settings menu.
-            You may need to enable Developer Options first by tapping "Build
-            Number" in "About phone" seven times.
-        *   When prompted on your device, allow debugging from your computer.
-    *   If using a wireless connection (e.g. to connect a Googlebook to itself):
-        *   You can use wireless debugging:
-            *   Ensure both devices are on the same network.
-            *   Enable Wireless Debugging in Developer Options.
-            *   Select "Pair device with pairing code". Note the IP address,
-                port numbers, and passcode.
-            *   Run `adb pair <IP>:<pair_port>` in your terminal, and enter the
-                passcode when prompted.
-            *   Run `adb connect <IP>:<main_port>` in your terminal.
-        *   Or, connect a device to itself with a `vsock` (requires root):
-            *   Open the 'ADB Terminal' app.
-            *   Run `su 0 setprop service.adb.listen_addrs
-                tcp:localhost:5555,vsock:5555`
-            *   Run `su 0 setprop ctl.restart adbd`
-            *   Now the terminal is configured to listen on a `vsock`. These two
-                commands only need to be run once, until the device is rebooted.
-            *   Open the 'Terminal' app.
-            *   Run `adb connect vsock:2:5555`
-*   Test your connection with `adb devices` in the command line.
-    *   Tip: If the connection fails, try running `adb kill-server` and retrying
-        the connection steps.
+*   Establish a connection between your computer and your Android device (see
+    [above](#connectivity)).
 *   If working in a fresh developer environment, run
     `sudo apt-get update && sudo apt install git adb openjdk-25-jdk -y` to
     install necessary dependencies.
-*   Ensure you have Cahier installed on the Android device. If you don't, please
-    run `./gradlew :app:installDebug` to install it.
+*   Ensure you have Cahier installed on the Android device (see
+    [above](#installation)).
 *   Get a Gemini API key. If you don't have one, go to
     https://ai.google.dev/gemini-api/docs/api-key to create one.
 *   Run `export GOOGLE_API_KEY=<insert_api_key_here>` to put the API key in your
@@ -276,27 +315,6 @@ Cahier is built with a focus on modern Android development:
 *   **System Integration:**
     *   [RoleManager API](https://developer.android.com/reference/android/app/role/RoleManager)
     *   [ActivityResultContracts](https://developer.android.com/training/basics/intents/result)
-
-## Getting Started
-
-### Prerequisites
-
-*   Android Studio (latest stable version recommended)
-*   Android SDK corresponding to `compileSdk = 35` and `minSdk = 26`
-*   Gradle version specified in `gradle-wrapper.properties` (currently 8.11.1)
-
-### Installation
-
-1.  Clone the repository:
-
-    ```sh
-    git clone https://github.com/android/cahier
-    ```
-2.  Open the project in Android Studio.
-3.  Let Android Studio sync Gradle dependencies.
-4.  Run the app on an Android device or emulator (API 26+). For testing the
-    Notes Role feature, use a device/emulator running Android 14 (API 34) or
-    higher.
 
 ## Code Highlights & Best Practices
 
