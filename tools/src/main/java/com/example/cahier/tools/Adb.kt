@@ -37,7 +37,7 @@ interface Adb {
   /**
    * Finds the first connected Android device and sets it as `device`, if not already set.
    *
-   * @throws IllegalStateException if no connected Android devices are found.
+   * @throws IllegalStateException if adb fails or no connected Android devices are found.
    */
   fun findDevice()
 
@@ -46,6 +46,7 @@ interface Adb {
    *
    * @param pkg The package name to check.
    * @return True if the package is installed, false otherwise.
+   * @throws IllegalStateException if adb fails.
    */
   fun isInstalled(pkg: String): Boolean
 }
@@ -88,18 +89,23 @@ class RealAdb(override var device: String? = null) : Adb {
     device =
       device
         ?: run(listOf("devices"))
-          .takeIf { it.exitCode == 0 }
-          ?.let { result ->
+          .also { check(it.exitCode == 0) { "adb devices failed: ${it.stderr.trim()}" } }
+          .let { result ->
             result.stdout.lineSequence().drop(1).firstNotNullOfOrNull { line ->
               val parts = line.trim().split("\\s+".toRegex())
               if (parts.size >= 2 && parts[1] == "device") parts[0] else null
             }
           }
-        ?: throw IllegalStateException("No connected Android devices found via ADB.")
+        ?: error("No connected Android devices found via ADB.")
   }
 
   override fun isInstalled(pkg: String): Boolean =
     run(listOf("shell", "pm", "path", pkg)).let { result ->
-      result.exitCode == 0 && result.stdout.contains("package:")
+      // `pm path` fails without printing anything if the package isn't installed, which is fine,
+      // but if it fails for any other reason, we should throw an exception.
+      check(result.exitCode == 0 || result.stderr.isBlank()) {
+        "adb shell pm path $pkg failed: ${result.stderr.trim()}"
+      }
+      result.stdout.contains("package:")
     }
 }
