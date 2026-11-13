@@ -55,6 +55,35 @@ jobs:
           arch: x86_64
           script: ./gradlew :app:connectedAndroidTest
 
+      - name: Report failed Android tests
+        # connectedAndroidTest only points at an HTML report that stays on the runner, so this
+        # annotates each failed test with its failure message.
+        if: failure()
+        shell: python3 {0}
+        run: |
+          import glob
+          import xml.etree.ElementTree as ET
+
+          def escape(text, is_property=False):
+              """Escapes text for a workflow command, e.g. ::error title=<property>::<text>."""
+              text = text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              if is_property:
+                  text = text.replace(":", "%3A").replace(",", "%2C")
+              return text
+
+          for path in glob.glob("app/build/outputs/androidTest-results/connected/**/*.xml", recursive=True):
+              try:
+                  cases = list(ET.parse(path).getroot().iter("testcase"))
+              except ET.ParseError:
+                  continue
+              for case in cases:
+                  for problem in case.findall("failure") + case.findall("error"):
+                      test = f"{case.get('classname')}.{case.get('name')}"
+                      details = (problem.text or problem.get("message") or "").strip()
+                      print(f"{test} failed:\n{details}\n")
+                      summary = "\n".join(details.splitlines()[:40])
+                      print(f"::error title={escape(test, is_property=True)}::{escape(summary)}")
+
   screenshots:
     runs-on: ubuntu-latest
     permissions:

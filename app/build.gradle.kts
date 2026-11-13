@@ -17,7 +17,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
     alias(libs.plugins.roborazzi)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.3.20"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.4.21"
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
     id("com.google.dagger.hilt.android")
@@ -156,6 +156,10 @@ dependencies {
 
     //Kotlin serialization
     implementation(libs.kotlinx.serialization.json)
+
+    // Instrumented tests run against the app APK's kotlinx-coroutines, so keep it at the version
+    // kotlinx-coroutines-test needs.
+    implementation(platform(libs.kotlinx.coroutines.bom))
 
     implementation(libs.appcompat.v7)
     implementation(libs.appcompat.v7.resources)
