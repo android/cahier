@@ -58,6 +58,7 @@ class CahierAppTest {
     composeTestRule.onNodeWithContentDescription("Brush").assertExists()
     composeTestRule.onNodeWithContentDescription("Color").assertExists()
     composeTestRule.onNodeWithContentDescription("Eraser").assertExists()
+    composeTestRule.onNodeWithContentDescription("Clear").assertExists()
   }
 
   @Test

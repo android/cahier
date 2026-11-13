@@ -301,7 +301,7 @@ private fun ToolboxHistoryControlsContent(
   }
   IconButton(onClick = { coroutineScope.launch { onClear() } }, modifier = Modifier.size(48.dp)) {
     Icon(
-      painter = painterResource(R.drawable.clear_all_24px),
+      painter = painterResource(R.drawable.delete_24px),
       contentDescription = stringResource(R.string.clear),
     )
   }
