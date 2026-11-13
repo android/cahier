@@ -61,6 +61,8 @@ import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
 import com.example.cahier.core.data.CustomBrush
+import com.example.cahier.core.ui.BRUSH_SIZES
+import com.example.cahier.core.ui.ColorPickerDropdownMenu
 import com.example.cahier.features.drawing.viewmodel.DrawingCanvasViewModel
 import kotlinx.coroutines.launch
 
@@ -115,6 +117,7 @@ internal fun ToolboxBrushControls(
   modifier: Modifier = Modifier,
 ) {
   val brushesMenuExpanded = rememberSaveable { mutableStateOf(false) }
+  val colorMenuExpanded = rememberSaveable { mutableStateOf(false) }
   val sizeMenuExpanded = rememberSaveable { mutableStateOf(false) }
   val customBrushes by drawingCanvasViewModel.customBrushes.collectAsStateWithLifecycle()
   val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
@@ -124,6 +127,7 @@ internal fun ToolboxBrushControls(
       ToolBoxContent(
         drawingCanvasViewModel = drawingCanvasViewModel,
         brushesMenuExpanded = brushesMenuExpanded,
+        colorMenuExpanded = colorMenuExpanded,
         sizeMenuExpanded = sizeMenuExpanded,
         customBrushes = customBrushes,
         onColorPickerClick = onColorPickerClick,
@@ -135,6 +139,7 @@ internal fun ToolboxBrushControls(
       ToolBoxContent(
         drawingCanvasViewModel = drawingCanvasViewModel,
         brushesMenuExpanded = brushesMenuExpanded,
+        colorMenuExpanded = colorMenuExpanded,
         sizeMenuExpanded = sizeMenuExpanded,
         customBrushes = customBrushes,
         onColorPickerClick = onColorPickerClick,
@@ -148,6 +153,7 @@ internal fun ToolboxBrushControls(
 private fun ToolBoxContent(
   drawingCanvasViewModel: DrawingCanvasViewModel,
   brushesMenuExpanded: MutableState<Boolean>,
+  colorMenuExpanded: MutableState<Boolean>,
   sizeMenuExpanded: MutableState<Boolean>,
   customBrushes: List<CustomBrush>,
   onColorPickerClick: () -> Unit,
@@ -177,16 +183,30 @@ private fun ToolBoxContent(
       customBrushes = customBrushes,
     )
   }
-  IconButton(
-    onClick = {
-      onColorPickerClick()
-      drawingCanvasViewModel.setEraserMode(false)
-    },
-    modifier = Modifier.size(48.dp),
-  ) {
-    Icon(
-      painter = painterResource(R.drawable.palette_24px),
-      contentDescription = stringResource(R.string.color),
+  Box {
+    IconButton(
+      onClick = {
+        colorMenuExpanded.value = true
+        drawingCanvasViewModel.setEraserMode(false)
+      },
+      modifier = Modifier.size(48.dp),
+    ) {
+      Icon(
+        painter = painterResource(R.drawable.palette_24px),
+        contentDescription = stringResource(R.string.color),
+      )
+    }
+    ColorPickerDropdownMenu(
+      expanded = colorMenuExpanded.value,
+      onDismissRequest = { colorMenuExpanded.value = false },
+      onColorSelected = { newColor ->
+        drawingCanvasViewModel.changeBrushColor(newColor)
+        colorMenuExpanded.value = false
+      },
+      onCustomColorClick = {
+        colorMenuExpanded.value = false
+        onColorPickerClick()
+      },
     )
   }
   Box {
@@ -402,17 +422,16 @@ fun SizeDropdownMenu(
   onSizeChange: (Float) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val sizes = listOf(5f, 10f, 15f, 20f, 25f)
   DropdownMenu(
     expanded = expanded,
     onDismissRequest = onDismissRequest,
     properties = PopupProperties(focusable = true),
     modifier = modifier,
   ) {
-    for (size in sizes) {
+    for (size in BRUSH_SIZES) {
       DropdownMenuItem(
-        text = { Text(text = "${size.toInt()}px") },
-        onClick = { onSizeChange(size) },
+        text = { Text(text = stringResource(R.string.bg_size_px, size)) },
+        onClick = { onSizeChange(size.toFloat()) },
       )
     }
   }

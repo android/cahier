@@ -61,6 +61,34 @@ class CahierAppTest {
   }
 
   @Test
+  fun drawingScreen_brushSizesAndCustomColorPicker() {
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule
+        .onAllNodesWithContentDescription("Add note")
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+    }
+
+    composeTestRule.onNodeWithContentDescription("Add note").performClick()
+    composeTestRule.onNodeWithContentDescription("Drawing note").performClick()
+
+    composeTestRule.onNodeWithContentDescription("Brush size").performClick()
+    composeTestRule.onNodeWithText("2px").assertExists()
+    composeTestRule.onNodeWithText("100px").assertExists().performClick()
+
+    composeTestRule.onNodeWithContentDescription("Color").performClick()
+    composeTestRule.onNodeWithText("Red").assertExists()
+    composeTestRule
+      .onNodeWithText(composeTestRule.activity.getString(R.string.brush_designer_custom_color))
+      .performClick()
+
+    composeTestRule
+      .onNodeWithText(composeTestRule.activity.getString(R.string.brush_designer_pick_color))
+      .assertExists()
+    composeTestRule.onNodeWithText(composeTestRule.activity.getString(R.string.done)).performClick()
+  }
+
+  @Test
   fun homeScreen_navigateToSettings() {
     composeTestRule.onNodeWithText("Settings").assertExists().performClick()
     composeTestRule.onNodeWithText("Default notes app").assertExists()

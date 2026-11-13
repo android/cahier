@@ -136,6 +136,18 @@ class DrawingCanvasViewModelTest {
   }
 
   @Test
+  fun changeBrushColor_preserveAlpha_retains_custom_alpha() = runTest {
+    val translucentBlue = Color(red = 0f, green = 0f, blue = 1f, alpha = 0.5f)
+    viewModel.changeBrushColor(translucentBlue, preserveAlpha = true)
+    assertEquals(0.5f, viewModel.getCurrentBrush().composeColor.alpha, 0.01f)
+
+    viewModel.changeBrush(StockBrushes.highlighter())
+    val customHighlighterColor = Color(red = 1f, green = 0f, blue = 0f, alpha = 0.6f)
+    viewModel.changeBrushColor(customHighlighterColor, preserveAlpha = true)
+    assertEquals(0.6f, viewModel.getCurrentBrush().composeColor.alpha, 0.01f)
+  }
+
+  @Test
   fun changeBrushSize_updates_selectedBrush_state() = runTest {
     viewModel.changeBrushSize(15f)
     assertEquals(15f, viewModel.getCurrentBrush().size, 0.01f)

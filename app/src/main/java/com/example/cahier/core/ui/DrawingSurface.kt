@@ -51,6 +51,8 @@ import androidx.ink.strokes.Stroke
 import coil3.compose.AsyncImage
 import com.example.cahier.core.utils.pointerInputWithSiblingFallthrough
 
+val BRUSH_SIZES: List<Int> = (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)
+
 @SuppressLint("RestrictedApi", "VisibleForTests")
 @Composable
 fun DrawingSurface(

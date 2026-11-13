@@ -16,119 +16,135 @@
 
 package com.example.cahier.core.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.example.cahier.R
+import com.example.cahier.core.ui.theme.BrushBlack
+import com.example.cahier.core.ui.theme.BrushBlue
+import com.example.cahier.core.ui.theme.BrushGreen
+import com.example.cahier.core.ui.theme.BrushRed
+import com.example.cahier.core.ui.theme.BrushYellow
+import com.godaddy.android.colorpicker.ClassicColorPicker
+import com.godaddy.android.colorpicker.HsvColor
+import java.util.Locale
 
+/** Dropdown menu offering preset brush colors and an option to open [CustomColorPickerDialog]. */
 @Composable
-fun ColorPickerDialog(
-  showDialog: Boolean,
+fun ColorPickerDropdownMenu(
+  expanded: Boolean,
   onDismissRequest: () -> Unit,
   onColorSelected: (Color) -> Unit,
+  onCustomColorClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Surface(modifier = modifier) {
-    if (showDialog) {
-      Dialog(onDismissRequest = onDismissRequest) {
-        ColorPickerContent(onColorSelected = onColorSelected, onDismissRequest = onDismissRequest)
-      }
-    }
-  }
-}
-
-@Composable
-private fun ColorPickerContent(
-  onColorSelected: (Color) -> Unit,
-  onDismissRequest: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Card(modifier = modifier) {
-    Column(
-      Modifier.padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-      Text(
-        text = stringResource(R.string.select_color),
-        style = MaterialTheme.typography.headlineSmall,
-      )
-      ColorGrid(onColorSelected = onColorSelected)
-      Button(onClick = onDismissRequest, modifier = Modifier.align(Alignment.End)) {
-        Text(text = stringResource(R.string.dismiss))
-      }
-    }
-  }
-}
-
-@Composable
-private fun ColorGrid(onColorSelected: (Color) -> Unit, modifier: Modifier = Modifier) {
   val colors = remember {
     listOf(
-      Color.Black,
-      Color.Gray,
-      Color.White,
-      Color.Red,
-      Color.Green,
-      Color.Blue,
-      Color.Yellow,
-      Color.Cyan,
-      Color.Magenta,
-      Color.DarkGray,
-      Color.LightGray,
+      R.string.brush_designer_color_black to BrushBlack,
+      R.string.brush_designer_color_red to BrushRed,
+      R.string.brush_designer_color_blue to BrushBlue,
+      R.string.brush_designer_color_green to BrushGreen,
+      R.string.brush_designer_color_yellow to BrushYellow,
     )
   }
 
-  LazyVerticalGrid(
-    columns = GridCells.Adaptive(minSize = 40.dp),
-    contentPadding = PaddingValues(8.dp),
-    modifier = modifier,
-  ) {
-    items(colors.size) { index ->
-      ColorSwatch(color = colors[index], onColorSelected = onColorSelected)
+  DropdownMenu(expanded = expanded, onDismissRequest = onDismissRequest, modifier = modifier) {
+    for ((nameRes, color) in colors) {
+      val name = stringResource(nameRes)
+      DropdownMenuItem(
+        text = { Text(name) },
+        leadingIcon = {
+          Icon(
+            painter = painterResource(R.drawable.circle_24px),
+            contentDescription = name,
+            tint = color,
+          )
+        },
+        onClick = { onColorSelected(color) },
+      )
     }
+    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+
+    DropdownMenuItem(
+      text = { Text(stringResource(R.string.brush_designer_custom_color)) },
+      leadingIcon = {
+        Icon(
+          painter = painterResource(R.drawable.palette_24px),
+          contentDescription = stringResource(R.string.brush_designer_custom_color),
+          tint = MaterialTheme.colorScheme.onSurface,
+        )
+      },
+      onClick = onCustomColorClick,
+    )
   }
 }
 
+/** A dialog for picking a custom color using a classic HSV color picker. */
 @Composable
-private fun ColorSwatch(
-  color: Color,
+fun CustomColorPickerDialog(
+  initialColor: Color,
   onColorSelected: (Color) -> Unit,
-  modifier: Modifier = Modifier,
+  onDismissRequest: () -> Unit,
 ) {
-  Box(
-    modifier =
-      modifier.padding(8.dp).size(40.dp).clip(CircleShape).background(color).clickable {
-        onColorSelected(color)
-      }
-  )
-}
+  var currentColor by remember { mutableStateOf(HsvColor.from(initialColor)) }
 
-@Preview
-@Composable
-private fun ColorPickerContentPreview() {
-  ColorPickerContent(onColorSelected = {}, onDismissRequest = {})
+  AlertDialog(
+    onDismissRequest = {
+      onColorSelected(currentColor.toColor())
+      onDismissRequest()
+    },
+    title = { Text(stringResource(R.string.brush_designer_pick_color)) },
+    text = {
+      Column(horizontalAlignment = Alignment.End) {
+        ClassicColorPicker(
+          color = currentColor,
+          modifier = Modifier.fillMaxWidth().height(300.dp),
+          onColorChanged = { hsvColor: HsvColor -> currentColor = hsvColor },
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val hexString = String.format(Locale.US, "%08x", currentColor.toColor().toArgb())
+        Text(
+          text = hexString,
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    },
+    confirmButton = {
+      TextButton(
+        onClick = {
+          onColorSelected(currentColor.toColor())
+          onDismissRequest()
+        }
+      ) {
+        Text(stringResource(R.string.done))
+      }
+    },
+    dismissButton = {
+      TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.bg_cancel)) }
+    },
+  )
 }

@@ -402,16 +402,15 @@ constructor(
     }
   }
 
-  fun changeBrushColor(color: ComposeColor) {
+  fun changeBrushColor(color: ComposeColor, preserveAlpha: Boolean = false) {
     isBrushSelectedInSession = true
     _selectedBrush.update { currentBrush ->
       val colorToApply =
-        when (currentBrush.family) {
-          heartHighlighter,
-          poopHighlighter,
-          starHighlighter,
-          highlighter -> color.copy(alpha = HIGHLIGHTER_ALPHA)
-
+        when {
+          preserveAlpha -> color
+          currentBrush.family in
+            setOf(heartHighlighter, poopHighlighter, starHighlighter, highlighter) ->
+            color.copy(alpha = HIGHLIGHTER_ALPHA)
           else -> color.copy(alpha = 1f)
         }
       currentBrush.copyWithComposeColor(color = colorToApply)

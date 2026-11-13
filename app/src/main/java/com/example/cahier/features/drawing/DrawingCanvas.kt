@@ -70,12 +70,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.ink.brush.compose.composeColor
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cahier.R
-import com.example.cahier.core.ui.ColorPickerDialog
 import com.example.cahier.core.ui.ConfirmationDialog
+import com.example.cahier.core.ui.CustomColorPickerDialog
 import com.example.cahier.core.ui.DrawingSurface
 import com.example.cahier.core.ui.FocusedFieldEnum
 import com.example.cahier.core.ui.LocalTextureStore
@@ -194,6 +195,7 @@ private fun DrawingCanvasContent(
 
   val canUndo by drawingCanvasViewModel.canUndo.collectAsStateWithLifecycle()
   val canRedo by drawingCanvasViewModel.canRedo.collectAsStateWithLifecycle()
+  val currentBrush by drawingCanvasViewModel.currentBrush.collectAsStateWithLifecycle()
   var showColorPicker by rememberSaveable { mutableStateOf(false) }
   var brushesMenuExpanded by rememberSaveable { mutableStateOf(false) }
   var sizeMenuExpanded by rememberSaveable { mutableStateOf(false) }
@@ -242,14 +244,15 @@ private fun DrawingCanvasContent(
       },
     )
 
-    ColorPickerDialog(
-      showDialog = showColorPicker,
-      onDismissRequest = { showColorPicker = false },
-      onColorSelected = { color ->
-        drawingCanvasViewModel.changeBrushColor(color)
-        showColorPicker = false
-      },
-    )
+    if (showColorPicker) {
+      CustomColorPickerDialog(
+        initialColor = currentBrush.composeColor,
+        onColorSelected = { color ->
+          drawingCanvasViewModel.changeBrushColor(color, preserveAlpha = true)
+        },
+        onDismissRequest = { showColorPicker = false },
+      )
+    }
   }
 }
 

@@ -77,6 +77,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowHeightSizeClass
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.example.cahier.R
+import com.example.cahier.core.ui.CustomColorPickerDialog
 import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.developer.brushgraph.data.DisplayText

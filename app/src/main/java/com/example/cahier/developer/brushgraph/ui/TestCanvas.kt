@@ -42,12 +42,10 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -85,12 +83,9 @@ import androidx.ink.brush.Brush
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
 import com.example.cahier.R
+import com.example.cahier.core.ui.BRUSH_SIZES
+import com.example.cahier.core.ui.ColorPickerDropdownMenu
 import com.example.cahier.core.ui.DrawingSurface
-import com.example.cahier.core.ui.theme.BrushBlack
-import com.example.cahier.core.ui.theme.BrushBlue
-import com.example.cahier.core.ui.theme.BrushGreen
-import com.example.cahier.core.ui.theme.BrushRed
-import com.example.cahier.core.ui.theme.BrushYellow
 import com.example.cahier.core.ui.theme.extendedColorScheme
 import com.example.cahier.developer.brushgraph.data.GraphValidationException
 import com.example.cahier.developer.brushgraph.data.ValidationSeverity
@@ -279,15 +274,6 @@ fun CollapsiblePreviewPane(
 
                   // Color picker
                   var colorMenuExpanded by remember { mutableStateOf(false) }
-                  val colors = remember {
-                    listOf(
-                      R.string.brush_designer_color_black to BrushBlack,
-                      R.string.brush_designer_color_red to BrushRed,
-                      R.string.brush_designer_color_blue to BrushBlue,
-                      R.string.brush_designer_color_green to BrushGreen,
-                      R.string.brush_designer_color_yellow to BrushYellow,
-                    )
-                  }
                   Box {
                     val iconTint = if (brushColor.luminance() < 0.5f) Color.White else Color.Black
 
@@ -308,45 +294,18 @@ fun CollapsiblePreviewPane(
                       )
                     }
 
-                    DropdownMenu(
+                    ColorPickerDropdownMenu(
                       expanded = colorMenuExpanded,
                       onDismissRequest = { colorMenuExpanded = false },
-                    ) {
-                      for ((nameRes, color) in colors) {
-                        val name = stringResource(nameRes)
-                        DropdownMenuItem(
-                          text = { Text(name) },
-                          leadingIcon = {
-                            Icon(
-                              painter = painterResource(R.drawable.circle_24px),
-                              contentDescription = name,
-                              tint = color,
-                            )
-                          },
-                          onClick = {
-                            onUpdateTestBrushColor(color)
-                            colorMenuExpanded = false
-                          },
-                        )
-                      }
-                      HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
-                      DropdownMenuItem(
-                        text = { Text(stringResource(R.string.brush_designer_custom_color)) },
-                        leadingIcon = {
-                          Icon(
-                            painter = painterResource(R.drawable.palette_24px),
-                            contentDescription =
-                              stringResource(R.string.brush_designer_custom_color),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                          )
-                        },
-                        onClick = {
-                          colorMenuExpanded = false
-                          onChooseColor(brushColor) { newColor -> onUpdateTestBrushColor(newColor) }
-                        },
-                      )
-                    }
+                      onColorSelected = { color ->
+                        onUpdateTestBrushColor(color)
+                        colorMenuExpanded = false
+                      },
+                      onCustomColorClick = {
+                        colorMenuExpanded = false
+                        onChooseColor(brushColor) { newColor -> onUpdateTestBrushColor(newColor) }
+                      },
+                    )
                   }
                   Spacer(Modifier.width(16.dp))
 
@@ -373,8 +332,7 @@ fun CollapsiblePreviewPane(
                       expanded = sizeExpanded,
                       onDismissRequest = { sizeExpanded = false },
                     ) {
-                      for (size in
-                        (2..4 step 1) + (6..10 step 2) + (20..40 step 10) + (50..100 step 25)) {
+                      for (size in BRUSH_SIZES) {
                         DropdownMenuItem(
                           text = { Text(stringResource(R.string.bg_size_px, size)) },
                           onClick = {
