@@ -31,17 +31,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.toRect
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.withSaveLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.graphics.withSave
 import androidx.ink.authoring.compose.InProgressStrokes
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
@@ -81,27 +76,15 @@ fun DrawingSurface(
       )
     }
 
+    val strokeToScreenTransform = remember { Matrix() }
     Canvas(modifier = Modifier.fillMaxSize()) {
       val canvas = drawContext.canvas.nativeCanvas
       for (stroke in strokes) {
-        val blendMode =
-          if (stroke.brush.family == StockBrushes.highlighter()) {
-            BlendMode.Multiply
-          } else {
-            BlendMode.SrcOver
-          }
-        drawContext.canvas.withSaveLayer(
-          drawContext.size.toRect(),
-          Paint().apply { this.blendMode = blendMode },
-        ) {
-          canvas.withSave {
-            canvasStrokeRenderer.draw(
-              stroke = stroke,
-              canvas = this,
-              strokeToScreenTransform = Matrix(),
-            )
-          }
-        }
+        canvasStrokeRenderer.draw(
+          stroke = stroke,
+          canvas = canvas,
+          strokeToScreenTransform = strokeToScreenTransform,
+        )
       }
     }
 
