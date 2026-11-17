@@ -56,7 +56,7 @@ class FileHelperTest {
   }
 
   @Test
-  fun copyUriToInternalStorage_creates_a_new_file() = runTest {
+  fun copyUriToInternalStorage_createsANewFile() = runTest {
     val sourceFile = File(context.cacheDir, "source.txt")
     sourceFile.writeText("hello world")
     val sourceUri = sourceFile.toUri()
@@ -73,7 +73,7 @@ class FileHelperTest {
   }
 
   @Test
-  fun saveBitmapToCache_creates_a_new_file() = runTest {
+  fun saveBitmapToCache_createsANewFile() = runTest {
     val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
 
     val resultUri = fileHelper.saveBitmapToCache(bitmap)
@@ -87,7 +87,7 @@ class FileHelperTest {
   }
 
   @Test
-  fun createShareableUri_creates_a_new_file() = runTest {
+  fun createShareableUri_createsANewFile() = runTest {
     val internalFile = File(context.filesDir, "internal.txt")
     internalFile.writeText("share me")
 
