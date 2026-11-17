@@ -1,7 +1,7 @@
 package com.example.cahier
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onRoot
 import com.example.cahier.core.data.FakeNotesRepository
 import com.example.cahier.features.home.HomePane
