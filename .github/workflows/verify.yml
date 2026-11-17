@@ -55,6 +55,12 @@ jobs:
           arch: x86_64
           script: ./gradlew :app:connectedAndroidTest
 
+      - name: Report failed Android tests
+        # connectedAndroidTest only points at an HTML report that stays on the runner, so this
+        # annotates each failed test with its failure message.
+        if: failure()
+        run: python3 scripts/report_failed_android_tests.py
+
   screenshots:
     runs-on: ubuntu-latest
     permissions:
