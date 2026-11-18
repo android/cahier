@@ -52,6 +52,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -83,6 +84,8 @@ import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.core.ui.theme.CahierAppTheme
 import com.example.cahier.core.utils.createDropTarget
 import com.example.cahier.features.drawing.viewmodel.DrawingCanvasViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -263,7 +266,6 @@ private fun DrawingSurfaceWithTarget(
   modifier: Modifier = Modifier,
 ) {
   val uiState by drawingCanvasViewModel.uiState.collectAsStateWithLifecycle()
-  val exportedUri by drawingCanvasViewModel.exportedImageUri.collectAsStateWithLifecycle()
   val currentBrush by drawingCanvasViewModel.currentBrush.collectAsStateWithLifecycle()
   val isEraserMode by drawingCanvasViewModel.isEraserMode.collectAsStateWithLifecycle()
   val strokes = remember { mutableStateListOf<Stroke>() }
@@ -272,6 +274,8 @@ private fun DrawingSurfaceWithTarget(
   val canvasStrokeRenderer =
     remember(cacheGen) { CanvasStrokeRenderer.create(textureStore = textureStore) }
   var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+  val coroutineScope = rememberCoroutineScope()
+  var dragExportJob by remember { mutableStateOf<Job?>(null) }
   val view = LocalView.current
   val activity = LocalActivity.current as ComponentActivity
 
@@ -285,12 +289,6 @@ private fun DrawingSurfaceWithTarget(
     if (strokes != uiState.strokes) {
       strokes.clear()
       strokes.addAll(uiState.strokes)
-    }
-  }
-
-  LaunchedEffect(uiState.strokes, uiState.note.imageUriList, canvasSize) {
-    if (canvasSize != IntSize.Zero) {
-      drawingCanvasViewModel.createExportedBitmap(canvasSize.width, canvasSize.height)
     }
   }
 
@@ -314,27 +312,33 @@ private fun DrawingSurfaceWithTarget(
       onErase = drawingCanvasViewModel::erase,
       onEraseStart = drawingCanvasViewModel::startErase,
       onEraseEnd = drawingCanvasViewModel::endErase,
-      onStartDrag = {
-        exportedUri?.let { uri ->
-          val clipData =
-            ClipData(ClipDescription("Image", arrayOf("image/png")), ClipData.Item(uri))
-          val dragShadowBuilder = View.DragShadowBuilder(view)
-          // While Jetpack Compose offers the `dragAndDropSource`
-          // modifier, a custom implementation using the Android View
-          // system's `startDragAndDrop` is necessary here. This is
-          // because the Ink API's drawing gestures conflict with the
-          // long-press-to-drag gesture when using the standard Compose
-          // modifier, preventing drag detection. This approach allows
-          // for a custom gesture detector to coexist with the Ink API
-          // and manually initiate the drag for seamless interoperability.
-          view.startDragAndDrop(
-            clipData,
-            dragShadowBuilder,
-            null,
-            View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ,
-          )
-        }
-      },
+      onStartDrag = onStartDrag@{
+          if (canvasSize == IntSize.Zero) return@onStartDrag
+          dragExportJob?.cancel()
+          dragExportJob = coroutineScope.launch {
+            val uri =
+              drawingCanvasViewModel.createExportedBitmap(canvasSize.width, canvasSize.height)
+                ?: return@launch
+            val clipData =
+              ClipData(ClipDescription("Image", arrayOf("image/png")), ClipData.Item(uri))
+            val dragShadowBuilder = View.DragShadowBuilder(view)
+            // While Jetpack Compose offers the `dragAndDropSource`
+            // modifier, a custom implementation using the Android View
+            // system's `startDragAndDrop` is necessary here. This is
+            // because the Ink API's drawing gestures conflict with the
+            // long-press-to-drag gesture when using the standard Compose
+            // modifier, preventing drag detection. This approach allows
+            // for a custom gesture detector to coexist with the Ink API
+            // and manually initiate the drag for seamless interoperability.
+            view.startDragAndDrop(
+              clipData,
+              dragShadowBuilder,
+              null,
+              View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ,
+            )
+          }
+        },
+      onEndDrag = { dragExportJob?.cancel() },
       currentBrush = currentBrush,
       onGetNextBrush = drawingCanvasViewModel::getCurrentBrush,
       isEraserMode = isEraserMode,

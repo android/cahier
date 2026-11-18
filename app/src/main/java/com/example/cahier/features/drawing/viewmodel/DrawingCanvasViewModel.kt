@@ -74,6 +74,7 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -116,8 +117,11 @@ constructor(
       Brush.createWithComposeColor(
         family = StockBrushes.pressurePen(),
         color =
-          if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) ComposeColor.White
-          else ComposeColor.Gray,
+          if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
+            ComposeColor.White
+          } else {
+            ComposeColor.Gray
+          },
         size = 5F,
         epsilon = 0.1F,
       )
@@ -138,9 +142,6 @@ constructor(
   val canUndo: StateFlow<Boolean> = _canUndo.asStateFlow()
   private val _canRedo = MutableStateFlow(false)
   val canRedo: StateFlow<Boolean> = _canRedo.asStateFlow()
-
-  private val _exportedImageUri = MutableStateFlow<Uri?>(null)
-  val exportedImageUri: StateFlow<Uri?> = _exportedImageUri.asStateFlow()
 
   private val _customBrushes = MutableStateFlow<List<CustomBrush>>(emptyList())
   val customBrushes: StateFlow<List<CustomBrush>> = _customBrushes.asStateFlow()
@@ -244,57 +245,70 @@ constructor(
   }
 
   @SuppressLint("RestrictedApi")
-  suspend fun createExportedBitmap(width: Int, height: Int) {
+  suspend fun createExportedBitmap(width: Int, height: Int): Uri? {
+    if (width <= 0 || height <= 0) return null
     val backgroundImageUri = _uiState.value.note.imageUriList?.firstOrNull()
     val strokes = _uiState.value.strokes
 
-    val backgroundBitmap =
-      if (backgroundImageUri != null) {
-        val request =
-          ImageRequest.Builder(context)
-            .data(backgroundImageUri.toUri())
-            .allowHardware(false)
-            .build()
-        imageLoader.execute(request).image?.toBitmap()
-      } else {
-        null
+    return withContext(ioDispatcher) {
+      val backgroundBitmap =
+        if (backgroundImageUri != null) {
+          val request =
+            ImageRequest.Builder(context)
+              .data(backgroundImageUri.toUri())
+              .allowHardware(false)
+              .build()
+          imageLoader.execute(request).image?.toBitmap()
+        } else {
+          null
+        }
+
+      ensureActive()
+      val exportBitmap = createBitmap(width, height)
+      try {
+        val canvas = Canvas(exportBitmap)
+
+        val backgroundColor =
+          if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
+            Color.BLACK
+          } else {
+            Color.WHITE
+          }
+        canvas.drawColor(backgroundColor)
+
+        backgroundBitmap?.let { bmp ->
+          val canvasWidth = width.toFloat()
+          val canvasHeight = height.toFloat()
+          val bmpWidth = bmp.width.toFloat()
+          val bmpHeight = bmp.height.toFloat()
+
+          val scaleX = canvasWidth / bmpWidth
+          val scaleY = canvasHeight / bmpHeight
+
+          val scale = maxOf(scaleX, scaleY)
+
+          val dx = (canvasWidth - bmpWidth * scale) / 2f
+          val dy = (canvasHeight - bmpHeight * scale) / 2f
+
+          val matrix = Matrix()
+          matrix.setScale(scale, scale)
+          matrix.postTranslate(dx, dy)
+
+          canvas.drawBitmap(bmp, matrix, null)
+        }
+
+        val strokeRenderer = CanvasStrokeRenderer.create(textureStore = textureStore)
+        val strokeToScreenTransform = Matrix()
+        for (stroke in strokes) {
+          ensureActive()
+          strokeRenderer.draw(canvas, stroke, strokeToScreenTransform)
+        }
+        ensureActive()
+        fileHelper.saveBitmapToCache(exportBitmap, "shared_image_$noteId.png")
+      } finally {
+        exportBitmap.recycle()
       }
-
-    val exportBitmap = createBitmap(width, height)
-    val canvas = Canvas(exportBitmap)
-
-    val backgroundColor =
-      if (currentNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
-        Color.BLACK
-      } else {
-        Color.WHITE
-      }
-    canvas.drawColor(backgroundColor)
-
-    backgroundBitmap?.let { bmp ->
-      val canvasWidth = width.toFloat()
-      val canvasHeight = height.toFloat()
-      val bmpWidth = bmp.width.toFloat()
-      val bmpHeight = bmp.height.toFloat()
-
-      val scaleX = canvasWidth / bmpWidth
-      val scaleY = canvasHeight / bmpHeight
-
-      val scale = maxOf(scaleX, scaleY)
-
-      val dx = (canvasWidth - bmpWidth * scale) / 2f
-      val dy = (canvasHeight - bmpHeight * scale) / 2f
-
-      val matrix = Matrix()
-      matrix.setScale(scale, scale)
-      matrix.postTranslate(dx, dy)
-
-      canvas.drawBitmap(bmp, matrix, null)
     }
-
-    val strokeRenderer = CanvasStrokeRenderer.create(textureStore = textureStore)
-    strokes.forEach { stroke -> strokeRenderer.draw(canvas, stroke, Matrix()) }
-    _exportedImageUri.value = fileHelper.saveBitmapToCache(exportBitmap)
   }
 
   suspend fun saveStrokes() {

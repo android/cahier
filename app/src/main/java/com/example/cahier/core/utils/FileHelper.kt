@@ -65,13 +65,14 @@ class FileHelper(private val context: Context) {
    * Saves a bitmap to a temporary cache file and returns a shareable content URI.
    *
    * @param bitmap The bitmap to save.
+   * @param fileName Name of the cache file to write (reused across exports for the same note).
    * @return A shareable content URI for the saved image.
    */
-  suspend fun saveBitmapToCache(bitmap: Bitmap): Uri {
+  suspend fun saveBitmapToCache(bitmap: Bitmap, fileName: String = "shared_image.png"): Uri {
     return withContext(Dispatchers.IO) {
       val cachePath = File(context.cacheDir, "images")
       cachePath.mkdirs()
-      val file = File(cachePath, "shared_image_${UUID.randomUUID()}.png")
+      val file = File(cachePath, fileName)
       val fileOutputStream = FileOutputStream(file)
       fileOutputStream.use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
       FileProvider.getUriForFile(context, "${context.packageName}.provider", file)

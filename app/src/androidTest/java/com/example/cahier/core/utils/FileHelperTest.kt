@@ -87,6 +87,17 @@ class FileHelperTest {
   }
 
   @Test
+  fun saveBitmapToCache_reusesSameUriForSameFileName() = runTest {
+    val bitmap1 = Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888)
+    val bitmap2 = Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888)
+
+    val uri1 = fileHelper.saveBitmapToCache(bitmap1, "shared_image_42.png")
+    val uri2 = fileHelper.saveBitmapToCache(bitmap2, "shared_image_42.png")
+
+    assertEquals(uri1, uri2)
+  }
+
+  @Test
   fun createShareableUri_createsANewFile() = runTest {
     val internalFile = File(context.filesDir, "internal.txt")
     internalFile.writeText("share me")

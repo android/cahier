@@ -63,6 +63,7 @@ fun DrawingSurface(
   backgroundImageUri: String?,
   onStartDrag: () -> Unit,
   modifier: Modifier = Modifier,
+  onEndDrag: () -> Unit = {},
   maskPath: Path? = null,
 ) {
   val textureStore = LocalTextureStore.current
@@ -94,9 +95,8 @@ fun DrawingSurface(
           detectDragGesturesAfterLongPress(
             onDragStart = { onStartDrag() },
             onDrag = { change, _ -> change.consume() },
-            onDragEnd = {
-              // Do nothing.
-            },
+            onDragEnd = { onEndDrag() },
+            onDragCancel = { onEndDrag() },
           )
         }
     )

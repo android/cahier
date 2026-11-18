@@ -48,6 +48,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -212,5 +213,11 @@ class DrawingCanvasViewModelTest {
     viewModel.changeBrush(StockBrushes.marker())
 
     assertFalse("Calling changeBrush should disable eraser mode.", viewModel.isEraserMode.value)
+  }
+
+  @Test
+  fun createExportedBitmap_returnsNullForEmptyBounds() = runTest {
+    assertNull(viewModel.createExportedBitmap(0, 100))
+    assertNull(viewModel.createExportedBitmap(100, 0))
   }
 }
