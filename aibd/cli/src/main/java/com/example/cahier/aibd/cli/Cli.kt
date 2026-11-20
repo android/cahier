@@ -24,6 +24,8 @@ import com.google.genai.errors.ApiException
 import com.google.genai.errors.GenAiIOException
 import com.google.genai.types.Part
 import java.io.File
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -119,6 +121,17 @@ class LoadingSpinner(
   }
 }
 
+/**
+ * Returns whether this exception was caused by Gemini taking too long to respond. Depending on the
+ * version of the Gemini SDK, the underlying HTTP client reports this either as a
+ * [SocketTimeoutException], or as an [InterruptedIOException] with the message "timeout".
+ */
+private fun GenAiIOException.isTimeout(): Boolean {
+  val cause = cause
+  return cause is SocketTimeoutException ||
+    (cause is InterruptedIOException && cause.message == "timeout")
+}
+
 fun <R> runWithSpinnerAndCancel(
   harness: Harness<ByteArray>,
   terminal: Terminal,
@@ -155,7 +168,7 @@ fun <R> runWithSpinnerAndCancel(
     // Covers both client errors (4xx, e.g. exhausted quota) and server errors (5xx, e.g. an
     // overloaded model), so that a failed request doesn't end the CLI session.
     spinner.stop(false)
-    harness.revertChatState()
+    harness.revertChatState("Gemini request failed.")
     println(
       "Active Gemini request failed. Chat history reverted. Failure reason:\n${e.message}\n\n" +
         "Please try again."
@@ -164,11 +177,34 @@ fun <R> runWithSpinnerAndCancel(
     return null
   } catch (e: GenAiIOException) {
     spinner.stop(false)
-    harness.revertChatState()
-    println("Active Gemini request cancelled. Chat history reverted.")
-    harness.log(
-      "Gemini request failed (this may have been due to cancellation with CTRL+C): ${e.message}"
-    )
+    val cause = e.cause
+    when {
+      e.isTimeout() -> {
+        val minutes = Harness.GEMINI_REQUEST_TIMEOUT.toMinutes()
+        harness.revertChatState("Gemini request timed out.")
+        println(
+          "Gemini did not respond within $minutes minutes, so the request timed out. Chat " +
+            "history reverted.\nThe model may be overloaded. Please try again, or switch to " +
+            "another model with /model."
+        )
+        harness.log("Gemini request timed out after $minutes minutes: $cause")
+      }
+      cause is InterruptedIOException -> {
+        // The thread running the request was interrupted, which happens when the user cancels.
+        harness.revertChatState()
+        println("Active Gemini request cancelled. Chat history reverted.")
+        harness.log("Gemini request interrupted: $cause")
+      }
+      else -> {
+        val reason = cause?.toString() ?: e.message
+        harness.revertChatState("Gemini request failed.")
+        println(
+          "Active Gemini request failed due to a network or I/O error. Chat history reverted. " +
+            "Failure reason:\n$reason\n\nPlease check your connection and try again."
+        )
+        harness.log("Gemini request failed with a network or I/O error: $reason")
+      }
+    }
     return null
   } catch (e: CancellationException) {
     spinner.stop(false)

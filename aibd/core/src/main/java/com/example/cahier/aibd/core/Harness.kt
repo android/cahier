@@ -27,6 +27,7 @@ import com.google.genai.types.GenerateContentResponse
 import com.google.genai.types.HttpOptions
 import com.google.genai.types.Part
 import java.io.File
+import java.time.Duration
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
@@ -100,7 +101,8 @@ class Harness<T>(
   val storage: Storage = DesktopStorage(File(System.getProperty("user.home"), ".ink-aibd")),
   private val client: Client =
     try {
-      val httpOptions = HttpOptions.builder().timeout(300000).build()
+      val httpOptions =
+        HttpOptions.builder().timeout(GEMINI_REQUEST_TIMEOUT.toMillis().toInt()).build()
       val sdkClient = SdkClient.builder().httpOptions(httpOptions).build()
       RealClient(sdkClient)
     } catch (e: Exception) {
@@ -303,10 +305,14 @@ class Harness<T>(
     )
   }
 
-  /** Attempts to restore the active chat session to the last state saved to storage. */
-  fun revertChatState() {
+  /**
+   * Attempts to restore the active chat session to the last state saved to storage.
+   *
+   * @param reason Why the chat state is being reverted, which is recorded in the log.
+   */
+  fun revertChatState(reason: String = "Request cancelled by user.") {
     if (activeConversation.copy(chat = createChat()).setActive() != null) {
-      log("Request cancelled by user. Restored last saved history.")
+      log("$reason Restored last saved history.")
     } else {
       logAndPrint(
         "Failed to update active conversation to last saved history, state may be corrupted."
@@ -503,6 +509,15 @@ class Harness<T>(
         .toList()
     return userPrompts.getOrNull(turnIndex - 1)?.lines()?.firstOrNull()?.take(40)
       ?: return "Brush design prompt $turnIndex"
+  }
+
+  companion object {
+    /**
+     * How long to wait for Gemini to respond to a single request attempt. Brush generation requests
+     * are not streamed, so this must cover the whole time that Gemini takes to think and write its
+     * response, which can be several minutes when the model is under heavy load.
+     */
+    val GEMINI_REQUEST_TIMEOUT: Duration = Duration.ofMinutes(10)
   }
 }
 

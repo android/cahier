@@ -32,12 +32,16 @@ import com.example.cahier.tools.CommandResult
 import com.example.cahier.tools.FakeAdb
 import com.google.common.truth.Truth.assertThat
 import com.google.genai.errors.ClientException
+import com.google.genai.errors.GenAiIOException
 import com.google.genai.errors.ServerException
 import com.google.genai.types.GenerateContentResponse
 import com.google.genai.types.Part
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.InterruptedIOException
 import java.io.PrintStream
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import kotlinx.coroutines.Dispatchers
 import org.jline.reader.LineReader
 import org.jline.terminal.Attributes
@@ -485,4 +489,96 @@ class CliTest {
     assertThat(result).isNull()
     assertThat(capturedOut.toString()).contains("503 UNAVAILABLE. The model is overloaded.")
   }
+
+  @Test
+  fun runWithSpinnerAndCancel_readTimeout_printsTimeoutAndReturnsNull() {
+    val terminal = createMockTerminal()
+
+    val result =
+      runWithSpinnerAndCancel<String>(
+        harness,
+        terminal,
+        LoadingSpinner(Dispatchers.Unconfined, terminal),
+        Dispatchers.Unconfined,
+      ) {
+        throw GenAiIOException("Failed to execute HTTP request.", SocketTimeoutException("timeout"))
+      }
+
+    assertThat(result).isNull()
+    assertThat(capturedOut.toString()).contains("so the request timed out")
+    assertThat(capturedOut.toString()).doesNotContain("cancelled")
+    assertThat(sessionLog()).contains("Gemini request timed out. Restored last saved history.")
+    assertThat(sessionLog()).doesNotContain("cancelled by user")
+  }
+
+  @Test
+  fun runWithSpinnerAndCancel_callTimeout_printsTimeoutAndReturnsNull() {
+    val terminal = createMockTerminal()
+
+    val result =
+      runWithSpinnerAndCancel<String>(
+        harness,
+        terminal,
+        LoadingSpinner(Dispatchers.Unconfined, terminal),
+        Dispatchers.Unconfined,
+      ) {
+        throw GenAiIOException("Failed to execute HTTP request.", InterruptedIOException("timeout"))
+      }
+
+    assertThat(result).isNull()
+    assertThat(capturedOut.toString()).contains("so the request timed out")
+    assertThat(capturedOut.toString()).doesNotContain("cancelled")
+  }
+
+  @Test
+  fun runWithSpinnerAndCancel_interrupted_printsCancelledAndReturnsNull() {
+    val terminal = createMockTerminal()
+
+    val result =
+      runWithSpinnerAndCancel<String>(
+        harness,
+        terminal,
+        LoadingSpinner(Dispatchers.Unconfined, terminal),
+        Dispatchers.Unconfined,
+      ) {
+        throw GenAiIOException(
+          "Failed to execute HTTP request.",
+          InterruptedIOException("interrupted"),
+        )
+      }
+
+    assertThat(result).isNull()
+    assertThat(capturedOut.toString()).contains("Active Gemini request cancelled.")
+    assertThat(capturedOut.toString()).doesNotContain("timed out")
+  }
+
+  @Test
+  fun runWithSpinnerAndCancel_networkError_printsFailureAndReturnsNull() {
+    val terminal = createMockTerminal()
+
+    val result =
+      runWithSpinnerAndCancel<String>(
+        harness,
+        terminal,
+        LoadingSpinner(Dispatchers.Unconfined, terminal),
+        Dispatchers.Unconfined,
+      ) {
+        throw GenAiIOException(
+          "Failed to execute HTTP request.",
+          UnknownHostException("generativelanguage.googleapis.com"),
+        )
+      }
+
+    assertThat(result).isNull()
+    assertThat(capturedOut.toString()).contains("failed due to a network or I/O error")
+    assertThat(capturedOut.toString())
+      .contains("java.net.UnknownHostException: generativelanguage.googleapis.com")
+    assertThat(capturedOut.toString()).doesNotContain("cancelled")
+    assertThat(sessionLog()).contains("Gemini request failed. Restored last saved history.")
+    assertThat(sessionLog()).doesNotContain("cancelled by user")
+  }
+
+  /** Returns everything that has been written to the session logs. */
+  private fun sessionLog(): String =
+    File(testBaseDir, "log").listFiles().orEmpty().joinToString("\n") { it.readText() }
 }
