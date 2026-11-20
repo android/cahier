@@ -137,9 +137,7 @@ class HomeScreenViewModel @Inject constructor(private val noteRepository: NotesR
           type = noteType,
           text = if (noteType == NoteType.Text) "" else null,
         )
-      val insertedId = noteRepository.addNote(newNote)
-      selectNote(insertedId)
-      insertedId
+      noteRepository.addNote(newNote)
     } catch (e: Exception) {
       Log.e(TAG, "Error adding note: ${e.message}")
       _uiState.value = _uiState.value.copy(error = "Error adding note: ${e.message}")

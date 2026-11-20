@@ -298,10 +298,16 @@ private fun CahierNavigationSuite(
                   }
                 },
                 onAddNewTextNote = {
-                  homeScreenViewModel.addNote { noteId -> navigateToCanvas(noteId) }
+                  homeScreenViewModel.addNote { noteId ->
+                    if (!isCompact) homeScreenViewModel.selectNote(noteId)
+                    navigateToCanvas(noteId)
+                  }
                 },
                 onAddNewDrawingNote = {
-                  homeScreenViewModel.addDrawingNote { noteId -> navigateToDrawingCanvas(noteId) }
+                  homeScreenViewModel.addDrawingNote { noteId ->
+                    if (!isCompact) homeScreenViewModel.selectNote(noteId)
+                    navigateToDrawingCanvas(noteId)
+                  }
                 },
                 onDeleteNote = { note ->
                   homeScreenViewModel.deleteNote(note)
