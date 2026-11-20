@@ -29,6 +29,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -114,5 +115,42 @@ class HomeScreenViewModelTest {
       assertEquals(Note(), awaitItem().note)
       cancelAndIgnoreRemainingEvents()
     }
+  }
+
+  @Test
+  fun selectNote_defersStrokeReloadWhileUnsubscribed() = runTest {
+    val noteId = notesRepository.addNote(Note(title = "Drawing Note", type = NoteType.Drawing))
+    viewModel.selectNote(noteId)
+    assertEquals(1, notesRepository.getNoteStrokesCallCount)
+    assertFalse(viewModel.uiState.value.isLoading)
+
+    notesRepository.updateNoteStrokes(noteId, emptyList(), "brush-1")
+    notesRepository.updateNoteStrokes(noteId, emptyList(), "brush-2")
+    assertEquals(1, notesRepository.getNoteStrokesCallCount)
+
+    viewModel.uiState.test {
+      awaitItem()
+      cancelAndIgnoreRemainingEvents()
+    }
+    assertEquals(2, notesRepository.getNoteStrokesCallCount)
+  }
+
+  @Test
+  fun addDrawingNote_selectsCreatedNoteAndReloadsStrokesWhenSubscribed() = runTest {
+    var createdNoteId = 0L
+    viewModel.addDrawingNote { id -> createdNoteId = id }
+    assertEquals(1, notesRepository.getNoteStrokesCallCount)
+
+    // Simulate drawing and saving strokes while HomePane is on the backstack (unsubscribed).
+    notesRepository.updateNoteStrokes(createdNoteId, emptyList(), null)
+    assertEquals(1, notesRepository.getNoteStrokesCallCount)
+
+    // Returning to HomePane subscribes to uiState and loads the saved strokes for the preview.
+    viewModel.uiState.test {
+      val state = awaitItem()
+      assertEquals(createdNoteId, state.note.id)
+      cancelAndIgnoreRemainingEvents()
+    }
+    assertEquals(2, notesRepository.getNoteStrokesCallCount)
   }
 }

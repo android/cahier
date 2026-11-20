@@ -28,17 +28,22 @@ import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -70,21 +75,40 @@ class HomeScreenViewModel @Inject constructor(private val noteRepository: NotesR
   fun selectNote(noteId: Long) {
     selectNoteJob?.cancel()
     selectNoteJob = viewModelScope.launch {
-      _uiState.value = _uiState.value.copy(isLoading = true)
+      _uiState.update { it.copy(strokes = emptyList(), isLoading = true) }
       try {
-        noteRepository.getNoteStream(noteId).filterNotNull().collect { note ->
-          val strokes =
-            if (note.type == NoteType.Drawing) {
-              noteRepository.getNoteStrokes(noteId)
-            } else {
-              emptyList()
+        coroutineScope {
+          val note =
+            noteRepository
+              .getNoteStream(noteId)
+              .filterNotNull()
+              .shareIn(this, SharingStarted.Eagerly, replay = 1)
+
+          // Title, favorite, and image changes apply immediately.
+          launch { note.collect { updated -> _uiState.update { it.copy(note = updated) } } }
+
+          // Reload strokes only when the saved stroke data changes. After the first load, wait
+          // until something is observing uiState, so a HomePane left on the back stack doesn't
+          // decode every stroke after each save in the drawing screen.
+          note
+            .distinctUntilChangedBy { it.strokesData }
+            .withIndex()
+            .collectLatest { (index, updated) ->
+              if (index > 0) _uiState.subscriptionCount.first { it > 0 }
+              val strokes =
+                if (updated.type == NoteType.Drawing) {
+                  noteRepository.getNoteStrokes(noteId)
+                } else {
+                  emptyList()
+                }
+              _uiState.update { it.copy(strokes = strokes, isLoading = false) }
             }
-          _uiState.value = CahierUiState(note = note, strokes = strokes)
         }
       } catch (e: Exception) {
         if (e is CancellationException) throw e
-        _uiState.value =
-          _uiState.value.copy(error = "Error retrieving note: ${e.message}", isLoading = false)
+        _uiState.update {
+          it.copy(error = "Error retrieving note: ${e.message}", isLoading = false)
+        }
         Log.e(TAG, "Error retrieving note: ${e.message}")
       }
     }
@@ -114,7 +138,7 @@ class HomeScreenViewModel @Inject constructor(private val noteRepository: NotesR
           text = if (noteType == NoteType.Text) "" else null,
         )
       val insertedId = noteRepository.addNote(newNote)
-      _uiState.value = CahierUiState(note = newNote.copy(id = insertedId))
+      selectNote(insertedId)
       insertedId
     } catch (e: Exception) {
       Log.e(TAG, "Error adding note: ${e.message}")

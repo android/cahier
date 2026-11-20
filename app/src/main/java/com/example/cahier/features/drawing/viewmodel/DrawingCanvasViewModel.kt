@@ -61,6 +61,7 @@ import com.example.cahier.core.data.CustomBrush
 import com.example.cahier.core.data.CustomBrushDao
 import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.data.CustomBrushes
+import com.example.cahier.core.data.Note
 import com.example.cahier.core.data.NotesRepository
 import com.example.cahier.core.di.IoDispatcher
 import com.example.cahier.core.navigation.DrawingCanvasDestination
@@ -79,6 +80,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -150,39 +152,43 @@ constructor(
 
   init {
     viewModelScope.launch {
+      var isInitialLoad = true
       noteRepository.getNoteStream(noteId).filterNotNull().collect { note ->
-        val initialStrokes =
-          if (note.strokesData != null) {
-            noteRepository.getNoteStrokes(note.id)
-          } else {
-            emptyList()
-          }
-
-        note.clientBrushFamilyId?.let { id ->
-          if (!isBrushSelectedInSession) {
-            val customBrush = customBrushes.value.find { it.name == id }
-            customBrush?.let {
-              _selectedBrush.value = _selectedBrush.value.copy(family = it.brushFamily)
-            }
-          }
-        }
-
-        _uiState.update { it.copy(note = note, strokes = initialStrokes) }
-        if (history.isEmpty()) {
-          history.clear()
-          history.add(initialStrokes)
-          historyIndex = 0
-          updateUndoRedoState()
+        if (isInitialLoad) {
+          isInitialLoad = false
+          loadInitialNote(note)
         } else {
-          if (historyIndex >= 0 && historyIndex < history.size) {
-            _uiState.update { it.copy(strokes = history[historyIndex]) }
-          }
-          updateUndoRedoState()
+          _uiState.update { it.copy(note = note) }
         }
       }
     }
 
     loadCustomBrushes()
+  }
+
+  private suspend fun loadInitialNote(note: Note) {
+    val initialStrokes = noteRepository.getNoteStrokes(note.id)
+
+    note.clientBrushFamilyId?.let { restoreSavedBrush(it) }
+
+    if (history.isEmpty()) {
+      history.add(initialStrokes)
+      historyIndex = 0
+      updateUndoRedoState()
+      _uiState.update { it.copy(note = note, strokes = initialStrokes) }
+    } else {
+      _uiState.update { it.copy(note = note) }
+    }
+  }
+
+  private fun restoreSavedBrush(brushId: String) {
+    viewModelScope.launch {
+      // Custom brushes load asynchronously, so wait for them before looking up the saved brush.
+      val brushes = customBrushes.first { it.isNotEmpty() }
+      if (isBrushSelectedInSession) return@launch
+      val customBrush = brushes.find { it.name == brushId } ?: return@launch
+      _selectedBrush.update { it.copy(family = customBrush.brushFamily) }
+    }
   }
 
   fun addImageWithLocalUri(localUri: Uri?) {

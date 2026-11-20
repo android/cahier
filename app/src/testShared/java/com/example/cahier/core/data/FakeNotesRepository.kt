@@ -28,6 +28,10 @@ class FakeNotesRepository : NotesRepository {
   private val notesFlow = MutableStateFlow<LinkedHashMap<Long, Note>>(LinkedHashMap())
   private val strokesFlow = MutableStateFlow<LinkedHashMap<Long, List<Stroke>>>(LinkedHashMap())
   private var nextId = 1L
+  private var strokeRevision = 0
+
+  var getNoteStrokesCallCount: Int = 0
+    private set
 
   fun getNotes(): List<Note> = notesFlow.value.values.toList()
 
@@ -83,10 +87,16 @@ class FakeNotesRepository : NotesRepository {
       current[noteId] = strokes
       current
     }
-    updateNoteField(noteId) { it.copy(clientBrushFamilyId = clientBrushFamilyId) }
+    updateNoteField(noteId) {
+      it.copy(
+        strokesData = "fake_strokes_${++strokeRevision}",
+        clientBrushFamilyId = clientBrushFamilyId,
+      )
+    }
   }
 
   override suspend fun getNoteStrokes(noteId: Long): List<Stroke> {
+    getNoteStrokesCallCount++
     return strokesFlow.value[noteId] ?: emptyList()
   }
 

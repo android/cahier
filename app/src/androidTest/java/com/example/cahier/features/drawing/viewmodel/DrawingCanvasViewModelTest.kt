@@ -49,6 +49,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -81,19 +82,22 @@ class DrawingCanvasViewModelTest {
     notesRepository = FakeNotesRepository()
     noteId = runBlocking { notesRepository.addNote(Note(title = "Drawing Test")) }
 
+    viewModel = createViewModel(noteId)
+  }
+
+  private fun createViewModel(noteId: Long): DrawingCanvasViewModel {
     val savedStateHandle = SavedStateHandle(mapOf(DrawingCanvasDestination.NOTE_ID_ARG to noteId))
     val context = ApplicationProvider.getApplicationContext<Context>()
-    viewModel =
-      DrawingCanvasViewModel(
-        context,
-        savedStateHandle,
-        notesRepository,
-        fileHelper,
-        imageLoader,
-        customBrushDao = FakeCustomBrushDao(),
-        CahierTextureBitmapStore(context),
-        ioDispatcher = testDispatcher,
-      )
+    return DrawingCanvasViewModel(
+      context,
+      savedStateHandle,
+      notesRepository,
+      fileHelper,
+      imageLoader,
+      customBrushDao = FakeCustomBrushDao(),
+      CahierTextureBitmapStore(context),
+      ioDispatcher = testDispatcher,
+    )
   }
 
   @After
@@ -219,5 +223,35 @@ class DrawingCanvasViewModelTest {
   fun createExportedBitmap_returnsNullForEmptyBounds() = runTest {
     assertNull(viewModel.createExportedBitmap(0, 100))
     assertNull(viewModel.createExportedBitmap(100, 0))
+  }
+
+  @Test
+  fun onStrokesFinished_doesNotReloadStrokesFromRepository() = runTest {
+    assertEquals(1, notesRepository.getNoteStrokesCallCount)
+
+    val brush = Brush(StockBrushes.marker(), 10f, 1f)
+    val stroke1 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    val stroke2 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+
+    viewModel.onStrokesFinished(listOf(stroke1))
+    viewModel.onStrokesFinished(listOf(stroke2))
+    viewModel.onTitleChanged("Updated Title")
+
+    assertEquals(1, notesRepository.getNoteStrokesCallCount)
+    assertEquals("Updated Title", viewModel.uiState.value.note.title)
+    assertEquals(2, viewModel.uiState.value.strokes.size)
+    assertSame(stroke1, viewModel.uiState.value.strokes[0])
+    assertSame(stroke2, viewModel.uiState.value.strokes[1])
+  }
+
+  @Test
+  fun init_restoresBrushSavedWithNote() = runTest {
+    val savedBrush = viewModel.customBrushes.value.first()
+    val brushNoteId =
+      notesRepository.addNote(Note(title = "Brush Note", clientBrushFamilyId = savedBrush.name))
+
+    val restoredViewModel = createViewModel(brushNoteId)
+
+    assertEquals(savedBrush.brushFamily, restoredViewModel.currentBrush.value.family)
   }
 }
