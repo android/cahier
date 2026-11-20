@@ -77,6 +77,11 @@ roborazzi {
     outputDir.set(file("../screenshots"))
 }
 
+ksp {
+    // Room exports the database schema here so that migrations can be tested.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)

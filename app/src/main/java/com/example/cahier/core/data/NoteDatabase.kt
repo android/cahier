@@ -20,7 +20,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Note::class, CustomBrushEntity::class], version = 9, exportSchema = false)
+@Database(entities = [Note::class, CustomBrushEntity::class], version = 9)
 @TypeConverters(Converters::class)
 abstract class NoteDatabase : RoomDatabase() {
   abstract fun noteDao(): NoteDao
