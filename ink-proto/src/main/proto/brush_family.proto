@@ -311,6 +311,9 @@ message BrushPaint {
     // LINT.IfChange(texture_mapping)
 
     // Specification of how the texture should be applied to the stroke.
+    //
+    // This enum is deprecated, and exists only to support the deprecated
+    // `mapping` field.
     enum Mapping {
       MAPPING_UNSPECIFIED = 0 [(ink.proto.enum_value_min_version) = 0];
 
@@ -436,47 +439,51 @@ message BrushPaint {
     // LINT.ThenChange(../../brush/brush_paint.h:blend_mode)
 
     oneof layer {
-      TilingTexture tiling_texture = 24
-          [(ink.proto.field_min_version) = 2147483647];
-      StampingTexture stamping_texture = 25
-          [(ink.proto.field_min_version) = 2147483647];
+      TilingTexture tiling_texture = 24 [(ink.proto.field_min_version) = 2];
+      StampingTexture stamping_texture = 25 [(ink.proto.field_min_version) = 2];
     }
 
-    // TODO(b/543451823): Deprecate the below `TextureLayer` fields, except for
-    // `blend_mode`, in favor of the `oneof` above, once the `oneof` fields are
-    // assigned a non-development `field_min_version`.
-
     // String id that will be used by renderers to retrieve the color texture.
-    optional string client_texture_id = 1 [(ink.proto.field_min_version) = 0];
+    optional string client_texture_id = 1
+        [deprecated = true, (ink.proto.field_min_version) = 0];
 
     // The x-dimension of size of (one animation frame of) the texture,
     // specified in  `size_unit`s
-    optional float size_x = 2 [default = 1, (ink.proto.field_min_version) = 0];
+    optional float size_x = 2
+        [default = 1, deprecated = true, (ink.proto.field_min_version) = 0];
 
     // The y-dimension of size of (one animation frame of) the texture,
     // specified in  `size_unit`s
-    optional float size_y = 3 [default = 1, (ink.proto.field_min_version) = 0];
+    optional float size_y = 3
+        [default = 1, deprecated = true, (ink.proto.field_min_version) = 0];
 
     // The unit for size_x and size_y.
     optional SizeUnit size_unit = 4 [
       default = SIZE_UNIT_STROKE_COORDINATES,
+      deprecated = true,
       (ink.proto.field_min_version) = 0
     ];
 
     // How the texture should be applied to the stroke.
-    optional Mapping mapping = 5
-        [default = MAPPING_TILING, (ink.proto.field_min_version) = 0];
+    optional Mapping mapping = 5 [
+      default = MAPPING_TILING,
+      deprecated = true,
+      (ink.proto.field_min_version) = 0
+    ];
 
     // An x-offset into the texture, specified as fractions of the texture size.
-    optional float offset_x = 6 [(ink.proto.field_min_version) = 0];
+    optional float offset_x = 6
+        [deprecated = true, (ink.proto.field_min_version) = 0];
 
     // A y-offset into the texture, specified as fractions of the texture size.
-    optional float offset_y = 7 [(ink.proto.field_min_version) = 0];
+    optional float offset_y = 7
+        [deprecated = true, (ink.proto.field_min_version) = 0];
 
     // Angle in radians specifying the rotation of the texture. The rotation is
     // carried out about the center of the texture's first repetition along both
     // axes.
-    optional float rotation_in_radians = 8 [(ink.proto.field_min_version) = 0];
+    optional float rotation_in_radians = 8
+        [deprecated = true, (ink.proto.field_min_version) = 0];
 
     reserved 9 to 15;
 
@@ -492,18 +499,25 @@ message BrushPaint {
     // The origin point to use for the texture
     optional Origin origin = 17 [
       default = ORIGIN_STROKE_SPACE_ORIGIN,
+      deprecated = true,
       (ink.proto.field_min_version) = 0
     ];
 
     // How points outside the texture in the x direction are treated for this
     // texture layer
-    optional Wrap wrap_x = 18
-        [default = WRAP_REPEAT, (ink.proto.field_min_version) = 0];
+    optional Wrap wrap_x = 18 [
+      default = WRAP_REPEAT,
+      deprecated = true,
+      (ink.proto.field_min_version) = 0
+    ];
 
     // How points outside the texture in the y direction are treated for this
     // texture layer
-    optional Wrap wrap_y = 19
-        [default = WRAP_REPEAT, (ink.proto.field_min_version) = 0];
+    optional Wrap wrap_y = 19 [
+      default = WRAP_REPEAT,
+      deprecated = true,
+      (ink.proto.field_min_version) = 0
+    ];
 
     reserved 20;
     reserved 21;
@@ -515,55 +529,51 @@ message BrushPaint {
   // vertex positions. Each copy of the texture will have the same size and
   // shape, modulo reflections.
   message TilingTexture {
-    option (ink.proto.message_min_version) = 2147483647;
+    option (ink.proto.message_min_version) = 2;
 
     // String id that will be used by renderers to retrieve the color texture.
-    optional string client_texture_id = 1
-        [(ink.proto.field_min_version) = 2147483647];
+    optional string client_texture_id = 1 [(ink.proto.field_min_version) = 2];
 
     // The origin point to use for the texture
     optional TextureLayer.Origin origin = 2 [
       default = ORIGIN_STROKE_SPACE_ORIGIN,
-      (ink.proto.field_min_version) = 2147483647
+      (ink.proto.field_min_version) = 2
     ];
 
     // The unit for size_x and size_y.
     optional TextureLayer.SizeUnit size_unit = 3 [
       default = SIZE_UNIT_STROKE_COORDINATES,
-      (ink.proto.field_min_version) = 2147483647
+      (ink.proto.field_min_version) = 2
     ];
 
     // How points outside the texture in the x direction are treated for this
     // texture layer
     optional TextureLayer.Wrap wrap_x = 4
-        [default = WRAP_REPEAT, (ink.proto.field_min_version) = 2147483647];
+        [default = WRAP_REPEAT, (ink.proto.field_min_version) = 2];
 
     // How points outside the texture in the y direction are treated for this
     // texture layer
     optional TextureLayer.Wrap wrap_y = 5
-        [default = WRAP_REPEAT, (ink.proto.field_min_version) = 2147483647];
+        [default = WRAP_REPEAT, (ink.proto.field_min_version) = 2];
 
     // The x-dimension of size of (one animation frame of) the texture,
     // specified in  `size_unit`s
-    optional float size_x = 6
-        [default = 1, (ink.proto.field_min_version) = 2147483647];
+    optional float size_x = 6 [default = 1, (ink.proto.field_min_version) = 2];
 
     // The y-dimension of size of (one animation frame of) the texture,
     // specified in  `size_unit`s
-    optional float size_y = 7
-        [default = 1, (ink.proto.field_min_version) = 2147483647];
+    optional float size_y = 7 [default = 1, (ink.proto.field_min_version) = 2];
 
     // An x-offset into the texture, specified as fractions of the texture size.
-    optional float offset_x = 8 [(ink.proto.field_min_version) = 2147483647];
+    optional float offset_x = 8 [(ink.proto.field_min_version) = 2];
 
     // A y-offset into the texture, specified as fractions of the texture size.
-    optional float offset_y = 9 [(ink.proto.field_min_version) = 2147483647];
+    optional float offset_y = 9 [(ink.proto.field_min_version) = 2];
 
     // Angle in radians specifying the rotation of the texture. The rotation is
     // carried out about the center of the texture's first repetition along both
     // axes.
-    optional float rotation_in_radians = 10
-        [(ink.proto.field_min_version) = 2147483647];
+    optional float rotation_in_radians = 10 [(ink.proto.field_min_version) = 2];
   }
 
   // A texture intended for use with particle brush coats (i.e. with a brush tip
@@ -571,11 +581,10 @@ message BrushPaint {
   // thereof) will be "stamped" onto each particle of the stroke, scaled or
   // rotated appropriately to cover the whole particle.
   message StampingTexture {
-    option (ink.proto.message_min_version) = 2147483647;
+    option (ink.proto.message_min_version) = 2;
 
     // String id that will be used by renderers to retrieve the color texture.
-    optional string client_texture_id = 1
-        [(ink.proto.field_min_version) = 2147483647];
+    optional string client_texture_id = 1 [(ink.proto.field_min_version) = 2];
 
     reserved 2 to 5;
   }
@@ -933,7 +942,7 @@ message BrushBehavior {
     // Time elapsed (in seconds) from the current modeled stroke input until the
     // last input in the stroke.
     SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS = 41
-        [(ink.proto.enum_value_min_version) = 2147483647];
+        [(ink.proto.enum_value_min_version) = 2];
 
     // Stylus barrel twist with values reported in the range [0, 2π).
     SOURCE_BARREL_TWIST_IN_RADIANS = 42
@@ -1521,14 +1530,14 @@ message ColorFunction {
     // Applies an additive offset to the color's hue angle, while maintaining
     // the same level of perceived lightness.  The offset angle must be finite,
     // but can be positive or negative (or zero).
-    float hue_offset_radians = 3 [(ink.proto.field_min_version) = 2147483647];
+    float hue_offset_radians = 3 [(ink.proto.field_min_version) = 2];
     // Applies a multiplier to the color's chroma.  The multiplier must be
     // finite and nonnegative.  Typical multiplier values range between 0 and 1.
-    float chroma_multiplier = 4 [(ink.proto.field_min_version) = 2147483647];
+    float chroma_multiplier = 4 [(ink.proto.field_min_version) = 2];
     // Applies an additive offset to the color's perceived lightness.  The
     // offset must be finite, but can be positive or negative (or zero).
     // Typical offset values range between -1 and 1.
-    float lightness_offset = 5 [(ink.proto.field_min_version) = 2147483647];
+    float lightness_offset = 5 [(ink.proto.field_min_version) = 2];
   }
 }
 
