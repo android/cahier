@@ -72,6 +72,7 @@ class HomeScreenViewModelTest {
   fun selectedNote_showsStrokesSavedWhileUnsubscribed() = runTest {
     var createdNoteId = 0L
     viewModel.addDrawingNote { id -> createdNoteId = id }
+    viewModel.selectNote(createdNoteId)
     val savedStrokes =
       listOf(Stroke(Brush(StockBrushes.marker(), 10f, 1f), ImmutableStrokeInputBatch.EMPTY))
 

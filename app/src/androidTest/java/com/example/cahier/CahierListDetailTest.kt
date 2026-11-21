@@ -16,19 +16,30 @@
 
 package com.example.cahier
 
+import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.cahier.core.data.CahierTextureBitmapStore
 import com.example.cahier.core.data.FakeNotesRepository
+import com.example.cahier.core.data.Note
+import com.example.cahier.core.data.NoteType
+import com.example.cahier.core.ui.LocalTextureStore
 import com.example.cahier.features.home.HomePane
 import com.example.cahier.features.home.viewmodel.HomeScreenViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,7 +51,9 @@ class CahierListDetailTest {
 
   @get:Rule(order = 1) val composeTestRule = createComposeRule()
 
-  private val fakeViewModel = HomeScreenViewModel(FakeNotesRepository())
+  private val notesRepository = FakeNotesRepository()
+  private val fakeViewModel = HomeScreenViewModel(notesRepository)
+  private val context = ApplicationProvider.getApplicationContext<Context>()
 
   @Test
   fun homeScreen_showListOnly() {
@@ -66,19 +79,65 @@ class CahierListDetailTest {
     composeTestRule.onNodeWithTag("Detail").assertExists()
   }
 
+  @Test
+  fun addDrawingNote_withDetailPane_selectsNewNote() {
+    val existingNoteId = runBlocking { notesRepository.addNote(Note(type = NoteType.Drawing)) }
+    composeTestRule.setContent {
+      DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(mediumWidthWindow)) {
+        HomeContent(forceCompact = false)
+      }
+    }
+    composeTestRule.waitUntil { fakeViewModel.uiState.value.note.id == existingNoteId }
+
+    val newNoteId = addDrawingNoteFromFab()
+
+    composeTestRule.waitUntil { fakeViewModel.uiState.value.note.id == newNoteId }
+  }
+
+  @Test
+  fun addDrawingNote_compact_doesNotSelectNewNote() {
+    runBlocking { notesRepository.addNote(Note(type = NoteType.Drawing)) }
+    composeTestRule.setContent {
+      DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(compatWidthWindow)) {
+        HomeContent(forceCompact = true)
+      }
+    }
+
+    addDrawingNoteFromFab()
+
+    composeTestRule.waitForIdle()
+    assertEquals(Note(), fakeViewModel.uiState.value.note)
+    assertEquals(0, notesRepository.getNoteStrokesCallCount)
+  }
+
+  /** Adds a drawing note with the floating action button and returns its ID. */
+  private fun addDrawingNoteFromFab(): Long {
+    val noteCountBefore = notesRepository.getNotes().size
+    composeTestRule
+      .onNodeWithContentDescription(context.getString(R.string.add_note))
+      .performClick()
+    composeTestRule
+      .onNodeWithContentDescription(context.getString(R.string.drawing_note))
+      .performClick()
+    composeTestRule.waitUntil { notesRepository.getNotes().size == noteCountBefore + 1 }
+    return notesRepository.getNotes().maxOf { it.id }
+  }
+
   private val mediumWidthWindow = DpSize(width = 1200.dp, height = 900.dp)
 
   private val compatWidthWindow = DpSize(width = 400.dp, height = 900.dp)
 
   @Composable
   private fun HomeContent(forceCompact: Boolean) {
-    HomePane(
-      navigateToCanvas = { _ -> },
-      navigateToDrawingCanvas = { _ -> },
-      navigateToBrushGraph = {},
-      navigateUp = {},
-      forceCompact = forceCompact,
-      homeScreenViewModel = fakeViewModel,
-    )
+    CompositionLocalProvider(LocalTextureStore provides CahierTextureBitmapStore(context)) {
+      HomePane(
+        navigateToCanvas = { _ -> },
+        navigateToDrawingCanvas = { _ -> },
+        navigateToBrushGraph = {},
+        navigateUp = {},
+        forceCompact = forceCompact,
+        homeScreenViewModel = fakeViewModel,
+      )
+    }
   }
 }
