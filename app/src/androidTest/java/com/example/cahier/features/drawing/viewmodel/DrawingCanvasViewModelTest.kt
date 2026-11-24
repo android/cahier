@@ -279,4 +279,42 @@ class DrawingCanvasViewModelTest {
     assertEquals(1, notesRepository.updateNoteStrokesCallCount)
     assertEquals(listOf(stroke1, stroke2), notesRepository.getNoteStrokes(noteId))
   }
+
+  @Test
+  fun undo_savesRestoredStrokes() = runTest {
+    val brush = Brush(StockBrushes.marker(), 10f, 1f)
+    val stroke1 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    val stroke2 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    viewModel.onStrokesFinished(listOf(stroke1))
+    viewModel.onStrokesFinished(listOf(stroke2))
+
+    viewModel.undo()
+
+    assertEquals(listOf(stroke1), notesRepository.getNoteStrokes(noteId))
+  }
+
+  @Test
+  fun redo_savesRestoredStrokes() = runTest {
+    val brush = Brush(StockBrushes.marker(), 10f, 1f)
+    val stroke1 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    val stroke2 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    viewModel.onStrokesFinished(listOf(stroke1))
+    viewModel.onStrokesFinished(listOf(stroke2))
+    viewModel.undo()
+
+    viewModel.redo()
+
+    assertEquals(listOf(stroke1, stroke2), notesRepository.getNoteStrokes(noteId))
+  }
+
+  @Test
+  fun onStrokesFinished_savesNameOfCustomBrushUsed() = runTest {
+    val customBrush = viewModel.customBrushes.value.first()
+    val stroke = Stroke(Brush(customBrush.brushFamily, 10f, 1f), ImmutableStrokeInputBatch.EMPTY)
+
+    viewModel.onStrokesFinished(listOf(stroke))
+
+    val savedNote = notesRepository.getNotes().single { it.id == noteId }
+    assertEquals(customBrush.name, savedNote.clientBrushFamilyId)
+  }
 }
