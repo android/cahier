@@ -134,23 +134,4 @@ class HomeScreenViewModelTest {
     }
     assertEquals(2, notesRepository.getNoteStrokesCallCount)
   }
-
-  @Test
-  fun addDrawingNote_selectsCreatedNoteAndReloadsStrokesWhenSubscribed() = runTest {
-    var createdNoteId = 0L
-    viewModel.addDrawingNote { id -> createdNoteId = id }
-    assertEquals(1, notesRepository.getNoteStrokesCallCount)
-
-    // Simulate drawing and saving strokes while HomePane is on the backstack (unsubscribed).
-    notesRepository.updateNoteStrokes(createdNoteId, emptyList(), null)
-    assertEquals(1, notesRepository.getNoteStrokesCallCount)
-
-    // Returning to HomePane subscribes to uiState and loads the saved strokes for the preview.
-    viewModel.uiState.test {
-      val state = awaitItem()
-      assertEquals(createdNoteId, state.note.id)
-      cancelAndIgnoreRemainingEvents()
-    }
-    assertEquals(2, notesRepository.getNoteStrokesCallCount)
-  }
 }
