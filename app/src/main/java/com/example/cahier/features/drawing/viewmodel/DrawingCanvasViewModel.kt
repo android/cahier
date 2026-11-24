@@ -63,6 +63,7 @@ import com.example.cahier.core.data.CustomBrushEntity
 import com.example.cahier.core.data.CustomBrushes
 import com.example.cahier.core.data.Note
 import com.example.cahier.core.data.NotesRepository
+import com.example.cahier.core.di.ApplicationScope
 import com.example.cahier.core.di.IoDispatcher
 import com.example.cahier.core.navigation.DrawingCanvasDestination
 import com.example.cahier.core.ui.CahierUiState
@@ -72,9 +73,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import ink.proto.BrushFamily as ProtoBrushFamily
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -83,6 +86,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
@@ -97,6 +102,7 @@ constructor(
   private val customBrushDao: CustomBrushDao,
   val textureStore: CahierTextureBitmapStore,
   @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+  @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(CahierUiState())
@@ -149,6 +155,11 @@ constructor(
   val customBrushes: StateFlow<List<CustomBrush>> = _customBrushes.asStateFlow()
 
   private var isBrushSelectedInSession = false
+
+  // Saves run one at a time under saveMutex. Each save gets a new ID from latestSaveRequestId and
+  // only writes if its ID is still the latest, so a stale save never overwrites a newer one.
+  private val saveMutex = Mutex()
+  private val latestSaveRequestId = AtomicLong(0L)
 
   init {
     viewModelScope.launch {
@@ -219,7 +230,7 @@ constructor(
       historyIndex--
       _uiState.update { it.copy(strokes = history[historyIndex]) }
       updateUndoRedoState()
-      viewModelScope.launch { saveStrokes() }
+      saveStrokes()
     }
   }
 
@@ -228,7 +239,7 @@ constructor(
       historyIndex++
       _uiState.update { it.copy(strokes = history[historyIndex]) }
       updateUndoRedoState()
-      viewModelScope.launch { saveStrokes() }
+      saveStrokes()
     }
   }
 
@@ -317,15 +328,28 @@ constructor(
     }
   }
 
-  suspend fun saveStrokes() {
-    if (historyIndex >= 0 && historyIndex < history.size) {
-      val strokesToSave = history[historyIndex]
-      val currentBrushFamily = strokesToSave.lastOrNull()?.brush?.family
-      val clientBrushFamilyId =
-        _customBrushes.value.find { it.brushFamily == currentBrushFamily }?.name
-      noteRepository.updateNoteStrokes(noteId, strokesToSave, clientBrushFamilyId)
-    } else if (history.isEmpty()) {
-      noteRepository.updateNoteStrokes(noteId, emptyList(), null)
+  /**
+   * Saves the current strokes on [applicationScope], off the main thread, so serializing every
+   * stroke doesn't delay drawing and the save still finishes if the screen closes. Saves run one at
+   * a time, and a save is skipped if a newer one was requested while it waited.
+   */
+  private fun saveStrokes() {
+    val strokesToSave =
+      when {
+        historyIndex in history.indices -> history[historyIndex]
+        history.isEmpty() -> emptyList()
+        else -> return
+      }
+    val currentBrushFamily = strokesToSave.lastOrNull()?.brush?.family
+    val clientBrushFamilyId =
+      _customBrushes.value.find { it.brushFamily == currentBrushFamily }?.name
+    val request = latestSaveRequestId.incrementAndGet()
+    applicationScope.launch {
+      saveMutex.withLock {
+        if (request == latestSaveRequestId.get()) {
+          noteRepository.updateNoteStrokes(noteId, strokesToSave, clientBrushFamilyId)
+        }
+      }
     }
   }
 
@@ -343,7 +367,7 @@ constructor(
     val currentStrokes = history.getOrElse(historyIndex) { emptyList() }
     val newStrokes = currentStrokes + finishedStrokes
     updateStrokes(newStrokes)
-    viewModelScope.launch { saveStrokes() }
+    saveStrokes()
   }
 
   fun startErase() {
@@ -352,7 +376,7 @@ constructor(
 
   fun endErase() {
     previousPoint = null
-    viewModelScope.launch { saveStrokes() }
+    saveStrokes()
   }
 
   fun erase(x: Float, y: Float) {
@@ -449,7 +473,7 @@ constructor(
   fun clearStrokes() {
     if (_uiState.value.strokes.isNotEmpty()) {
       updateStrokes(emptyList())
-      viewModelScope.launch { saveStrokes() }
+      saveStrokes()
     }
   }
 
@@ -546,10 +570,6 @@ constructor(
         _customBrushes.value = builtInBrushes + userBrushes
       }
     }
-  }
-
-  override fun onCleared() {
-    viewModelScope.launch { saveStrokes() }
   }
 
   companion object {

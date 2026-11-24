@@ -37,10 +37,13 @@ import com.example.cahier.developer.brushdesigner.data.FakeCustomBrushDao
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -85,7 +88,10 @@ class DrawingCanvasViewModelTest {
     viewModel = createViewModel(noteId)
   }
 
-  private fun createViewModel(noteId: Long): DrawingCanvasViewModel {
+  private fun createViewModel(
+    noteId: Long,
+    applicationScope: CoroutineScope = CoroutineScope(testDispatcher),
+  ): DrawingCanvasViewModel {
     val savedStateHandle = SavedStateHandle(mapOf(DrawingCanvasDestination.NOTE_ID_ARG to noteId))
     val context = ApplicationProvider.getApplicationContext<Context>()
     return DrawingCanvasViewModel(
@@ -97,6 +103,7 @@ class DrawingCanvasViewModelTest {
       customBrushDao = FakeCustomBrushDao(),
       CahierTextureBitmapStore(context),
       ioDispatcher = testDispatcher,
+      applicationScope = applicationScope,
     )
   }
 
@@ -253,5 +260,23 @@ class DrawingCanvasViewModelTest {
     val restoredViewModel = createViewModel(brushNoteId)
 
     assertEquals(savedBrush.brushFamily, restoredViewModel.currentBrush.value.family)
+  }
+
+  @Test
+  fun onStrokesFinished_savesLatestStrokesInBackground() = runTest {
+    val backgroundDispatcher = StandardTestDispatcher(testScheduler)
+    val savingViewModel = createViewModel(noteId, CoroutineScope(backgroundDispatcher))
+    val brush = Brush(StockBrushes.marker(), 10f, 1f)
+    val stroke1 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+    val stroke2 = Stroke(brush, ImmutableStrokeInputBatch.EMPTY)
+
+    savingViewModel.onStrokesFinished(listOf(stroke1))
+    savingViewModel.onStrokesFinished(listOf(stroke2))
+    assertEquals(0, notesRepository.updateNoteStrokesCallCount)
+
+    advanceUntilIdle()
+    // The save queued for stroke1 is skipped because a newer save was requested.
+    assertEquals(1, notesRepository.updateNoteStrokesCallCount)
+    assertEquals(listOf(stroke1, stroke2), notesRepository.getNoteStrokes(noteId))
   }
 }

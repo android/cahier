@@ -33,6 +33,9 @@ class FakeNotesRepository : NotesRepository {
   var getNoteStrokesCallCount: Int = 0
     private set
 
+  var updateNoteStrokesCallCount: Int = 0
+    private set
+
   fun getNotes(): List<Note> = notesFlow.value.values.toList()
 
   override fun getAllNotesStream(): Flow<List<Note>> {
@@ -82,6 +85,7 @@ class FakeNotesRepository : NotesRepository {
     strokes: List<Stroke>,
     clientBrushFamilyId: String?,
   ) {
+    updateNoteStrokesCallCount++
     strokesFlow.update {
       val current = LinkedHashMap(it)
       current[noteId] = strokes
