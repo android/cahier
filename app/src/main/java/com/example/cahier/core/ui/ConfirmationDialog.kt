@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.cahier.R
+import com.example.cahier.core.ui.theme.CahierAppTheme
 
 @Composable
 fun ConfirmationDialog(
@@ -27,13 +28,16 @@ fun ConfirmationDialog(
   )
 }
 
-@Preview
+// Dialogs are drawn in their own window, so the preview needs an explicit size to show one.
+@Preview(widthDp = 360, heightDp = 280)
 @Composable
 fun ConfirmationDialogPreview() {
-  ConfirmationDialog(
-    onConfirm = {},
-    onDismiss = {},
-    title = "Confirm",
-    text = "Confirm you want to perform this action.",
-  )
+  CahierAppTheme {
+    ConfirmationDialog(
+      onConfirm = {},
+      onDismiss = {},
+      title = "Confirm",
+      text = "Confirm you want to perform this action.",
+    )
+  }
 }
